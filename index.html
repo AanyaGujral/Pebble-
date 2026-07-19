@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fitness Prototype</title>
+
+  <!-- Load the design tokens (colors + fonts) from the single source of truth -->
+  <script src="js/tokens.js"></script>
+
+  <!-- Google Fonts — swap these if your tokens use different fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* Base reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /*
+     * Colors and fonts are applied by JavaScript from tokens.js (see bottom of
+     * this file). We only set structure/layout here, never hard-coded colors.
+     */
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 380px;
+      border-radius: 20px;
+      padding: 28px;
+      border: 1px solid;
+    }
+
+    h1 { font-size: 22px; margin-bottom: 6px; }
+    .sub { font-size: 14px; margin-bottom: 24px; }
+
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-top: 1px solid;
+    }
+    .stat .label { font-size: 14px; }
+    .stat .value { font-size: 18px; font-weight: 700; }
+
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
+
+    /* Respect users who prefer less motion */
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <h1 id="title">Sleep</h1>
+    <p class="sub" id="sub">Last night's summary</p>
+
+    <div class="stat">
+      <span class="label"><span class="dot" id="dot1"></span>Duration</span>
+      <span class="value">7h 24m</span>
+    </div>
+    <div class="stat">
+      <span class="label"><span class="dot" id="dot2"></span>Quality</span>
+      <span class="value">82</span>
+    </div>
+    <div class="stat">
+      <span class="label"><span class="dot" id="dot3"></span>Resting HR</span>
+      <span class="value">54 bpm</span>
+    </div>
+  </div>
+
+  <script>
+    /*
+     * Apply the design tokens. This is the pattern to remember:
+     * read colors/fonts from window.T (tokens.js) and apply them.
+     * Nothing here hard-codes a color — swap tokens.js and this restyles itself.
+     */
+    document.body.style.background = T.bg;
+    document.body.style.color = T.text;
+    document.body.style.fontFamily = T.sans;
+
+    const card = document.getElementById("card");
+    card.style.background = T.surface;
+    card.style.borderColor = T.border;
+
+    document.getElementById("sub").style.color = T.muted;
+    document.querySelectorAll(".stat").forEach(s => s.style.borderTopColor = T.border);
+
+    // Status dots use semantic tokens
+    document.getElementById("dot1").style.background = T.green;   // good
+    document.getElementById("dot2").style.background = T.green;   // good
+    document.getElementById("dot3").style.background = T.yellow;  // caution
+  </script>
+</body>
+</html>
