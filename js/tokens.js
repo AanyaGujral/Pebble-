@@ -19,11 +19,13 @@ window.T = {
   border: "#DDE6EC",      // hairline borders (light, derived from neutrals)
 
   // --- Brand + hero ---
-  brand: "#012D46",       // primary brand / hero color (dark navy)
+  brand: "#002D46",       // OFFICIAL brand navy — primary CTA + hero color
                           // also used as primary text (see textPrimary below)
+  teal: "#00B9AA",        // OFFICIAL brand teal — ACCENT ONLY (splash, active
+                          // tab indicator, brand moments). NOT a domain color.
 
   // --- Text hierarchy (3 levels) ---
-  textPrimary: "#012D46",   // main text — darker than the darkest neutral
+  textPrimary: "#002D46",   // main text — the brand navy, darker than any neutral
   textSecondary: "#3F4D54", // labels, sub-headings (darkest neutral)
   textMuted: "#6A7D86",     // dimmed text, units, captions
 
@@ -99,9 +101,44 @@ window.T = {
 
   // --- Semantic status colors (point at scale steps above) ---
   // Change the mapping here, not the raw hex, so status stays consistent.
+  // Express these as small dots/labels/ring-fill — NOT by recoloring whole cards.
   good: "#136F63",     // green 600
   caution: "#FE724D",  // orange 600
   info: "#2C82D8",     // blue 600
+
+  // --- Domain colors (which TAB / metric family a thing belongs to) ---
+  // Domain is DOMINANT: a card's identity comes from its domain color.
+  // Green is intentionally NOT a domain — it is reserved for "good" semantics.
+  domain: {
+    sleep: "#2C82D8",     // blue 600  — cool, nighttime
+    activity: "#FE724D",  // orange 600 — warm, energetic
+    health: "#002D46",    // navy      — calm hero, metrics carry the color
+    settings: "#002D46",  // navy      — structural, no accent
+  },
+
+  // --- Sleep stage ramp (one blue family + grey for awake) ---
+  sleepStage: {
+    deep:  "#1C538A",   // blue 800
+    light: "#5198DF",   // blue 500
+    rem:   "#99C3EC",   // blue 300
+    awake: "#B3C9D3",   // neutral 400 (desaturated — awake isn't sleep)
+  },
+
+  // --- Health sub-scores (recovery = rest/green, strain = effort/orange) ---
+  recovery: "#136F63",  // green 600 — wellness/rest signal
+  strain:   "#FE724D",  // orange 600 — exertion (intense, not "bad")
+
+  // --- Sleep-tab metric graphs (HR / SpO2 / HRV / Temp during the night) ---
+  // On the SLEEP tab these stay in the blue family (context = "your night"),
+  // but each takes a DIFFERENT step so the four graphs stay distinguishable.
+  // Line = the step below; area fill = same hue at low opacity; axis = neutral.
+  // Semantics (a low SpO2 dip, high HR) show as a small dot/band, not a recolor.
+  sleepMetric: {
+    hr:   "#2C82D8",  // blue 600 — strongest (most-looked-at)
+    hrv:  "#5198DF",  // blue 500
+    spo2: "#78AFE6",  // blue 400
+    temp: "#99C3EC",  // blue 300 — lightest (Qore 2-Band only)
+  },
 
   // --- Spacing scale (in px). Use for padding, gaps, margins. ---
   // T.space[4] = 16px is your default comfortable unit.
@@ -123,6 +160,19 @@ window.T = {
     card: "16px",  // default card corner
     lg: "24px",
     pill: "999px", // fully rounded (toggles, chips)
+  },
+
+  // --- Button hierarchy ---
+  // primary = the one main action per screen (navy fill, white text).
+  // secondary = supporting action (navy outline, transparent fill).
+  // subtle = low-emphasis / tertiary (light neutral fill, navy text).
+  // Don't make everything primary — one primary per screen keeps it calm.
+  button: {
+    primary:     { bg: "#002D46", text: "#FFFFFF", border: "#002D46" },
+    secondary:   { bg: "transparent", text: "#002D46", border: "#002D46" },
+    subtle:      { bg: "#E3F6FF", text: "#002D46", border: "transparent" },
+    disabledBg:  "#CEE3ED",
+    disabledText:"#8296A0",
   },
 
   // --- Fonts ---
