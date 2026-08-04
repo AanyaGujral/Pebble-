@@ -3,13 +3,14 @@
   Card: 216px tall, 16px padding, 328px base width (expands)
   Structure: BASE (shared) + PERIODS (day/week/month) merged by
   setPeriod(key) into the active CONFIG. Default period: "day".
-  Segmented D/W/M control is DEV-ONLY: hidden in production.
-  Show it with data-dev on .lc-card, or by loading the page
-  with ?dev=1. In production, switch periods via the public
-  API: hrLineChart.setPeriod("day" | "week" | "month").
-  End pills (sleep/wake time chips behind first + last x-tick,
-  day period only) are toggled by data-end-pills="true|false"
-  on .lc-card. Default "false" = plain labels, no pill fills.
+  Segmented D/W/M control in the header switches periods.
+  Dev-only controls: hidden by default; shown when the card has a
+  data-dev attribute, added automatically when the URL contains
+  ?dev=1 (or &dev=1). Production switching: hrLineChart.setPeriod().
+  A second dev-only switcher previews trend states (pos/neu/neg).
+  End-pills variant: data-end-pills="true" = sleep-page variant
+  (time chips behind first/last x-tick, day period only);
+  "false" = plain labels.
   Scrub: plot dims to dark; only dot + dashed line stay lit.
   Header readout shows scrubbed value + formatX(x) timestamp.
   Fonts: Google Sans Flex (text) · League Spartan (numbers)
@@ -26,17 +27,20 @@
 <style>
   .lc-card {
     /* ---------- design tokens ---------- */
-    --neutral-800: #10111A;      /* card background */
-    --text-primary: #F0F1F8;
-    --text-secondary: #7C809A;
-    --gridline: #1C1E28;
-    --accent: #D24963;           /* line red */
-    --pill-bg: #292B38;
-    --pill-text: #B9BDD1;
-    --font-text: "Google Sans Flex", "Google Sans", system-ui, sans-serif;
-    --font-number: "League Spartan", system-ui, sans-serif;
-    --radius: 20px;
-    --pad: 16px;
+    /* values sourced from tokens.js — do not hand-pick colors */
+    --neutral-800: #0F111B;      /* surface.card / neutral.800 */
+    --neutral-700: #282B39;      /* neutral.700 — dividers, semantic.neutral.bg */
+    --text-primary: #EFF1F9;     /* textColor.text1 */
+    --text-2: #B8BDD3;           /* textColor.text2 / semantic.neutral.text */
+    --text-secondary: #7B819C;   /* textColor.text3 */
+    --gridline: var(--neutral-700);  /* drawn at borderWidth.hairline (0.5px) */
+    --accent: #E43A62;           /* metric.heartRate (crimson.400) */
+    --pill-bg: var(--neutral-700);   /* semantic.neutral.bg */
+    --pill-text: var(--text-2);      /* semantic.neutral.text */
+    --font-text: 'Google Sans Flex', 'Google Sans', sans-serif;         /* fontFamily.text */
+    --font-number: 'Spartan', 'League Spartan', sans-serif;             /* fontFamily.numeric */
+    --radius: 20px;              /* radius.20 */
+    --pad: 16px;                 /* spacing.16 */
     --card-height: 216px;
     --card-min-width: 328px;     /* base phone width; chart expands with container */
 
@@ -57,38 +61,61 @@
   /* ---------- header (auto layout: three blocks spread with screen width) ---------- */
   .lc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex: none; }
   .lc-title {
-    font: 500 15px/1.3 var(--font-text);
+    font: 500 15px/22px var(--font-text);   /* typeText.paragraphP1Medium */
     color: var(--text-primary);
     margin: 0;
   }
   .lc-value-block { text-align: right; }
   .lc-value-row { display: flex; align-items: baseline; gap: 4px; justify-content: flex-end; }
   .lc-value {
-    font: 700 20px/1 var(--font-number);
+    font: 700 24px/28px var(--font-number);  /* typeNumeric.numL */
     color: var(--text-primary);
-    letter-spacing: 0.01em;
+    letter-spacing: -0.005em;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
   }
   .lc-unit {
-    font: 500 11px/1 var(--font-text);
+    font: 500 11px/16px var(--font-text);    /* typeText.overlineMedium */
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.08em;
   }
   .lc-sublabel {
-    font: 500 11px/1.4 var(--font-text);
-    color: var(--text-secondary);
-    margin-top: 3px;
-  }
-  .lc-sublabel.scrubbing { font-family: var(--font-number); }
-
-  /* ---------- segmented period control — DEV ONLY ----------
-     Hidden in production. Visible only when .lc-card has the
-     data-dev attribute (added automatically when URL has ?dev=1). */
-  .lc-seg { display: none; }
-  .lc-card[data-dev] .lc-seg {
+    font: 500 11px/16px var(--font-text);    /* typeText.paragraphP3Medium —
+                                                 same 11/16 as the scrub timestamp,
+                                                 so the swap causes no shift */
+    color: var(--text-2);                     /* textColor.text2, per comparison spec */
+    margin-top: 4px;                          /* spacing.4 */
     display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;                                 /* spacing.4 */
+  }
+  /* 5x5 trend glyph — semantic.*.icon colors (glyphs/badges only, per tokens.js) */
+  .lc-trend-icon { width: 7px; height: 5px; flex: none; display: none; }  /* shorter + wider per reference */
+  .lc-trend-icon.positive {
+    display: inline-block; background: #4ADE80;              /* semantic.positive.icon */
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);            /* up triangle */
+  }
+  .lc-trend-icon.negative {
+    display: inline-block; background: #F4604C;              /* semantic.negative.icon */
+    clip-path: polygon(0 0, 100% 0, 50% 100%);               /* down triangle */
+  }
+  .lc-trend-icon.neutral {
+    display: inline-block; background: #999FB9;              /* semantic.neutral.icon */
+    height: 3px; border-radius: 1.5px;                       /* flat dash */
+  }
+  .lc-sublabel.scrubbing .lc-trend-icon { display: none; }
+  .lc-sublabel.scrubbing {                 /* 11px numeric per design direction
+                                               (sits between numXs and numS) */
+    font: 500 11px/16px var(--font-number);
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+  }
+
+  /* ---------- segmented period control (existing tokens only) ---------- */
+  .lc-seg {
+    display: none;               /* dev-only: shown via data-dev on the card */
     background: var(--pill-bg);
-    border-radius: 10px;         /* pill radius family */
+    border-radius: 12px;         /* radius.12 */
     padding: 2px;
     height: 22px;
     flex: none;
@@ -97,23 +124,34 @@
     border: 0;
     background: transparent;
     color: var(--pill-text);
-    font: 600 11px/1 var(--font-number);
+    font: 600 10px/1 var(--font-number);     /* typeNumeric.numXs, semibold */
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
     padding: 0 8px;
     border-radius: 8px;
     cursor: pointer;
   }
   .lc-seg button.active { color: var(--text-primary); }
+  .lc-card[data-dev] .lc-seg { display: flex; }
+  .lc-seg--trend button { display: flex; align-items: center; padding: 0 6px; opacity: 0.45; }
+  .lc-seg--trend button.active { opacity: 1; }
 
   /* ---------- chart ---------- */
-  .lc-chart-wrap { position: relative; flex: 1; min-height: 0; margin-top: 14px; }
+  .lc-chart-wrap { position: relative; flex: 1; min-height: 0; margin-top: 16px;  /* spacing.16 */ }
   .lc-chart-wrap svg { display: block; width: 100%; height: 100%; touch-action: none; }
-  .lc-gridline { stroke: var(--gridline); stroke-width: 1; }
+  .lc-gridline { stroke: var(--gridline); stroke-width: 0.5; }  /* borderWidth.hairline */
   .lc-y-label, .lc-x-label {
-    font: 500 11px var(--font-number);
+    font: 500 10px var(--font-number);       /* typeNumeric.numXs */
     fill: var(--text-secondary);
+    letter-spacing: 0.01em;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
   }
   .lc-x-pill-bg { fill: var(--pill-bg); }
-  .lc-x-pill-label { font: 500 11px var(--font-number); fill: var(--pill-text); }
+  .lc-x-pill-label {                       /* typeNumeric.numXs on semantic.neutral */
+    font: 500 10px var(--font-number);
+    fill: var(--pill-text);
+    letter-spacing: 0.01em;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+  }
   .lc-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
   .lc-line.dotted { stroke-dasharray: 0.1 6; }   /* round caps render dashes as dots */
   .lc-plot { transition: opacity 140ms ease; }
@@ -125,9 +163,9 @@
   }
 </style>
 
-<!-- data-end-pills: "true" = sleep-page variant (time pills behind first/last
-     x-tick, day period only) · "false" = default, plain labels everywhere -->
-<div class="lc-card" id="hr-line-card" data-end-pills="false">
+<!-- data-end-pills: "true" = sleep-page variant (time chips behind
+     first/last x-tick, day period only); "false" = plain labels -->
+<div class="lc-card" id="hr-line-card" data-end-pills="true">
   <div class="lc-header">
     <h3 class="lc-title">Heart Rate</h3>
     <div class="lc-seg" data-role="seg" role="tablist" aria-label="Period">
@@ -135,12 +173,20 @@
       <button data-period="week" role="tab">W</button>
       <button data-period="month" role="tab">M</button>
     </div>
+    <div class="lc-seg lc-seg--trend" data-role="trend-seg" aria-label="Trend (dev only)">
+      <button data-trend="positive" title="Positive"><span class="lc-trend-icon positive"></span></button>
+      <button data-trend="neutral" title="Neutral"><span class="lc-trend-icon neutral"></span></button>
+      <button data-trend="negative" title="Negative"><span class="lc-trend-icon negative"></span></button>
+    </div>
     <div class="lc-value-block">
       <div class="lc-value-row">
         <span class="lc-value" data-role="value">83</span>
         <span class="lc-unit" data-role="unit">BPM</span>
       </div>
-      <div class="lc-sublabel" data-role="sublabel">Average</div>
+      <div class="lc-sublabel" data-role="sublabel">
+        <span class="lc-trend-icon" data-role="trend" aria-hidden="true"></span>
+        <span data-role="sublabel-text">Average</span>
+      </div>
     </div>
   </div>
   <div class="lc-chart-wrap" data-role="wrap">
@@ -157,7 +203,7 @@ var hrLineChart = (function () {
     yMin: 40, yMax: 100,
     yAxisWidth: 34,              // right-side label gutter
     xAxisHeight: 26,             // pill row height
-    topPad: 10,                  // space above top gridline so its label never clips
+    topPad: 12,                  // spacing.12 — keeps top y-label clear
     xTickFrameWidth: 50          // every x value sits in an equal-width frame
   };
 
@@ -179,7 +225,8 @@ var hrLineChart = (function () {
         { label: "7:28" }
       ],
       restingValue: "83",
-      restingSublabel: "10% lower than yesterday",
+      restingSublabel: "10% up from last night",   // sample comparison copy
+      restingTrend: "positive",                    // "positive" | "negative" | "neutral"
       formatX: function (x) {             // minutes → "h:mm AM/PM"
         var m = Math.round(x) % (24 * 60);
         var h = Math.floor(m / 60), mm = m % 60;
@@ -196,7 +243,8 @@ var hrLineChart = (function () {
         { label: "F" }, { label: "S" }, { label: "S" }
       ],
       restingValue: "82",
-      restingSublabel: "Weekly average",
+      restingSublabel: "Same as last week",        // sample comparison copy
+      restingTrend: "neutral",
       formatX: function (x) {
         return DAY_NAMES[Math.min(6, Math.max(0, Math.floor(x)))];
       },
@@ -209,7 +257,8 @@ var hrLineChart = (function () {
         { label: "22" }, { label: "30" }
       ],
       restingValue: "84",
-      restingSublabel: "Monthly average",
+      restingSublabel: "3% down from June",        // sample comparison copy
+      restingTrend: "negative",
       formatX: function (x) { return "Jul " + Math.round(x); },
       data: sampleMonth()
     }
@@ -255,19 +304,17 @@ var hrLineChart = (function () {
   /* ================= state + elements ================= */
   var CONFIG = null;
   var root = document.getElementById("hr-line-card");
+  var END_PILLS = root.getAttribute("data-end-pills") === "true";
   var wrap = root.querySelector('[data-role="wrap"]');
   var svg = root.querySelector('[data-role="svg"]');
   var valueEl = root.querySelector('[data-role="value"]');
   var sublabelEl = root.querySelector('[data-role="sublabel"]');
+  var sublabelTextEl = root.querySelector('[data-role="sublabel-text"]');
+  var trendEl = root.querySelector('[data-role="trend"]');
   var segEl = root.querySelector('[data-role="seg"]');
+  var trendSegEl = root.querySelector('[data-role="trend-seg"]');
   var NS = "http://www.w3.org/2000/svg";
   var geom = null;
-
-  /* dev mode: ?dev=1 in the URL reveals the D/W/M control */
-  if (/[?&]dev=1(&|$)/.test(location.search)) root.setAttribute("data-dev", "");
-
-  /* end-pills variant: read once from the HTML attribute (true/false) */
-  var END_PILLS = root.getAttribute("data-end-pills") === "true";
 
   function el(name, attrs, parent) {
     var e = document.createElementNS(NS, name);
@@ -295,8 +342,8 @@ var hrLineChart = (function () {
     /* gradient fill under the line */
     var defs = el("defs", {});
     var grad = el("linearGradient", { id: "lc-fill", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
-    el("stop", { offset: "0%", "stop-color": "#D24963", "stop-opacity": 0.30 }, grad);
-    el("stop", { offset: "100%", "stop-color": "#D24963", "stop-opacity": 0 }, grad);
+    el("stop", { offset: "0%", "stop-color": "#E43A62", "stop-opacity": 0.30 }, grad);
+    el("stop", { offset: "100%", "stop-color": "#E43A62", "stop-opacity": 0 }, grad);
 
     /* y-axis: 4 lines, 40 at the bottom — gridlines + right-side labels */
     CONFIG.yTicks.forEach(function (t) {
@@ -345,19 +392,21 @@ var hrLineChart = (function () {
       el("path", { class: "lc-line" + (r.dotted ? " dotted" : ""), d: r.d }, plot);
     });
 
-    /* x-axis labels — each value in an equal-width frame, uniformly spaced */
-    var fw = CONFIG.xTickFrameWidth, pillH = 20, nT = CONFIG.xTicks.length;
-    var pillTop = plotH + (CONFIG.xAxisHeight - pillH) / 2 + 2;
-    var baseline = pillTop + pillH / 2 + 4;
+    /* x-axis labels — each value in an equal-width frame, uniformly spaced.
+       Pill hugs its label: 4px side padding, 16px tall, radius.4/2 = 2px */
+    var fw = CONFIG.xTickFrameWidth, pillH = 16, nT = CONFIG.xTicks.length;
+    var center = plotH + CONFIG.xAxisHeight / 2 + 2;   /* label optical center */
+    var baseline = center + 4;
+    var pillTop = center - pillH / 2;
     CONFIG.xTicks.forEach(function (t, i) {
       var cx = fw / 2 + (nT > 1 ? i * (plotW - fw) / (nT - 1) : plotW / 2 - fw / 2);
-      /* end-pills variant: sleep/wake time chips behind first + last tick,
-         day period only, and only when data-end-pills="true" on the card */
-      var isPill = END_PILLS && CONFIG.periodKey === "day" && (i === 0 || i === nT - 1);
+      var isPill = END_PILLS && CONFIG.periodKey === "day"
+                   && (i === 0 || i === nT - 1);
       if (isPill) {
+        var pw = 6 * t.label.length + 8;               /* text width + 4px sides */
         el("rect", {
-          class: "lc-x-pill-bg", x: cx - fw / 2, y: pillTop,
-          width: fw, height: pillH, rx: pillH / 2
+          class: "lc-x-pill-bg", x: cx - pw / 2, y: pillTop,
+          width: pw, height: pillH, rx: 2
         });
       }
       var l = el("text", {
@@ -403,7 +452,7 @@ var hrLineChart = (function () {
     geom.hoverDot.style.opacity = 1;
 
     valueEl.textContent = Math.round(p.value);
-    sublabelEl.textContent = CONFIG.formatX(p.x);
+    sublabelTextEl.textContent = CONFIG.formatX(p.x);
     sublabelEl.classList.add("scrubbing");
   }
 
@@ -413,7 +462,8 @@ var hrLineChart = (function () {
     geom.hoverLine.style.opacity = 0;
     geom.hoverDot.style.opacity = 0;
     valueEl.textContent = CONFIG.restingValue;
-    sublabelEl.textContent = CONFIG.restingSublabel;
+    sublabelTextEl.textContent = CONFIG.restingSublabel;
+    trendEl.className = "lc-trend-icon" + (CONFIG.restingTrend ? " " + CONFIG.restingTrend : "");
     sublabelEl.classList.remove("scrubbing");
   }
 
@@ -431,8 +481,12 @@ var hrLineChart = (function () {
       b.classList.toggle("active", b.dataset.period === key);
       b.setAttribute("aria-selected", b.dataset.period === key);
     });
+    trendSegEl.querySelectorAll("button").forEach(function (b) {
+      b.classList.toggle("active", b.dataset.trend === PERIODS[key].restingTrend);
+    });
     valueEl.textContent = CONFIG.restingValue;
-    sublabelEl.textContent = CONFIG.restingSublabel;
+    sublabelTextEl.textContent = CONFIG.restingSublabel;
+    trendEl.className = "lc-trend-icon" + (CONFIG.restingTrend ? " " + CONFIG.restingTrend : "");
     sublabelEl.classList.remove("scrubbing");
     draw();
   }
@@ -442,12 +496,31 @@ var hrLineChart = (function () {
     if (b) setPeriod(b.dataset.period);
   });
 
+  /* dev-only trend switcher: previews positive / neutral / negative */
+  function setTrend(key) {
+    CONFIG.restingTrend = key;
+    PERIODS[CONFIG.periodKey].restingTrend = key;
+    trendSegEl.querySelectorAll("button").forEach(function (b) {
+      b.classList.toggle("active", b.dataset.trend === key);
+    });
+    if (!sublabelEl.classList.contains("scrubbing")) {
+      trendEl.className = "lc-trend-icon " + key;
+    }
+  }
+  trendSegEl.addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (b) setTrend(b.dataset.trend);
+  });
+
   /* responsive redraw */
   if (typeof ResizeObserver !== "undefined") {
     new ResizeObserver(function () { draw(); }).observe(wrap);
   } else {
     window.addEventListener("resize", draw);
   }
+
+  /* dev-only controls: visible only with ?dev=1 in the URL */
+  if (/[?&]dev=1(&|$)/.test(location.search)) root.setAttribute("data-dev", "");
 
   setPeriod("day");   /* default */
 
