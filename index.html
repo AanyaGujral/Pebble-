@@ -151,11 +151,15 @@ body{
   background:var(--neutral-900);border:2px solid var(--neutral-700);
   z-index:60;pointer-events:none;
 }
+/* The status bar floats OVER the app so tab backgrounds extend all the way
+   to the top edge (owner request, 2026-08-07). A soft scrim in each hero
+   keeps the clock legible. */
 .statusbar{
-  position:relative;z-index:50;flex:0 0 32px;
+  position:absolute;top:0;left:0;right:0;height:32px;z-index:50;
   display:flex;align-items:center;justify-content:space-between;
   padding:0 16px;
   font-size:13px;line-height:18px;font-weight:500;color:var(--text-1);
+  pointer-events:none;
 }
 .statusbar .batt{width:20px;height:10px;border-radius:3px;border:1px solid var(--text-2);padding:1px}
 .statusbar .batt i{display:block;width:12px;height:100%;border-radius:2px;background:var(--text-1)}
@@ -204,7 +208,15 @@ body{
 /* ==========================================================================
    5. SHARED SCREEN PIECES — header, hero ring, stat chips, cards
    ========================================================================== */
-.screen-head{padding:12px 16px 0;display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:20}
+/* 44px top padding = 32px status bar (now an overlay) + the original 12px */
+.screen-head{padding:44px 16px 0;display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:20}
+
+/* full-bleed tab background: the owner-supplied PNG sits on top of a
+   code-drawn stand-in scene (shown until the PNG file exists on disk) */
+.hero-bg{position:absolute;inset:0 0 auto 0;height:660px;overflow:hidden;pointer-events:none}
+.hero-bg img,.hero-bg svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bg-scrim-top{position:absolute;left:0;top:0;right:0;height:160px;background:linear-gradient(180deg, color-mix(in srgb, var(--surface-app) 55%, transparent) 0%, color-mix(in srgb, var(--surface-app) 18%, transparent) 55%, transparent 100%)}
+.bg-scrim-bottom{position:absolute;left:0;bottom:0;right:0;height:250px;background:linear-gradient(180deg, transparent 0%, var(--surface-app) 88%)}
 .screen-title{font-size:24px;line-height:30px;font-weight:500;letter-spacing:-0.01em;color:var(--text-1)}
 .date-btn{
   margin:4px 0 0 -8px;display:flex;align-items:center;gap:4px;
@@ -568,10 +580,16 @@ body[data-state="empty"]   .hero.stateful .score{color:var(--text-3)}
            prototype (score ring, goals, week rings, 3 charts, workouts)
            ========================================================= -->
       <section class="page" id="page-activity">
-        <!-- Flag: the standalone prototype used a photographic backdrop
-             (embedded webp). Recreated here with token gradients so the
-             file stays small and colors stay tokenised. -->
         <div class="hero stateful" style="background:linear-gradient(180deg, color-mix(in srgb, var(--metric-activity) 9%, var(--surface-app)) 0%, var(--surface-app) 90%)">
+          <!-- Owner-supplied dusk-forest background. The PNG loads from
+               assets/backgrounds/ when present; until then a code-drawn
+               stand-in scene (SVG below, painted by JS) approximates it. -->
+          <div class="hero-bg" aria-hidden="true">
+            <svg data-art="activity" viewBox="0 0 360 660" preserveAspectRatio="xMidYMid slice"></svg>
+            <img src="assets/backgrounds/activity-dusk.png" alt="" onerror="this.remove()">
+            <div class="bg-scrim-top"></div>
+            <div class="bg-scrim-bottom"></div>
+          </div>
           <div class="screen-head">
             <div>
               <div class="screen-title">Activity</div>
@@ -749,15 +767,15 @@ body[data-state="empty"]   .hero.stateful .score{color:var(--text-3)}
            (night-sky hero, hypnogram, vitals charts, nap, continuity)
            ========================================================= -->
       <section class="page" id="page-sleep">
-        <div class="hero stateful" id="sleepHero">
-          <!-- night-sky backdrop: gradients + moon + stars, all code-drawn -->
-          <div style="position:absolute;inset:0 0 auto 0;height:560px;overflow:hidden;pointer-events:none">
-            <div style="position:absolute;inset:0;background:linear-gradient(180deg, var(--violet-900) 0%, color-mix(in srgb, var(--violet-900) 55%, var(--surface-app)) 55%, var(--surface-app) 100%)"></div>
-            <div style="position:absolute;inset:0;background:radial-gradient(520px 380px at 78% 10%, color-mix(in srgb, var(--violet-600) 42%, transparent) 0%, transparent 72%)"></div>
-            <div style="position:absolute;inset:0;background:radial-gradient(600px 330px at 16% 72%, color-mix(in srgb, var(--teal-700) 32%, transparent) 0%, transparent 70%)"></div>
-            <svg width="360" height="420" viewBox="0 0 360 420" style="position:absolute;left:0;top:0" aria-hidden="true" id="starfield"></svg>
-            <!-- crescent moon -->
-            <div style="position:absolute;left:280px;top:60px;width:49px;height:49px;border-radius:50%;background:radial-gradient(31px 32px at 58% 39%, var(--violet-0) 0%, var(--violet-100) 70%, var(--violet-200) 100%);-webkit-mask-image:radial-gradient(circle 27px at 76% 20%, transparent 0 27px, #000 27.5px);mask-image:radial-gradient(circle 27px at 76% 20%, transparent 0 27px, #000 27.5px);opacity:0.9"></div>
+        <div class="hero stateful" id="sleepHero" style="background:var(--violet-900)">
+          <!-- Owner-supplied night-sky background. The PNG loads from
+               assets/backgrounds/ when present; until then a code-drawn
+               stand-in scene (SVG below, painted by JS) approximates it. -->
+          <div class="hero-bg" aria-hidden="true">
+            <svg data-art="sleep" viewBox="0 0 360 660" preserveAspectRatio="xMidYMid slice"></svg>
+            <img src="assets/backgrounds/sleep-night.png" alt="" onerror="this.remove()">
+            <div class="bg-scrim-top"></div>
+            <div class="bg-scrim-bottom"></div>
           </div>
 
           <div class="screen-head">
@@ -959,7 +977,7 @@ body[data-state="empty"]   .hero.stateful .score{color:var(--text-3)}
            using the list patterns from the approved screens.
            ========================================================= -->
       <section class="page" id="page-me">
-        <div class="screen-head" style="padding-top:12px">
+        <div class="screen-head">
           <div class="screen-title">Me</div>
         </div>
 
@@ -1376,11 +1394,84 @@ $$('[data-cont]').forEach(grid => {
   });
 });
 
-// Starfield for the Sleep hero — fixed positions so it never flickers.
-const STARS = [[22,40,1],[60,90,1.4],[120,30,1],[160,120,1.2],[210,60,1],[250,150,1.3],[40,180,1],[90,240,1.2],[300,200,1],[330,110,1.4],[140,200,1],[190,260,1.1],[280,300,1],[70,320,1.2],[320,340,1]];
-const starSvg = $('#starfield');
-STARS.forEach(([cx, cy, r], i) =>
-  starSvg.append(svgEl('circle', { cx, cy, r, fill:'var(--violet-100)', opacity:(0.25 + (i%4)*0.15).toFixed(2) })));
+/* ==========================================================================
+   STAND-IN TAB BACKGROUNDS
+   --------------------------------------------------------------------------
+   The owner supplied PNG artwork for the Activity (dusk forest) and Sleep
+   (night sky) tabs. Those PNGs belong in assets/backgrounds/ — when they
+   exist, the <img> covers this. Until then, the scenes below are drawn in
+   code to approximate the artwork so the layout can be reviewed.
+   Flag: stand-in only — replace with the real PNGs, do not polish further.
+   ========================================================================== */
+function seeded(seed){ // tiny deterministic random so the scene never flickers
+  return () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+}
+// One mountain ridge: a wandering line from left to right, filled to the bottom.
+function ridgePath(rnd, yBase, amp, spiky){
+  let d = `M0 660 L0 ${yBase}`;
+  let y = yBase;
+  for (let x = 0; x <= 360; x += spiky ? 7 : 24){
+    y = yBase + (rnd() - 0.5) * amp * 2;
+    if (spiky && x % 14 === 7) y -= amp * 0.9; // conifer tips on near ridges
+    d += ` L${x} ${y.toFixed(1)}`;
+  }
+  return d + ' L360 660 Z';
+}
+function paintScene(svg){
+  const kind = svg.dataset.art;
+  const rnd = seeded(kind === 'sleep' ? 7 : 3);
+  const defs = svgEl('defs', {});
+  const sky = svgEl('linearGradient', { id:'sky-'+kind, x1:0, y1:0, x2:0, y2:1 });
+  const stops = kind === 'sleep'
+    ? [ ['0%','var(--violet-900)'], ['55%','color-mix(in srgb, var(--violet-800) 70%, var(--neutral-900))'],
+        ['72%','color-mix(in srgb, var(--orchid-700) 32%, var(--violet-900))'], ['85%','var(--violet-900)'] ]
+    : [ ['0%','color-mix(in srgb, var(--lime-900) 45%, var(--neutral-900))'],
+        ['48%','color-mix(in srgb, var(--lime-900) 70%, var(--neutral-900))'],
+        ['58%','color-mix(in srgb, var(--gold-600) 55%, var(--lime-900))'],
+        ['62%','color-mix(in srgb, var(--tangerine-500) 70%, var(--lime-900))'],
+        ['68%','color-mix(in srgb, var(--lime-900) 60%, var(--neutral-900))'] ];
+  stops.forEach(([o, c]) => { const s = svgEl('stop', { offset:o }); s.style.stopColor = c; sky.append(s); });
+  defs.append(sky); svg.append(defs);
+  svg.append(svgEl('rect', { x:0, y:0, width:360, height:660, fill:`url(#sky-${kind})` }));
+
+  if (kind === 'sleep'){
+    // stars, one bright sparkle, crescent moon top-right (like the artwork)
+    for (let i = 0; i < 42; i++){
+      svg.append(svgEl('circle', { cx:(rnd()*360).toFixed(0), cy:(rnd()*380).toFixed(0),
+        r:(0.6 + rnd()*0.9).toFixed(1), fill:'var(--violet-100)', opacity:(0.2 + rnd()*0.5).toFixed(2) }));
+    }
+    const spark = svgEl('path', { d:'M287 175 l2.4 6 6 2.4 -6 2.4 -2.4 6 -2.4 -6 -6 -2.4 6 -2.4 Z',
+      fill:'var(--sky-200)', opacity:0.9 });
+    svg.append(spark);
+    const mask = svgEl('mask', { id:'moon-cut' });
+    mask.append(svgEl('rect', { x:0, y:0, width:360, height:660, fill:'#fff' }));
+    mask.append(svgEl('circle', { cx:312, cy:82, r:22, fill:'#000' })); // bite
+    svg.append(mask);
+    svg.append(svgEl('circle', { cx:302, cy:92, r:24, fill:'var(--violet-100)', opacity:0.85, mask:'url(#moon-cut)' }));
+    // soft misty ridges
+    const layers = [ [470, 14, 0.5], [510, 18, 0.65], [555, 16, 0.8] ];
+    layers.forEach(([y, amp, dark]) => {
+      const p = svgEl('path', { d:ridgePath(rnd, y, amp, false),
+        fill:`color-mix(in srgb, var(--neutral-900) ${dark*100}%, var(--violet-800))` });
+      svg.append(p);
+    });
+  } else {
+    // sun glow on the horizon
+    const glow = svgEl('radialGradient', { id:'glow-act', cx:'50%', cy:'50%', r:'50%' });
+    const g1 = svgEl('stop', { offset:'0%', 'stop-opacity':'0.55' }); g1.style.stopColor = 'var(--tangerine-400)';
+    const g2 = svgEl('stop', { offset:'100%', 'stop-opacity':'0' }); g2.style.stopColor = 'var(--tangerine-400)';
+    glow.append(g1, g2); svg.append(glow);
+    svg.append(svgEl('ellipse', { cx:180, cy:405, rx:210, ry:70, fill:'url(#glow-act)' }));
+    // receding mountain ridges, nearer ones darker with tree-line spikes
+    const layers = [ [415, 10, 0.30, false], [445, 16, 0.42, false], [480, 20, 0.55, false],
+                     [520, 22, 0.70, true], [575, 26, 0.85, true] ];
+    layers.forEach(([y, amp, dark, spiky]) => {
+      svg.append(svgEl('path', { d:ridgePath(rnd, y, amp, spiky),
+        fill:`color-mix(in srgb, var(--neutral-900) ${dark*100}%, var(--emerald-800))` }));
+    });
+  }
+}
+$$('.hero-bg svg[data-art]').forEach(paintScene);
 
 /* ==========================================================================
    TAB BAR + MENUS + DATE PICKER
