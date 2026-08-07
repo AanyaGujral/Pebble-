@@ -1,102 +1,1563 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fitness Prototype</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pebble — app prototype</title>
 
-  <!-- Load the design tokens (colors + fonts) from the single source of truth -->
-  <script src="js/tokens.js"></script>
+<!--
+  Pebble companion-app prototype
+  ==============================
+  Four tabs (Health · Activity · Sleep · Me) rendered inside an Android phone
+  mockup at 360px width, plus a control panel that switches every data card
+  between five states: default, empty, watch-not-worn, syncing and loading.
 
-  <!-- Google Fonts — swap these if your tokens use different fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  Sleep and Activity are recreated from the approved standalone prototypes.
+  Health and Me are FIRST-PASS layouts (no spec exists yet) — flagged below
+  where guesses were made.
+-->
 
-  <style>
-    /* Base reset */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<!-- Webfonts. Google Sans Flex (text) and League Spartan (numerals) load from
+     Google Fonts, same as the approved chart components. If there is no
+     network the prototype falls back to system sans — everything still works. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,400..700&family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    /*
-     * Colors and fonts are applied by JavaScript from tokens.js (see bottom of
-     * this file). We only set structure/layout here, never hard-coded colors.
-     */
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
+<style>
+/* ==========================================================================
+   1. TOKENS
+   --------------------------------------------------------------------------
+   /* Flag: these custom properties are copied VERBATIM from js/tokens.js
+      (the single source of truth). They are inlined here because the page
+      must open by double-clicking (file://), where ES-module imports are
+      blocked by the browser. If js/tokens.js changes, re-copy the values.
+      This mirrors the approach used in the approved Activity prototype. */
+:root{
+  /* hue ramps — 0 lightest → 900 darkest, primary at 400 */
+  --crimson-0:#FFEAED;--crimson-100:#FFC2C9;--crimson-200:#FD99A5;--crimson-300:#F26E83;--crimson-400:#E43A62;--crimson-500:#C02D50;--crimson-600:#9E2040;--crimson-700:#7C142F;--crimson-800:#5D0820;--crimson-900:#3F0112;
+  --terracotta-0:#FFEEE5;--terracotta-100:#FDCEBE;--terracotta-200:#F2AF98;--terracotta-300:#E68F72;--terracotta-400:#D96F4A;--terracotta-500:#B65A3A;--terracotta-600:#93472B;--terracotta-700:#73341D;--terracotta-800:#532210;--terracotta-900:#361104;
+  --tangerine-0:#FFF0DF;--tangerine-100:#FFDCBA;--tangerine-200:#FDC894;--tangerine-300:#FAB36C;--tangerine-400:#F59E3B;--tangerine-500:#CA8028;--tangerine-600:#A16315;--tangerine-700:#7A4700;--tangerine-800:#552D00;--tangerine-900:#331500;
+  --gold-0:#FBF3DE;--gold-100:#F9E8BE;--gold-200:#F7DD9C;--gold-300:#F5D278;--gold-400:#F2C64B;--gold-500:#C6A034;--gold-600:#9C7C1C;--gold-700:#735901;--gold-800:#4D3900;--gold-900:#2A1B00;
+  --lime-0:#EEF8E0;--lime-100:#DCEEBF;--lime-200:#CAE39D;--lime-300:#B8D978;--lime-400:#A6CE4E;--lime-500:#86A839;--lime-600:#688424;--lime-700:#4B620F;--lime-800:#304100;--lime-900:#172300;
+  --emerald-0:#E6F9EC;--emerald-100:#C0E8CE;--emerald-200:#9BD7B0;--emerald-300:#73C693;--emerald-400:#43B476;--emerald-500:#329560;--emerald-600:#22774A;--emerald-700:#125B36;--emerald-800:#034023;--emerald-900:#002611;
+  --teal-0:#E4F9F4;--teal-100:#C1EDE4;--teal-200:#9EE0D3;--teal-300:#76D4C3;--teal-400:#45C7B3;--teal-500:#31A492;--teal-600:#1D8173;--teal-700:#076155;--teal-800:#004239;--teal-900:#00261F;
+  --sky-0:#E7F6FF;--sky-100:#C4E3FA;--sky-200:#A2CFF1;--sky-300:#7EBCE8;--sky-400:#58A8DF;--sky-500:#458ABA;--sky-600:#336E96;--sky-700:#215273;--sky-800:#113952;--sky-900:#032134;
+  --violet-0:#F1F1FF;--violet-100:#D6D4FF;--violet-200:#BBB7FC;--violet-300:#A29AF5;--violet-400:#8A7CEC;--violet-500:#7266C6;--violet-600:#5B50A2;--violet-700:#453C7F;--violet-800:#30295E;--violet-900:#1D163E;
+  --orchid-0:#FEEDFF;--orchid-100:#F1CFFA;--orchid-200:#E4B1F2;--orchid-300:#D692E8;--orchid-400:#C873DE;--orchid-500:#A65DB9;--orchid-600:#864896;--orchid-700:#663474;--orchid-800:#492053;--orchid-900:#2D0E35;
+  --neutral-0:#EFF1F9;--neutral-100:#D5D9EA;--neutral-200:#B8BDD3;--neutral-300:#999FB9;--neutral-400:#7B819C;--neutral-500:#5E637D;--neutral-600:#42465B;--neutral-700:#282B39;--neutral-800:#0F111B;--neutral-900:#07080C;
 
-    .card {
-      width: 100%;
-      max-width: 380px;
-      border-radius: 20px;
-      padding: 28px;
-      border: 1px solid;
-    }
+  /* surfaces — elevation is lightness, never shadow */
+  --surface-app:var(--neutral-900);
+  --surface-card:var(--neutral-800);
+  --surface-raised:var(--neutral-700);
+  --surface-fill:var(--neutral-600);
 
-    h1 { font-size: 22px; margin-bottom: 6px; }
-    .sub { font-size: 14px; margin-bottom: 24px; }
+  /* text */
+  --text-1:var(--neutral-0);
+  --text-2:var(--neutral-200);
+  --text-3:var(--neutral-400);
 
-    .stat {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 0;
-      border-top: 1px solid;
-    }
-    .stat .label { font-size: 14px; }
-    .stat .value { font-size: 18px; font-weight: 700; }
+  /* lines */
+  --divider:var(--neutral-700);
+  --gridline:var(--neutral-700);
 
-    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
+  /* metric aliases — one hue per body signal, always step 400 */
+  --metric-heart-rate:var(--crimson-400);
+  --metric-hrv:var(--terracotta-400);
+  --metric-calories:var(--tangerine-400);
+  --metric-steps:var(--gold-400);
+  --metric-activity:var(--lime-400);
+  --metric-distance:var(--emerald-400);
+  --metric-readiness:var(--teal-400);
+  --metric-spo2:var(--sky-400);
+  --metric-sleep:var(--violet-400);
+  --metric-skin-temp:var(--orchid-400);
 
-    /* Respect users who prefer less motion */
-    @media (prefers-reduced-motion: reduce) {
-      * { animation: none !important; transition: none !important; }
-    }
-  </style>
+  /* semantic quads — glyphs and badges only, never chart lines or fills */
+  --positive-bg:#0E2A1B;--positive-fill:#1E5B38;--positive-icon:#4ADE80;--positive-text:#8AF0B0;
+  --negative-bg:#331109;--negative-fill:#6E2418;--negative-icon:#F4604C;--negative-text:#FF9184;
+  --caution-bg:#2E2103;--caution-fill:#6B4E0E;--caution-icon:#EFB428;--caution-text:#F5CE6F;
+  --neutral-bg:var(--neutral-700);--neutral-fill:var(--neutral-600);--neutral-icon:var(--neutral-300);--neutral-text:var(--neutral-200);
+
+  /* type — Google Sans Flex for words, League Spartan for every numeral */
+  --font-text:'Google Sans Flex','Google Sans',sans-serif;
+  --font-number:'Spartan','League Spartan',sans-serif;
+  --num-features:'tnum' 1,'lnum' 1;
+
+  /* radii, spacing helpers, motion */
+  --radius-card:20px;
+  --duration-fast:120ms;
+  --duration-base:140ms;
+  --duration-slow:240ms;
+}
+
+/* ==========================================================================
+   2. PAGE SCAFFOLD — the desk the phone sits on, plus the control panel
+   ========================================================================== */
+:root{color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-height:100vh;
+  background:var(--neutral-900);
+  color:var(--text-1);
+  font-family:var(--font-text);
+  display:flex;align-items:flex-start;justify-content:center;
+  gap:32px;padding:32px 16px;flex-wrap:wrap;
+}
+
+/* Control panel — lives OUTSIDE the phone. Switches the state of every card. */
+.panel{
+  position:sticky;top:32px;
+  width:230px;background:var(--surface-card);
+  border:0.5px solid var(--neutral-700);border-radius:var(--radius-card);
+  padding:16px;
+}
+.panel h2{margin:0;font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.panel .hint{margin:8px 0 12px;font-size:11px;line-height:16px;color:var(--text-3)}
+.panel .opts{display:flex;flex-direction:column;gap:4px}
+.panel label{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:12px;cursor:pointer;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);
+}
+.panel label:hover{background:var(--surface-raised)}
+.panel input{accent-color:var(--metric-readiness);margin:0}
+.panel label.on{background:var(--surface-raised);color:var(--text-1)}
+.panel .desc{display:block;font-size:10px;line-height:14px;font-weight:400;color:var(--text-3)}
+
+/* ==========================================================================
+   3. PHONE MOCKUP — Android, 360px-wide screen, punch-hole camera
+   ========================================================================== */
+.phone{
+  flex:0 0 auto;
+  border-radius:40px;
+  background:var(--neutral-900);
+  border:2px solid var(--neutral-700);
+  outline:6px solid var(--neutral-800);
+  padding:10px;
+}
+.screen{
+  position:relative;width:360px;height:780px;
+  border-radius:32px;overflow:hidden;
+  background:var(--surface-app);
+  display:flex;flex-direction:column;
+}
+/* punch-hole selfie camera */
+.screen::before{
+  content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:12px;height:12px;border-radius:50%;
+  background:var(--neutral-900);border:2px solid var(--neutral-700);
+  z-index:60;pointer-events:none;
+}
+.statusbar{
+  position:relative;z-index:50;flex:0 0 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-1);
+}
+.statusbar .batt{width:20px;height:10px;border-radius:3px;border:1px solid var(--text-2);padding:1px}
+.statusbar .batt i{display:block;width:12px;height:100%;border-radius:2px;background:var(--text-1)}
+.statusbar .right{display:flex;align-items:center;gap:6px;color:var(--text-2)}
+
+/* the scrollable app area */
+.pages{flex:1;overflow:hidden;position:relative}
+.page{
+  position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  display:none;scrollbar-width:none;
+  padding-bottom:96px; /* room for the floating tab bar */
+}
+.page::-webkit-scrollbar{display:none}
+.page.active{display:block}
+
+/* gesture bar */
+.gesture{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:112px;height:4px;border-radius:999px;background:var(--neutral-600);
+  z-index:60;pointer-events:none;
+}
+
+/* ==========================================================================
+   4. BOTTOM NAVIGATION — recreated from the supplied screenshot:
+      pill container, 4 items (Health, Activity, Sleep, Me),
+      active tab = filled icon + brightest label
+   ========================================================================== */
+.tabbar{
+  position:absolute;left:8px;right:8px;bottom:14px;z-index:55;
+  height:72px;border-radius:32px;
+  background:var(--surface-card);
+  border:0.5px solid var(--neutral-700);
+  display:grid;grid-template-columns:repeat(4,1fr);
+}
+.tab{
+  appearance:none;background:none;border:0;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font-family:inherit;font-size:13px;line-height:18px;font-weight:500;color:var(--text-3);
+}
+.tab svg{width:26px;height:26px;display:block}
+.tab .ico-fill{display:none}
+.tab.active{color:var(--text-1)}
+.tab.active .ico-line{display:none}
+.tab.active .ico-fill{display:block}
+
+/* ==========================================================================
+   5. SHARED SCREEN PIECES — header, hero ring, stat chips, cards
+   ========================================================================== */
+.screen-head{padding:12px 16px 0;display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:20}
+.screen-title{font-size:24px;line-height:30px;font-weight:500;letter-spacing:-0.01em;color:var(--text-1)}
+.date-btn{
+  margin:4px 0 0 -8px;display:flex;align-items:center;gap:4px;
+  background:none;border:0;padding:4px 8px;border-radius:12px;cursor:pointer;font-family:inherit;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);
+}
+.date-btn:hover{background:var(--surface-raised)}
+.caret{width:6px;height:6px;border-right:1.2px solid var(--text-3);border-bottom:1.2px solid var(--text-3);transform:rotate(45deg);margin-bottom:3px;display:inline-block}
+.dots-btn{
+  width:44px;height:44px;margin:-8px -12px 0 0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:none;border:0;cursor:pointer;
+}
+.dots-btn span{width:3px;height:3px;border-radius:50%;background:var(--text-2)}
+
+/* dropdown menu behind the 3-dot button */
+.menu{
+  position:absolute;right:16px;top:64px;z-index:40;width:188px;
+  background:var(--surface-card);border:0.5px solid var(--surface-fill);
+  border-radius:20px;padding:8px;display:none;
+}
+.menu.open{display:block}
+.menu button{
+  width:100%;text-align:left;background:none;border:0;padding:8px 12px;border-radius:12px;
+  cursor:pointer;font-family:inherit;font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);
+}
+.menu button:hover{background:var(--surface-raised);color:var(--text-1)}
+
+/* date dropdown (simplified from the full-month calendar in the standalone
+   prototypes — flagged: a week list keeps this one-file build lean) */
+.datemenu{
+  position:absolute;left:16px;top:96px;z-index:40;width:200px;
+  background:var(--surface-card);border:0.5px solid var(--surface-fill);
+  border-radius:20px;padding:8px;display:none;
+}
+.datemenu.open{display:block}
+.datemenu button{
+  width:100%;display:flex;justify-content:space-between;gap:8px;
+  background:none;border:0;padding:8px 12px;border-radius:12px;cursor:pointer;
+  font-family:inherit;font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);
+}
+.datemenu button:hover{background:var(--surface-raised);color:var(--text-1)}
+.datemenu button.sel{background:var(--surface-raised);color:var(--text-1)}
+.datemenu .dnum{font-family:var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3)}
+
+/* hero — score ring + headline + summary */
+.hero{position:relative;z-index:10}
+/* hero content must be positioned so it paints ABOVE the absolutely-
+   positioned night-sky / gradient backdrops */
+.hero-media,.chips{position:relative}
+.hero .ringwrap{margin-top:20px;display:flex;justify-content:center}
+.hero .ringbox{position:relative;width:136px;height:136px}
+.hero .glow{position:absolute;inset:-18px;border-radius:50%}
+.hero .ringnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hero .score{font-family:var(--font-number);font-size:56px;line-height:60px;font-weight:700;letter-spacing:-0.01em;font-feature-settings:var(--num-features);color:var(--text-1)}
+.hero .score-cap{margin-top:-10px;font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2)}
+.hero .headline{margin-top:24px;padding:0 24px;text-align:center;font-size:17px;line-height:22px;font-weight:600;color:var(--text-1)}
+.hero .summary{margin:4px 24px 0;text-align:center;font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
+
+/* three stat chips under the hero */
+.chips{margin-top:20px;padding:0 16px;display:flex;gap:8px}
+.chip{
+  flex:1;border-radius:20px;background:var(--surface-card);
+  border:0.5px solid var(--neutral-700);
+  padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.chip .lab{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2)}
+.chip .val{display:flex;align-items:baseline;gap:4px}
+.chip .num{font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:700;font-feature-settings:var(--num-features);color:var(--text-1)}
+.chip .unit{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+
+/* the card stack that slides over the hero background */
+.stack{
+  position:relative;z-index:10;margin-top:24px;
+  border-radius:24px 24px 0 0;background:var(--surface-app);
+  padding:20px 16px 32px;display:flex;flex-direction:column;gap:12px;
+}
+
+/* metric card */
+.card{background:var(--surface-card);border-radius:var(--radius-card);padding:16px;position:relative}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.card-title{font-size:17px;line-height:22px;font-weight:500;color:var(--text-1);white-space:nowrap}
+.card-metric{text-align:right;flex:0 0 auto}
+.card-metric .val{display:flex;align-items:baseline;justify-content:flex-end;gap:4px}
+.card-metric .num{font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;letter-spacing:-0.005em;font-feature-settings:var(--num-features);color:var(--text-1)}
+.card-metric .unit{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.trend{margin-top:4px;display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:11px;line-height:16px;font-weight:500;color:var(--text-2);white-space:nowrap}
+.tri-up{width:7px;height:5px;background:var(--positive-icon);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.tri-down-bad{width:7px;height:5px;background:var(--negative-icon);clip-path:polygon(0 0,100% 0,50% 100%)}
+.tri-down-good{width:7px;height:5px;background:var(--positive-icon);clip-path:polygon(0 0,100% 0,50% 100%)}
+.dot-flat{width:6px;height:6px;border-radius:50%;background:var(--text-3)}
+.card-body{margin-top:16px}
+.subnote{font-size:11px;line-height:16px;font-weight:400;color:var(--text-3);white-space:nowrap}
+
+/* chart bits */
+.chart{position:relative;touch-action:none;cursor:crosshair}
+.axis{font-family:var(--font-number);font-size:10px;line-height:12px;font-weight:500;letter-spacing:0.01em;font-feature-settings:var(--num-features);fill:var(--text-3);color:var(--text-3)}
+
+/* goals rows (Activity — Today's goals) */
+.goalrow{display:grid;grid-template-columns:20px 1fr auto;align-items:center;column-gap:8px;row-gap:8px}
+.goalrow .gname{font-size:15px;line-height:22px;font-weight:500;color:var(--text-2)}
+.goalrow .gval{justify-self:end;display:flex;align-items:baseline;gap:4px;white-space:nowrap}
+.goalrow .gnum{font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:700;font-feature-settings:var(--num-features);color:var(--text-1)}
+.goalrow .ggoal{font-size:11px;line-height:16px;font-weight:400;color:var(--text-3)}
+.gbar{grid-column:1/-1;display:block;height:8px;border-radius:999px;background:var(--surface-raised);box-shadow:inset 0 0 0 0.5px var(--neutral-500);overflow:hidden}
+.gbar i{display:block;height:100%;border-radius:999px}
+
+/* sleep stage summary tiles */
+.stagegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stage{background:var(--surface-raised);border-radius:8px;padding:8px}
+.stage .top{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.stage .nm{font-size:11px;line-height:16px;font-weight:500;color:var(--text-1)}
+.stage .sw{width:6px;height:6px;border-radius:50%;flex:0 0 auto}
+.stage .dur{margin-top:4px;font-family:var(--font-number);font-size:13px;line-height:16px;font-weight:500;font-feature-settings:var(--num-features);color:var(--text-1)}
+.stage .pct{font-family:var(--font-number);font-size:10px;line-height:12px;font-weight:500;font-feature-settings:var(--num-features);color:var(--text-3)}
+
+/* list rows (workouts, naps, settings) */
+.listrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:0.5px solid var(--divider)}
+.listrow:last-child{padding-bottom:0}
+.listrow .lft{display:flex;align-items:center;gap:8px;min-width:0}
+.listrow .txt{display:grid;gap:2px;min-width:0}
+.listrow .t1{font-size:13px;line-height:18px;font-weight:500;color:var(--text-1)}
+.listrow .t2{font-size:11px;line-height:16px;font-weight:500;color:var(--text-3)}
+.listrow .rgt{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.listrow .rnum{font-family:var(--font-number);font-size:13px;line-height:16px;font-weight:500;font-feature-settings:var(--num-features);color:var(--text-2)}
+.chev{width:6px;height:6px;border-right:1.2px solid var(--text-3);border-bottom:1.2px solid var(--text-3);transform:rotate(-45deg);display:inline-block}
+
+/* week grid (Goals met / Sleep continuity) */
+.week7{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.week7 .day{display:flex;flex-direction:column;align-items:center;gap:8px;padding:4px 0}
+.week7 .dlab{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.week7 .dnum{font-family:var(--font-number);font-size:10px;line-height:12px;font-weight:500;letter-spacing:0.01em;font-feature-settings:var(--num-features);color:var(--text-3)}
+.week7 .day.today .dlab,.week7 .day.today .dnum{color:var(--text-1);font-weight:700}
+.week7 .day.future{opacity:0.45}
+
+/* continuity pills */
+.contgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:center}
+.contpill{justify-self:center;width:28px;height:28px;border-radius:999px;display:flex;align-items:center;justify-content:center;border:1px solid var(--surface-fill);background:none}
+.contpill.met{background:var(--violet-800);border-color:var(--violet-600)}
+.contlab{display:flex;align-items:center;gap:8px;font-size:11px;line-height:16px;color:var(--text-2)}
+
+/* Health tab tiles (first pass — no spec yet) */
+.tilegrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0}
+.tile{background:var(--surface-card);border-radius:var(--radius-card);padding:14px;display:flex;flex-direction:column;gap:8px;min-height:104px}
+.tile .tl{display:flex;align-items:center;gap:6px;font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2)}
+.tile .tl .sw{width:8px;height:8px;border-radius:50%}
+.tile .tv{display:flex;align-items:baseline;gap:4px;margin-top:auto}
+.tile .tn{font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;letter-spacing:-0.005em;font-feature-settings:var(--num-features);color:var(--text-1)}
+.tile .tu{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.tile .ts{font-size:11px;line-height:16px;color:var(--text-3)}
+
+/* Me tab */
+.profile{display:flex;align-items:center;gap:14px;padding:20px 16px 8px}
+.avatar{
+  width:56px;height:56px;border-radius:50%;flex:0 0 auto;
+  background:var(--violet-800);color:var(--violet-100);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;line-height:26px;font-weight:600;
+}
+.profile .pname{font-size:20px;line-height:26px;font-weight:600;letter-spacing:-0.005em;color:var(--text-1)}
+.profile .pmail{font-size:13px;line-height:18px;color:var(--text-3)}
+.sectionlab{padding:16px 16px 8px;font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+
+/* ==========================================================================
+   6. CARD STATES — driven by data-state on <body>
+   --------------------------------------------------------------------------
+   default  → everything as designed
+   loading  → skeleton pulses replace live values and charts
+   syncing  → live data stays, a spinning "Syncing…" chip appears
+   notworn  → values become —, body swaps to a "band not worn" note
+   empty    → values become —, body swaps to a dashed "no data yet" note
+   ========================================================================== */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.skel{background:var(--surface-raised);border-radius:8px;animation:pulse 1.4s ease-in-out infinite}
+.state-cover{display:none}
+.statechip{display:none;margin-top:12px;align-items:center;gap:6px;font-size:11px;line-height:16px;font-weight:500;color:var(--text-3)}
+.statechip svg{width:14px;height:14px;flex:0 0 auto}
+.statechip.sync svg{animation:spin 1.1s linear infinite}
+
+/* what hides / shows per state (only inside .stateful regions) */
+body[data-state="loading"]  .stateful .live{display:none !important}
+body[data-state="notworn"]  .stateful .live{display:none !important}
+body[data-state="empty"]    .stateful .live{display:none !important}
+body[data-state="loading"]  .stateful .cover-loading{display:block}
+body[data-state="notworn"]  .stateful .cover-notworn{display:flex}
+body[data-state="empty"]    .stateful .cover-empty{display:flex}
+body[data-state="syncing"]  .stateful .statechip.sync{display:flex}
+body[data-state="syncing"]  .stateful .card-body{opacity:.6}
+body[data-state="syncing"]  .stateful .hero-media{opacity:.75}
+
+/* covers share one look: icon + short line, vertically centered */
+.cover-notworn,.cover-empty{
+  flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  min-height:96px;border-radius:12px;border:1px dashed var(--neutral-600);
+  padding:16px;text-align:center;
+}
+.cover-notworn svg,.cover-empty svg{width:22px;height:22px;color:var(--text-3)}
+.cover-title{font-size:13px;line-height:18px;font-weight:500;color:var(--text-2)}
+.cover-sub{font-size:11px;line-height:16px;color:var(--text-3)}
+.value-dash{display:none;font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;font-feature-settings:var(--num-features);color:var(--text-3)}
+body[data-state="notworn"] .stateful .value-dash,
+body[data-state="empty"]   .stateful .value-dash{display:block}
+body[data-state="loading"] .stateful .value-skel{display:block}
+.value-skel{display:none;width:64px;height:20px;margin-left:auto}
+
+/* hero states */
+body[data-state="loading"] .hero.stateful .score{visibility:hidden}
+body[data-state="notworn"] .hero.stateful .score,
+body[data-state="empty"]   .hero.stateful .score{color:var(--text-3)}
+
+/* ==========================================================================
+   7. MOTION SAFETY — hard gate: everything stops under reduced motion
+   ========================================================================== */
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+}
+</style>
 </head>
-<body>
-  <div class="card" id="card">
-    <h1 id="title">Sleep</h1>
-    <p class="sub" id="sub">Last night's summary</p>
+<body data-state="default">
 
-    <div class="stat">
-      <span class="label"><span class="dot" id="dot1"></span>Duration</span>
-      <span class="value">7h 24m</span>
-    </div>
-    <div class="stat">
-      <span class="label"><span class="dot" id="dot2"></span>Quality</span>
-      <span class="value">82</span>
-    </div>
-    <div class="stat">
-      <span class="label"><span class="dot" id="dot3"></span>Resting HR</span>
-      <span class="value">54 bpm</span>
-    </div>
+<!-- ======================= CONTROL PANEL ======================= -->
+<aside class="panel" aria-label="Prototype controls">
+  <h2>Card states</h2>
+  <p class="hint">Applies to every data card on the Health, Activity and Sleep tabs (and the band card on Me).</p>
+  <div class="opts" id="stateOpts">
+    <label class="on"><input type="radio" name="cardstate" value="default" checked><span>Default<span class="desc">Live data, as designed</span></span></label>
+    <label><input type="radio" name="cardstate" value="loading"><span>Loading<span class="desc">Skeletons while data loads</span></span></label>
+    <label><input type="radio" name="cardstate" value="syncing"><span>Syncing<span class="desc">Data shown, band syncing</span></span></label>
+    <label><input type="radio" name="cardstate" value="notworn"><span>Watch not worn<span class="desc">Band off wrist since 10:20</span></span></label>
+    <label><input type="radio" name="cardstate" value="empty"><span>Empty<span class="desc">New user, no data yet</span></span></label>
   </div>
+</aside>
 
-  <script>
-    /*
-     * Apply the design tokens. This is the pattern to remember:
-     * read colors/fonts from window.T (tokens.js) and apply them.
-     * Nothing here hard-codes a color — swap tokens.js and this restyles itself.
-     */
-    document.body.style.background = T.bg;
-    document.body.style.color = T.text;
-    document.body.style.fontFamily = T.sans;
+<!-- ======================= PHONE ======================= -->
+<div class="phone">
+  <div class="screen">
 
-    const card = document.getElementById("card");
-    card.style.background = T.surface;
-    card.style.borderColor = T.border;
+    <div class="statusbar">
+      <span>12:30</span>
+      <span class="right">
+        <!-- signal + battery, drawn simply -->
+        <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M1 11h2V8H1v3Zm4 0h2V5H5v6Zm4 0h2V2H9v9Z" fill="currentColor"/></svg>
+        <span class="batt"><i></i></span>
+      </span>
+    </div>
 
-    document.getElementById("sub").style.color = T.muted;
-    document.querySelectorAll(".stat").forEach(s => s.style.borderTopColor = T.border);
+    <div class="pages">
 
-    // Status dots use semantic tokens
-    document.getElementById("dot1").style.background = T.green;   // good
-    document.getElementById("dot2").style.background = T.green;   // good
-    document.getElementById("dot3").style.background = T.yellow;  // caution
-  </script>
+      <!-- =========================================================
+           HEALTH TAB (home)
+           Flag: no approved spec exists for this tab yet — this is a
+           first-pass layout reusing the hero + tile patterns from the
+           approved Sleep/Activity screens. Metrics link to their tabs.
+           ========================================================= -->
+      <section class="page active" id="page-health">
+        <div class="hero stateful" style="background:linear-gradient(180deg, color-mix(in srgb, var(--metric-readiness) 10%, var(--surface-app)) 0%, var(--surface-app) 88%)">
+          <div class="screen-head">
+            <div>
+              <div class="screen-title">Health</div>
+              <button class="date-btn" data-datebtn><span data-datelabel>Today, Aug 6</span><span class="caret"></span></button>
+            </div>
+            <button class="dots-btn" data-menubtn aria-label="More"><span></span><span></span><span></span></button>
+          </div>
+          <div class="menu" data-menu>
+            <button>About readiness</button>
+            <button>Goal setting</button>
+            <button>Share</button>
+          </div>
+          <div class="datemenu" data-datemenu></div>
+
+          <div class="hero-media">
+            <div class="ringwrap">
+              <div class="ringbox">
+                <div class="glow" style="background:radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--metric-readiness) 30%, transparent) 0%, transparent 70%)"></div>
+                <svg width="136" height="136" viewBox="0 0 136 136">
+                  <defs>
+                    <linearGradient id="ring-health" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="var(--teal-300)"/>
+                      <stop offset="100%" stop-color="var(--teal-500)"/>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="68" cy="68" r="62" fill="none" stroke="var(--neutral-700)" stroke-width="12"/>
+                  <circle class="live" cx="68" cy="68" r="62" fill="none" stroke="url(#ring-health)" stroke-width="12"
+                          stroke-linecap="round" stroke-dasharray="284.4 389.56" transform="rotate(-90 68 68)"/>
+                </svg>
+                <div class="ringnum">
+                  <div class="score"><span class="live">73</span><span class="value-dash" style="font-size:56px;line-height:60px">--</span></div>
+                  <div class="score-cap">Readiness</div>
+                </div>
+              </div>
+            </div>
+            <div class="headline"><span class="live">You're set up for a solid day</span><span class="value-dash" style="font-size:17px;line-height:22px;font-family:var(--font-text);font-weight:600">&nbsp;</span></div>
+            <p class="summary live">Sleep was restful and your heart is recovered. A workout today would land well.</p>
+            <p class="summary cover-notworn" style="display:none"></p>
+            <div class="statechip sync" style="justify-content:center">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing with band…</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack" style="margin-top:20px">
+          <!-- metric tiles: tap-through to each tab -->
+          <div class="tilegrid">
+            <div class="tile stateful card" data-goto="sleep">
+              <div class="tl"><span class="sw" style="background:var(--metric-sleep)"></span>Sleep</div>
+              <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
+              <div class="cover-notworn state-cover mini"></div>
+              <div class="cover-empty state-cover mini"></div>
+              <div class="tv live"><span class="tn">7:34</span><span class="tu">hrs</span></div>
+              <div class="ts live">Score 78 · restful</div>
+            </div>
+            <div class="tile stateful card" data-goto="activity">
+              <div class="tl"><span class="sw" style="background:var(--metric-steps)"></span>Steps</div>
+              <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
+              <div class="cover-notworn state-cover mini"></div>
+              <div class="cover-empty state-cover mini"></div>
+              <div class="tv live"><span class="tn">7,240</span></div>
+              <div class="ts live">Goal 10,000 · 72%</div>
+            </div>
+            <div class="tile stateful card">
+              <div class="tl"><span class="sw" style="background:var(--metric-heart-rate)"></span>Heart rate</div>
+              <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
+              <div class="cover-notworn state-cover mini"></div>
+              <div class="cover-empty state-cover mini"></div>
+              <div class="tv live"><span class="tn">64</span><span class="tu">bpm</span></div>
+              <div class="ts live">Resting · just now</div>
+            </div>
+            <div class="tile stateful card">
+              <div class="tl"><span class="sw" style="background:var(--metric-hrv)"></span>HRV</div>
+              <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
+              <div class="cover-notworn state-cover mini"></div>
+              <div class="cover-empty state-cover mini"></div>
+              <div class="tv live"><span class="tn">48</span><span class="tu">ms</span></div>
+              <div class="ts live">7-day avg 45 ms</div>
+            </div>
+            <div class="tile stateful card">
+              <div class="tl"><span class="sw" style="background:var(--metric-spo2)"></span>Blood oxygen</div>
+              <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
+              <div class="cover-notworn state-cover mini"></div>
+              <div class="cover-empty state-cover mini"></div>
+              <div class="tv live"><span class="tn">96</span><span class="tu">%</span></div>
+              <div class="ts live">Overnight average</div>
+            </div>
+            <div class="tile stateful card">
+              <div class="tl"><span class="sw" style="background:var(--metric-skin-temp)"></span>Skin temp</div>
+              <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
+              <div class="cover-notworn state-cover mini"></div>
+              <div class="cover-empty state-cover mini"></div>
+              <div class="tv live"><span class="tn">33.2</span><span class="tu">°C</span></div>
+              <div class="ts live">Same as baseline</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================
+           ACTIVITY TAB — recreated from the approved standalone
+           prototype (score ring, goals, week rings, 3 charts, workouts)
+           ========================================================= -->
+      <section class="page" id="page-activity">
+        <!-- Flag: the standalone prototype used a photographic backdrop
+             (embedded webp). Recreated here with token gradients so the
+             file stays small and colors stay tokenised. -->
+        <div class="hero stateful" style="background:linear-gradient(180deg, color-mix(in srgb, var(--metric-activity) 9%, var(--surface-app)) 0%, var(--surface-app) 90%)">
+          <div class="screen-head">
+            <div>
+              <div class="screen-title">Activity</div>
+              <button class="date-btn" data-datebtn><span data-datelabel>Today, Aug 6</span><span class="caret"></span></button>
+            </div>
+            <button class="dots-btn" data-menubtn aria-label="More"><span></span><span></span><span></span></button>
+          </div>
+          <div class="menu" data-menu>
+            <button>About activity</button>
+            <button>Goal setting</button>
+            <button>Share</button>
+          </div>
+          <div class="datemenu" data-datemenu></div>
+
+          <div class="hero-media">
+            <div class="ringwrap">
+              <div class="ringbox">
+                <div class="glow" style="background:radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--metric-activity) 30%, transparent) 0%, transparent 70%)"></div>
+                <svg width="136" height="136" viewBox="0 0 136 136">
+                  <defs>
+                    <linearGradient id="ring-act" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="var(--lime-300)"/>
+                      <stop offset="100%" stop-color="var(--lime-500)"/>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="68" cy="68" r="62" fill="none" stroke="var(--neutral-700)" stroke-width="12"/>
+                  <circle class="live" cx="68" cy="68" r="62" fill="none" stroke="url(#ring-act)" stroke-width="12"
+                          stroke-linecap="round" stroke-dasharray="264.9 389.56" transform="rotate(-90 68 68)"/>
+                </svg>
+                <div class="ringnum">
+                  <div class="score"><span class="live">68</span><span class="value-dash" style="font-size:56px;line-height:60px">--</span></div>
+                  <div class="score-cap">Score</div>
+                </div>
+              </div>
+            </div>
+            <div class="headline live">You are ahead of your usual Thursday</div>
+            <p class="summary live">Steps and calories are both on pace. Distance is trailing, so a short walk this afternoon would close it.</p>
+            <div class="statechip sync" style="justify-content:center">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing activity…</span>
+            </div>
+          </div>
+
+          <div class="chips stateful">
+            <div class="chip"><div class="lab">Steps</div><div class="val"><span class="num live">7,240</span><span class="value-dash">—</span></div></div>
+            <div class="chip"><div class="lab">Distance</div><div class="val"><span class="num live">5.1</span><span class="value-dash">—</span><span class="unit">km</span></div></div>
+            <div class="chip"><div class="lab">Calories</div><div class="val"><span class="num live">420</span><span class="value-dash">—</span><span class="unit">kcal</span></div></div>
+          </div>
+        </div>
+
+        <div class="stack">
+
+          <!-- Today's goals -->
+          <div class="card stateful" data-cover="Activity">
+            <div class="card-head"><div class="card-title">Today's goals</div></div>
+            <div class="statechip sync">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing activity…</span>
+            </div>
+            <div class="card-body">
+              <div class="live" style="display:flex;flex-direction:column;gap:20px">
+                <div class="goalrow">
+                  <svg viewBox="0 0 24 24" fill="var(--metric-steps)" style="width:20px;height:20px" aria-hidden="true"><path d="M4 16.5c4-1 5.5-2.7 6.3-5.6l.5-2.2 2.6 2.4c.6.5 1.3.9 2.1 1.1l2.9.8a2 2 0 0 1 1.6 2v1.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-.9Z"/></svg>
+                  <span class="gname">Steps</span>
+                  <span class="gval"><span class="gnum">7,240</span><span class="ggoal">/ 10,000</span></span>
+                  <span class="gbar"><i style="width:72%;background:var(--metric-steps)"></i></span>
+                </div>
+                <div class="goalrow">
+                  <svg viewBox="0 0 256 256" fill="var(--metric-distance)" style="width:20px;height:20px" aria-hidden="true"><path d="M128,16A88.1,88.1,0,0,0,40,104c0,31.4,14.5,64.7,42,96.4a254.4,254.4,0,0,0,41.4,38.9,8,8,0,0,0,9.2,0A254.4,254.4,0,0,0,174,200.4c27.5-31.7,42-65,42-96.4A88.1,88.1,0,0,0,128,16Zm0,120a32,32,0,1,1,32-32A32,32,0,0,1,128,136Z"/></svg>
+                  <span class="gname">Distance</span>
+                  <span class="gval"><span class="gnum">5.1</span><span class="ggoal">/ 8 km</span></span>
+                  <span class="gbar"><i style="width:64%;background:var(--metric-distance)"></i></span>
+                </div>
+                <div class="goalrow">
+                  <svg viewBox="0 0 256 256" fill="var(--metric-calories)" style="width:20px;height:20px" aria-hidden="true"><path d="M143.4,17.9a8,8,0,0,0-12.8,3.5c-7.9,25.3-23.8,44.3-39.3,62.7C75.9,102.4,60,121.2,60,148a68,68,0,0,0,136,0C196,89.9,167.8,40.7,143.4,17.9Zm-14.7,182a32.1,32.1,0,0,1-33.5-33.5c.8-17.3,13.5-31.2,27.4-43.2a8,8,0,0,1,11,.6c11.5,12.1,25.7,27.4,26.3,44.6A32,32,0,0,1,128.7,199.9Z"/></svg>
+                  <span class="gname">Calories</span>
+                  <span class="gval"><span class="gnum">420</span><span class="ggoal">/ 600 kcal</span></span>
+                  <span class="gbar"><i style="width:70%;background:var(--metric-calories)"></i></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Goals met (week of concentric rings) -->
+          <div class="card stateful">
+            <div class="card-head">
+              <div class="card-title">Goals met</div>
+              <span class="subnote">Aug 3 – Aug 9</span>
+            </div>
+            <div class="card-body">
+              <div class="week7 live" id="goalsWeek"><!-- rings drawn by JS --></div>
+            </div>
+          </div>
+
+          <!-- Steps (bar chart) -->
+          <div class="card stateful" data-chart="steps">
+            <div class="card-head">
+              <div class="card-title">Steps</div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>7,240</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit">steps</span>
+                </div>
+                <div class="trend live" data-trend><span class="tri-up"></span><span>12% up from yesterday</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- Distance (line chart) -->
+          <div class="card stateful" data-chart="distance">
+            <div class="card-head">
+              <div class="card-title">Distance</div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>5.1</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit">km</span>
+                </div>
+                <div class="trend live" data-trend><span class="tri-down-bad"></span><span>9% down from yesterday</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- Calories (line chart) -->
+          <div class="card stateful" data-chart="calories">
+            <div class="card-head">
+              <div class="card-title">Calories</div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>420</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit">kcal</span>
+                </div>
+                <div class="trend live" data-trend><span class="tri-up"></span><span>6% up from yesterday</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- Workouts. Flag: the workout DETAILS page is still pending —
+               rows are visual-only for now, chevrons included per prototype. -->
+          <div class="card stateful">
+            <div class="card-head">
+              <div class="card-title">Workouts</div>
+              <span class="subnote live">2 workouts · 1h 17m</span>
+            </div>
+            <div class="card-body">
+              <div class="live">
+                <div class="listrow" style="border-top:0.5px solid var(--divider)">
+                  <span class="lft">
+                    <svg viewBox="0 0 256 256" fill="var(--metric-activity)" style="width:17px;height:17px;flex:0 0 auto" aria-hidden="true"><path d="M152,88a32,32,0,1,0-32-32A32,32,0,0,0,152,88Zm67.9,80.1a8,8,0,0,1-.2,11.3l-32,30.7a8,8,0,0,1-11.1-.2,7.9,7.9,0,0,1,.2-11.3L204,171.9l-26.7-25.6-17.5,40.7a8.2,8.2,0,0,1-5.5,4.6l-56,14a7.5,7.5,0,0,1-2,.3,8,8,0,0,1-1.9-15.8l51.9-13,28.4-66.1-24.9,6.8-15.9,29.2a8,8,0,0,1-14-7.6l17.4-32a8,8,0,0,1,4.9-3.9l48-13.1a8,8,0,0,1,9.4,4.5l18.5,41.1Z"/></svg>
+                    <span class="txt"><span class="t1">Morning run</span><span class="t2">7:12 – 7:44 AM · 4.3 km</span></span>
+                  </span>
+                  <span class="rgt"><span class="rnum">32 min</span><span class="chev"></span></span>
+                </div>
+                <div class="listrow" style="padding-bottom:0">
+                  <span class="lft">
+                    <svg viewBox="0 0 256 256" fill="var(--metric-activity)" style="width:17px;height:17px;flex:0 0 auto" aria-hidden="true"><path d="M248,120h-8V88a16,16,0,0,0-16-16H208V64a16,16,0,0,0-16-16H168a16,16,0,0,0-16,16v56H104V64A16,16,0,0,0,88,48H64A16,16,0,0,0,48,64v8H32A16,16,0,0,0,16,88v32H8a8,8,0,0,0,0,16h8v32a16,16,0,0,0,16,16H48v8a16,16,0,0,0,16,16H88a16,16,0,0,0,16-16V136h48v56a16,16,0,0,0,16,16h24a16,16,0,0,0,16-16v-8h16a16,16,0,0,0,16-16V136h8a8,8,0,0,0,0-16Z"/></svg>
+                    <span class="txt"><span class="t1">Strength training</span><span class="t2">10:15 – 11:00 AM · 6 exercises</span></span>
+                  </span>
+                  <span class="rgt"><span class="rnum">45 min</span><span class="chev"></span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- =========================================================
+           SLEEP TAB — recreated from the approved standalone prototype
+           (night-sky hero, hypnogram, vitals charts, nap, continuity)
+           ========================================================= -->
+      <section class="page" id="page-sleep">
+        <div class="hero stateful" id="sleepHero">
+          <!-- night-sky backdrop: gradients + moon + stars, all code-drawn -->
+          <div style="position:absolute;inset:0 0 auto 0;height:560px;overflow:hidden;pointer-events:none">
+            <div style="position:absolute;inset:0;background:linear-gradient(180deg, var(--violet-900) 0%, color-mix(in srgb, var(--violet-900) 55%, var(--surface-app)) 55%, var(--surface-app) 100%)"></div>
+            <div style="position:absolute;inset:0;background:radial-gradient(520px 380px at 78% 10%, color-mix(in srgb, var(--violet-600) 42%, transparent) 0%, transparent 72%)"></div>
+            <div style="position:absolute;inset:0;background:radial-gradient(600px 330px at 16% 72%, color-mix(in srgb, var(--teal-700) 32%, transparent) 0%, transparent 70%)"></div>
+            <svg width="360" height="420" viewBox="0 0 360 420" style="position:absolute;left:0;top:0" aria-hidden="true" id="starfield"></svg>
+            <!-- crescent moon -->
+            <div style="position:absolute;left:280px;top:60px;width:49px;height:49px;border-radius:50%;background:radial-gradient(31px 32px at 58% 39%, var(--violet-0) 0%, var(--violet-100) 70%, var(--violet-200) 100%);-webkit-mask-image:radial-gradient(circle 27px at 76% 20%, transparent 0 27px, #000 27.5px);mask-image:radial-gradient(circle 27px at 76% 20%, transparent 0 27px, #000 27.5px);opacity:0.9"></div>
+          </div>
+
+          <div class="screen-head">
+            <div>
+              <div class="screen-title">Sleep</div>
+              <button class="date-btn" data-datebtn><span data-datelabel>Today, Aug 6</span><span class="caret"></span></button>
+            </div>
+            <button class="dots-btn" data-menubtn aria-label="More"><span></span><span></span><span></span></button>
+          </div>
+          <div class="menu" data-menu>
+            <button>About sleep</button>
+            <button>Goal setting</button>
+            <button>Share</button>
+          </div>
+          <div class="datemenu" data-datemenu></div>
+
+          <div class="hero-media">
+            <div class="ringwrap">
+              <div class="ringbox">
+                <div class="glow" style="background:radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--metric-sleep) 30%, transparent) 0%, transparent 70%)"></div>
+                <svg width="136" height="136" viewBox="0 0 136 136">
+                  <defs>
+                    <linearGradient id="ring-sleep" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="var(--violet-200)"/>
+                      <stop offset="100%" stop-color="var(--violet-500)"/>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="68" cy="68" r="62" fill="none" stroke="var(--neutral-700)" stroke-width="12"/>
+                  <circle class="live" cx="68" cy="68" r="62" fill="none" stroke="url(#ring-sleep)" stroke-width="12"
+                          stroke-linecap="round" stroke-dasharray="303.9 389.56" transform="rotate(-90 68 68)"/>
+                </svg>
+                <div class="ringnum">
+                  <div class="score"><span class="live">78</span><span class="value-dash" style="font-size:56px;line-height:60px">--</span></div>
+                  <div class="score-cap">Score</div>
+                </div>
+              </div>
+            </div>
+            <div class="headline live">That was a restful night</div>
+            <p class="summary live">Your sleep duration was sufficient but your efficiency was low so you might want to take it easy today, keeping activities light.</p>
+            <div class="statechip sync" style="justify-content:center">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing sleep…</span>
+            </div>
+          </div>
+
+          <div class="chips stateful">
+            <div class="chip"><div class="lab">Duration</div><div class="val"><span class="num live">7:34</span><span class="value-dash">—</span></div></div>
+            <div class="chip"><div class="lab">Efficiency</div><div class="val"><span class="num live">64</span><span class="value-dash">—</span><span class="unit">%</span></div></div>
+            <div class="chip"><div class="lab">Asleep in</div><div class="val"><span class="num live">18</span><span class="value-dash">—</span><span class="unit">m</span></div></div>
+          </div>
+        </div>
+
+        <div class="stack">
+
+          <!-- Last night's sleep: hypnogram + stage tiles -->
+          <div class="card stateful" data-chart="hypnogram">
+            <div class="card-head">
+              <div class="card-title">Last night's sleep</div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>7:34</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                </div>
+                <div class="trend live" data-trend><span class="tri-up"></span><span>10% up from last night</span></div>
+              </div>
+            </div>
+            <div class="statechip sync">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing sleep…</span>
+            </div>
+            <div class="card-body">
+              <div class="live">
+                <div class="chartmount" data-mount></div>
+                <div class="stagegrid" style="margin-top:16px">
+                  <div class="stage"><div class="top"><span class="nm">Awake</span><span class="sw" style="background:var(--violet-100)"></span></div><div class="dur">0:22</div><div class="pct">5%</div></div>
+                  <div class="stage"><div class="top"><span class="nm">REM</span><span class="sw" style="background:var(--violet-200)"></span></div><div class="dur">1:38</div><div class="pct">22%</div></div>
+                  <div class="stage"><div class="top"><span class="nm">Light</span><span class="sw" style="background:var(--violet-400)"></span></div><div class="dur">3:56</div><div class="pct">52%</div></div>
+                  <div class="stage"><div class="top"><span class="nm">Deep</span><span class="sw" style="background:var(--violet-600)"></span></div><div class="dur">1:38</div><div class="pct">21%</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Heart rate -->
+          <div class="card stateful" data-chart="hr">
+            <div class="card-head">
+              <div class="card-title">Heart rate</div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>56</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit">bpm</span>
+                </div>
+                <div class="trend live" data-trend><span class="tri-down-good"></span><span>3% down from last night</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- HRV -->
+          <div class="card stateful" data-chart="hrv">
+            <div class="card-head">
+              <div class="card-title">Heart rate variability</div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>48</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit">ms</span>
+                </div>
+                <div class="trend live" data-trend><span class="tri-up"></span><span>8% up from last night</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- Skin temperature -->
+          <div class="card stateful" data-chart="temp">
+            <div class="card-head">
+              <div class="card-title">Skin temperature</div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>33.2</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit" style="text-transform:none">°C</span>
+                </div>
+                <div class="trend live" data-trend><span class="dot-flat"></span><span>Same as last night</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- Blood oxygen -->
+          <div class="card stateful" data-chart="spo2">
+            <div class="card-head">
+              <div class="card-title">Blood oxygen</div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>96</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit">%</span>
+                </div>
+                <div class="trend live" data-trend><span class="tri-down-bad"></span><span>1% down from last night</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- Nap -->
+          <div class="card stateful">
+            <div class="card-head">
+              <div class="card-title">Nap</div>
+              <span class="subnote live">1 nap · 24 m</span>
+            </div>
+            <div class="card-body" style="margin-top:12px">
+              <div class="live">
+                <div class="listrow" style="padding:8px 0 0;border-top:0.5px solid var(--surface-raised)">
+                  <span class="lft">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--violet-300);flex:0 0 auto"></span>
+                    <span class="rnum" style="color:var(--text-1)">14:10 – 14:34</span>
+                  </span>
+                  <span class="rnum">24 m</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sleep continuity (bed / wake pills for the week) -->
+          <div class="card stateful">
+            <div class="card-head">
+              <div class="card-title">Sleep continuity</div>
+              <span class="subnote">Jul 26 – Aug 1</span>
+            </div>
+            <div class="card-body">
+              <div class="live" style="background:var(--surface-raised);border-radius:12px;padding:12px;display:grid;gap:16px">
+                <div style="display:grid;gap:8px">
+                  <div class="contlab">
+                    <svg viewBox="0 0 256 256" fill="var(--text-1)" style="width:14px;height:14px" aria-hidden="true"><path d="M233.5,142.2a8.1,8.1,0,0,0-8.5-1.9A88.1,88.1,0,0,1,115.7,31a8,8,0,0,0-10.4-10.4A104,104,0,1,0,235.4,150.7,8.1,8.1,0,0,0,233.5,142.2Z"/></svg>
+                    <span>Asleep by 22:00</span>
+                  </div>
+                  <div class="contgrid" data-cont="bed"></div>
+                </div>
+                <div style="display:grid;gap:8px">
+                  <div class="contlab">
+                    <svg viewBox="0 0 256 256" fill="var(--text-1)" style="width:14px;height:14px" aria-hidden="true"><path d="M128,60a68,68,0,1,0,68,68A68.1,68.1,0,0,0,128,60Zm0-20a8,8,0,0,0,8-8V16a8,8,0,0,0-16,0V32A8,8,0,0,0,128,40Zm0,176a8,8,0,0,0-8,8v16a8,8,0,0,0,16,0V224A8,8,0,0,0,128,216ZM43.1,54.5A8,8,0,1,0,54.5,43.1L43.1,31.8A8,8,0,0,0,31.8,43.1Zm169.8,147a8,8,0,0,0-11.4,11.4l11.4,11.3a8,8,0,0,0,11.3-11.3ZM40,120H16a8,8,0,0,0,0,16H40a8,8,0,0,0,0-16Zm200,0H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16ZM54.5,201.5,43.1,212.9a8,8,0,0,0,11.4,11.3l11.3-11.4a8,8,0,0,0-11.3-11.3ZM212.9,43.1,201.5,54.5a8,8,0,0,0,11.4,11.3l11.3-11.3a8,8,0,1,0-11.3-11.4Z"/></svg>
+                    <span>Awake by 09:00</span>
+                  </div>
+                  <div class="contgrid" data-cont="wake"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- =========================================================
+           ME TAB (settings: profile, band, preferences)
+           Flag: no approved spec exists for this tab yet — first pass
+           using the list patterns from the approved screens.
+           ========================================================= -->
+      <section class="page" id="page-me">
+        <div class="screen-head" style="padding-top:12px">
+          <div class="screen-title">Me</div>
+        </div>
+
+        <div class="profile">
+          <div class="avatar">A</div>
+          <div>
+            <div class="pname">Aanya</div>
+            <div class="pmail">design@pebblecart.com</div>
+          </div>
+        </div>
+
+        <div class="sectionlab">My band</div>
+        <div style="padding:0 16px">
+          <div class="card stateful" id="bandCard">
+            <div style="display:flex;align-items:center;gap:12px">
+              <svg viewBox="0 0 256 256" fill="var(--text-2)" style="width:28px;height:28px;flex:0 0 auto" aria-hidden="true"><path d="M164,32H92A28.1,28.1,0,0,0,64,60V196a28.1,28.1,0,0,0,28,28h72a28.1,28.1,0,0,0,28-28V60A28.1,28.1,0,0,0,164,32Zm12,164a12,12,0,0,1-12,12H92a12,12,0,0,1-12-12V60A12,12,0,0,1,92,48h72a12,12,0,0,1,12,12Z"/></svg>
+              <div style="flex:1;min-width:0">
+                <div class="t1" style="font-size:15px;line-height:22px;font-weight:600;color:var(--text-1)">Pebble Band</div>
+                <div class="t2" style="font-size:11px;line-height:16px;color:var(--text-3)" id="bandStatus">Connected · battery 68%</div>
+              </div>
+              <span class="chev"></span>
+            </div>
+            <div class="statechip sync">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing…</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sectionlab">Preferences</div>
+        <div style="padding:0 16px">
+          <div class="card">
+            <div class="listrow" style="border-top:0;padding-top:0"><span class="lft"><span class="txt"><span class="t1">Goals</span><span class="t2">Steps, sleep and calorie targets</span></span></span><span class="chev"></span></div>
+            <div class="listrow"><span class="lft"><span class="txt"><span class="t1">Notifications</span><span class="t2">Bedtime reminders, goal alerts</span></span></span><span class="chev"></span></div>
+            <div class="listrow"><span class="lft"><span class="txt"><span class="t1">Units</span><span class="t2">Kilometres, kilograms, °C</span></span></span><span class="chev"></span></div>
+            <div class="listrow"><span class="lft"><span class="txt"><span class="t1">Health data</span><span class="t2">Export and connected services</span></span></span><span class="chev"></span></div>
+            <div class="listrow" style="padding-bottom:0"><span class="lft"><span class="txt"><span class="t1">Privacy</span><span class="t2">Data sharing and permissions</span></span></span><span class="chev"></span></div>
+          </div>
+        </div>
+
+        <div class="sectionlab">About</div>
+        <div style="padding:0 16px 16px">
+          <div class="card">
+            <div class="listrow" style="border-top:0;padding-top:0"><span class="lft"><span class="txt"><span class="t1">Help &amp; support</span></span></span><span class="chev"></span></div>
+            <div class="listrow" style="padding-bottom:0"><span class="lft"><span class="txt"><span class="t1">App version</span></span></span><span class="rnum">0.4 (prototype)</span></div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /.pages -->
+
+    <!-- ============ BOTTOM NAV (from the supplied screenshot) ============ -->
+    <nav class="tabbar" aria-label="Main tabs">
+      <button class="tab active" data-tab="health" aria-label="Health tab">
+        <!-- house -->
+        <svg class="ico-line" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4.5 10.2 12 4l7.5 6.2V19a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-8.8Z"/></svg>
+        <svg class="ico-fill" viewBox="0 0 24 24" fill="currentColor"><path d="M4.5 10.2 12 4l7.5 6.2V19a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-8.8Z"/></svg>
+        <span>Health</span>
+      </button>
+      <button class="tab" data-tab="activity" aria-label="Activity tab">
+        <!-- running shoe -->
+        <svg class="ico-line" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16.5c4-1 5.5-2.7 6.3-5.6l.5-2.2 2.6 2.4c.6.5 1.3.9 2.1 1.1l2.9.8a2 2 0 0 1 1.6 2v1.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-.9Z"/><path d="M10.8 8.7 9.4 7.2M2.5 12.5h2M2.5 14.5h3"/></svg>
+        <svg class="ico-fill" viewBox="0 0 24 24" fill="currentColor"><path d="M4 16.5c4-1 5.5-2.7 6.3-5.6l.5-2.2 2.6 2.4c.6.5 1.3.9 2.1 1.1l2.9.8a2 2 0 0 1 1.6 2v1.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-.9Z"/></svg>
+        <span>Activity</span>
+      </button>
+      <button class="tab" data-tab="sleep" aria-label="Sleep tab">
+        <!-- moon -->
+        <svg class="ico-line" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/></svg>
+        <svg class="ico-fill" viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/></svg>
+        <span>Sleep</span>
+      </button>
+      <button class="tab" data-tab="me" aria-label="Me tab">
+        <!-- person -->
+        <svg class="ico-line" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8.2" r="3.4"/><path d="M5.5 19.5c1.3-3 3.8-4.6 6.5-4.6s5.2 1.6 6.5 4.6"/></svg>
+        <svg class="ico-fill" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8.2" r="3.6"/><path d="M4.8 20c1.4-3.4 4.1-5.2 7.2-5.2s5.8 1.8 7.2 5.2a1 1 0 0 1-.9.5H5.7a1 1 0 0 1-.9-.5Z"/></svg>
+        <span>Me</span>
+      </button>
+    </nav>
+
+    <div class="gesture"></div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   Pebble prototype behaviour
+   --------------------------------------------------------------------------
+   Everything below is plain JavaScript, commented in plain English.
+   Sections: helpers → chart data → chart drawing → scrubbing →
+             week widgets → tab bar / menus → state machine.
+   ========================================================================== */
+
+/* ---------- tiny helpers ---------- */
+const $  = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+const SVGNS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs){
+  const el = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+
+/* ==========================================================================
+   CHART DATA — invented sample data shaped like a real day / night.
+   Values match the numbers shown in the approved prototypes.
+   ========================================================================== */
+
+// Steps per hour (24 values, sums ≈ 7,240): quiet night, morning-run spike.
+const STEPS_HOURLY = [0,0,0,0,0,10,120,980,620,340,410,520,610,380,290,330,420,510,640,420,300,220,110,7];
+
+// Cumulative distance (km) sampled every hour, ends at 5.1.
+const DIST_CUM = [0,0,0,0,0,0,0.1,1.6,2.2,2.4,2.6,2.9,3.2,3.4,3.5,3.7,3.9,4.2,4.6,4.8,4.9,5.0,5.1,5.1];
+
+// Cumulative active calories (kcal), ends at 420.
+const CAL_CUM = [0,0,0,0,0,0,4,60,105,125,150,185,225,255,270,290,315,345,380,398,408,414,419,420];
+
+// Overnight vitals: one sample every 30 min, 23:00 → 07:00 (17 points).
+const HR_NIGHT   = [62,60,58,56,55,54,53,54,55,53,52,54,56,55,57,59,61];
+const HRV_NIGHT  = [38,40,43,45,48,50,52,51,49,52,54,53,50,48,46,44,42];
+const TEMP_NIGHT = [33.6,33.5,33.4,33.2,33.1,33.0,32.9,32.9,33.0,33.1,33.1,33.2,33.3,33.3,33.4,33.5,33.6];
+const SPO2_NIGHT = [97,97,96,96,95,95,94,95,96,96,97,96,96,95,96,97,97];
+
+// Hypnogram: [stage row, duration in minutes]. Rows: 0 Awake, 1 REM, 2 Light, 3 Deep.
+// Night runs 23:12 → 06:46 (454 min).
+const HYPNO = [
+  [0,14],[2,38],[3,42],[2,26],[1,22],[2,30],[3,34],[0,4],[2,36],[1,28],
+  [3,22],[2,40],[1,24],[2,32],[0,4],[1,24],[2,30],[2,4]
+];
+const STAGE_FILL = [
+  'var(--violet-100)', // awake — lightest
+  'var(--violet-200)', // REM
+  'var(--violet-400)', // light
+  'var(--violet-600)'  // deep — darkest
+];
+const STAGE_NAMES = ['Awake','REM','Light','Deep'];
+
+// Night-time axis labels for every sleep chart.
+const NIGHT_TICKS = ['23:00','1:00','3:00','5:00','7:00'];
+const DAY_TICKS   = ['00:00','6:00','12:00','18:00','24:00'];
+
+/* Each chart the state machine + scrubber needs to know about. */
+const CHARTS = {
+  steps:    { kind:'bars', data:STEPS_HOURLY, color:'var(--metric-steps)',    unit:' steps', ticks:DAY_TICKS,
+              yLabels:['3,600','2,400','1,200','0'], yMax:3600,
+              fmt:v => v.toLocaleString('en-US'), stampFmt:i => hourLabel(i) },
+  distance: { kind:'line', data:DIST_CUM, color:'var(--metric-distance)', unit:' km', ticks:DAY_TICKS,
+              yLabels:['6','4','2','0'], yMax:6,
+              fmt:v => v.toFixed(1), stampFmt:i => hourLabel(i) },
+  calories: { kind:'line', data:CAL_CUM, color:'var(--metric-calories)', unit:' kcal', ticks:DAY_TICKS,
+              yLabels:['450','300','150','0'], yMax:450,
+              fmt:v => String(Math.round(v)), stampFmt:i => hourLabel(i) },
+  hr:       { kind:'line', data:HR_NIGHT, color:'var(--metric-heart-rate)', unit:' bpm', ticks:NIGHT_TICKS,
+              yLabels:['80','70','60','50'], yMin:50, yMax:80,
+              fmt:v => String(Math.round(v)), stampFmt:i => nightLabel(i) },
+  hrv:      { kind:'line', data:HRV_NIGHT, color:'var(--metric-hrv)', unit:' ms', ticks:NIGHT_TICKS,
+              yLabels:['60','50','40','30'], yMin:30, yMax:60,
+              fmt:v => String(Math.round(v)), stampFmt:i => nightLabel(i) },
+  temp:     { kind:'line', data:TEMP_NIGHT, color:'var(--metric-skin-temp)', unit:' °C', ticks:NIGHT_TICKS,
+              yLabels:['34','33.5','33','32.5'], yMin:32.5, yMax:34, hiLo:true,
+              fmt:v => v.toFixed(1), stampFmt:i => nightLabel(i) },
+  spo2:     { kind:'line', data:SPO2_NIGHT, color:'var(--metric-spo2)', unit:' %', ticks:NIGHT_TICKS,
+              yLabels:['100','98','96','94'], yMin:94, yMax:100,
+              fmt:v => String(Math.round(v)), stampFmt:i => nightLabel(i) },
+  hypnogram:{ kind:'hypno' }
+};
+
+function hourLabel(i){ return String(i).padStart(2,'0') + ':00'; }
+function nightLabel(i){ // sample i → clock time, 23:00 + i×30min
+  const m = (23*60 + i*30) % (24*60);
+  return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0');
+}
+
+/* ==========================================================================
+   CHART DRAWING — geometry copied from the approved chart cards:
+   plot 0→262 wide, gridlines at y 12 / 39.3 / 66.7 / 94, labels on the right,
+   time ticks along the bottom.
+   ========================================================================== */
+const PLOT_W = 262, VIEW_W = 296, TOP = 12, BOT = 94;
+
+function yFor(v, cfg){
+  const min = cfg.yMin || 0;
+  return BOT - ((v - min) / (cfg.yMax - min)) * (BOT - TOP);
+}
+
+/* Line chart with soft area fill, right-side y labels, bottom ticks. */
+function drawLine(mount, key){
+  const cfg = CHARTS[key];
+  const svg = svgEl('svg', { width:VIEW_W, height:120, viewBox:`0 0 ${VIEW_W} 120` });
+
+  // area gradient — fades the metric colour to transparent
+  const defs = svgEl('defs', {});
+  const grad = svgEl('linearGradient', { id:'g-'+key, x1:0, y1:0, x2:0, y2:1 });
+  const s1 = svgEl('stop', { offset:'0%', 'stop-opacity':'0.3' }); s1.style.stopColor = cfg.color;
+  const s2 = svgEl('stop', { offset:'100%', 'stop-opacity':'0' }); s2.style.stopColor = cfg.color;
+  grad.append(s1, s2); defs.append(grad); svg.append(defs);
+
+  // gridlines + y labels
+  const gys = [12, 39.3, 66.7, 94];
+  gys.forEach((y, i) => {
+    svg.append(svgEl('line', { x1:0, x2:PLOT_W, y1:y, y2:y, stroke:'var(--gridline)', 'stroke-width':0.5 }));
+    const t = svgEl('text', { x:VIEW_W-2, y:y+4, 'text-anchor':'end', class:'axis' });
+    t.textContent = cfg.yLabels[i]; svg.append(t);
+  });
+
+  // the line itself
+  const pts = cfg.data.map((v, i) => [ i/(cfg.data.length-1)*PLOT_W, yFor(v, cfg) ]);
+  const dLine = 'M' + pts.map(p => p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L');
+  const dArea = dLine + ` L${PLOT_W} ${BOT} L0 ${BOT} Z`;
+  svg.append(svgEl('path', { d:dArea, fill:`url(#g-${key})` }));
+  const path = svgEl('path', { d:dLine, fill:'none', stroke:cfg.color, 'stroke-width':2, 'stroke-linecap':'round', 'stroke-linejoin':'round' });
+  svg.append(path);
+
+  // high / low markers (skin temperature only)
+  if (cfg.hiLo){
+    let hi = 0, lo = 0;
+    cfg.data.forEach((v, i) => { if (v > cfg.data[hi]) hi = i; if (v < cfg.data[lo]) lo = i; });
+    svg.append(svgEl('circle', { cx:pts[hi][0], cy:pts[hi][1], r:4, fill:'var(--metric-heart-rate)', stroke:'var(--surface-card)', 'stroke-width':1.5 }));
+    svg.append(svgEl('circle', { cx:pts[lo][0], cy:pts[lo][1], r:4, fill:'var(--metric-spo2)', stroke:'var(--surface-card)', 'stroke-width':1.5 }));
+  }
+
+  // scrub guide (hidden until a finger / cursor lands on the chart)
+  const guide = svgEl('line', { x1:0, x2:0, y1:TOP, y2:BOT, stroke:'var(--text-3)', 'stroke-width':1, 'stroke-dasharray':'3 3', visibility:'hidden' });
+  const dot   = svgEl('circle', { r:4, fill:cfg.color, stroke:'var(--text-1)', 'stroke-width':1.5, visibility:'hidden' });
+  svg.append(guide, dot);
+
+  // bottom time ticks
+  cfg.ticks.forEach((lab, i) => {
+    const x = i/(cfg.ticks.length-1)*PLOT_W;
+    const t = svgEl('text', { x, y:113, class:'axis',
+      'text-anchor': i === 0 ? 'start' : (i === cfg.ticks.length-1 ? 'end' : 'middle') });
+    t.textContent = lab; svg.append(t);
+  });
+
+  mount.classList.add('chart');
+  mount.append(svg);
+  return { svg, guide, dot, pts, cfg };
+}
+
+/* Hourly bar chart (Steps). */
+function drawBars(mount, key){
+  const cfg = CHARTS[key];
+  const svg = svgEl('svg', { width:VIEW_W, height:120, viewBox:`0 0 ${VIEW_W} 120` });
+  const gys = [12, 39.3, 66.7, 94];
+  gys.forEach((y, i) => {
+    svg.append(svgEl('line', { x1:0, x2:PLOT_W, y1:y, y2:y, stroke:'var(--gridline)', 'stroke-width':0.5 }));
+    const t = svgEl('text', { x:VIEW_W-2, y:y+4, 'text-anchor':'end', class:'axis' });
+    t.textContent = cfg.yLabels[i]; svg.append(t);
+  });
+  const n = cfg.data.length, slot = PLOT_W/n, bw = Math.max(4, slot-4);
+  const bars = [];
+  cfg.data.forEach((v, i) => {
+    const h = Math.max(v > 0 ? 2 : 0, (v/cfg.yMax)*(BOT-TOP));
+    const r = svgEl('rect', { x:(i*slot + (slot-bw)/2).toFixed(1), y:(BOT-h).toFixed(1),
+      width:bw.toFixed(1), height:h.toFixed(1), rx:2, fill:cfg.color });
+    svg.append(r); bars.push(r);
+  });
+  cfg.ticks.forEach((lab, i) => {
+    const x = i/(cfg.ticks.length-1)*PLOT_W;
+    const t = svgEl('text', { x, y:113, class:'axis',
+      'text-anchor': i === 0 ? 'start' : (i === cfg.ticks.length-1 ? 'end' : 'middle') });
+    t.textContent = lab; svg.append(t);
+  });
+  mount.classList.add('chart');
+  mount.append(svg);
+  return { svg, bars, cfg, slot };
+}
+
+/* Hypnogram (Last night's sleep): one rounded bar per stage segment,
+   thin 2px connectors between stage changes — same look as the prototype. */
+function drawHypno(mount){
+  const svg = svgEl('svg', { width:VIEW_W, height:114, viewBox:`0 0 ${VIEW_W} 114` });
+  const total = HYPNO.reduce((s, seg) => s + seg[1], 0);
+  const rowY = stage => 4 + stage*20;          // top of each stage row
+  [12, 39.3, 66.7, 84].forEach(y =>
+    svg.append(svgEl('line', { x1:0, x2:VIEW_W, y1:y, y2:y, stroke:'var(--gridline)', 'stroke-width':0.5 })));
+  let x = 0;
+  HYPNO.forEach((seg, i) => {
+    const w = seg[1]/total*VIEW_W;
+    // connector to the previous segment
+    if (i > 0){
+      const prev = HYPNO[i-1];
+      const y1 = Math.min(rowY(prev[0]), rowY(seg[0])) + 8;
+      const y2 = Math.max(rowY(prev[0]), rowY(seg[0])) + 8;
+      svg.append(svgEl('rect', { x:x-1, y:y1, width:2, height:y2-y1, fill:'var(--violet-700)' }));
+    }
+    svg.append(svgEl('rect', { x:x.toFixed(1), y:rowY(seg[0]), width:Math.max(w,3).toFixed(1),
+      height:17, rx:4, fill:STAGE_FILL[seg[0]] }));
+    x += w;
+  });
+  // time ticks under the plot
+  NIGHT_TICKS.forEach((lab, i) => {
+    const t = svgEl('text', { x:i/(NIGHT_TICKS.length-1)*VIEW_W, y:107, class:'axis',
+      'text-anchor': i === 0 ? 'start' : (i === NIGHT_TICKS.length-1 ? 'end' : 'middle') });
+    t.textContent = lab; svg.append(t);
+  });
+  mount.append(svg);
+}
+
+/* ==========================================================================
+   SCRUBBING — press / drag on a chart to read a value at a point in time.
+   The big number in the card header temporarily shows the sampled value
+   and its timestamp, then snaps back when the finger lifts.
+   ========================================================================== */
+function attachScrub(card, chart){
+  const mount   = $('[data-mount]', card);
+  const valEl   = $('[data-val]', card);
+  const trendEl = $('[data-trend]', card);
+  if (!mount || !valEl || !trendEl) return;
+  const restValue = valEl.textContent;
+  const restTrend = trendEl.innerHTML;
+  const cfg = chart.cfg;
+
+  function sample(clientX){
+    const r = mount.getBoundingClientRect();
+    const x = Math.min(Math.max(clientX - r.left, 0), PLOT_W);
+    const i = Math.round(x / PLOT_W * (cfg.data.length - 1));
+    return { i, x: i/(cfg.data.length-1)*PLOT_W };
+  }
+  function show(e){
+    const { i, x } = sample(e.clientX);
+    valEl.textContent = cfg.fmt(cfg.data[i]);
+    trendEl.innerHTML = '<span>' + cfg.stampFmt(i) + '</span>';
+    if (chart.guide){ // line charts: dashed guide + dot
+      chart.guide.setAttribute('x1', x); chart.guide.setAttribute('x2', x);
+      chart.guide.setAttribute('visibility', 'visible');
+      chart.dot.setAttribute('cx', x); chart.dot.setAttribute('cy', chart.pts[i][1]);
+      chart.dot.setAttribute('visibility', 'visible');
+    }
+    if (chart.bars){ // bar chart: dim all bars except the touched one
+      chart.bars.forEach((b, bi) => b.setAttribute('opacity', bi === i ? 1 : 0.28));
+    }
+  }
+  function hide(){
+    valEl.textContent = restValue;
+    trendEl.innerHTML = restTrend;
+    if (chart.guide){ chart.guide.setAttribute('visibility','hidden'); chart.dot.setAttribute('visibility','hidden'); }
+    if (chart.bars) chart.bars.forEach(b => b.setAttribute('opacity', 1));
+  }
+  mount.addEventListener('pointerdown', show);
+  mount.addEventListener('pointermove', e => { if (e.buttons || e.pointerType === 'mouse') show(e); });
+  mount.addEventListener('pointerup', hide);
+  mount.addEventListener('pointerleave', hide);
+  mount.addEventListener('pointercancel', hide);
+}
+
+/* Build every chart card. */
+$$('[data-chart]').forEach(card => {
+  const key = card.dataset.chart;
+  const mount = $('[data-mount]', card);
+  const cfg = CHARTS[key];
+  if (!mount || !cfg) return;
+  mount.classList.add('live'); // charts hide in loading / notworn / empty
+  if (cfg.kind === 'line'){ attachScrub(card, drawLine(mount, key)); }
+  else if (cfg.kind === 'bars'){ attachScrub(card, drawBars(mount, key)); }
+  else if (cfg.kind === 'hypno'){ drawHypno(mount); }
+});
+
+/* ==========================================================================
+   WEEK WIDGETS — Goals-met rings (Activity) and continuity pills (Sleep)
+   ========================================================================== */
+
+// One day cell: three concentric rings (steps / distance / calories).
+// state: {fr:[f,f,f]} fractions 0..1, or 'notworn', or 'future'.
+function dayRing(state){
+  const svg = svgEl('svg', { width:34, height:34, viewBox:'0 0 36 36' });
+  const radii = [15.5, 11.5, 7.5];
+  const hues  = ['var(--metric-steps)','var(--metric-distance)','var(--metric-calories)'];
+  if (state === 'notworn'){
+    svg.append(svgEl('circle', { cx:18, cy:18, r:13, fill:'none', stroke:'var(--neutral-500)',
+      'stroke-width':2, 'stroke-dasharray':'2.5 3.5', 'stroke-linecap':'round' }));
+    return svg;
+  }
+  radii.forEach((r, i) => {
+    svg.append(svgEl('circle', { cx:18, cy:18, r, fill:'none', stroke:'var(--surface-fill)', 'stroke-width':3 }));
+    if (state !== 'future'){
+      const f = state.fr[i], C = 2*Math.PI*r;
+      if (f > 0) svg.append(svgEl('circle', { cx:18, cy:18, r, fill:'none', stroke:hues[i], 'stroke-width':3,
+        'stroke-linecap':'round', 'stroke-dasharray':`${(f*C).toFixed(2)} ${C.toFixed(2)}`, transform:'rotate(-90 18 18)' }));
+    }
+  });
+  if (state === 'future') $$('circle', svg).forEach(c => c.setAttribute('stroke','var(--surface-raised)'));
+  return svg;
+}
+
+// The week around "today" (Thu Aug 6) — same days as the prototype.
+const WEEK = [
+  { lab:'M', num:3, state:{ fr:[1,1,1] },        cls:'' },
+  { lab:'T', num:4, state:'notworn',             cls:'' },
+  { lab:'W', num:5, state:{ fr:[1,0.58,0.42] },  cls:'' },
+  { lab:'T', num:6, state:{ fr:[0.72,0.64,0.6] },cls:'today' },
+  { lab:'F', num:7, state:'future',              cls:'future' },
+  { lab:'S', num:8, state:'future',              cls:'future' },
+  { lab:'S', num:9, state:'future',              cls:'future' }
+];
+const weekMount = $('#goalsWeek');
+WEEK.forEach(d => {
+  const cell = document.createElement('span');
+  cell.className = 'day ' + d.cls;
+  const lab = document.createElement('span'); lab.className = 'dlab'; lab.textContent = d.lab;
+  const num = document.createElement('span'); num.className = 'dnum'; num.textContent = d.num;
+  cell.append(lab, dayRing(d.state), num);
+  weekMount.append(cell);
+});
+
+// Sleep continuity pills: which nights hit "asleep by 22:00" / "awake by 09:00".
+const CONT = { bed:[1,0,1,1,0,1,1], wake:[1,1,0,1,1,1,0] };
+$$('[data-cont]').forEach(grid => {
+  CONT[grid.dataset.cont].forEach(met => {
+    const pill = document.createElement('span');
+    pill.className = 'contpill' + (met ? ' met' : '');
+    if (met) pill.innerHTML =
+      '<svg width="15" height="12" viewBox="0 0 15 12"><path d="M1.6 6.1l4.1 4.1L13.4 1.9" stroke-width="1.6" stroke="var(--violet-200)" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    grid.append(pill);
+  });
+});
+
+// Starfield for the Sleep hero — fixed positions so it never flickers.
+const STARS = [[22,40,1],[60,90,1.4],[120,30,1],[160,120,1.2],[210,60,1],[250,150,1.3],[40,180,1],[90,240,1.2],[300,200,1],[330,110,1.4],[140,200,1],[190,260,1.1],[280,300,1],[70,320,1.2],[320,340,1]];
+const starSvg = $('#starfield');
+STARS.forEach(([cx, cy, r], i) =>
+  starSvg.append(svgEl('circle', { cx, cy, r, fill:'var(--violet-100)', opacity:(0.25 + (i%4)*0.15).toFixed(2) })));
+
+/* ==========================================================================
+   TAB BAR + MENUS + DATE PICKER
+   ========================================================================== */
+$$('.tab').forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
+function showTab(name){
+  $$('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  $$('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
+  $('#page-' + name).scrollTop = 0;
+  closeAllMenus();
+}
+// Health-tab tiles jump to their tab
+$$('[data-goto]').forEach(t => t.addEventListener('click', () => showTab(t.dataset.goto)));
+
+function closeAllMenus(){
+  $$('.menu.open, .datemenu.open').forEach(m => m.classList.remove('open'));
+}
+// 3-dot menus (About / Goal setting / Share — visual only for now;
+// flagged: those subpages exist in the standalone prototypes, not here yet)
+$$('[data-menubtn]').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const menu = $('[data-menu]', btn.closest('.hero'));
+    const was = menu.classList.contains('open');
+    closeAllMenus();
+    if (!was) menu.classList.add('open');
+  });
+});
+
+// Date picker — simplified week list (the standalone prototypes use a full
+// month calendar; flagged as a deliberate simplification for this build).
+const DATES = [
+  { label:'Today, Aug 6',     num:'Thu' },
+  { label:'Yesterday, Aug 5', num:'Wed' },
+  { label:'Tue, Aug 4',       num:'Tue' },
+  { label:'Mon, Aug 3',       num:'Mon' },
+  { label:'Sun, Aug 2',       num:'Sun' },
+  { label:'Sat, Aug 1',       num:'Sat' },
+  { label:'Fri, Jul 31',      num:'Fri' }
+];
+$$('[data-datemenu]').forEach(menu => {
+  DATES.forEach((d, i) => {
+    const b = document.createElement('button');
+    if (i === 0) b.classList.add('sel');
+    b.innerHTML = `<span>${d.label}</span><span class="dnum">${d.num}</span>`;
+    b.addEventListener('click', () => {
+      $('[data-datelabel]', menu.closest('.hero')).textContent = d.label;
+      $$('button', menu).forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel');
+      menu.classList.remove('open');
+    });
+    menu.append(b);
+  });
+});
+$$('[data-datebtn]').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const menu = $('[data-datemenu]', btn.closest('.hero'));
+    const was = menu.classList.contains('open');
+    closeAllMenus();
+    if (!was) menu.classList.add('open');
+  });
+});
+document.addEventListener('click', closeAllMenus);
+
+/* ==========================================================================
+   STATE MACHINE — the control panel drives data-state on <body>.
+   CSS does the hiding/showing; this code fills in the cover content
+   (skeletons + messages) once, and tweaks the few text-only spots.
+   ========================================================================== */
+
+// Build the covers for every stateful card that has a chart / body.
+const COVER_COPY = {
+  notworn: { title:'Band not worn',
+             sub:'Off wrist since 10:20 — wear your band to keep tracking.' },
+  empty:   { title:'No data yet',
+             sub:'Wear your band for a day and this card will fill in.' }
+};
+const WATCH_ICON = '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M164,32H92A28.1,28.1,0,0,0,64,60V196a28.1,28.1,0,0,0,28,28h72a28.1,28.1,0,0,0,28-28V60A28.1,28.1,0,0,0,164,32Zm12,164a12,12,0,0,1-12,12H92a12,12,0,0,1-12-12V60A12,12,0,0,1,92,48h72a12,12,0,0,1,12,12Z"/></svg>';
+const MOON_ICON  = '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M233.5,142.2a8.1,8.1,0,0,0-8.5-1.9A88.1,88.1,0,0,1,115.7,31a8,8,0,0,0-10.4-10.4A104,104,0,1,0,235.4,150.7,8.1,8.1,0,0,0,233.5,142.2Z"/></svg>';
+
+$$('.card.stateful').forEach(card => {
+  const body = $('.card-body', card);
+  if (!body) return;
+  // keep layout height stable across states; cards on hidden tabs measure 0,
+  // so fall back to a sensible height (chart cards are ~150px tall)
+  const h = body.offsetHeight || (card.dataset.chart ? 150 : 80);
+
+  const load = document.createElement('div');
+  load.className = 'cover-loading state-cover';
+  load.style.minHeight = Math.max(h, 64) + 'px';
+  load.innerHTML =
+    '<div class="skel" style="height:14px;width:45%;margin-bottom:12px"></div>' +
+    '<div class="skel" style="height:' + Math.max(h-40, 40) + 'px"></div>';
+
+  const notworn = document.createElement('div');
+  notworn.className = 'cover-notworn state-cover';
+  notworn.style.minHeight = Math.max(h, 96) + 'px';
+  notworn.innerHTML = WATCH_ICON +
+    '<div class="cover-title">' + COVER_COPY.notworn.title + '</div>' +
+    '<div class="cover-sub">' + COVER_COPY.notworn.sub + '</div>';
+
+  const empty = document.createElement('div');
+  empty.className = 'cover-empty state-cover';
+  empty.style.minHeight = Math.max(h, 96) + 'px';
+  empty.innerHTML = MOON_ICON +
+    '<div class="cover-title">' + COVER_COPY.empty.title + '</div>' +
+    '<div class="cover-sub">' + COVER_COPY.empty.sub + '</div>';
+
+  body.append(load, notworn, empty);
+});
+
+// Small tiles on the Health tab get compact covers (no room for full copy).
+$$('.tile.stateful').forEach(tile => {
+  $('.cover-notworn', tile).innerHTML =
+    '<div style="margin-top:14px;color:var(--text-3)">' + WATCH_ICON.replace('<svg ','<svg style="width:18px;height:18px" ') + '</div>' +
+    '<div class="cover-sub">Band not worn</div>';
+  $('.cover-notworn', tile).style.minHeight = '0';
+  $('.cover-notworn', tile).style.border = 'none';
+  $('.cover-notworn', tile).style.padding = '0';
+  $('.cover-empty', tile).innerHTML =
+    '<div style="margin-top:14px;color:var(--text-3)">–</div>' +
+    '<div class="cover-sub">No data yet</div>';
+  $('.cover-empty', tile).style.minHeight = '0';
+  $('.cover-empty', tile).style.border = 'none';
+  $('.cover-empty', tile).style.padding = '0';
+});
+
+// Hero copy per state (headline + summary swap).
+const HERO_COPY = {
+  health:  { notworn:['Band not worn','Put your band on to keep today’s picture complete.'],
+             empty:  ['Welcome to Pebble','Wear your band today and your readiness score will appear here.'] },
+  activity:{ notworn:['Band not worn','Activity paused at 10:20 — wear your band to keep counting.'],
+             empty:  ['No activity yet','Your steps, distance and calories will show up after your first sync.'] },
+  sleep:   { notworn:['Band not worn','Wear your band tonight to track your sleep.'],
+             empty:  ['No sleep data yet','After your first night with the band, your score appears here.'] }
+};
+const heroRest = {};
+$$('.page').forEach(page => {
+  const hero = $('.hero', page); if (!hero) return;
+  const head = $('.headline', hero), sum = $('.summary', hero);
+  if (head && sum) heroRest[page.id] = [head, sum];
+});
+
+const bandStatus = $('#bandStatus');
+const BAND_COPY = {
+  default:'Connected · battery 68%',
+  loading:'Connecting…',
+  syncing:'Connected · syncing',
+  notworn:'Connected · not on wrist',
+  empty:  'Not paired yet'
+};
+
+function setState(state){
+  document.body.dataset.state = state;
+  // hero text: state copy for notworn/empty, original otherwise
+  for (const id in heroRest){
+    const [head, sum] = heroRest[id];
+    const key = id.replace('page-','');
+    if ((state === 'notworn' || state === 'empty') && HERO_COPY[key]){
+      head.dataset.rest ??= head.textContent;
+      sum.dataset.rest  ??= sum.textContent;
+      head.textContent = HERO_COPY[key][state][0];
+      sum.textContent  = HERO_COPY[key][state][1];
+      head.classList.remove('live'); sum.classList.remove('live');
+    } else {
+      if (head.dataset.rest){ head.textContent = head.dataset.rest; sum.textContent = sum.dataset.rest; }
+      head.classList.add('live'); sum.classList.add('live');
+    }
+  }
+  bandStatus.textContent = BAND_COPY[state];
+  // highlight the picked option in the panel
+  $$('#stateOpts label').forEach(l => l.classList.toggle('on', $('input', l).value === state));
+}
+
+$$('#stateOpts input').forEach(r => r.addEventListener('change', () => setState(r.value)));
+setState('default');
+</script>
 </body>
 </html>
