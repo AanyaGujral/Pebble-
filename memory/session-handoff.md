@@ -34,11 +34,28 @@ what decisions were made, and the exact next steps.
 
 ## Exact next steps
 
-1. Metric detail pages (tap a card → full-screen metric history).
-2. Workout details page for the Activity tab.
-3. Port the About / Goal-setting subpages from the standalone prototypes.
-4. Review Health and Me layouts with the owner and turn them into specs
-   under `docs/`.
+1. Get the two background PNGs from the owner as file uploads and save them
+   to `assets/backgrounds/activity-dusk.png` + `sleep-night.png` (slots are
+   already wired; code-drawn stand-ins show until then).
+2. Owner approval → push the pending local commits to
+   `claude/pebble-app-tabs-prototype-jty6sh`.
+3. Metric detail pages (tap a card → full-screen metric history).
+4. Workout details page for the Activity tab.
+
+## Done since first build (feedback round, 2026-08-07)
+
+- Month-scroll history calendar modal (scroll up for earlier months) on all
+  three data tabs; picking a day updates that tab's date label.
+- About activity / About sleep read-only pages behind the 3-dot menus.
+- Goal setting: activity (steps / distance / calories value sheet) and
+  sleep (24 h bedtime dial, drag handles, 15-min snap, wake-up alarm toggle).
+- Sleep continuity card expands to the "When you slept" 7-night timeline.
+- All icons now Phosphor (path data embedded in index.html).
+- Health tab: greeting "Good morning, Aanya", three nested rings
+  (sleep / readiness / activity) + legend chips.
+- Me tab rebuilt after the owner's settings screenshot: PBL Qore 2 device
+  card (MAC, firmware, Unbind, status), working toggles, grouped rows —
+  all colors/type from tokens.
 
 ## Known limitations
 
