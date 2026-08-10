@@ -5,6 +5,19 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-10 — Activity empty states + calendar polish (owner feedback,
+  round 2) — In the "empty" card state on the Activity tab: the steps /
+  distance / calories charts now keep their frame (gridlines + axis labels)
+  with the data marks hidden instead of the generic "no data yet" cover;
+  Today's goals shows its three rows zeroed (0 / goal, bars empty); Goals
+  met swaps to a no-data week — dotted rings on past days and today, three
+  empty rings on future days (matches the owner's reference images); the
+  Workouts card hides entirely. Scrubbing is disabled while a chart shows
+  no data. History calendar: fade overlay halved to 68px and the month
+  scroll gets extra bottom padding, so the sheet opens with the previous
+  month's last ring row tucked under the fade and the current month sitting
+  higher.
+
 - 2026-08-10 — Activity tab fix round (owner feedback) — (1) Steps bar chart
   scrub now picks the bar by slot (floor(x/slot), same rule as the approved
   bar-chart component — the old round() rule grabbed the wrong bar near slot
