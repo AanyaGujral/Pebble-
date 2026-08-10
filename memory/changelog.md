@@ -5,6 +5,19 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-10 — Activity-only flow: new nav, one no-data state (owner
+  feedback, round 3) — Bottom nav replaced with the owner's "pebblenav"
+  component: floating 328×60 pill, background blur, 24px icons (regular
+  idle / fill selected), 10px labels; icon markup copied verbatim from the
+  supplied file. This flow now lands on Activity, and Health / Sleep / Me
+  are visible but non-clickable (their screens will be integrated
+  separately). Watch-not-worn state removed everywhere — "No data" (the
+  old empty) is the only no-data state; loading / syncing removed from the
+  control panel but their plumbing is kept for later integration. History
+  calendar: future days are now completely empty — day number only, no
+  ring (a zero-length dash with round caps had been rendering as a small
+  green dot).
+
 - 2026-08-10 — Activity empty states + calendar polish (owner feedback,
   round 2) — In the "empty" card state on the Activity tab: the steps /
   distance / calories charts now keep their frame (gridlines + axis labels)

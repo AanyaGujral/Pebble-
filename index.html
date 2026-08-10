@@ -185,27 +185,43 @@ body{
 }
 
 /* ==========================================================================
-   4. BOTTOM NAVIGATION — recreated from the supplied screenshot:
-      pill container, 4 items (Health, Activity, Sleep, Me),
-      active tab = filled icon + brightest label
+   4. BOTTOM NAVIGATION — owner-supplied component ("pebblenav"):
+      floating 328×60 pill, background blur over the scrolling content,
+      4 tabs of 72×60. Metrics copied from the component file; the bar
+      background is the component's neutral-800 @ 80%, written with
+      color-mix so it stays on tokens.
+      Only Activity is wired up in this flow — Health / Sleep / Me are
+      shown idle and non-clickable (their screens land separately).
    ========================================================================== */
-.tabbar{
-  position:absolute;left:8px;right:8px;bottom:14px;z-index:55;
-  height:72px;border-radius:32px;
-  background:var(--surface-card);
-  border:0.5px solid var(--neutral-700);
-  display:grid;grid-template-columns:repeat(4,1fr);
+.pebble-nav{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:20px;z-index:55;
+  display:flex;align-items:center;gap:4px;
+  width:328px;height:60px;padding:0 14px;
+  border-radius:999px;
+  background:color-mix(in srgb, var(--neutral-800) 80%, transparent);
+  -webkit-backdrop-filter:blur(26px);   /* Figma background blur 52 */
+  backdrop-filter:blur(26px);
+  box-shadow:0 8px 24px color-mix(in srgb, var(--neutral-900) 48%, transparent),
+             0 2px 6px color-mix(in srgb, var(--neutral-900) 32%, transparent);
 }
-.tab{
-  appearance:none;background:none;border:0;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  font-family:inherit;font-size:13px;line-height:18px;font-weight:500;color:var(--text-3);
+.pebble-tab{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  width:72px;height:60px;padding:10px 0;border:0;background:none;border-radius:999px;
+  font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;
 }
-.tab svg{width:26px;height:26px;display:block}
-.tab .ico-fill{display:none}
-.tab.active{color:var(--text-1)}
-.tab.active .ico-line{display:none}
-.tab.active .ico-fill{display:block}
+.pebble-tab:focus-visible{outline:2px solid var(--neutral-0);outline-offset:-2px}
+.pebble-tab .icon{display:block;width:24px;height:24px;color:var(--neutral-300);transition:color 160ms ease, transform 160ms ease}
+.pebble-tab .label{font-size:10px;line-height:14px;font-weight:400;letter-spacing:.01em;color:var(--neutral-300);transition:color 160ms ease}
+.pebble-tab:active .icon{transform:scale(.92)}
+.pebble-tab .ico-fill{display:none}
+/* selected: filled glyph at neutral 0, label at neutral 100 */
+.pebble-tab[aria-current="page"] .ico-line{display:none}
+.pebble-tab[aria-current="page"] .ico-fill{display:block}
+.pebble-tab[aria-current="page"] .icon{color:var(--neutral-0)}
+.pebble-tab[aria-current="page"] .label{color:var(--neutral-100)}
+/* tabs whose screens aren't in this flow yet: visible but inert */
+.pebble-tab[aria-disabled="true"]{cursor:default}
+.pebble-tab[aria-disabled="true"]:active .icon{transform:none}
 
 /* ==========================================================================
    5. SHARED SCREEN PIECES — header, hero ring, stat chips, cards
@@ -496,10 +512,9 @@ body{
    6. CARD STATES — driven by data-state on <body>
    --------------------------------------------------------------------------
    default  → everything as designed
-   loading  → skeleton pulses replace live values and charts
-   syncing  → live data stays, a spinning "Syncing…" chip appears
-   notworn  → values become —, body swaps to a "band not worn" note
-   empty    → values become —, body swaps to a dashed "no data yet" note
+   empty    → the ONE no-data state: values become —, cards show their
+              no-data treatment (watch-not-worn was removed — owner)
+   loading / syncing → kept for later integration, not selectable now
    ========================================================================== */
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -512,33 +527,29 @@ body{
 
 /* what hides / shows per state (only inside .stateful regions) */
 body[data-state="loading"]  .stateful .live{display:none !important}
-body[data-state="notworn"]  .stateful .live{display:none !important}
 body[data-state="empty"]    .stateful .live{display:none !important}
 body[data-state="loading"]  .stateful .cover-loading{display:block}
-body[data-state="notworn"]  .stateful .cover-notworn{display:flex}
 body[data-state="empty"]    .stateful .cover-empty{display:flex}
 body[data-state="syncing"]  .stateful .statechip.sync{display:flex}
 body[data-state="syncing"]  .stateful .card-body{opacity:.6}
 body[data-state="syncing"]  .stateful .hero-media{opacity:.75}
 
-/* covers share one look: icon + short line, vertically centered */
-.cover-notworn,.cover-empty{
+/* the no-data cover: icon + short line, vertically centered */
+.cover-empty{
   flex-direction:column;align-items:center;justify-content:center;gap:8px;
   min-height:96px;border-radius:12px;border:1px dashed var(--neutral-600);
   padding:16px;text-align:center;
 }
-.cover-notworn svg,.cover-empty svg{width:22px;height:22px;color:var(--text-3)}
+.cover-empty svg{width:22px;height:22px;color:var(--text-3)}
 .cover-title{font-size:13px;line-height:18px;font-weight:500;color:var(--text-2)}
 .cover-sub{font-size:11px;line-height:16px;color:var(--text-3)}
 .value-dash{display:none;font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;font-feature-settings:var(--num-features);color:var(--text-3)}
-body[data-state="notworn"] .stateful .value-dash,
 body[data-state="empty"]   .stateful .value-dash{display:block}
 body[data-state="loading"] .stateful .value-skel{display:block}
 .value-skel{display:none;width:64px;height:20px;margin-left:auto}
 
 /* hero states */
 body[data-state="loading"] .hero.stateful .score{visibility:hidden}
-body[data-state="notworn"] .hero.stateful .score,
 body[data-state="empty"]   .hero.stateful .score{color:var(--text-3)}
 
 /* ---- Activity-tab empty-state exceptions (owner spec) ----
@@ -570,21 +581,23 @@ body[data-state="empty"] .stateful.empty-rings .cover-empty{display:none}
    ========================================================================== */
 @media (prefers-reduced-motion:reduce){
   *{animation:none !important;transition:none !important}
+  .pebble-tab:active .icon{transform:none !important}
 }
 </style>
 </head>
 <body data-state="default">
 
-<!-- ======================= CONTROL PANEL ======================= -->
+<!-- ======================= CONTROL PANEL =======================
+     Flag (owner, 2026-08-10): this flow keeps only two states —
+     Default and No data (the old "empty"). Watch-not-worn is removed
+     for good; loading / syncing will be integrated separately, so
+     their CSS/JS plumbing stays below but they are not selectable. -->
 <aside class="panel" aria-label="Prototype controls">
   <h2>Card states</h2>
-  <p class="hint">Applies to every data card on the Health, Activity and Sleep tabs (and the band card on Me).</p>
+  <p class="hint">Applies to every data card on the Activity tab.</p>
   <div class="opts" id="stateOpts">
     <label class="on"><input type="radio" name="cardstate" value="default" checked><span>Default<span class="desc">Live data, as designed</span></span></label>
-    <label><input type="radio" name="cardstate" value="loading"><span>Loading<span class="desc">Skeletons while data loads</span></span></label>
-    <label><input type="radio" name="cardstate" value="syncing"><span>Syncing<span class="desc">Data shown, band syncing</span></span></label>
-    <label><input type="radio" name="cardstate" value="notworn"><span>Watch not worn<span class="desc">Band off wrist since 10:20</span></span></label>
-    <label><input type="radio" name="cardstate" value="empty"><span>Empty<span class="desc">New user, no data yet</span></span></label>
+    <label><input type="radio" name="cardstate" value="empty"><span>No data<span class="desc">New user, nothing synced yet</span></span></label>
   </div>
 </aside>
 
@@ -609,7 +622,9 @@ body[data-state="empty"] .stateful.empty-rings .cover-empty{display:none}
            first-pass layout reusing the hero + tile patterns from the
            approved Sleep/Activity screens. Metrics link to their tabs.
            ========================================================= -->
-      <section class="page active" id="page-health">
+      <!-- Flag: this flow lands on Activity (the tab being built) — Health
+           is kept in the file but is not reachable from the nav for now. -->
+      <section class="page" id="page-health">
         <div class="hero stateful" style="background:linear-gradient(180deg, color-mix(in srgb, var(--metric-readiness) 10%, var(--surface-app)) 0%, var(--surface-app) 88%)">
           <div class="screen-head">
             <div>
@@ -643,7 +658,6 @@ body[data-state="empty"] .stateful.empty-rings .cover-empty{display:none}
             </div>
             <div class="headline"><span class="live">You're set up for a solid day</span><span class="value-dash" style="font-size:17px;line-height:22px;font-family:var(--font-text);font-weight:600">&nbsp;</span></div>
             <p class="summary live">Sleep was restful and your heart is recovered. A workout today would land well.</p>
-            <p class="summary cover-notworn" style="display:none"></p>
             <div class="statechip sync" style="justify-content:center">
               <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
               <span>Syncing with band…</span>
@@ -663,7 +677,6 @@ body[data-state="empty"] .stateful.empty-rings .cover-empty{display:none}
             <div class="tile stateful card" data-goto="sleep">
               <div class="tl"><span class="sw" style="background:var(--metric-sleep)"></span>Sleep</div>
               <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
-              <div class="cover-notworn state-cover mini"></div>
               <div class="cover-empty state-cover mini"></div>
               <div class="tv live"><span class="tn">7:34</span><span class="tu">hrs</span></div>
               <div class="ts live">Score 78 · restful</div>
@@ -671,7 +684,6 @@ body[data-state="empty"] .stateful.empty-rings .cover-empty{display:none}
             <div class="tile stateful card" data-goto="activity">
               <div class="tl"><span class="sw" style="background:var(--metric-steps)"></span>Steps</div>
               <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
-              <div class="cover-notworn state-cover mini"></div>
               <div class="cover-empty state-cover mini"></div>
               <div class="tv live"><span class="tn">7,240</span></div>
               <div class="ts live">Goal 10,000 · 72%</div>
@@ -679,7 +691,6 @@ body[data-state="empty"] .stateful.empty-rings .cover-empty{display:none}
             <div class="tile stateful card">
               <div class="tl"><span class="sw" style="background:var(--metric-heart-rate)"></span>Heart rate</div>
               <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
-              <div class="cover-notworn state-cover mini"></div>
               <div class="cover-empty state-cover mini"></div>
               <div class="tv live"><span class="tn">64</span><span class="tu">bpm</span></div>
               <div class="ts live">Resting · just now</div>
@@ -687,7 +698,6 @@ body[data-state="empty"] .stateful.empty-rings .cover-empty{display:none}
             <div class="tile stateful card">
               <div class="tl"><span class="sw" style="background:var(--metric-hrv)"></span>HRV</div>
               <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
-              <div class="cover-notworn state-cover mini"></div>
               <div class="cover-empty state-cover mini"></div>
               <div class="tv live"><span class="tn">48</span><span class="tu">ms</span></div>
               <div class="ts live">7-day avg 45 ms</div>
@@ -695,7 +705,6 @@ body[data-state="empty"] .stateful.empty-rings .cover-empty{display:none}
             <div class="tile stateful card">
               <div class="tl"><span class="sw" style="background:var(--metric-spo2)"></span>Blood oxygen</div>
               <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
-              <div class="cover-notworn state-cover mini"></div>
               <div class="cover-empty state-cover mini"></div>
               <div class="tv live"><span class="tn">96</span><span class="tu">%</span></div>
               <div class="ts live">Overnight average</div>
@@ -703,7 +712,6 @@ body[data-state="empty"] .stateful.empty-rings .cover-empty{display:none}
             <div class="tile stateful card">
               <div class="tl"><span class="sw" style="background:var(--metric-skin-temp)"></span>Skin temp</div>
               <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
-              <div class="cover-notworn state-cover mini"></div>
               <div class="cover-empty state-cover mini"></div>
               <div class="tv live"><span class="tn">33.2</span><span class="tu">°C</span></div>
               <div class="ts live">Same as baseline</div>
@@ -716,7 +724,7 @@ body[data-state="empty"] .stateful.empty-rings .cover-empty{display:none}
            ACTIVITY TAB — recreated from the approved standalone
            prototype (score ring, goals, week rings, 3 charts, workouts)
            ========================================================= -->
-      <section class="page" id="page-activity">
+      <section class="page active" id="page-activity">
         <div class="hero stateful" style="background:linear-gradient(180deg, color-mix(in srgb, var(--metric-activity) 9%, var(--surface-app)) 0%, var(--surface-app) 90%)">
           <!-- Owner-supplied dusk-forest background. The PNG loads from
                assets/backgrounds/ when present; until then a code-drawn
@@ -1393,29 +1401,32 @@ body[data-state="empty"] .stateful.empty-rings .cover-empty{display:none}
       </div>
     </div>
 
-    <!-- ============ BOTTOM NAV (from the supplied screenshot) ============ -->
-    <nav class="tabbar" aria-label="Main tabs">
-      <!-- icons are Phosphor (regular when idle, fill when active) -->
-      <button class="tab active" data-tab="health" aria-label="Health tab">
-        <span class="ico-line phi" data-ph="house" style="width:26px;height:26px"></span>
-        <span class="ico-fill phi" data-ph="house" data-weight="fill" style="width:26px;height:26px"></span>
-        <span>Health</span>
+    <!-- ============ BOTTOM NAV — owner-supplied "pebblenav" component ============
+         Icon markup is copied VERBATIM from the owner's component file:
+         Phosphor regular when idle, fill when selected (sleep + me idle
+         glyphs are the stroke-drawn variants from that file).
+         Health / Sleep / Me are non-clickable in this flow (owner) —
+         their screens will be integrated separately. -->
+    <nav class="pebble-nav" aria-label="Primary">
+      <button type="button" class="pebble-tab" data-tab="health" aria-disabled="true">
+        <svg class="icon ico-line" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z"/></svg>
+        <svg class="icon ico-fill" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z"/></svg>
+        <span class="label">Health</span>
       </button>
-      <button class="tab" data-tab="activity" aria-label="Activity tab">
-        <!-- owner swapped the Activity icon to Phosphor "sneaker-move" -->
-        <span class="ico-line phi" data-ph="sneaker-move" style="width:26px;height:26px"></span>
-        <span class="ico-fill phi" data-ph="sneaker-move" data-weight="fill" style="width:26px;height:26px"></span>
-        <span>Activity</span>
+      <button type="button" class="pebble-tab" data-tab="activity" aria-current="page">
+        <svg class="icon ico-line" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M231.16,166.63l-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-8-8,48.05,48.05,0,0,1-48-48,8,8,0,0,0-12.83-6.37L30.13,76l-.2.16a16,16,0,0,0-1.24,23.75L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63ZM224,200H151.37L40,88.63l12.87-9.76,38.79,38.79A8,8,0,0,0,103,106.34L65.74,69.11l40-30.31A64.15,64.15,0,0,0,160,87.5v21.89a63.65,63.65,0,0,0,35.38,57.24L224,180.94ZM70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm40,24a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16h54.8A8,8,0,0,1,110.8,208Z"/></svg>
+        <svg class="icon ico-fill" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z"/></svg>
+        <span class="label">Activity</span>
       </button>
-      <button class="tab" data-tab="sleep" aria-label="Sleep tab">
-        <span class="ico-line phi" data-ph="moon" style="width:26px;height:26px"></span>
-        <span class="ico-fill phi" data-ph="moon" data-weight="fill" style="width:26px;height:26px"></span>
-        <span>Sleep</span>
+      <button type="button" class="pebble-tab" data-tab="sleep" aria-disabled="true">
+        <svg class="icon ico-line" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path d="M108.11,28.11A96.09,96.09,0,0,0,227.89,147.89,96,96,0,1,1,108.11,28.11Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
+        <svg class="icon ico-fill" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z"/></svg>
+        <span class="label">Sleep</span>
       </button>
-      <button class="tab" data-tab="me" aria-label="Me tab">
-        <span class="ico-line phi" data-ph="user" style="width:26px;height:26px"></span>
-        <span class="ico-fill phi" data-ph="user" data-weight="fill" style="width:26px;height:26px"></span>
-        <span>Me</span>
+      <button type="button" class="pebble-tab" data-tab="me" aria-disabled="true">
+        <svg class="icon ico-line" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><circle cx="128" cy="96" r="64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M32,216c19.37-33.47,54.55-56,96-56s76.63,22.53,96,56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
+        <svg class="icon ico-fill" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z"/></svg>
+        <span class="label">Me</span>
       </button>
     </nav>
 
@@ -1675,8 +1686,8 @@ function attachScrub(card, chart){
     return { i, x: i/(cfg.data.length-1)*PLOT_W };
   }
   function show(e){
-    // no scrubbing while the card shows no data (loading / not worn / empty)
-    if (/loading|notworn|empty/.test(document.body.dataset.state)) return;
+    // no scrubbing while the card shows no data
+    if (/loading|empty/.test(document.body.dataset.state)) return;
     const { i, x } = sample(e.clientX);
     valEl.textContent = cfg.fmt(cfg.data[i]);
     trendEl.innerHTML = '<span>' + cfg.stampFmt(i) + '</span>';
@@ -1716,7 +1727,7 @@ $$('[data-chart]').forEach(card => {
   const mount = $('[data-mount]', card);
   const cfg = CHARTS[key];
   if (!mount || !cfg) return;
-  mount.classList.add('live'); // charts hide in loading / notworn / empty
+  mount.classList.add('live'); // charts hide in loading / empty
   if (cfg.kind === 'line'){ attachScrub(card, drawLine(mount, key)); }
   else if (cfg.kind === 'bars'){ attachScrub(card, drawBars(mount, key)); }
   else if (cfg.kind === 'hypno'){ drawHypno(mount); }
@@ -1727,12 +1738,12 @@ $$('[data-chart]').forEach(card => {
    ========================================================================== */
 
 // One day cell: three concentric rings (steps / distance / calories).
-// state: {fr:[f,f,f]} fractions 0..1, or 'notworn', or 'future'.
+// state: {fr:[f,f,f]} fractions 0..1, or 'nodata' (dotted), or 'future'.
 function dayRing(state){
   const svg = svgEl('svg', { width:34, height:34, viewBox:'0 0 36 36' });
   const radii = [15.5, 11.5, 7.5];
   const hues  = ['var(--metric-steps)','var(--metric-distance)','var(--metric-calories)'];
-  if (state === 'notworn'){
+  if (state === 'nodata'){
     svg.append(svgEl('circle', { cx:18, cy:18, r:13, fill:'none', stroke:'var(--neutral-500)',
       'stroke-width':2, 'stroke-dasharray':'2.5 3.5', 'stroke-linecap':'round' }));
     return svg;
@@ -1752,7 +1763,7 @@ function dayRing(state){
 // The week around "today" (Thu Aug 6) — same days as the prototype.
 const WEEK = [
   { lab:'M', num:3, state:{ fr:[1,1,1] },        cls:'' },
-  { lab:'T', num:4, state:'notworn',             cls:'' },
+  { lab:'T', num:4, state:'nodata',              cls:'' },
   { lab:'W', num:5, state:{ fr:[1,0.58,0.42] },  cls:'' },
   { lab:'T', num:6, state:{ fr:[0.72,0.64,0.6] },cls:'today' },
   { lab:'F', num:7, state:'future',              cls:'future' },
@@ -1779,7 +1790,7 @@ WEEK.forEach(d => {
   cell.className = 'day ' + d.cls;
   const lab = document.createElement('span'); lab.className = 'dlab'; lab.textContent = d.lab;
   const num = document.createElement('span'); num.className = 'dnum'; num.textContent = d.num;
-  cell.append(lab, dayRing(d.cls === 'future' ? 'future' : 'notworn'), num);
+  cell.append(lab, dayRing(d.cls === 'future' ? 'future' : 'nodata'), num);
   weekEmpty.append(cell);
 });
 weekMount.after(weekEmpty);
@@ -1880,9 +1891,16 @@ $$('.hero-bg svg[data-art]').forEach(paintScene);
 /* ==========================================================================
    TAB BAR + MENUS + DATE PICKER
    ========================================================================== */
-$$('.tab').forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
+$$('.pebble-tab').forEach(btn => btn.addEventListener('click', () => {
+  // Health / Sleep / Me are inert in this flow — their screens land separately
+  if (btn.getAttribute('aria-disabled') === 'true') return;
+  showTab(btn.dataset.tab);
+}));
 function showTab(name){
-  $$('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  $$('.pebble-tab').forEach(b => {
+    if (b.dataset.tab === name) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
   $$('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
   $('#page-' + name).scrollTop = 0;
   closeAllMenus();
@@ -1990,14 +2008,18 @@ function buildCalendar(tab){
       const btn = document.createElement('button');
       btn.className = 'cal-day' + (future ? ' future' : '');
       btn.type = 'button';
-      const dash = future ? '0 ' + C.toFixed(1) : (dayScore(d, m)/100*C).toFixed(1) + ' ' + C.toFixed(1);
+      const dash = (dayScore(d, m)/100*C).toFixed(1) + ' ' + C.toFixed(1);
+      // future days are completely empty — just the day number over a blank
+      // svg (kept for row alignment). No ring, no dot. (owner request)
       btn.innerHTML =
         `<span class="dn" style="color:${sel ? cfg.sel : 'var(--text-1)'}">${d}</span>` +
-        `<svg width="28" height="28" viewBox="0 0 28 28">
-           <circle cx="14" cy="14" r="10.5" fill="none" stroke-width="3" stroke="var(--surface-raised)"/>
-           <circle cx="14" cy="14" r="10.5" fill="none" stroke-width="3" stroke="${sel ? cfg.sel : cfg.ring}"
-                   stroke-linecap="round" stroke-dasharray="${dash}" transform="rotate(-90 14 14)"/>
-         </svg>`;
+        (future
+          ? `<svg width="28" height="28" viewBox="0 0 28 28"></svg>`
+          : `<svg width="28" height="28" viewBox="0 0 28 28">
+               <circle cx="14" cy="14" r="10.5" fill="none" stroke-width="3" stroke="var(--surface-raised)"/>
+               <circle cx="14" cy="14" r="10.5" fill="none" stroke-width="3" stroke="${sel ? cfg.sel : cfg.ring}"
+                       stroke-linecap="round" stroke-dasharray="${dash}" transform="rotate(-90 14 14)"/>
+             </svg>`);
       if (!future) btn.addEventListener('click', () => {
         selDate[tab] = { y, m, d };
         $('#page-' + tab + ' [data-datelabel]').textContent = dateLabelFor(tab);
@@ -2197,13 +2219,11 @@ $('#contToggle').addEventListener('click', () => {
    ========================================================================== */
 
 // Build the covers for every stateful card that has a chart / body.
+// (Watch-not-worn was removed — "no data" is the only no-data state.)
 const COVER_COPY = {
-  notworn: { title:'Band not worn',
-             sub:'Off wrist since 10:20 — wear your band to keep tracking.' },
   empty:   { title:'No data yet',
              sub:'Wear your band for a day and this card will fill in.' }
 };
-const WATCH_ICON = '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M164,32H92A28.1,28.1,0,0,0,64,60V196a28.1,28.1,0,0,0,28,28h72a28.1,28.1,0,0,0,28-28V60A28.1,28.1,0,0,0,164,32Zm12,164a12,12,0,0,1-12,12H92a12,12,0,0,1-12-12V60A12,12,0,0,1,92,48h72a12,12,0,0,1,12,12Z"/></svg>';
 const MOON_ICON  = '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M233.5,142.2a8.1,8.1,0,0,0-8.5-1.9A88.1,88.1,0,0,1,115.7,31a8,8,0,0,0-10.4-10.4A104,104,0,1,0,235.4,150.7,8.1,8.1,0,0,0,233.5,142.2Z"/></svg>';
 
 $$('.card.stateful').forEach(card => {
@@ -2220,13 +2240,6 @@ $$('.card.stateful').forEach(card => {
     '<div class="skel" style="height:14px;width:45%;margin-bottom:12px"></div>' +
     '<div class="skel" style="height:' + Math.max(h-40, 40) + 'px"></div>';
 
-  const notworn = document.createElement('div');
-  notworn.className = 'cover-notworn state-cover';
-  notworn.style.minHeight = Math.max(h, 96) + 'px';
-  notworn.innerHTML = WATCH_ICON +
-    '<div class="cover-title">' + COVER_COPY.notworn.title + '</div>' +
-    '<div class="cover-sub">' + COVER_COPY.notworn.sub + '</div>';
-
   const empty = document.createElement('div');
   empty.className = 'cover-empty state-cover';
   empty.style.minHeight = Math.max(h, 96) + 'px';
@@ -2234,17 +2247,11 @@ $$('.card.stateful').forEach(card => {
     '<div class="cover-title">' + COVER_COPY.empty.title + '</div>' +
     '<div class="cover-sub">' + COVER_COPY.empty.sub + '</div>';
 
-  body.append(load, notworn, empty);
+  body.append(load, empty);
 });
 
 // Small tiles on the Health tab get compact covers (no room for full copy).
 $$('.tile.stateful').forEach(tile => {
-  $('.cover-notworn', tile).innerHTML =
-    '<div style="margin-top:14px;color:var(--text-3)">' + WATCH_ICON.replace('<svg ','<svg style="width:18px;height:18px" ') + '</div>' +
-    '<div class="cover-sub">Band not worn</div>';
-  $('.cover-notworn', tile).style.minHeight = '0';
-  $('.cover-notworn', tile).style.border = 'none';
-  $('.cover-notworn', tile).style.padding = '0';
   $('.cover-empty', tile).innerHTML =
     '<div style="margin-top:14px;color:var(--text-3)">–</div>' +
     '<div class="cover-sub">No data yet</div>';
@@ -2255,12 +2262,9 @@ $$('.tile.stateful').forEach(tile => {
 
 // Hero copy per state (headline + summary swap).
 const HERO_COPY = {
-  health:  { notworn:['Band not worn','Put your band on to keep today’s picture complete.'],
-             empty:  ['Welcome to Pebble','Wear your band today and your readiness score will appear here.'] },
-  activity:{ notworn:['Band not worn','Activity paused at 10:20 — wear your band to keep counting.'],
-             empty:  ['No activity yet','Your steps, distance and calories will show up after your first sync.'] },
-  sleep:   { notworn:['Band not worn','Wear your band tonight to track your sleep.'],
-             empty:  ['No sleep data yet','After your first night with the band, your score appears here.'] }
+  health:  { empty: ['Welcome to Pebble','Wear your band today and your readiness score will appear here.'] },
+  activity:{ empty: ['No activity yet','Your steps, distance and calories will show up after your first sync.'] },
+  sleep:   { empty: ['No sleep data yet','After your first night with the band, your score appears here.'] }
 };
 const heroRest = {};
 $$('.page').forEach(page => {
@@ -2272,19 +2276,18 @@ $$('.page').forEach(page => {
 const bandStatus = $('#bandStatus');
 const BAND_COPY = {
   default:'Connected',
-  loading:'Connecting…',
-  syncing:'Syncing…',
-  notworn:'Not on wrist',
+  loading:'Connecting…',   // kept for later integration
+  syncing:'Syncing…',      // kept for later integration
   empty:  'Disconnected'
 };
 
 function setState(state){
   document.body.dataset.state = state;
-  // hero text: state copy for notworn/empty, original otherwise
+  // hero text: no-data copy in the empty state, original otherwise
   for (const id in heroRest){
     const [head, sum] = heroRest[id];
     const key = id.replace('page-','');
-    if ((state === 'notworn' || state === 'empty') && HERO_COPY[key]){
+    if (state === 'empty' && HERO_COPY[key]){
       head.dataset.rest ??= head.textContent;
       sum.dataset.rest  ??= sum.textContent;
       head.textContent = HERO_COPY[key][state][0];

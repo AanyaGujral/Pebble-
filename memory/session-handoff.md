@@ -5,10 +5,18 @@ what decisions were made, and the exact next steps.
 
 ## Current status
 
-- `index.html` is the full app prototype: Android phone mockup (360px) with
-  4 tabs — Health, Activity, Sleep, Me — and the bottom nav recreated from
-  the supplied screenshot (Phosphor icons: regular idle, fill active;
-  Activity uses owner-picked "sneaker-move").
+- `index.html` is now an **Activity-only flow**: it lands on the Activity
+  tab, and Health / Sleep / Me are visible in the nav but non-clickable
+  (owner: the 4 tabs are built one at a time and will be integrated
+  separately — their page markup is still in the file, just unreachable).
+- Bottom nav is the owner's "pebblenav" component: floating 328×60 pill
+  with background blur, Phosphor icons regular-idle / fill-selected
+  (Activity = "sneaker-move"), 10px labels, `aria-current` marks the
+  selected tab.
+- Card states are down to two: **Default** and **No data** (the old
+  "empty"). Watch-not-worn was REMOVED for good; loading / syncing were
+  taken out of the control panel but their CSS/JS plumbing is kept for
+  later integration.
 - Sleep and Activity tabs are recreated from the approved standalone
   prototypes: score rings, hypnogram, overnight vitals charts, today's
   goals, goals-met week rings, workouts list, nap, sleep continuity.
