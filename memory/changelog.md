@@ -5,6 +5,17 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-10 — Merged the two working copies: adopted the parallel session's
+  version (metric details pages with D/W/M/Y switcher, two-state control
+  panel scoped to the Activity tab, goal lines, dotted bar-scrub) as the
+  base, then applied the StatTile feedback round: detail summaries now use
+  the approved StatTile component (one-line headers, small-light unit text,
+  equal-width tiles), steps ≥10k shown in thousands (25.2K-style), Goals
+  met as "7 of 30" with a small "of", Active hours on one line ("17 HRS"),
+  Best day as small-DAY + big number ("DAY 11"); extra space added between
+  detail plots and their X-axis labels (Activity tab as reference); no-data
+  state on detail pages keeps tile headers with — and chart frames empty.
+
 - 2026-08-07 (later) — Feedback round: ported the month-scroll history
   calendar, About pages, and goal-setting flows (activity value sheet +
   sleep bedtime dial with draggable handles) from the standalone prototypes;
