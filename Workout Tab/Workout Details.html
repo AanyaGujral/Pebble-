@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Workout Details · Pebble</title>
+
+<!-- League Spartan carries every numeral. Google Sans Flex is not on Google
+     Fonts yet, so text falls back to system (same as the token sheet). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   Generated verbatim from js/tokens.js — do not hand-edit values here.
+   /* Copied into this file (instead of importing js/tokens.js) because the
+      tokens file is an ES module, and browsers block module imports when a
+      page is opened by double-clicking (file://). Same pattern as the
+      StatTile component preview. Values must stay in sync with js/tokens.js. */
+/* ════════════════════════════════════════════════════════════════════ */
+:root{
+--crimson-0:#FFEAED;--crimson-100:#FFC2C9;--crimson-200:#FD99A5;--crimson-300:#F26E83;--crimson-400:#E43A62;--crimson-500:#C02D50;--crimson-600:#9E2040;--crimson-700:#7C142F;--crimson-800:#5D0820;--crimson-900:#3F0112;
+--terracotta-0:#FFEEE5;--terracotta-100:#FDCEBE;--terracotta-200:#F2AF98;--terracotta-300:#E68F72;--terracotta-400:#D96F4A;--terracotta-500:#B65A3A;--terracotta-600:#93472B;--terracotta-700:#73341D;--terracotta-800:#532210;--terracotta-900:#361104;
+--tangerine-0:#FFF0DF;--tangerine-100:#FFDCBA;--tangerine-200:#FDC894;--tangerine-300:#FAB36C;--tangerine-400:#F59E3B;--tangerine-500:#CA8028;--tangerine-600:#A16315;--tangerine-700:#7A4700;--tangerine-800:#552D00;--tangerine-900:#331500;
+--gold-0:#FBF3DE;--gold-100:#F9E8BE;--gold-200:#F7DD9C;--gold-300:#F5D278;--gold-400:#F2C64B;--gold-500:#C6A034;--gold-600:#9C7C1C;--gold-700:#735901;--gold-800:#4D3900;--gold-900:#2A1B00;
+--lime-0:#EEF8E0;--lime-100:#DCEEBF;--lime-200:#CAE39D;--lime-300:#B8D978;--lime-400:#A6CE4E;--lime-500:#86A839;--lime-600:#688424;--lime-700:#4B620F;--lime-800:#304100;--lime-900:#172300;
+--emerald-0:#E6F9EC;--emerald-100:#C0E8CE;--emerald-200:#9BD7B0;--emerald-300:#73C693;--emerald-400:#43B476;--emerald-500:#329560;--emerald-600:#22774A;--emerald-700:#125B36;--emerald-800:#034023;--emerald-900:#002611;
+--teal-0:#E4F9F4;--teal-100:#C1EDE4;--teal-200:#9EE0D3;--teal-300:#76D4C3;--teal-400:#45C7B3;--teal-500:#31A492;--teal-600:#1D8173;--teal-700:#076155;--teal-800:#004239;--teal-900:#00261F;
+--sky-0:#E7F6FF;--sky-100:#C4E3FA;--sky-200:#A2CFF1;--sky-300:#7EBCE8;--sky-400:#58A8DF;--sky-500:#458ABA;--sky-600:#336E96;--sky-700:#215273;--sky-800:#113952;--sky-900:#032134;
+--violet-0:#F1F1FF;--violet-100:#D6D4FF;--violet-200:#BBB7FC;--violet-300:#A29AF5;--violet-400:#8A7CEC;--violet-500:#7266C6;--violet-600:#5B50A2;--violet-700:#453C7F;--violet-800:#30295E;--violet-900:#1D163E;
+--orchid-0:#FEEDFF;--orchid-100:#F1CFFA;--orchid-200:#E4B1F2;--orchid-300:#D692E8;--orchid-400:#C873DE;--orchid-500:#A65DB9;--orchid-600:#864896;--orchid-700:#663474;--orchid-800:#492053;--orchid-900:#2D0E35;
+--neutral-0:#EFF1F9;--neutral-100:#D5D9EA;--neutral-200:#B8BDD3;--neutral-300:#999FB9;--neutral-400:#7B819C;--neutral-500:#5E637D;--neutral-600:#42465B;--neutral-700:#282B39;--neutral-800:#0F111B;--neutral-900:#07080C;
+}
+
+/* Semantic aliases — components reference these, never raw hues. */
+:root{
+--surface-app:var(--neutral-900);
+--surface-card:var(--neutral-800);
+--surface-raised:var(--neutral-700);
+--surface-fill:var(--neutral-600);
+
+--text-1:var(--neutral-0);
+--text-2:var(--neutral-200);
+--text-3:var(--neutral-400);
+
+--divider:var(--neutral-700);
+--gridline:var(--neutral-700);
+--border-card:var(--neutral-700);
+
+--metric-heart-rate:var(--crimson-400);
+--metric-hrv:var(--terracotta-400);
+--metric-calories:var(--tangerine-400);
+--metric-steps:var(--gold-400);
+--metric-activity:var(--lime-400);
+--metric-distance:var(--emerald-400);
+--metric-readiness:var(--teal-400);
+--metric-spo2:var(--sky-400);
+--metric-sleep:var(--violet-400);
+--metric-skin-temp:var(--orchid-400);
+--metric-track:var(--neutral-700);
+
+--positive-bg:#0E2A1B;--positive-fill:#1E5B38;--positive-icon:#4ADE80;--positive-text:#8AF0B0;
+--negative-bg:#331109;--negative-fill:#6E2418;--negative-icon:#F4604C;--negative-text:#FF9184;
+--caution-bg:#2E2103;--caution-fill:#6B4E0E;--caution-icon:#EFB428;--caution-text:#F5CE6F;
+--neutral-bg:var(--neutral-700);--neutral-fill:var(--neutral-600);--neutral-icon:var(--neutral-300);--neutral-text:var(--neutral-200);
+}
+
+/* Heart-rate training zones.
+   /* No zone tokens exist in js/tokens.js, and the two references disagree:
+      the wireframe legend uses red/gold/white/steel/gray dots, the zone-bar
+      reference uses an orange→blue heat scale. Went with a heat scale built
+      from primitive 400s (hottest zone = crimson, matching the heart-rate
+      metric hue) — flagged; promote to js/tokens.js if these stick. */
+:root{
+--zone-limit:var(--crimson-400);
+--zone-anaerobic:var(--tangerine-400);
+--zone-aerobic:var(--gold-400);
+--zone-fatburn:var(--emerald-400);
+--zone-warmup:var(--sky-400);
+}
+
+/* Typography — two families, two jobs. Every numeral is League Spartan with
+   tabular lining figures; all other text is Google Sans Flex (system fallback). */
+:root{
+--font-text:'Google Sans Flex','Google Sans',sans-serif;
+--font-number:'Spartan','League Spartan',sans-serif;
+--font-feature-numeric:'tnum' 1,'lnum' 1;
+
+--weight-regular:400;--weight-medium:500;--weight-semibold:600;--weight-bold:700;
+
+--h1-size:24px;--h1-line:30px;--h1-tracking:-0.01em;
+--h2-size:20px;--h2-line:26px;--h2-tracking:-0.005em;
+--h3-size:17px;--h3-line:22px;--h3-tracking:0;
+--p1-size:15px;--p1-line:22px;--p1-tracking:0;
+--p2-size:13px;--p2-line:18px;--p2-tracking:0;
+--p3-size:11px;--p3-line:16px;--p3-tracking:0;
+--caption-size:10px;--caption-line:14px;--caption-tracking:0.01em;
+--overline-size:11px;--overline-line:16px;--overline-tracking:0.08em;
+
+--num-2xl-size:56px;--num-2xl-line:60px;--num-2xl-tracking:-0.01em;--num-2xl-weight:700;
+--num-xl-size:42px;--num-xl-line:46px;--num-xl-tracking:-0.01em;--num-xl-weight:700;
+--num-l-size:24px;--num-l-line:28px;--num-l-tracking:-0.005em;--num-l-weight:700;
+--num-m-size:20px;--num-m-line:24px;--num-m-tracking:0;--num-m-weight:700;
+--num-s-size:13px;--num-s-line:16px;--num-s-tracking:0;--num-s-weight:500;
+--num-xs-size:10px;--num-xs-line:12px;--num-xs-tracking:0.01em;--num-xs-weight:500;
+
+--type-h1:var(--weight-semibold) var(--h1-size)/var(--h1-line) var(--font-text);
+--type-h2:var(--weight-semibold) var(--h2-size)/var(--h2-line) var(--font-text);
+--type-h3:var(--weight-medium) var(--h3-size)/var(--h3-line) var(--font-text);
+--type-p1:var(--weight-regular) var(--p1-size)/var(--p1-line) var(--font-text);
+--type-p2:var(--weight-regular) var(--p2-size)/var(--p2-line) var(--font-text);
+--type-p3:var(--weight-regular) var(--p3-size)/var(--p3-line) var(--font-text);
+--type-caption:var(--weight-regular) var(--caption-size)/var(--caption-line) var(--font-text);
+--type-overline:var(--weight-medium) var(--overline-size)/var(--overline-line) var(--font-text);
+--type-num-2xl:var(--num-2xl-weight) var(--num-2xl-size)/var(--num-2xl-line) var(--font-number);
+--type-num-xl:var(--num-xl-weight) var(--num-xl-size)/var(--num-xl-line) var(--font-number);
+--type-num-l:var(--num-l-weight) var(--num-l-size)/var(--num-l-line) var(--font-number);
+--type-num-m:var(--num-m-weight) var(--num-m-size)/var(--num-m-line) var(--font-number);
+--type-num-s:var(--num-s-weight) var(--num-s-size)/var(--num-s-line) var(--font-number);
+--type-num-xs:var(--num-xs-weight) var(--num-xs-size)/var(--num-xs-line) var(--font-number);
+}
+
+/* Spacing (4px base), radius, borders, layout constants, motion. */
+:root{
+--space-2:2px;--space-4:4px;--space-8:8px;--space-12:12px;--space-16:16px;--space-20:20px;
+--space-24:24px;--space-32:32px;--space-36:36px;--space-40:40px;--space-48:48px;--space-64:64px;
+
+--screen-width:360px;
+--screen-gutter:16px;
+--card-pad:16px;
+--card-gap:12px;
+
+--radius-4:4px;--radius-8:8px;--radius-12:12px;--radius-16:16px;--radius-20:20px;
+--radius-24:24px;--radius-28:28px;--radius-32:32px;--radius-36:36px;--radius-full:999px;
+--radius-card:var(--radius-20);
+
+--border-hairline:0.5px;
+--border-thin:1px;
+--stroke-chart-line:2px;
+--shadow-none:none;
+
+--duration-fast:120ms;
+--ease-standard:ease;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   DOCUMENT DEFAULTS — dark-only, app surface is always neutral-900
+   ════════════════════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--surface-app);
+  color:var(--text-1);
+  font:var(--type-p1);
+  -webkit-font-smoothing:antialiased;
+}
+/* Hard gate from .claude/rules: all motion off under reduced-motion. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   PAGE SHELL — one phone-width column, cards stacked with 12px rhythm
+   ════════════════════════════════════════════════════════════════════ */
+.screen{
+  max-width:400px;              /* phone frame; grows a little past 360 base */
+  margin:0 auto;
+  padding:var(--space-16) var(--screen-gutter) var(--space-64);
+  display:flex;
+  flex-direction:column;
+  gap:var(--card-gap);
+}
+
+/* ── Top bar: back · date · share ──────────────────────────────────── */
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:var(--space-4) 0 var(--space-8);
+}
+.topbar .title{
+  font:var(--type-h3);
+  font-weight:var(--weight-semibold);
+  color:var(--text-1);
+}
+.icon-btn{
+  width:44px;height:44px;
+  border-radius:var(--radius-full);
+  background:var(--surface-card);
+  border:none;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-1);
+  cursor:pointer;
+  transition:background var(--duration-fast) var(--ease-standard);
+}
+.icon-btn:hover{background:var(--surface-raised)}
+.icon-btn svg{display:block}
+
+/* ── Workout identity: activity icon, name, time range ─────────────── */
+.workout-id{
+  display:flex;
+  align-items:center;
+  gap:var(--space-16);
+  padding:var(--space-8) 0 var(--space-4);
+}
+.workout-id .badge{
+  width:60px;height:60px;
+  border-radius:var(--radius-16);
+  background:var(--surface-card);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-1);
+  flex-shrink:0;
+}
+.workout-id .name{
+  font:var(--type-h2);
+  font-weight:var(--weight-bold);
+  letter-spacing:var(--h2-tracking);
+  color:var(--text-1);
+  margin:0;
+}
+.workout-id .time{
+  font:var(--type-p1);
+  color:var(--text-3);
+  margin:var(--space-2) 0 0;
+}
+
+/* ── Cards ──────────────────────────────────────────────────────────── */
+.card{
+  background:var(--surface-card);
+  border-radius:var(--radius-card);
+  padding:var(--card-pad);
+  box-shadow:var(--shadow-none);
+}
+
+/* Session Summary — the AI insight card. Gold treatment per wireframe:
+   thin gold outline + faint gold wash over the card surface. */
+.card.summary{
+  border:var(--border-thin) solid var(--gold-600);
+  background:linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--gold-900) 35%, var(--surface-card)),
+    var(--surface-card) 70%
+  );
+  padding:var(--space-20) var(--card-pad);
+}
+.summary .head{
+  display:flex;align-items:center;gap:var(--space-8);
+  margin-bottom:var(--space-8);
+}
+.summary .head .spark{color:var(--gold-400);display:flex}
+.summary .head h2{
+  font:var(--type-h3);
+  font-weight:var(--weight-semibold);
+  color:var(--text-1);
+  margin:0;
+}
+.summary p{
+  font:var(--type-p1);
+  color:var(--text-2);
+  margin:0;
+}
+
+/* ── Key stats card: big kcal figure + 2×2 StatTile grid ───────────── */
+/* StatTile pattern from the design system (label / figure / unit),
+   align-left variant, embedded in a shared card with hairline dividers. */
+.kcal .figure{display:flex;align-items:baseline;gap:var(--space-4)}
+.kcal .value{
+  font:var(--type-num-xl);
+  letter-spacing:var(--num-xl-tracking);
+  font-feature-settings:var(--font-feature-numeric);
+  color:var(--text-1);
+}
+.kcal .unit{
+  font:var(--type-overline);
+  font-weight:var(--weight-semibold);
+  letter-spacing:var(--overline-tracking);
+  text-transform:uppercase;
+  color:var(--text-3);
+  font-size:var(--p2-size); /* unit reads slightly larger beside the xl figure */
+}
+.kcal .context{
+  font:var(--type-p1);
+  color:var(--text-3);
+  margin:var(--space-4) 0 0;
+}
+
+.stats-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  margin-top:var(--space-16);
+  border-top:var(--border-hairline) solid var(--divider);
+}
+.stat-tile{padding:var(--space-16) 0 var(--space-4)}
+.stat-tile:nth-child(odd){
+  border-right:var(--border-hairline) solid var(--divider);
+  padding-right:var(--space-16);
+}
+.stat-tile:nth-child(even){padding-left:var(--space-16)}
+.stat-tile:nth-child(-n+2){border-bottom:var(--border-hairline) solid var(--divider);padding-bottom:var(--space-16)}
+.stat-tile .label{
+  display:flex;align-items:center;gap:var(--space-8);
+  font:var(--type-p2);
+  font-weight:var(--weight-medium);
+  color:var(--text-3);
+  margin-bottom:var(--space-8);
+}
+.stat-tile .label svg{flex-shrink:0}
+.stat-tile .figure{display:flex;align-items:baseline;gap:var(--space-4)}
+.stat-tile .value{
+  font:var(--type-num-l);
+  letter-spacing:var(--num-l-tracking);
+  font-feature-settings:var(--font-feature-numeric);
+  color:var(--text-1);
+}
+/* "Moderate" is a word, not a numeral — Spartan is numerals-only, so effort
+   uses the text family at matching size/weight (h1 size, bold). */
+.stat-tile .value.word{
+  font:var(--weight-bold) var(--h1-size)/var(--num-l-line) var(--font-text);
+  letter-spacing:var(--h1-tracking);
+}
+.stat-tile .unit{
+  font:var(--type-overline);
+  font-weight:var(--weight-semibold);
+  letter-spacing:var(--overline-tracking);
+  text-transform:uppercase;
+  color:var(--text-3);
+}
+
+/* ── Heart Rate card ────────────────────────────────────────────────── */
+.hr-head{
+  display:flex;align-items:center;gap:var(--space-8);
+  margin-bottom:var(--space-16);
+}
+.hr-head .glyph{color:var(--metric-heart-rate);display:flex}
+.hr-head h2{
+  font:var(--type-h3);
+  font-weight:var(--weight-semibold);
+  color:var(--text-1);
+  margin:0;
+}
+
+.hr-stats{
+  display:flex;
+  margin-bottom:var(--space-20);
+}
+.hr-stats .cell{flex:1}
+.hr-stats .cell + .cell{
+  border-left:var(--border-hairline) solid var(--divider);
+  padding-left:var(--space-16);
+}
+.hr-stats .figure{display:flex;align-items:baseline;gap:var(--space-4)}
+.hr-stats .value{
+  font:var(--type-num-l);
+  letter-spacing:var(--num-l-tracking);
+  font-feature-settings:var(--font-feature-numeric);
+  color:var(--text-1);
+}
+.hr-stats .unit{
+  font:var(--type-overline);
+  font-weight:var(--weight-semibold);
+  letter-spacing:var(--overline-tracking);
+  text-transform:uppercase;
+  color:var(--text-3);
+}
+.hr-stats .caption{
+  font:var(--type-p2);
+  color:var(--text-3);
+  margin-top:var(--space-2);
+}
+
+/* Chart. Per the wireframe the trace is a white line over a soft gray fill
+   (not the crimson metric hue) — followed the wireframe, flagged here. */
+.hr-chart svg{width:100%;height:auto;display:block}
+.hr-chart .grid-line{
+  stroke:var(--gridline);
+  stroke-width:var(--border-thin);
+  stroke-dasharray:3 4;
+}
+.hr-chart .axis-num{
+  font:var(--type-num-s);
+  font-feature-settings:var(--font-feature-numeric);
+  fill:var(--text-3);
+}
+.hr-chart .trace{
+  fill:none;
+  stroke:var(--text-1);
+  stroke-width:var(--stroke-chart-line);
+  stroke-linejoin:round;
+  stroke-linecap:round;
+}
+.hr-chart .trace-fill{fill:var(--surface-raised);opacity:0.55}
+.hr-xlabels{
+  display:flex;justify-content:space-between;
+  padding-right:var(--space-36); /* clears the y-axis label gutter */
+  margin-top:var(--space-4);
+}
+.hr-xlabels span{
+  font:var(--type-num-s);
+  font-feature-settings:var(--font-feature-numeric);
+  color:var(--text-3);
+}
+
+/* ── HR zones — per-zone rows in the zone-bar reference style:
+     uppercase name · bpm range · colored % · time, bar on hatched track ── */
+.zones{
+  margin-top:var(--space-16);
+  padding-top:var(--space-16);
+  border-top:var(--border-hairline) solid var(--divider);
+  display:flex;flex-direction:column;gap:var(--space-8);
+}
+.zone{
+  background:var(--surface-raised);
+  border-radius:var(--radius-16);
+  padding:var(--space-12);
+}
+.zone .head{
+  display:flex;align-items:baseline;gap:var(--space-8);
+  margin-bottom:var(--space-8);
+  white-space:nowrap; /* zone header must stay on one line, like the reference */
+}
+.zone .name{
+  font:var(--type-overline);
+  font-weight:var(--weight-semibold);
+  letter-spacing:var(--overline-tracking);
+  text-transform:uppercase;
+  color:var(--text-1);
+}
+.zone .range{
+  font:var(--type-num-xs);
+  font-feature-settings:var(--font-feature-numeric);
+  color:var(--text-3);
+  text-transform:uppercase;
+}
+/* On very narrow phones the longest header ("Anaerobic Endurance" + range +
+   % + time) can't fit one line, so the bpm range steps aside first. */
+@media (max-width:380px){
+  .zone .range{display:none}
+}
+.zone .pct{
+  font:var(--type-num-s);
+  font-feature-settings:var(--font-feature-numeric);
+}
+.zone .time{
+  margin-left:auto;
+  display:flex;align-items:baseline;gap:var(--space-4);
+}
+.zone .time .value{
+  font:var(--type-num-m);
+  font-feature-settings:var(--font-feature-numeric);
+  color:var(--text-1);
+}
+.zone .time .unit{
+  font:var(--type-overline);
+  font-weight:var(--weight-semibold);
+  letter-spacing:var(--overline-tracking);
+  text-transform:uppercase;
+  color:var(--text-3);
+}
+/* Hatched track = the unfilled remainder of the session, like the reference. */
+.zone .track{
+  height:14px;
+  border-radius:var(--radius-8);
+  background:repeating-linear-gradient(
+    135deg,
+    var(--surface-fill) 0 2px,
+    transparent 2px 7px
+  );
+  overflow:hidden;
+}
+.zone .fill{
+  height:100%;
+  border-radius:var(--radius-8);
+}
+/* Zone color + share of the 45:00 session (24/16/4/1/0 min). */
+.zone.z-limit    .fill{background:var(--zone-limit);width:0%}
+.zone.z-limit    .pct{color:var(--zone-limit)}
+.zone.z-anaerobic .fill{background:var(--zone-anaerobic);width:2%}
+.zone.z-anaerobic .pct{color:var(--zone-anaerobic)}
+.zone.z-aerobic  .fill{background:var(--zone-aerobic);width:9%}
+.zone.z-aerobic  .pct{color:var(--zone-aerobic)}
+.zone.z-fatburn  .fill{background:var(--zone-fatburn);width:36%}
+.zone.z-fatburn  .pct{color:var(--zone-fatburn)}
+.zone.z-warmup   .fill{background:var(--zone-warmup);width:53%}
+.zone.z-warmup   .pct{color:var(--zone-warmup)}
+</style>
+</head>
+<body>
+
+<main class="screen">
+
+  <!-- ── Top bar: back, date, share ─────────────────────────────────── -->
+  <header class="topbar">
+    <button class="icon-btn" aria-label="Back">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.5 4 L6.5 10 L12.5 16"/>
+      </svg>
+    </button>
+    <span class="title">Today, 1 Aug</span>
+    <button class="icon-btn" aria-label="Share workout">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10 12 V2.5 M6.8 5.2 L10 2 L13.2 5.2"/>
+        <path d="M6 8.5 H4.5 V17 H15.5 V8.5 H14"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- ── Workout identity ───────────────────────────────────────────── -->
+  <section class="workout-id">
+    <div class="badge" aria-hidden="true">
+      <!-- barbell -->
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+        <path d="M2.5 14 H5.5 M22.5 14 H25.5"/>
+        <path d="M7 8.5 V19.5 M11 6.5 V21.5 M17 6.5 V21.5 M21 8.5 V19.5"/>
+        <path d="M11 14 H17"/>
+      </svg>
+    </div>
+    <div>
+      <h1 class="name">Strength Training</h1>
+      <p class="time">7:10 AM – 7:55 AM</p>
+    </div>
+  </section>
+
+  <!-- ── Session Summary (AI insight) ───────────────────────────────── -->
+  <section class="card summary">
+    <div class="head">
+      <span class="spark" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M8 2 L9.6 6.4 L14 8 L9.6 9.6 L8 14 L6.4 9.6 L2 8 L6.4 6.4 Z"/>
+          <path d="M14.5 11.5 L15.4 13.6 L17.5 14.5 L15.4 15.4 L14.5 17.5 L13.6 15.4 L11.5 14.5 L13.6 13.6 Z" opacity="0.8"/>
+        </svg>
+      </span>
+      <h2>Session Summary</h2>
+    </div>
+    <p>Solid session. Heart rate cycled between sets rather than staying
+    elevated, which is what you want for strength work — 89% of the time sat
+    in warm-up and fat-burning zones.</p>
+  </section>
+
+  <!-- ── Key stats: calories + 2×2 stat tiles ───────────────────────── -->
+  <section class="card">
+    <div class="kcal">
+      <div class="figure">
+        <span class="value">200</span>
+        <span class="unit">kcal</span>
+      </div>
+      <p class="context">Strength Training · 7:10 AM – 7:55 AM</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-tile">
+        <div class="label">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <circle cx="7" cy="7" r="5.75"/><path d="M7 4 V7 L9.2 8.4"/>
+          </svg>
+          Duration
+        </div>
+        <div class="figure"><span class="value">45:00</span></div>
+      </div>
+      <div class="stat-tile">
+        <div class="label">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+            <path d="M7 12.2 C4.4 10 1.6 7.8 1.6 5.2 C1.6 3.4 3 2 4.7 2 C5.7 2 6.5 2.5 7 3.2 C7.5 2.5 8.3 2 9.3 2 C11 2 12.4 3.4 12.4 5.2 C12.4 7.8 9.6 10 7 12.2 Z"/>
+          </svg>
+          Avg HR
+        </div>
+        <div class="figure"><span class="value">111</span><span class="unit">bpm</span></div>
+      </div>
+      <div class="stat-tile">
+        <div class="label">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+            <path d="M7 12.2 C4.4 10 1.6 7.8 1.6 5.2 C1.6 3.4 3 2 4.7 2 C5.7 2 6.5 2.5 7 3.2 C7.5 2.5 8.3 2 9.3 2 C11 2 12.4 3.4 12.4 5.2 C12.4 7.8 9.6 10 7 12.2 Z"/>
+          </svg>
+          Max HR
+        </div>
+        <div class="figure"><span class="value">136</span><span class="unit">bpm</span></div>
+      </div>
+      <div class="stat-tile">
+        <div class="label">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <path d="M2 9.5 A5.4 5.4 0 0 1 12 9.5"/><path d="M7 9.5 L9.8 6"/>
+          </svg>
+          Effort
+        </div>
+        <div class="figure"><span class="value word">Moderate</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Heart Rate: avg/max, trace, zones ──────────────────────────── -->
+  <section class="card">
+    <div class="hr-head">
+      <span class="glyph" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 14 14" fill="currentColor">
+          <path d="M7 12.2 C4.4 10 1.6 7.8 1.6 5.2 C1.6 3.4 3 2 4.7 2 C5.7 2 6.5 2.5 7 3.2 C7.5 2.5 8.3 2 9.3 2 C11 2 12.4 3.4 12.4 5.2 C12.4 7.8 9.6 10 7 12.2 Z"/>
+        </svg>
+      </span>
+      <h2>Heart Rate</h2>
+    </div>
+
+    <div class="hr-stats">
+      <div class="cell">
+        <div class="figure"><span class="value">111</span><span class="unit">bpm</span></div>
+        <div class="caption">Avg heart rate</div>
+      </div>
+      <div class="cell">
+        <div class="figure"><span class="value">136</span><span class="unit">bpm</span></div>
+        <div class="caption">Max heart rate</div>
+      </div>
+    </div>
+
+    <!-- HR trace, 07:10–07:55. Gridlines at 50/100/150/200 bpm.
+         Static sample data shaped like the wireframe: steady set-to-set
+         cycling ~95–125 bpm with one 136 bpm peak late in the session. -->
+    <div class="hr-chart">
+      <svg viewBox="0 0 332 146" role="img" aria-label="Heart rate over the workout, cycling between roughly 95 and 125 beats per minute with a peak of 136">
+        <line class="grid-line" x1="10" y1="17.6" x2="296" y2="17.6"/>
+        <line class="grid-line" x1="10" y1="55.9" x2="296" y2="55.9"/>
+        <line class="grid-line" x1="10" y1="94.1" x2="296" y2="94.1"/>
+        <line class="grid-line" x1="10" y1="132.4" x2="296" y2="132.4"/>
+        <text class="axis-num" x="330" y="21" text-anchor="end">200</text>
+        <text class="axis-num" x="330" y="59" text-anchor="end">150</text>
+        <text class="axis-num" x="330" y="97" text-anchor="end">100</text>
+        <text class="axis-num" x="330" y="136" text-anchor="end">50</text>
+        <path class="trace-fill" d="M10,99 16,95 22,93 28,79 34,95 40,77 46,96 52,76 58,94 64,78 70,96 76,75 82,95 88,77 94,97 100,76 106,94 112,78 118,96 124,75 130,93 136,77 142,95 148,76 154,96 160,78 166,94 172,76 178,95 184,77 190,96 196,75 202,93 208,77 214,67 218,80 224,74 230,90 236,79 242,95 248,77 254,94 260,78 266,96 272,80 278,93 284,84 290,97 296,101 L296,140 L10,140 Z"/>
+        <polyline class="trace" points="10,99 16,95 22,93 28,79 34,95 40,77 46,96 52,76 58,94 64,78 70,96 76,75 82,95 88,77 94,97 100,76 106,94 112,78 118,96 124,75 130,93 136,77 142,95 148,76 154,96 160,78 166,94 172,76 178,95 184,77 190,96 196,75 202,93 208,77 214,67 218,80 224,74 230,90 236,79 242,95 248,77 254,94 260,78 266,96 272,80 278,93 284,84 290,97 296,101"/>
+      </svg>
+      <div class="hr-xlabels"><span>07:10</span><span>07:55</span></div>
+    </div>
+
+    <!-- Zone minutes sum to the 45:00 session; warm-up + fat-burning
+         (24 + 16 = 40 min) is the 89% the summary card calls out.
+         /* BPM ranges aren't in the wireframe — derived from a standard
+            5-zone model around this user's data, flagged as sample data. */ -->
+    <div class="zones">
+      <div class="zone z-limit">
+        <div class="head">
+          <span class="name">Limit</span>
+          <span class="range">172+ bpm</span>
+          <span class="pct">0%</span>
+          <span class="time"><span class="value">0</span><span class="unit">min</span></span>
+        </div>
+        <div class="track"><div class="fill"></div></div>
+      </div>
+      <div class="zone z-anaerobic">
+        <div class="head">
+          <span class="name">Anaerobic Endurance</span>
+          <span class="range">153–171 bpm</span>
+          <span class="pct">2%</span>
+          <span class="time"><span class="value">1</span><span class="unit">min</span></span>
+        </div>
+        <div class="track"><div class="fill"></div></div>
+      </div>
+      <div class="zone z-aerobic">
+        <div class="head">
+          <span class="name">Aerobic Endurance</span>
+          <span class="range">134–152 bpm</span>
+          <span class="pct">9%</span>
+          <span class="time"><span class="value">4</span><span class="unit">min</span></span>
+        </div>
+        <div class="track"><div class="fill"></div></div>
+      </div>
+      <div class="zone z-fatburn">
+        <div class="head">
+          <span class="name">Fat Burning</span>
+          <span class="range">115–133 bpm</span>
+          <span class="pct">36%</span>
+          <span class="time"><span class="value">16</span><span class="unit">min</span></span>
+        </div>
+        <div class="track"><div class="fill"></div></div>
+      </div>
+      <div class="zone z-warmup">
+        <div class="head">
+          <span class="name">Warm Up</span>
+          <span class="range">&lt;115 bpm</span>
+          <span class="pct">53%</span>
+          <span class="time"><span class="value">24</span><span class="unit">min</span></span>
+        </div>
+        <div class="track"><div class="fill"></div></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+</body>
+</html>

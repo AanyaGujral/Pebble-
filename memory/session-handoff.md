@@ -5,9 +5,14 @@ what decisions were made, and the exact next steps.
 
 ## Current status
 
-- Repo skeleton created. One screen exists: Sleep (in `index.html`).
-- `js/tokens.js` still holds PLACEHOLDER colors and fonts — not real brand yet.
-- Not yet pushed to GitHub / not yet deployed.
+- Repo skeleton created. Screens: Sleep (old skeleton in `index.html`, richer
+  version in `Sleep Tab/`), Workout Details (`Workout Tab/Workout Details.html`).
+- `js/tokens.js` now holds the real Pebble tokens (color ramps, metric aliases,
+  Google Sans Flex / Spartan type scales, spacing, radius).
+- Note: `js/tokens.js` is an ES module, so standalone screens copy the tokens
+  in as CSS variables (see the comment at the top of the Workout Details page).
+  `index.html` still expects the old `window.T` placeholder shape, so it no
+  longer restyles correctly — migrate or retire it.
 
 ## Decisions made
 
