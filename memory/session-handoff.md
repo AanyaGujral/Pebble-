@@ -5,24 +5,39 @@ what decisions were made, and the exact next steps.
 
 ## Current status
 
-- Repo skeleton created. One screen exists: Sleep (in `index.html`).
-- `js/tokens.js` still holds PLACEHOLDER colors and fonts — not real brand yet.
-- Not yet pushed to GitHub / not yet deployed.
+- `index.html` now holds the FULL Pebble app prototype (phone mockup with
+  Health / Activity / Sleep / Me tabs, state-machine control panel, embedded
+  fonts). It opens by double-clicking — no server needed.
+- Real brand tokens are in `js/tokens.js` (the prototype inlines them as CSS
+  custom properties because ES-module imports don't work over `file://`;
+  if tokens change, re-copy the values into the `:root` block).
+- Newest feature: Steps / Distance / Calories detail pages on the Activity
+  tab — tap a chart card to open its internal page with a D/W/M/Y switcher,
+  chart, goal line (W/M/Y) and a three-chip summary row.
 
-## Decisions made
+## Decisions made (latest work)
 
-- Kept everything in a single `index.html` for now (no build step, no server).
-  Easier for a novice; split into multiple screen files later if it grows.
-- Using Inter font as a placeholder until real brand fonts are supplied.
+- Detail chart cards reuse the approved chart-card format and scrub/hover
+  states from the Activity tab (`drawBars` / `drawLine` / `attachScrub`);
+  the wireframes contributed only the D/W/M/Y tabs, axis label counts
+  (7 week, 8 month, 12 year) and the summary information.
+- Summary blocks reuse the Activity-tab stat chips, which put the label
+  above the value (the wireframes show value above label) — flagged in a
+  code comment next to `.sumchips`.
+- The wireframes' Steps/Distance/Calories pill switcher and the explainer
+  text under the summary were dropped (owner request, 2026-08-10).
+- All detail data is sample data, kept consistent with the Activity tab's
+  "today" (7,240 steps · 5.1 km · 420 kcal) and the goals from Goal setting
+  (10,000 steps · 8 km · 600 kcal).
 
 ## Exact next steps
 
-1. Replace placeholder values in `js/tokens.js` with real brand colors + fonts.
-2. Open `index.html` in a browser and confirm it restyles from the new tokens.
-3. Push to GitHub with GitHub Desktop, then enable GitHub Pages for a live URL.
-4. Build the next screen (Activity or Stress) reusing the same tokens.
+1. Owner review of the three detail pages (chip label/value order OK?).
+2. Workout details page is still pending (rows on Activity are visual-only).
+3. Health and Me tabs still have placeholder content in places.
 
 ## Known limitations
 
-- Only one screen. No navigation between screens yet.
-- No icons system yet (the PDF had an icon registry; add when needed).
+- Goal edits in Goal setting only update the label, not the charts.
+- Detail pages don't participate in the loading/empty state machine
+  (scrubbing is simply disabled in those states).
