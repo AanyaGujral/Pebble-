@@ -5,18 +5,34 @@ what decisions were made, and the exact next steps.
 
 ## Current status
 
-- `index.html` is now the full app prototype: Android phone mockup (360px)
-  with 4 tabs — Health, Activity, Sleep, Me — and the bottom nav recreated
-  from the supplied screenshot.
+- `index.html` is the full app prototype: Android phone mockup (360px) with
+  4 tabs — Health, Activity, Sleep, Me — and the bottom nav recreated from
+  the supplied screenshot (Phosphor icons: regular idle, fill active;
+  Activity uses owner-picked "sneaker-move").
 - Sleep and Activity tabs are recreated from the approved standalone
-  prototypes (in `Sleep Tab/` and the uploaded Activity file): score rings,
-  hypnogram, overnight vitals charts, today's goals, goals-met week rings,
-  workouts list, nap, sleep continuity. Line/bar charts support press-drag
-  scrubbing (value + timestamp swap into the card header).
+  prototypes: score rings, hypnogram, overnight vitals charts, today's
+  goals, goals-met week rings, workouts list, nap, sleep continuity.
+  Line/bar charts support press-drag scrubbing (value + timestamp swap into
+  the card header; bars get the component's dotted top guide line).
+- Flows: date pill → full month-scroll history calendar modal (newest month
+  at the bottom, scroll up for the past, per-tab ring colors, fade overlay
+  keeps the current month focal); 3-dot menus → About activity / About
+  sleep read-only pages; Goal setting → activity value-picker sheet (unit
+  only on the focal value) and sleep 24h bedtime dial (draggable handles,
+  15-min snap, 3h minimum, alarm toggle).
 - A control panel sits beside the phone and switches every data card between
   five states: **default, loading, syncing, watch-not-worn, empty**.
 - `js/tokens.js` holds the real brand palette (crimson→orchid ramps,
   neutrals, metric aliases, League Spartan numerals + Google Sans Flex text).
+
+## How this state got here (2026-08-10)
+
+The previous session's last two commits were never pushed and were lost with
+that session's machine. The current `index.html` was recovered from the
+published artifact (which was built from that exact state) and then the
+owner's Activity-tab fix round was applied on top. **Push the working branch
+after every meaningful commit — an unpushed commit only lives on one
+machine.**
 
 ## Decisions made (all flagged in code comments too)
 
@@ -25,19 +41,22 @@ what decisions were made, and the exact next steps.
   requirement wins). If `js/tokens.js` changes, re-copy the values.
 - Health and Me tabs have no approved spec — they are first-pass layouts
   reusing hero/tile/list patterns from the approved screens.
-- The Activity hero's photographic backdrop was replaced with token
-  gradients to keep the file small and colors tokenised.
-- The full-month calendar from the standalone prototypes was simplified to
-  a 7-day date dropdown in this build.
-- 3-dot menu entries (About / Goal setting / Share) are visual-only here;
-  the full subpages exist in the standalone prototypes.
+- Status bar is a transparent overlay so tab backgrounds run edge-to-edge to
+  the top, with scrims for legibility.
+- Activity / Sleep tab backgrounds: the owner's PNGs never arrived as file
+  uploads, so `<img>` slots point at `assets/backgrounds/activity-dusk.png`
+  and `assets/backgrounds/sleep-night.png` with code-drawn SVG stand-ins
+  showing until the files exist. Ask the owner to re-attach the PNGs as
+  file uploads.
 
 ## Exact next steps
 
-1. Metric detail pages (tap a card → full-screen metric history).
-2. Workout details page for the Activity tab.
-3. Port the About / Goal-setting subpages from the standalone prototypes.
-4. Review Health and Me layouts with the owner and turn them into specs
+1. Get the two background PNGs as actual file uploads → save to
+   `assets/backgrounds/`, verify they cover the stand-ins.
+2. Metric detail pages (tap a card → full-screen metric history).
+3. Workout details page for the Activity tab.
+4. Possible third background for the Health tab (only two were supplied).
+5. Review Health and Me layouts with the owner and turn them into specs
    under `docs/`.
 
 ## Known limitations
