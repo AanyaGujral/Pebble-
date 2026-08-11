@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pebble — Workout details (tokenised)</title>
+
+<!--
+  ============================================================================
+  WORKOUT DETAILS PAGE — standalone, tokenised preview
+  ============================================================================
+  This is the workout details screen from index.html, pulled out on its own so
+  it opens by double-clicking, plus a panel on the right listing every design
+  token the screen uses.
+
+  THE POINT OF THIS FILE
+  The two components this screen is built from (WorkoutStatsTiles and
+  HeartRateCard) arrived with hard-coded values — #0F111B, 24px, 0.5px and so
+  on. Here every one of those has been replaced by a custom property named
+  after its path in tokens.json, and each declaration carries that path in a
+  comment. So you can read straight down the token block and check the screen
+  against the design system line by line.
+
+  NAMING RULE
+  Custom properties keep the short names already used in index.html (so this
+  block can be pasted straight in), and the comment on each line gives the
+  full tokens.json path it maps to. For example:
+
+      /* color.neutral.800 */  --neutral-800:#0F111B;
+
+  Four things on this screen are NOT in the token set. They are marked
+  OFF-SCALE in the token block and listed at the bottom of the right-hand
+  panel, so nothing is quietly invented.
+
+  Fonts load from the Google Fonts CDN. Offline the page falls back to system
+  sans — the layout still holds, but the type will look wider than it should.
+  ============================================================================
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,400..700&family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ==========================================================================
+   1. DESIGN TOKENS
+   --------------------------------------------------------------------------
+   Only the tokens this screen actually uses. Every line names its
+   tokens.json path. Values are verbatim from tokens.js / tokens.json.
+   ========================================================================== */
+:root{
+  color-scheme:dark;
+
+  /* ---- primitive hues (only the steps this screen touches) ---- */
+  /* color.primitive.crimson.400   */ --crimson-400:#E43A62;
+  /* color.primitive.tangerine.400 */ --tangerine-400:#F59E3B;
+  /* color.primitive.gold.400      */ --gold-400:#F2C64B;
+  /* color.primitive.emerald.400   */ --emerald-400:#43B476;
+  /* color.primitive.sky.400       */ --sky-400:#58A8DF;
+
+  /* ---- neutrals ---- */
+  /* color.neutral.0   */ --neutral-0:#EFF1F9;
+  /* color.neutral.100 */ --neutral-100:#D5D9EA;
+  /* color.neutral.200 */ --neutral-200:#B8BDD3;
+  /* color.neutral.300 */ --neutral-300:#999FB9;
+  /* color.neutral.400 */ --neutral-400:#7B819C;
+  /* color.neutral.500 */ --neutral-500:#5E637D;
+  /* color.neutral.600 */ --neutral-600:#42465B;
+  /* color.neutral.700 */ --neutral-700:#282B39;
+  /* color.neutral.800 */ --neutral-800:#0F111B;
+  /* color.neutral.900 */ --neutral-900:#07080C;
+
+  /* ---- surfaces: elevation is lightness, never shadow ---- */
+  /* color.surface.app  */ --surface-app:var(--neutral-900);
+  /* color.surface.card */ --surface-card:var(--neutral-800);
+  /* color.neutral.700  */ --surface-raised:var(--neutral-700);
+  /* color.neutral.600  */ --surface-fill:var(--neutral-600);
+
+  /* ---- text ---- */
+  /* color.text.text-1 */ --text-1:var(--neutral-0);
+  /* color.text.text-2 */ --text-2:var(--neutral-200);
+  /* color.text.text-3 */ --text-3:var(--neutral-400);
+
+  /* ---- lines ---- */
+  /* color.neutral.700 */ --divider:var(--neutral-700);
+  /* color.neutral.700 */ --gridline:var(--neutral-700);
+
+  /* ---- semantic: glyphs and badges only, never chart lines or fills ---- */
+  /* color.semantic.neutral.bg   */ --neutral-bg:var(--neutral-700);
+  /* color.semantic.neutral.fill */ --neutral-fill:var(--neutral-600);
+  /* color.semantic.neutral.icon */ --neutral-icon:var(--neutral-300);
+  /* color.semantic.neutral.text */ --neutral-text:var(--neutral-200);
+
+  /* ---- metric alias: one hue per body signal, always step 400 ---- */
+  /* color.metric.heart-rate */ --metric-heart-rate:var(--crimson-400);
+
+  /* ---- type families ---- */
+  /* typography.fontFamily.text    */ --font-text:'Google Sans Flex','Google Sans',sans-serif;
+  /* typography.fontFamily.numeric */ --font-number:'Spartan','League Spartan',sans-serif;
+  /* tabular lining figures, per the tokens.js note on typeNumeric */
+  --num-features:'tnum' 1,'lnum' 1;
+
+  /* ---- type styles ----
+     Each is a `font` shorthand plus its letter-spacing, because
+     letter-spacing cannot ride inside the shorthand. */
+  /* typography.text.heading.h3.medium   */ --type-h3-medium:500 17px/22px var(--font-text);      --ls-h3-medium:0;
+  /* typography.text.paragraph.p1.medium */ --type-p1-medium:500 15px/22px var(--font-text);      --ls-p1-medium:0;
+  /* typography.text.paragraph.p3.regular*/ --type-p3-regular:400 11px/16px var(--font-text);     --ls-p3-regular:0;
+  /* typography.text.paragraph.p3.medium */ --type-p3-medium:500 11px/16px var(--font-text);      --ls-p3-medium:0;
+  /* typography.text.overline.medium     */ --type-overline-medium:500 11px/16px var(--font-text);   --ls-overline:0.08em;
+  /* typography.text.overline.semibold   */ --type-overline-semibold:600 11px/16px var(--font-text); /* shares --ls-overline */
+  /* typography.numeric.num-l  */ --type-num-l:700 24px/28px var(--font-number);  --ls-num-l:-0.005em;
+  /* typography.numeric.num-s  */ --type-num-s:500 13px/16px var(--font-number);  --ls-num-s:0;
+  /* typography.numeric.num-xs */ --type-num-xs:500 10px/12px var(--font-number); --ls-num-xs:0.01em;
+
+  /* OFF-SCALE 1 — an 11px numeric style. The HeartRateCard uses it for the
+     zone ranges, the zone percentages and the scrub timestamp. It sits
+     between numeric.num-xs (10px) and numeric.num-s (13px) and has no token.
+     Kept because the scrub timestamp must match the 11px text it replaces,
+     or the header jumps when you press the chart. */
+  --type-num-11:500 11px/16px var(--font-number); --ls-num-11:0.01em;
+
+  /* ---- radius ---- */
+  /* radius.12   */ --radius-12:12px;
+  /* radius.20   */ --radius-20:20px;
+  /* radius.24   */ --radius-24:24px;
+  /* radius.full */ --radius-full:999px;
+
+  /* OFF-SCALE 2 — the x-axis pill corner. The chart component specifies
+     radius.4 / 2. Half a token is not a token. */
+  --radius-pill-corner:2px;
+
+  /* ---- spacing ---- */
+  /* spacing.4  */ --space-4:4px;
+  /* spacing.8  */ --space-8:8px;
+  /* spacing.12 */ --space-12:12px;
+  /* spacing.16 */ --space-16:16px;
+  /* spacing.40 */ --space-40:40px;
+
+  /* ---- border width ---- */
+  /* borderWidth.hairline */ --hairline:0.5px;
+
+  /* ---- motion ----
+     OFF-SCALE 3 — there is no motion scale in tokens.json. These durations
+     are carried over from index.html so the scrub feels the same. */
+  --duration-fast:120ms;
+  --duration-base:140ms;
+}
+
+/* ==========================================================================
+   2. THE DESK — phone mock on the left, token audit on the right.
+      Preview scaffolding only; none of this ships.
+   ========================================================================== */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-height:100vh;background:var(--neutral-900);color:var(--text-1);
+  font-family:var(--font-text);-webkit-font-smoothing:antialiased;
+  display:flex;align-items:flex-start;justify-content:center;
+  gap:32px;padding:32px 16px;flex-wrap:wrap;
+}
+.stage{display:flex;flex-direction:column;gap:12px;align-items:center}
+/* workout switcher — preview affordance, not part of the screen */
+.switcher{display:flex;gap:4px;padding:4px;border-radius:var(--radius-full);background:var(--surface-card)}
+.switcher button{
+  border:0;border-radius:var(--radius-full);background:none;cursor:pointer;
+  padding:8px 16px;font:var(--type-p3-medium);color:var(--text-3);font-family:var(--font-text);
+}
+.switcher button.on{background:var(--surface-raised);color:var(--text-1)}
+.phone{
+  width:360px;height:720px;border-radius:36px;overflow:hidden;position:relative;
+  background:var(--surface-app);border:2px solid var(--neutral-700);
+}
+.caption{font:var(--type-p3-regular);color:var(--text-3)}
+
+/* ==========================================================================
+   3. THE SCREEN
+   ========================================================================== */
+.page{
+  position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;
+  background:var(--surface-app);padding-bottom:var(--space-40);
+}
+.page::-webkit-scrollbar{display:none}
+
+/* ---- 3a. header ----------------------------------------------------------
+   Back button, activity icon chip, name over the start-end time, share.
+   The 40px top padding, the 40px round back button pulled 12px left and the
+   20px caret are the app's standard sub-page header, unchanged. */
+.head{padding:var(--space-40) var(--space-16) 0;display:flex;align-items:center;gap:var(--space-8)}
+.iconbtn{
+  flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  background:none;border:0;cursor:pointer;border-radius:var(--radius-full);color:var(--text-1);
+}
+.iconbtn.back{margin-left:-12px}      /* pulls the caret onto the content edge */
+.iconbtn.share{margin-right:-12px}    /* mirrored on the other end */
+.iconbtn:hover{background:var(--surface-raised)}
+.iconbtn svg{width:20px;height:20px;display:block;fill:currentColor}
+
+/* the icon chip is the one from the Workouts card rows, unchanged */
+.chip{
+  flex:none;display:grid;place-items:center;width:40px;height:40px;
+  border-radius:var(--radius-12);background:var(--neutral-bg);
+}
+/* Flag: the chip glyph is neutral.100. semantic.neutral.icon (neutral.300)
+   is the token that ought to apply here — index.html uses neutral.100 and
+   this file matches it rather than silently correcting the screen. */
+.chip svg{width:20px;height:20px;display:block;fill:var(--neutral-100)}
+
+.title{flex:1;min-width:0;display:flex;flex-direction:column}
+/* Flag: the app's other sub-pages title at heading.h2.medium (20/26). Here
+   the title is a two-line stack beside a 40px chip, and at 20/26 the stack
+   (42px) out-grows the chip and makes this header taller than every other
+   one. Stepped down one level to heading.h3.medium. */
+.title .name{
+  font:var(--type-h3-medium);letter-spacing:var(--ls-h3-medium);color:var(--text-1);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.title .when{font:var(--type-p3-regular);letter-spacing:var(--ls-p3-regular);color:var(--text-3)}
+
+/* ---- 3b. body ---- */
+.body{padding:var(--space-16) var(--space-16) var(--space-40);display:flex;flex-direction:column;gap:var(--space-12)}
+
+/* ---- 3c. stat tiles (WorkoutStatsTiles) ----------------------------------
+   Four tiles, 2x2, left aligned, no icons. A row of four would leave 76px a
+   tile — too narrow for "45:00" at numeric.num-l.
+   Flag: the tiles come in at radius.24 and the heart-rate card below at
+   radius.20. Both are as supplied, so the difference is kept and flagged. */
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-8)}
+.tile{background:var(--surface-card);border-radius:var(--radius-24);padding:var(--space-16);text-align:left}
+.tile .label{
+  font:var(--type-overline-semibold);letter-spacing:var(--ls-overline);text-transform:uppercase;
+  color:var(--text-2);margin-bottom:var(--space-8);
+}
+.tile .figure{display:flex;align-items:baseline;gap:var(--space-4)}
+.tile .value{
+  font:var(--type-num-l);letter-spacing:var(--ls-num-l);color:var(--text-1);
+  font-feature-settings:var(--num-features);
+}
+.tile .unit{
+  font:var(--type-overline-semibold);letter-spacing:var(--ls-overline);text-transform:uppercase;
+  color:var(--text-3);
+}
+
+/* ---- 3d. heart-rate card (HeartRateCard) ----
+   One card, two blocks, split by a hairline inset to the content column. */
+.hr-card{background:var(--surface-card);border-radius:var(--radius-20);width:100%}
+.hr-rule{height:0;margin:0 var(--space-16);border-top:var(--hairline) solid var(--divider)}
+
+/* chart */
+.lc{
+  --accent:var(--metric-heart-rate);
+  --pill-bg:var(--neutral-bg);       /* semantic.neutral.bg */
+  --pill-text:var(--neutral-text);   /* semantic.neutral.text */
+  padding:var(--space-16);height:216px;display:flex;flex-direction:column;
+}
+.lc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-8);flex:none}
+.lc-title{font:var(--type-p1-medium);letter-spacing:var(--ls-p1-medium);color:var(--text-1);margin:0}
+.lc-block{text-align:right}
+.lc-row{display:flex;align-items:baseline;gap:var(--space-4);justify-content:flex-end}
+.lc-value{
+  font:var(--type-num-l);letter-spacing:var(--ls-num-l);color:var(--text-1);
+  font-feature-settings:var(--num-features);
+}
+.lc-unit{
+  font:var(--type-overline-medium);letter-spacing:var(--ls-overline);
+  text-transform:uppercase;color:var(--text-3);
+}
+/* resting and scrubbing states are both 11/16, so the swap causes no shift */
+.lc-sub{
+  font:var(--type-p3-medium);letter-spacing:var(--ls-p3-medium);color:var(--text-2);
+  margin-top:var(--space-4);display:flex;align-items:center;justify-content:flex-end;gap:var(--space-4);
+}
+.lc-sub.scrubbing{font:var(--type-num-11);letter-spacing:var(--ls-num-11);font-feature-settings:var(--num-features)}
+.lc-wrap{position:relative;flex:1;min-height:0;margin-top:var(--space-16)}
+.lc-wrap svg{display:block;width:100%;height:100%;touch-action:none}
+.lc-gridline{stroke:var(--gridline);stroke-width:0.5}
+.lc-y-label,.lc-x-label{
+  font:var(--type-num-xs);letter-spacing:var(--ls-num-xs);
+  fill:var(--text-3);font-feature-settings:var(--num-features);
+}
+.lc-pill-bg{fill:var(--pill-bg)}
+.lc-pill-label{
+  font:var(--type-num-xs);letter-spacing:var(--ls-num-xs);
+  fill:var(--pill-text);font-feature-settings:var(--num-features);
+}
+.lc-line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.lc-plot{transition:opacity var(--duration-base) ease}
+.lc-plot.dim{opacity:0.28}                 /* scrub state: the plot falls dark */
+.lc-hover-line{stroke:var(--text-3);stroke-width:1;stroke-dasharray:3 3;opacity:0}
+.lc-hover-dot{fill:var(--accent);stroke:var(--text-1);stroke-width:1.5;opacity:0}
+
+/* zones — five rows, no container per zone. The rail and fill are the goal
+   bar from Activity -> Today's goals, unchanged. */
+.hrz{padding:var(--space-16);display:flex;flex-direction:column;gap:var(--space-16)}
+.hrz-row{display:grid;grid-template-columns:1fr auto;align-items:baseline;column-gap:var(--space-8);row-gap:var(--space-8)}
+.hrz-label{display:flex;align-items:baseline;gap:6px;min-width:0}
+.hrz-name{
+  font:var(--type-overline-semibold);letter-spacing:var(--ls-overline);text-transform:uppercase;
+  color:var(--text-1);white-space:nowrap;
+}
+/* every numeral takes the numeric face */
+.hrz-range{
+  font:var(--type-num-11);letter-spacing:var(--ls-num-11);font-feature-settings:var(--num-features);
+  color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* the zone hue is the only colour in the row */
+.hrz-pct{
+  font:var(--type-num-11);letter-spacing:var(--ls-num-11);font-feature-settings:var(--num-features);
+  color:var(--zone);white-space:nowrap;
+}
+.hrz-dur{
+  justify-self:end;font:var(--type-num-s);letter-spacing:var(--ls-num-s);
+  font-feature-settings:var(--num-features);color:var(--text-1);white-space:nowrap;
+}
+.hrz-bar{
+  grid-column:1/-1;display:block;height:var(--space-8);border-radius:var(--radius-full);
+  background:var(--surface-raised);
+  box-shadow:inset 0 0 0 var(--hairline) var(--neutral-500);
+  overflow:hidden;
+}
+.hrz-bar i{display:block;height:100%;border-radius:var(--radius-full);background:var(--zone)}
+
+/* ==========================================================================
+   4. TOKEN AUDIT PANEL — preview scaffolding, not part of the screen
+   ========================================================================== */
+.audit{width:420px;max-width:100%;display:flex;flex-direction:column;gap:var(--space-16)}
+.audit h1{font:var(--type-h3-medium);color:var(--text-1);margin:0}
+.audit .lede{font:var(--type-p3-regular);color:var(--text-3);margin:4px 0 0}
+.group{background:var(--surface-card);border-radius:var(--radius-20);padding:var(--space-16)}
+.group h2{
+  font:var(--type-overline-semibold);letter-spacing:var(--ls-overline);text-transform:uppercase;
+  color:var(--text-2);margin:0 0 var(--space-12);
+}
+.row{
+  display:grid;grid-template-columns:24px 1fr;gap:var(--space-12);
+  padding:var(--space-8) 0;border-top:var(--hairline) solid var(--divider);
+}
+.group .row:first-of-type{border-top:0;padding-top:0}
+.sw{width:24px;height:24px;border-radius:var(--radius-full);box-shadow:inset 0 0 0 var(--hairline) var(--neutral-600)}
+.sw.sq{border-radius:6px}
+.path{font:var(--type-p3-medium);color:var(--text-1);word-break:break-all}
+.val{font:var(--type-num-11);letter-spacing:var(--ls-num-11);font-feature-settings:var(--num-features);color:var(--text-3)}
+.use{font:var(--type-p3-regular);color:var(--text-2);margin-top:2px}
+.flag{border-radius:var(--radius-12);padding:var(--space-12);background:var(--surface-raised)}
+.flag .path{color:var(--tangerine-400)}
+
+@media (prefers-reduced-motion:reduce){
+  .lc-plot{transition:none}
+}
+</style>
+</head>
+
+<body>
+
+<!-- ============ phone ============ -->
+<div class="stage">
+  <div class="switcher" role="tablist" aria-label="Workout">
+    <button type="button" class="on" data-workout="strength" role="tab" aria-selected="true">Strength training</button>
+    <button type="button" data-workout="run" role="tab" aria-selected="false">Morning run</button>
+  </div>
+
+  <div class="phone">
+    <div class="page">
+
+      <!-- header -->
+      <div class="head">
+        <button class="iconbtn back" type="button" aria-label="Back">
+          <!-- Phosphor caret-left, regular -->
+          <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg>
+        </button>
+
+        <span class="chip" id="icon"></span>
+
+        <span class="title">
+          <span class="name" id="name">Strength training</span>
+          <span class="when" id="when">10:15 – 11:00 AM</span>
+        </span>
+
+        <button class="iconbtn share" type="button" aria-label="Share workout">
+          <!-- Phosphor share-network, regular -->
+          <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M176,160a39.89,39.89,0,0,0-28.62,12.09l-46.1-29.63a39.8,39.8,0,0,0,0-28.92l46.1-29.63a40,40,0,1,0-8.66-13.45l-46.1,29.63a40,40,0,1,0,0,55.82l46.1,29.63A40,40,0,1,0,176,160Zm0-128a24,24,0,1,1-24,24A24,24,0,0,1,176,32ZM64,152a24,24,0,1,1,24-24A24,24,0,0,1,64,152Zm112,72a24,24,0,1,1,24-24A24,24,0,0,1,176,224Z"/></svg>
+        </button>
+      </div>
+
+      <div class="body">
+        <!-- stat tiles -->
+        <div class="tiles" id="tiles"></div>
+
+        <!-- heart rate -->
+        <div class="hr-card">
+          <div class="lc">
+            <div class="lc-header">
+              <h3 class="lc-title">Heart rate</h3>
+              <div class="lc-block">
+                <div class="lc-row">
+                  <span class="lc-value" id="hrValue">114</span>
+                  <span class="lc-unit">BPM</span>
+                </div>
+                <div class="lc-sub" id="hrSub"><span id="hrSubText">Average</span></div>
+              </div>
+            </div>
+            <div class="lc-wrap" id="chartWrap">
+              <svg id="chart" role="img" aria-label="Heart rate through the workout"></svg>
+            </div>
+          </div>
+          <div class="hr-rule"></div>
+          <div class="hrz" id="zones"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="caption">Scroll the screen for the last zone row. Press and drag the chart to scrub.</p>
+</div>
+
+<!-- ============ token audit ============ -->
+<aside class="audit">
+  <div>
+    <h1>Tokens on this screen</h1>
+    <p class="lede">Every value the screen paints, mapped to its path in tokens.json. Anything without a token is called out at the bottom.</p>
+  </div>
+
+  <section class="group">
+    <h2>Colour — surfaces &amp; text</h2>
+    <div class="row"><span class="sw sq" style="background:#07080C"></span><div>
+      <div class="path">color.surface.app → color.neutral.900</div>
+      <div class="val">#07080C</div><div class="use">Page background</div></div></div>
+    <div class="row"><span class="sw sq" style="background:#0F111B"></span><div>
+      <div class="path">color.surface.card → color.neutral.800</div>
+      <div class="val">#0F111B</div><div class="use">Stat tiles, heart-rate card</div></div></div>
+    <div class="row"><span class="sw sq" style="background:#282B39"></span><div>
+      <div class="path">color.neutral.700</div>
+      <div class="val">#282B39</div><div class="use">Zone rail, x-axis pill, button hover, hairlines</div></div></div>
+    <div class="row"><span class="sw sq" style="background:#5E637D"></span><div>
+      <div class="path">color.neutral.500</div>
+      <div class="val">#5E637D</div><div class="use">Inset hairline on the zone rail</div></div></div>
+    <div class="row"><span class="sw sq" style="background:#EFF1F9"></span><div>
+      <div class="path">color.text.text-1 → color.neutral.0</div>
+      <div class="val">#EFF1F9</div><div class="use">Activity name, stat values, zone names and durations</div></div></div>
+    <div class="row"><span class="sw sq" style="background:#B8BDD3"></span><div>
+      <div class="path">color.text.text-2 → color.neutral.200</div>
+      <div class="val">#B8BDD3</div><div class="use">Tile labels, the “Average” sublabel</div></div></div>
+    <div class="row"><span class="sw sq" style="background:#7B819C"></span><div>
+      <div class="path">color.text.text-3 → color.neutral.400</div>
+      <div class="val">#7B819C</div><div class="use">Start–end time, units, axis labels, zone ranges</div></div></div>
+  </section>
+
+  <section class="group">
+    <h2>Colour — semantic &amp; metric</h2>
+    <div class="row"><span class="sw sq" style="background:#282B39"></span><div>
+      <div class="path">color.semantic.neutral.bg → color.neutral.700</div>
+      <div class="val">#282B39</div><div class="use">Activity icon chip, x-axis pill fill</div></div></div>
+    <div class="row"><span class="sw sq" style="background:#B8BDD3"></span><div>
+      <div class="path">color.semantic.neutral.text → color.neutral.200</div>
+      <div class="val">#B8BDD3</div><div class="use">Start and end time inside the x-axis pills</div></div></div>
+    <div class="row"><span class="sw" style="background:#E43A62"></span><div>
+      <div class="path">color.metric.heart-rate → crimson.400</div>
+      <div class="val">#E43A62</div><div class="use">Chart line, its gradient fill, the scrub dot</div></div></div>
+  </section>
+
+  <section class="group">
+    <h2>Colour — heart-rate zones</h2>
+    <p class="use" style="margin:0 0 var(--space-12)">Primitives at step 400, warm → cool by intensity. Deliberately <em>not</em> metric aliases: a zone is an intensity band, not a body signal.</p>
+    <div class="row"><span class="sw" style="background:#E43A62"></span><div>
+      <div class="path">color.primitive.crimson.400</div><div class="val">#E43A62</div><div class="use">Limit</div></div></div>
+    <div class="row"><span class="sw" style="background:#F59E3B"></span><div>
+      <div class="path">color.primitive.tangerine.400</div><div class="val">#F59E3B</div><div class="use">Anaerobic endurance</div></div></div>
+    <div class="row"><span class="sw" style="background:#F2C64B"></span><div>
+      <div class="path">color.primitive.gold.400</div><div class="val">#F2C64B</div><div class="use">Aerobic endurance</div></div></div>
+    <div class="row"><span class="sw" style="background:#43B476"></span><div>
+      <div class="path">color.primitive.emerald.400</div><div class="val">#43B476</div><div class="use">Fat burning</div></div></div>
+    <div class="row"><span class="sw" style="background:#58A8DF"></span><div>
+      <div class="path">color.primitive.sky.400</div><div class="val">#58A8DF</div><div class="use">Warm up</div></div></div>
+  </section>
+
+  <section class="group">
+    <h2>Type</h2>
+    <div class="row"><span></span><div>
+      <div class="path">typography.text.heading.h3.medium</div>
+      <div class="val">500 · 17/22 · 0</div><div class="use">Activity name</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">typography.text.paragraph.p1.medium</div>
+      <div class="val">500 · 15/22 · 0</div><div class="use">“Heart rate” card title</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">typography.text.paragraph.p3.regular</div>
+      <div class="val">400 · 11/16 · 0</div><div class="use">Start–end time under the activity name</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">typography.text.paragraph.p3.medium</div>
+      <div class="val">500 · 11/16 · 0</div><div class="use">“Average” sublabel at rest</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">typography.text.overline.medium</div>
+      <div class="val">500 · 11/16 · 0.08em</div><div class="use">The BPM unit beside the big value</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">typography.text.overline.semibold</div>
+      <div class="val">600 · 11/16 · 0.08em</div><div class="use">Tile labels, tile units, zone names</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">typography.numeric.num-l</div>
+      <div class="val">700 · 24/28 · −0.005em</div><div class="use">Stat tile values, the heart-rate value</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">typography.numeric.num-s</div>
+      <div class="val">500 · 13/16 · 0</div><div class="use">Zone durations</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">typography.numeric.num-xs</div>
+      <div class="val">500 · 10/12 · 0.01em</div><div class="use">Chart axis numbers</div></div></div>
+  </section>
+
+  <section class="group">
+    <h2>Radius, spacing, border</h2>
+    <div class="row"><span></span><div>
+      <div class="path">radius.12</div><div class="val">12px</div><div class="use">Activity icon chip</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">radius.20</div><div class="val">20px</div><div class="use">Heart-rate card</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">radius.24</div><div class="val">24px</div><div class="use">Stat tiles</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">radius.full</div><div class="val">999px</div><div class="use">Back and share buttons, zone rails and fills</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">spacing.4 / 8 / 12 / 16 / 40</div>
+      <div class="val">4 · 8 · 12 · 16 · 40</div>
+      <div class="use">4 value↔unit · 8 tile gap and zone gutters · 12 body stack · 16 all card padding · 40 header top and page bottom</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">borderWidth.hairline</div><div class="val">0.5px</div>
+      <div class="use">Rule between chart and zones, gridlines, zone rail inset</div></div></div>
+  </section>
+
+  <section class="group">
+    <h2>Not in the token set</h2>
+    <div class="flag" style="margin-bottom:var(--space-8)"><div class="path">11px numeric</div>
+      <div class="use">Zone ranges, zone percentages, the scrub timestamp. Sits between numeric.num-xs (10px) and numeric.num-s (13px). Kept because the scrub timestamp has to match the 11px text it replaces, or the header jumps when you press the chart. Worth adding as <em>numeric.num-sm</em> if it keeps recurring.</div></div>
+    <div class="flag" style="margin-bottom:var(--space-8)"><div class="path">2px corner radius</div>
+      <div class="use">The x-axis pills. The chart component specifies “radius.4 / 2”, and half a token is not a token.</div></div>
+    <div class="flag" style="margin-bottom:var(--space-8)"><div class="path">color.neutral.100 on the chip glyph</div>
+      <div class="use">The icon inside the chip. color.semantic.neutral.icon (neutral.300) is the token that ought to apply. index.html uses neutral.100, and this file matches the screen rather than quietly correcting it — flagging it for you to call.</div></div>
+    <div class="flag"><div class="path">Motion durations</div>
+      <div class="use">120ms and 140ms, carried over from index.html. tokens.json has no motion scale. The only animation here is the plot dimming on scrub, and it is switched off under prefers-reduced-motion.</div></div>
+  </section>
+</aside>
+
+<script>
+/* ==========================================================================
+   BEHAVIOUR
+   --------------------------------------------------------------------------
+   Same code as the details page in index.html: fill the header, tiles and
+   zone rows from a workout record, draw the chart, and let you scrub it.
+   ========================================================================== */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+/* Phosphor activity glyphs, fill weight — the same two the Workouts card uses */
+const GLYPH = {
+  barbell:'M200,64V192a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V136H104v56a16,16,0,0,1-16,16H72a16,16,0,0,1-16-16V64A16,16,0,0,1,72,48H88a16,16,0,0,1,16,16v56h48V64a16,16,0,0,1,16-16h16A16,16,0,0,1,200,64ZM36,72H32A16,16,0,0,0,16,88v32H8.27A8.18,8.18,0,0,0,0,127.47,8,8,0,0,0,8,136h8v32a16,16,0,0,0,16,16h4a4,4,0,0,0,4-4V76A4,4,0,0,0,36,72Zm220,55.47a8.18,8.18,0,0,0-8.25-7.47H240V88a16,16,0,0,0-16-16h-4a4,4,0,0,0-4,4V180a4,4,0,0,0,4,4h4a16,16,0,0,0,16-16V136h8A8,8,0,0,0,256,127.47Z',
+  'person-simple-run':'M120,56a32,32,0,1,1,32,32A32,32,0,0,1,120,56Zm103.28,74.08a8,8,0,0,0-10.6-4c-.25.12-26.71,10.72-72.18-20.19-52.29-35.54-88-7.77-89.51-6.57a8,8,0,1,0,10,12.48c.26-.21,25.12-19.5,64.07,3.27-4.25,13.35-12.76,31.82-25.25,47-18.56,22.48-41.11,32.56-67,30A8,8,0,0,0,31.2,208a92.29,92.29,0,0,0,9.34.47c27.38,0,52-12.38,71.63-36.18.57-.69,1.14-1.4,1.69-2.1C133.31,175.29,168,190.3,168,232a8,8,0,0,0,16,0c0-24.65-10.08-45.35-29.15-59.86a104.29,104.29,0,0,0-31.31-15.81A169.31,169.31,0,0,0,139,124c26.14,16.09,46.84,20,60.69,20,12.18,0,19.06-3,19.67-3.28A8,8,0,0,0,223.28,130.08Z'
+};
+
+/* ---------- time helpers (start is minutes past midnight) ---------- */
+function clock(mins, withMeridiem){
+  const t = Math.round(mins) % (24 * 60);
+  let h = Math.floor(t / 60);
+  const mm = String(t % 60).padStart(2, '0');
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if (h === 0) h = 12;
+  return h + ':' + mm + (withMeridiem ? ' ' + ap : '');
+}
+/* "10:15 – 11:00 AM" — the first AM/PM is dropped when both ends share it */
+function span(start, len){
+  const end = start + len;
+  const sameHalf = Math.floor(start / 720) === Math.floor(end / 720);
+  return clock(start, !sameHalf) + ' – ' + clock(end, true);
+}
+function mmss(s){
+  const m = Math.floor(s / 60), r = Math.round(s % 60);
+  return String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
+}
+
+/* ---------- zones, hardest → easiest ---------- */
+const ZONES = [
+  { name:'Limit',               range:'172+ BPM',    min:172, color:'var(--crimson-400)'   },
+  { name:'Anaerobic endurance', range:'153–171 BPM', min:153, color:'var(--tangerine-400)' },
+  { name:'Aerobic endurance',   range:'134–152 BPM', min:134, color:'var(--gold-400)'      },
+  { name:'Fat burning',         range:'115–133 BPM', min:115, color:'var(--emerald-400)'   },
+  { name:'Warm up',             range:'<115 BPM',    min:0,   color:'var(--sky-400)'       }
+];
+/* Count the time in each zone straight off the curve, so the bars and the
+   plotted line can never drift apart. Each reading covers an equal slice. */
+function zonesFromSeries(values, lenMin){
+  const slice = (lenMin * 60) / values.length;
+  const secs = ZONES.map(() => 0);
+  values.forEach(v => { secs[ZONES.findIndex(z => v >= z.min)] += slice; });
+  return secs.map(s => Math.round(s));
+}
+
+/* ---------- the two workouts ----------
+   SAMPLE DATA, one reading every 15 seconds, in BPM. Average and max are read
+   back off the series, so the tiles, the chart and the zone rows always agree.
+   Calories and Effort cannot be derived from heart rate — they are stand-ins
+   pending real values, and Effort's 1-10 scale is an assumption. */
+const WORKOUTS = {
+  /* Strength training — series, zone counts and the 45:00 / 200 kcal figures
+     are from the supplied HeartRateCard and WorkoutStatsTiles components. */
+  strength: {
+    icon:'barbell', name:'Strength training',
+    start: 10 * 60 + 15, length: 45, calories:'200', effort:'6.4',
+    series:[
+      72.7,75.6,77.0,78.1,81.9,82.5,84.5,86.2,87.9,88.2,88.8,90.8,90.1,91.4,92.7,94.1,
+      93.7,93.7,94.8,96.9,97.2,97.5,97.7,97.4,98.0,99.6,98.0,98.8,100.2,100.9,99.5,100.8,
+      102.5,101.9,101.2,102.9,104.2,103.0,104.9,103.0,105.2,105.9,106.7,105.4,105.5,107.5,
+      108.3,108.2,109.3,109.1,108.5,108.4,109.6,108.4,111.2,111.2,110.3,112.0,110.0,112.1,
+      113.2,111.8,111.7,110.9,111.4,110.0,110.9,110.7,108.8,110.4,110.3,110.2,110.3,111.0,
+      113.6,112.4,113.6,115.0,115.4,116.6,116.5,118.1,118.4,120.3,121.1,122.5,120.8,123.5,
+      124.0,123.8,123.7,123.6,125.3,125.1,125.2,125.1,126.1,124.9,126.2,124.7,125.1,122.6,
+      122.1,123.7,122.5,122.4,124.8,124.6,127.0,127.0,128.0,128.3,129.0,132.2,133.7,133.5,
+      136.2,136.5,139.3,139.6,140.9,143.6,146.4,150.4,152.5,154.8,154.5,156.4,158.3,154.2,
+      152.2,147.9,146.4,143.5,140.3,137.9,136.0,134.9,133.0,131.1,130.1,128.9,127.2,127.8,
+      127.6,126.1,125.5,124.0,124.7,122.9,121.5,121.9,120.7,119.5,119.5,119.8,117.7,116.5,
+      117.5,116.9,115.9,114.0,113.4,111.8,110.5,110.6,108.5,106.7,104.8,103.2,101.2,100.1,
+      96.4,96.6,94.7,90.7,90.7,88.0,86.3,82.7,82.9
+    ],
+    zoneSeconds:[0, 80, 250, 925, 1445]   /* as counted by the owner off the curve */
+  },
+  /* Morning run — no recording was supplied, so the curve comes from a fixed
+     warm-up / interval / cool-down profile and its zone times are counted off
+     that curve. Replace with the real series. */
+  run: {
+    icon:'person-simple-run', name:'Morning run',
+    start: 7 * 60 + 12, length: 32, calories:'330', effort:'8.1',
+    series:(function(){
+      const out = [], N = 129;             /* 32 minutes at one reading per 15s */
+      for (let i = 0; i < N; i++){
+        const t = i / (N - 1);
+        let v;
+        if (t < 0.16)      v = 74 + (150 - 74) * (t / 0.16);
+        else if (t < 0.82) v = 150 + 14 * Math.sin((t - 0.16) * 22);
+        else               v = 150 - (150 - 96) * ((t - 0.82) / 0.18);
+        out.push(Math.round((v + 2.5 * Math.sin(i * 1.7)) * 10) / 10);
+      }
+      return out;
+    })()
+  }
+};
+
+/* ---------- render ---------- */
+const wrap = $('#chartWrap'), svg = $('#chart');
+const CFG = { yTicks:[60,100,140,180], yMin:60, yMax:180, yAxisWidth:34, xAxisHeight:26, topPad:12, frameW:50, xTicks:5 };
+let session = null, geom = null;
+
+function show(key){
+  const w = WORKOUTS[key];
+  const avg = Math.round(w.series.reduce((a, v) => a + v, 0) / w.series.length);
+  const max = Math.round(Math.max.apply(null, w.series));
+
+  session = {
+    start:w.start, length:w.length, avg:avg,
+    /* x is minutes into the session, so chart and clock stay in step */
+    data:w.series.map((v, i) => ({ x:i * (w.length / (w.series.length - 1)), value:v }))
+  };
+
+  /* header */
+  $('#icon').innerHTML = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="' + GLYPH[w.icon] + '"/></svg>';
+  $('#name').textContent = w.name;
+  $('#when').textContent = span(w.start, w.length);
+
+  /* stat tiles — Duration / Calories / Max HR / Effort */
+  $('#tiles').innerHTML = [
+    { label:'Duration', value:mmss(w.length * 60) },
+    { label:'Calories', value:w.calories, unit:'kcal' },
+    { label:'Max HR',   value:String(max), unit:'bpm' },
+    { label:'Effort',   value:w.effort, unit:'/ 10' }
+  ].map(t =>
+    '<section class="tile"><div class="label">' + t.label + '</div>' +
+    '<div class="figure"><span class="value">' + t.value + '</span>' +
+    (t.unit ? '<span class="unit">' + t.unit + '</span>' : '') + '</div></section>'
+  ).join('');
+
+  /* zone rows — seconds are the source of truth; the percentage and the bar
+     width both derive from them, so they cannot disagree */
+  const secs = w.zoneSeconds || zonesFromSeries(w.series, w.length);
+  const total = secs.reduce((a, s) => a + s, 0) || 1;
+  const host = $('#zones');
+  host.innerHTML = '';
+  ZONES.forEach((z, i) => {
+    const share = secs[i] / total;
+    const row = document.createElement('div');
+    row.className = 'hrz-row';
+    row.style.setProperty('--zone', z.color);
+    row.innerHTML =
+      '<div class="hrz-label"><span class="hrz-name"></span><span class="hrz-range"></span><span class="hrz-pct"></span></div>' +
+      '<span class="hrz-dur"></span><span class="hrz-bar" role="img"><i></i></span>';
+    $('.hrz-name', row).textContent  = z.name;
+    $('.hrz-range', row).textContent = z.range;
+    $('.hrz-pct', row).textContent   = Math.round(share * 100) + '%';
+    $('.hrz-dur', row).textContent   = mmss(secs[i]);
+    $('.hrz-bar i', row).style.width = (share * 100).toFixed(2) + '%';
+    $('.hrz-bar', row).setAttribute('aria-label', z.name + ', ' + z.range + ', ' + mmss(secs[i]));
+    host.appendChild(row);
+  });
+
+  release();
+  draw();
+}
+
+function draw(){
+  if (!session) return;
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  if (W < 40 || H < 40) return;
+  const plotW = W - CFG.yAxisWidth, plotH = H - CFG.xAxisHeight;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+  const el = (n, a, p) => {
+    const e = document.createElementNS(SVGNS, n);
+    for (const k in a) e.setAttribute(k, a[k]);
+    (p || svg).appendChild(e);
+    return e;
+  };
+  const x = v => (v / session.length) * plotW;
+  const y = v => plotH - ((v - CFG.yMin) / (CFG.yMax - CFG.yMin)) * (plotH - CFG.topPad);
+
+  /* gradient under the line — the stops ride the accent token */
+  const grad = el('linearGradient', { id:'fill', x1:0, y1:0, x2:0, y2:1 }, el('defs', {}));
+  el('stop', { offset:'0%',   style:'stop-color:var(--accent);stop-opacity:0.30' }, grad);
+  el('stop', { offset:'100%', style:'stop-color:var(--accent);stop-opacity:0' }, grad);
+
+  /* y axis: gridlines, value on the right */
+  CFG.yTicks.forEach(t => {
+    el('line', { class:'lc-gridline', x1:0, x2:plotW, y1:y(t), y2:y(t) });
+    el('text', { class:'lc-y-label', x:W - 2, y:y(t) + 4, 'text-anchor':'end' }).textContent = t;
+  });
+
+  /* the plot dims as one unit while scrubbing */
+  const plot = el('g', { class:'lc-plot' });
+
+  /* smooth line: Catmull-Rom control points turned into cubic béziers */
+  const pts = session.data.map(p => ({ px:x(p.x), py:y(p.value) }));
+  const seg = i => {
+    const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i];
+    const p2 = pts[i + 1], p3 = pts[Math.min(i + 2, pts.length - 1)];
+    return 'C' + (p1.px + (p2.px - p0.px) / 6).toFixed(1) + ' ' + (p1.py + (p2.py - p0.py) / 6).toFixed(1) +
+           ' ' + (p2.px - (p3.px - p1.px) / 6).toFixed(1) + ' ' + (p2.py - (p3.py - p1.py) / 6).toFixed(1) +
+           ' ' + p2.px.toFixed(1) + ' ' + p2.py.toFixed(1);
+  };
+  let d = 'M' + pts[0].px.toFixed(1) + ' ' + pts[0].py.toFixed(1);
+  for (let i = 0; i < pts.length - 1; i++) d += seg(i);
+  el('path', { d:d + 'L' + pts[pts.length - 1].px.toFixed(1) + ' ' + plotH + 'L' + pts[0].px.toFixed(1) + ' ' + plotH + 'Z', fill:'url(#fill)' }, plot);
+  el('path', { class:'lc-line', d:d }, plot);
+
+  /* x axis: evenly spaced clock times, each in an equal-width frame. The
+     first and last sit on a pill — they are the session start and end. */
+  const pillH = 16, nT = CFG.xTicks, center = plotH + CFG.xAxisHeight / 2 + 2;
+  for (let i = 0; i < nT; i++){
+    const cx = CFG.frameW / 2 + i * (plotW - CFG.frameW) / (nT - 1);
+    const label = clock(session.start + (i / (nT - 1)) * session.length, false);
+    const isPill = (i === 0 || i === nT - 1);
+    if (isPill){
+      const pw = 6 * label.length + 8;            /* text width + 4px each side */
+      el('rect', { class:'lc-pill-bg', x:cx - pw / 2, y:center - pillH / 2, width:pw, height:pillH, rx:2 });
+    }
+    el('text', { class:isPill ? 'lc-pill-label' : 'lc-x-label', x:cx, y:center + 4, 'text-anchor':'middle' }).textContent = label;
+  }
+
+  /* scrub affordances sit outside the plot group, so they stay lit */
+  geom = {
+    x, y, plotW, plot,
+    hoverLine: el('line', { class:'lc-hover-line', y1:CFG.topPad, y2:plotH, x1:0, x2:0 }),
+    hoverDot:  el('circle', { class:'lc-hover-dot', r:4 })
+  };
+}
+
+/* ---------- scrub: header swaps to the reading under your finger ---------- */
+function scrub(evt){
+  if (!geom || !session) return;
+  const px = (evt.touches ? evt.touches[0].clientX : evt.clientX) - svg.getBoundingClientRect().left;
+  if (px < 0 || px > geom.plotW){ release(); return; }
+  const xv = (px / geom.plotW) * session.length;
+  let best = session.data[0], bd = Infinity;
+  session.data.forEach(p => { const dist = Math.abs(p.x - xv); if (dist < bd){ bd = dist; best = p; } });
+
+  geom.plot.classList.add('dim');
+  geom.hoverLine.setAttribute('x1', geom.x(best.x));
+  geom.hoverLine.setAttribute('x2', geom.x(best.x));
+  geom.hoverLine.style.opacity = 1;
+  geom.hoverDot.setAttribute('cx', geom.x(best.x));
+  geom.hoverDot.setAttribute('cy', geom.y(best.value));
+  geom.hoverDot.style.opacity = 1;
+
+  $('#hrValue').textContent = Math.round(best.value);
+  $('#hrSubText').textContent = clock(session.start + best.x, true);
+  $('#hrSub').classList.add('scrubbing');
+}
+function release(){
+  if (geom){
+    geom.plot.classList.remove('dim');
+    geom.hoverLine.style.opacity = 0;
+    geom.hoverDot.style.opacity = 0;
+  }
+  if (session) $('#hrValue').textContent = session.avg;
+  $('#hrSubText').textContent = 'Average';
+  $('#hrSub').classList.remove('scrubbing');
+}
+svg.addEventListener('pointermove', scrub);
+svg.addEventListener('pointerdown', scrub);
+svg.addEventListener('pointerleave', release);
+svg.addEventListener('pointerup', release);
+
+/* redraw whenever the chart box changes size */
+if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => draw()).observe(wrap);
+else window.addEventListener('resize', draw);
+
+/* workout switcher (preview only) */
+$$('[data-workout]').forEach(b => b.addEventListener('click', () => {
+  $$('[data-workout]').forEach(o => {
+    o.classList.toggle('on', o === b);
+    o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+  });
+  $('.page').scrollTop = 0;
+  show(b.dataset.workout);
+}));
+
+show('strength');
+</script>
+
+</body>
+</html>

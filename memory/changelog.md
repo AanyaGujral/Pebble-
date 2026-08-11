@@ -5,6 +5,24 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-11 — Added `Activity Tab/Workout Details.html` — a standalone,
+  **tokenised** preview of the workout details screen, for reviewing it
+  against the design system. Opens by double-clicking. Every hard-coded value
+  the two supplied components arrived with (`#0F111B`, `24px`, `0.5px`…) is
+  now a custom property named after its path in `tokens.json`, with that path
+  in a comment on the declaration. A panel beside the phone lists every token
+  the screen uses, its value and where it lands. Also has a switcher for the
+  two workouts. Four things on the screen have no token and are called out
+  rather than absorbed: the 11px numeric style (between numeric.num-xs and
+  num-s — used for zone ranges, zone percentages and the scrub timestamp, and
+  needed so the header does not jump on press); the 2px x-axis pill corner
+  (the component asks for "radius.4 / 2"); `color.neutral.100` on the chip
+  glyph where `color.semantic.neutral.icon` (neutral.300) is the token that
+  should apply — matched to what index.html does rather than silently
+  corrected, owner's call; and the motion durations, since tokens.json has no
+  motion scale. Verified in Chromium: no console errors, every `var()`
+  resolves, both workouts render and scrub.
+
 - 2026-08-11 — Added the **workout details page** (`#sub-workout` in
   `index.html`), the last of the "exact next steps". Tapping either row in the
   Workouts card on the Activity tab opens it. Header: back button + 40px
