@@ -455,23 +455,56 @@ body{
    (.chip). Flag: the wireframes print value above label; the chip block
    is label-above-value — keeping the chip exactly as built, per the
    owner's "visual blocks picked from the Activity tab" instruction. */
-/* Detail-page summary tiles — StatTile, ported 1:1 from the approved
-   StatTile_preview.html: card surface, 16px pad, centered; overline label
-   kept to ONE line; num-l value; any text beside the number uses the small
-   light unit style (owner, 2026-08-10).
-   Flag: two equal columns instead of the preview's three — at 360px a
-   3-across tile is 72px inside, too narrow for the "Active hours" heading
-   to stay on one line. Every tile is the same width either way. */
-.sumchips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.stattile{background:var(--surface-card);border-radius:var(--radius-card);padding:16px;text-align:center}
+/* ---- WorkoutsCard — the approved drop-in component (owner HTML).
+   Structure and type scale verbatim; colors come from this file's global
+   tokens rather than the component's own scoped copies (same values). ---- */
+.wo-card{
+  background:var(--surface-card);border-radius:24px;padding:16px;
+  width:100%;font-family:var(--font-text);
+}
+.wo-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex:none}
+.wo-title{font:500 15px/22px var(--font-text);color:var(--text-1);margin:0}
+.wo-meta{font:500 11px/16px var(--font-text);color:var(--text-2);white-space:nowrap}
+.wo-row{
+  display:flex;align-items:center;gap:12px;width:100%;
+  padding:12px 0;margin:0;border:0;border-top:0.5px solid var(--divider);
+  background:none;text-align:left;cursor:pointer;font-family:inherit;
+}
+.wo-row:first-of-type{margin-top:12px}
+.wo-row:last-of-type{padding-bottom:0}
+.wo-row:hover .wo-chip{background:var(--surface-fill)}
+.wo-row:focus-visible{outline:1px solid var(--text-2);outline-offset:2px;border-radius:8px}
+.wo-chip{
+  flex:none;display:grid;place-items:center;width:40px;height:40px;
+  border-radius:12px;background:var(--neutral-bg);
+  transition:background var(--duration-fast) ease;
+}
+.wo-glyph{width:20px;height:20px;color:var(--neutral-100)}
+.wo-body{flex:1;min-width:0}
+.wo-name{display:block;font:500 13px/18px var(--font-text);color:var(--text-1)}
+.wo-detail{display:block;margin-top:2px;font:400 11px/16px var(--font-text);color:var(--text-3)}
+.wo-dur{flex:none;font:500 13px/16px var(--font-number);color:var(--text-1);font-feature-settings:var(--num-features)}
+.wo-caret{flex:none;width:16px;height:16px;color:var(--text-3)}
+@media (prefers-reduced-motion:reduce){.wo-chip{transition:none}}
+
+/* Detail-page summary tiles — same format as the Activity-tab stat chips
+   (owner, 2026-08-10): three equal-width tiles across, 20px radius, hairline
+   border, centered overline label, num-m value, small light unit text.
+   Long numbers are abbreviated in K to stop spillover (see fmtTile in JS). */
+.sumchips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stattile{
+  border-radius:20px;background:var(--surface-card);
+  border:0.5px solid var(--neutral-700);
+  padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;
+}
 .stattile .label{
-  font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;
-  color:var(--text-2);margin-bottom:8px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis; /* heading always one line */
+  font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--text-2);text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%; /* one line always */
 }
 .stattile .figure{display:flex;align-items:baseline;justify-content:center;gap:4px;white-space:nowrap}
-.stattile .value{font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;letter-spacing:-0.005em;font-feature-settings:var(--num-features);color:var(--text-1)}
-.stattile .unit{font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.stattile .value{font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:700;font-feature-settings:var(--num-features);color:var(--text-1)}
+.stattile .unit{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
 
 /* goals rows (Activity — Today's goals) */
 .goalrow{display:grid;grid-template-columns:20px 1fr auto;align-items:center;column-gap:8px;row-gap:8px}
@@ -908,31 +941,38 @@ body{
             <div class="card-body"><div class="chartmount" data-mount></div></div>
           </div>
 
-          <!-- Workouts. Flag: the workout DETAILS page is still pending —
-               rows are visual-only for now, chevrons included per prototype.
-               Hidden entirely in the empty state (owner spec). -->
-          <div class="card stateful hide-empty">
-            <div class="card-head">
-              <div class="card-title">Workouts</div>
-              <span class="subnote live">2 workouts · 1h 17m</span>
-            </div>
-            <div class="card-body">
-              <div class="live">
-                <div class="listrow" style="border-top:0.5px solid var(--divider)">
-                  <span class="lft">
-                    <span class="phi" data-ph="person-simple-run" data-weight="fill" style="width:17px;height:17px;color:var(--metric-activity)"></span>
-                    <span class="txt"><span class="t1">Morning run</span><span class="t2">7:12 – 7:44 AM · 4.3 km</span></span>
-                  </span>
-                  <span class="rgt"><span class="rnum">32 min</span><span class="chev"></span></span>
-                </div>
-                <div class="listrow" style="padding-bottom:0">
-                  <span class="lft">
-                    <span class="phi" data-ph="barbell" data-weight="fill" style="width:17px;height:17px;color:var(--metric-activity)"></span>
-                    <span class="txt"><span class="t1">Strength training</span><span class="t2">10:15 – 11:00 AM · 6 exercises</span></span>
-                  </span>
-                  <span class="rgt"><span class="rnum">45 min</span><span class="chev"></span></span>
-                </div>
-              </div>
+          <!-- Workouts — the approved WorkoutsCard component (owner HTML,
+               2026-08-10): 40px icon chip per row, name + detail stack,
+               duration in Spartan, Phosphor caret. Rows are buttons; the
+               workout DETAILS page is still pending. Hidden entirely in
+               the no-data state (owner spec).
+               Flag: the component's scoped :root-style token block is
+               dropped — the card reads this file's global tokens instead,
+               which resolve to the same values. -->
+          <div class="wo-card stateful hide-empty">
+            <header class="wo-header">
+              <h3 class="wo-title">Workouts</h3>
+              <span class="wo-meta live">2 workouts · 1h 17m</span>
+            </header>
+            <div class="live">
+              <button class="wo-row" type="button">
+                <span class="wo-chip"><span class="wo-glyph phi" data-ph="person-simple-run" data-weight="fill"></span></span>
+                <span class="wo-body">
+                  <span class="wo-name">Morning run</span>
+                  <span class="wo-detail">7:12 – 7:44 AM · 4.3 km</span>
+                </span>
+                <span class="wo-dur">32 min</span>
+                <span class="wo-caret phi" data-ph="caret-right"></span>
+              </button>
+              <button class="wo-row" type="button">
+                <span class="wo-chip"><span class="wo-glyph phi" data-ph="barbell" data-weight="fill"></span></span>
+                <span class="wo-body">
+                  <span class="wo-name">Strength training</span>
+                  <span class="wo-detail">10:15 – 11:00 AM · 6 exercises</span>
+                </span>
+                <span class="wo-dur">45 min</span>
+                <span class="wo-caret phi" data-ph="caret-right"></span>
+              </button>
             </div>
           </div>
 
@@ -1956,18 +1996,18 @@ const DETAIL = {
       week:  { kind:'bars', data:STEPS_WEEK, color:'var(--metric-steps)', ticks:WEEK_TICKS, tickIdx:WEEK_IDX,
                yLabels:['13,200','8,800','4,400','0'], yMax:13200, goal:10000, goalLabel:'Goal 10,000',
                fmt:fmtInt, stampFmt:DETAIL_STAMP.week,
-               title:'Daily average', headline:'7,463',
-               summary:[{lab:'Total',parts:[['v','52.2'],['u','K']]},{lab:'Best day',parts:[['v','Wed']]},{lab:'Goal met',parts:[['v','1'],['u','of'],['v','7']]}] },
+               title:'Average', headline:'7,463',
+               summary:[{lab:'Total',parts:[['v','52,240']]},{lab:'Best day',parts:[['v','Wed']]},{lab:'Goal met',parts:[['v','1'],['u','of'],['v','7']]}] },
       month: { kind:'bars', data:STEPS_MONTH, color:'var(--metric-steps)', ticks:MONTH_TICKS, tickIdx:MONTH_IDX,
                yLabels:['15,000','10,000','5,000','0'], yMax:15000, goal:10000, goalLabel:'Goal 10,000',
                fmt:fmtInt, stampFmt:DETAIL_STAMP.month,
-               title:'Daily average', headline:'8,218',
-               summary:[{lab:'Total',parts:[['v','246.5'],['u','K']]},{lab:'Best day',parts:[['u','Day'],['v','11']]},{lab:'Goal met',parts:[['v','7'],['u','of'],['v','30']]}] },
+               title:'Average', headline:'8,218',
+               summary:[{lab:'Total',parts:[['v','246,533']]},{lab:'Best day',parts:[['u','Day'],['v','11']]},{lab:'Goal met',parts:[['v','7'],['u','of'],['v','30']]}] },
       year:  { kind:'bars', data:STEPS_YEAR, color:'var(--metric-steps)', ticks:YEAR_TICKS, tickIdx:YEAR_IDX,
                yLabels:['10,500','7,000','3,500','0'], yMax:10500, goal:10000, goalLabel:'Goal 10,000',
                fmt:fmtInt, stampFmt:DETAIL_STAMP.year,
-               title:'Daily average', headline:'7,506',
-               summary:[{lab:'Year total',parts:[['v','2,739.7'],['u','K']]},{lab:'Best month',parts:[['v','Sep']]},{lab:'Goal met',parts:[['v','0'],['u','of'],['v','12']]}] }
+               title:'Average', headline:'7,506',
+               summary:[{lab:'Year total',parts:[['v','2,739,650']]},{lab:'Best month',parts:[['v','Sep']]},{lab:'Goal met',parts:[['v','0'],['u','of'],['v','12']]}] }
     }
   },
   distance: {
@@ -1979,17 +2019,17 @@ const DETAIL = {
       week:  { kind:'line', data:DIST_WEEK, color:'var(--metric-distance)', ticks:WEEK_TICKS, tickIdx:WEEK_IDX,
                yLabels:['10.5','7','3.5','0'], yMax:10.5, goal:8, goalLabel:'Goal 8 km',
                fmt:fmtKm, stampFmt:DETAIL_STAMP.week,
-               title:'Daily average', headline:'5.9',
+               title:'Average', headline:'5.9',
                summary:[{lab:'Total',parts:[['v','41.2'],['u','km']]},{lab:'Best day',parts:[['v','Wed']]},{lab:'Goal met',parts:[['v','1'],['u','of'],['v','7']]}] },
       month: { kind:'line', data:DIST_MONTH, color:'var(--metric-distance)', ticks:MONTH_TICKS, tickIdx:MONTH_IDX,
                yLabels:['10.5','7','3.5','0'], yMax:10.5, goal:8, goalLabel:'Goal 8 km',
                fmt:fmtKm, stampFmt:DETAIL_STAMP.month,
-               title:'Daily average', headline:'6.0',
+               title:'Average', headline:'6.0',
                summary:[{lab:'Total',parts:[['v','181.0'],['u','km']]},{lab:'Best day',parts:[['u','Day'],['v','11']]},{lab:'Goal met',parts:[['v','7'],['u','of'],['v','30']]}] },
       year:  { kind:'line', data:DIST_YEAR, color:'var(--metric-distance)', ticks:YEAR_TICKS, tickIdx:YEAR_IDX,
                yLabels:['9','6','3','0'], yMax:9, goal:8, goalLabel:'Goal 8 km',
                fmt:fmtKm, stampFmt:DETAIL_STAMP.year,
-               title:'Daily average', headline:'5.5',
+               title:'Average', headline:'5.5',
                summary:[{lab:'Year total',parts:[['v','2,025'],['u','km']]},{lab:'Best month',parts:[['v','Sep']]},{lab:'Goal met',parts:[['v','0'],['u','of'],['v','12']]}] }
     }
   },
@@ -2002,21 +2042,33 @@ const DETAIL = {
       week:  { kind:'line', data:CAL_WEEK, color:'var(--metric-calories)', ticks:WEEK_TICKS, tickIdx:WEEK_IDX,
                yLabels:['750','500','250','0'], yMax:750, goal:600, goalLabel:'Goal 600 kcal',
                fmt:fmtCal, stampFmt:DETAIL_STAMP.week,
-               title:'Daily average', headline:'506',
+               title:'Average', headline:'506',
                summary:[{lab:'Total',parts:[['v','3,540'],['u','kcal']]},{lab:'Best day',parts:[['v','Wed']]},{lab:'Goal met',parts:[['v','1'],['u','of'],['v','7']]}] },
       month: { kind:'line', data:CAL_MONTH, color:'var(--metric-calories)', ticks:MONTH_TICKS, tickIdx:MONTH_IDX,
                yLabels:['750','500','250','0'], yMax:750, goal:600, goalLabel:'Goal 600 kcal',
                fmt:fmtCal, stampFmt:DETAIL_STAMP.month,
-               title:'Daily average', headline:'494',
+               title:'Average', headline:'494',
                summary:[{lab:'Total',parts:[['v','14,820'],['u','kcal']]},{lab:'Best day',parts:[['u','Day'],['v','11']]},{lab:'Goal met',parts:[['v','6'],['u','of'],['v','30']]}] },
       year:  { kind:'line', data:CAL_YEAR, color:'var(--metric-calories)', ticks:YEAR_TICKS, tickIdx:YEAR_IDX,
                yLabels:['750','500','250','0'], yMax:750, goal:600, goalLabel:'Goal 600 kcal',
                fmt:fmtCal, stampFmt:DETAIL_STAMP.year,
-               title:'Daily average', headline:'462',
+               title:'Average', headline:'462',
                summary:[{lab:'Year total',parts:[['v','168,780'],['u','kcal']]},{lab:'Best month',parts:[['v','Sep']]},{lab:'Goal met',parts:[['v','0'],['u','of'],['v','12']]}] }
     }
   }
 };
+
+/* Shorten a figure so it always fits a tile: 4+ digit thousands become
+   "52.2K" / "900K", millions become "2.7M". The K/M suffix is set in the
+   small light unit style, like every other bit of text beside a number. */
+function fmtTile(txt){
+  const n = Number(String(txt).replace(/,/g, ''));
+  if (!Number.isFinite(n) || Math.abs(n) < 10000)
+    return '<span class="value">' + txt + '</span>';
+  const [val, suf] = Math.abs(n) >= 1e6 ? [n/1e6, 'M'] : [n/1e3, 'K'];
+  const shown = Math.abs(val) >= 100 ? Math.round(val) : val.toFixed(1);
+  return '<span class="value">' + shown + '</span><span class="unit">' + suf + '</span>';
+}
 
 /* Render one detail page for a period: switcher state, card header,
    chart and summary chips. The chart mount is replaced with a fresh node
@@ -2035,13 +2087,15 @@ function showDetailPeriod(metric, period){
   $('[data-val]', sub).textContent = cfg.headline;
   $('[data-trend]', sub).innerHTML = '<span>' + DETAIL_SUBS[period] + '</span>';
 
-  // StatTile component markup — label stays on one line; every piece of
-  // text beside a number uses the small light unit style. The .live /
-  // .value-dash pair keeps headers and shows — in the no-data state.
+  // Stat tiles use the Activity-tab chip format. Long figures collapse to
+  // K so they never spill the tile (900,000 -> 900K, 2,739,650 -> 2.7M);
+  // the .live / .value-dash pair keeps headers and shows — with no data.
   $('[data-dsummary]', sub).innerHTML = cfg.summary.map(t =>
     '<section class="stattile"><div class="label">' + t.lab + '</div><div class="figure">'
     + '<span class="live" style="display:contents">'
-    + t.parts.map(p => '<span class="' + (p[0] === 'u' ? 'unit' : 'value') + '">' + p[1] + '</span>').join('')
+    + t.parts.map(p => p[0] === 'u'
+        ? '<span class="unit">' + p[1] + '</span>'
+        : fmtTile(p[1])).join('')
     + '</span><span class="value-dash">—</span></div></section>').join('');
 
   const card = $('[data-dcard]', sub);

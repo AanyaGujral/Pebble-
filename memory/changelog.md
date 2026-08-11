@@ -5,6 +5,16 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-10 (later) — Detail-page stat tiles switched to the Activity-tab
+  chip format (three equal tiles across, 20px radius, hairline border,
+  overline label, num-m value, small light unit) per owner screenshot; long
+  figures now abbreviate to K/M via `fmtTile` so nothing spills (900,000 →
+  900K, 2,739,650 → 2.7M, week 52,240 → 52.2K). W/M/Y chart header reads
+  "Average" instead of "Daily average". Activity tab's Workouts card
+  replaced with the owner's approved WorkoutsCard component (40px icon
+  chips, button rows, Spartan durations, Phosphor carets), reading this
+  file's global tokens instead of the component's scoped copies.
+
 - 2026-08-10 — Merged the two working copies: adopted the parallel session's
   version (metric details pages with D/W/M/Y switcher, two-state control
   panel scoped to the Activity tab, goal lines, dotted bar-scrub) as the
