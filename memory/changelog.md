@@ -5,6 +5,17 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-10 — Moved the named snapshot into `Activity Tab/Workout Tab.html`
+  (folder layout mirrors `Sleep Tab/`). `index.html` stays the live working
+  copy at the repo root. Pushed as is at the owner's request.
+  Background PNG: still NOT in the repo — the owner's image has come through
+  as an inline preview three times without a file landing on disk, so the
+  code-drawn stand-in scene is what ships. The `<img>` slots in both heroes
+  still point at `assets/backgrounds/activity-dusk.png` and
+  `sleep-night.png`; drop the real files there and they take over with no
+  code change. A half-finished rework of the stand-in artwork was reverted
+  (owner asked to ship as is) — redo it from scratch if the PNGs never come.
+
 - 2026-08-10 — Owner approved the prototype. Saved a named snapshot as
   `Workout Tab.html` (self-contained, opens by double-clicking; title
   "Pebble — Workout Tab") and pushed the branch to GitHub. `index.html`
