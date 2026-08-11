@@ -105,6 +105,7 @@
      letter-spacing cannot ride inside the shorthand. */
   /* typography.text.heading.h3.medium   */ --type-h3-medium:500 17px/22px var(--font-text);      --ls-h3-medium:0;
   /* typography.text.paragraph.p1.medium */ --type-p1-medium:500 15px/22px var(--font-text);      --ls-p1-medium:0;
+  /* typography.text.paragraph.p2.medium */ --type-p2-medium:500 13px/18px var(--font-text);      --ls-p2-medium:0;
   /* typography.text.paragraph.p3.regular*/ --type-p3-regular:400 11px/16px var(--font-text);     --ls-p3-regular:0;
   /* typography.text.paragraph.p3.medium */ --type-p3-medium:500 11px/16px var(--font-text);      --ls-p3-medium:0;
   /* typography.text.overline.medium     */ --type-overline-medium:500 11px/16px var(--font-text);   --ls-overline:0.08em;
@@ -135,7 +136,9 @@
   /* spacing.8  */ --space-8:8px;
   /* spacing.12 */ --space-12:12px;
   /* spacing.16 */ --space-16:16px;
+  /* spacing.32 */ --space-32:32px;
   /* spacing.40 */ --space-40:40px;
+  /* spacing.64 */ --space-64:64px;
 
   /* ---- border width ---- */
   /* borderWidth.hairline */ --hairline:0.5px;
@@ -182,11 +185,40 @@ body{
 }
 .page::-webkit-scrollbar{display:none}
 
+/* status bar — floats over everything at the top edge, 32px tall, no
+   background of its own. The sticky header underneath paints the strip it
+   sits on, so the clock stays legible while the page scrolls. */
+.statusbar{
+  position:absolute;top:0;left:0;right:0;height:var(--space-32);z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--space-16);pointer-events:none;
+  font:var(--type-p2-medium);letter-spacing:var(--ls-p2-medium);color:var(--text-1);
+}
+.statusbar .right{display:flex;align-items:center;gap:6px;color:var(--text-2)}
+.statusbar .batt{width:20px;height:10px;border-radius:3px;border:1px solid var(--text-2);padding:1px}
+.statusbar .batt i{display:block;width:12px;height:100%;border-radius:2px;background:var(--text-1)}
+
 /* ---- 3a. header ----------------------------------------------------------
    Back button, activity icon chip, name over the start-end time, share.
-   The 40px top padding, the 40px round back button pulled 12px left and the
-   20px caret are the app's standard sub-page header, unchanged. */
-.head{padding:var(--space-40) var(--space-16) 0;display:flex;align-items:center;gap:var(--space-8)}
+   Sticky: it stays pinned while the body scrolls under it.
+
+   The block is 96px tall and splits into two: the top 32px (spacing.32) is
+   the strip the status bar floats over, and the 64px (spacing.64) below it
+   is the header proper. The padding-top reserves the strip, so the header's
+   content box is exactly 64px and everything centres inside it.
+
+   It paints surface-app rather than sitting transparent, so cards passing
+   underneath do not show through the clock or the title.
+
+   The 40px round back button pulled 12px left and the 20px caret are the
+   app's standard sub-page header, unchanged. */
+.head{
+  position:sticky;top:0;z-index:20;
+  height:calc(var(--space-32) + var(--space-64));   /* 32 status bar + 64 header */
+  padding:var(--space-32) var(--space-16) 0;
+  background:var(--surface-app);
+  display:flex;align-items:center;gap:var(--space-8);
+}
 .iconbtn{
   flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
   background:none;border:0;cursor:pointer;border-radius:var(--radius-full);color:var(--text-1);
@@ -360,9 +392,20 @@ body{
   </div>
 
   <div class="phone">
+
+    <!-- status bar — floats over the page, 32px tall -->
+    <div class="statusbar">
+      <span>12:30</span>
+      <span class="right">
+        <!-- signal + battery, drawn simply -->
+        <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M1 11h2V8H1v3Zm4 0h2V5H5v6Zm4 0h2V2H9v9Z" fill="currentColor"/></svg>
+        <span class="batt"><i></i></span>
+      </span>
+    </div>
+
     <div class="page">
 
-      <!-- header -->
+      <!-- sticky header: 32px status-bar strip + 64px header -->
       <div class="head">
         <button class="iconbtn back" type="button" aria-label="Back">
           <!-- Phosphor caret-left, regular -->
@@ -411,7 +454,7 @@ body{
     </div>
   </div>
 
-  <p class="caption">Scroll the screen for the last zone row. Press and drag the chart to scrub.</p>
+  <p class="caption">Scroll the screen — the header stays pinned. Press and drag the chart to scrub.</p>
 </div>
 
 <!-- ============ token audit ============ -->
@@ -483,6 +526,9 @@ body{
       <div class="path">typography.text.paragraph.p1.medium</div>
       <div class="val">500 · 15/22 · 0</div><div class="use">“Heart rate” card title</div></div></div>
     <div class="row"><span></span><div>
+      <div class="path">typography.text.paragraph.p2.medium</div>
+      <div class="val">500 · 13/18 · 0</div><div class="use">Status bar clock</div></div></div>
+    <div class="row"><span></span><div>
       <div class="path">typography.text.paragraph.p3.regular</div>
       <div class="val">400 · 11/16 · 0</div><div class="use">Start–end time under the activity name</div></div></div>
     <div class="row"><span></span><div>
@@ -516,9 +562,9 @@ body{
     <div class="row"><span></span><div>
       <div class="path">radius.full</div><div class="val">999px</div><div class="use">Back and share buttons, zone rails and fills</div></div></div>
     <div class="row"><span></span><div>
-      <div class="path">spacing.4 / 8 / 12 / 16 / 40</div>
-      <div class="val">4 · 8 · 12 · 16 · 40</div>
-      <div class="use">4 value↔unit · 8 tile gap and zone gutters · 12 body stack · 16 all card padding · 40 header top and page bottom</div></div></div>
+      <div class="path">spacing.4 / 8 / 12 / 16 / 32 / 40 / 64</div>
+      <div class="val">4 · 8 · 12 · 16 · 32 · 40 · 64</div>
+      <div class="use">4 value↔unit · 8 tile gap and zone gutters · 12 body stack · 16 all card padding · 32 status-bar strip · 40 page bottom · 64 header height</div></div></div>
     <div class="row"><span></span><div>
       <div class="path">borderWidth.hairline</div><div class="val">0.5px</div>
       <div class="use">Rule between chart and zones, gridlines, zone rail inset</div></div></div>

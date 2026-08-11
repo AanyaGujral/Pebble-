@@ -5,6 +5,20 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-11 — Workout details header is now **sticky** (owner). The block is
+  96px tall and splits in two: the top 32px (spacing.32) is the strip the
+  status bar floats over, the 64px below (spacing.64) is the header proper.
+  `padding-top:32px` reserves the strip so the header's content box is exactly
+  64px and the back button, chip, title and share button centre inside it. The
+  header paints `surface-app` instead of sitting transparent, so cards scroll
+  cleanly underneath without showing through the clock or the title; the app's
+  status bar is z-index 50 and stays above it. Applied to both `index.html`
+  (`.wd-head`) and the standalone `Activity Tab/Workout Details.html`, which
+  gained a real 32px status bar so the reserved strip is visible. Both verified
+  in Chromium at 96 / 32 / 64. Open question for the owner: the header cuts
+  content off flat as it passes under — say the word if you want a hairline or
+  a fade at the boundary.
+
 - 2026-08-11 — Added `Activity Tab/Workout Details.html` — a standalone,
   **tokenised** preview of the workout details screen, for reviewing it
   against the design system. Opens by double-clicking. Every hard-coded value

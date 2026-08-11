@@ -500,15 +500,29 @@ body{
    ========================================================================== */
 
 /* ---- 1. header ------------------------------------------------------------
-   The frame is .sub-head, unchanged: 40px top padding and the 40px round back
-   button pulled 12px left so the caret optically lines up with the content
-   below. The page adds the icon chip, the two-line title and the share button.
+   Sticky, so it stays pinned while the body scrolls under it (owner,
+   2026-08-11). The block is 96px tall and splits into two: the top 32px
+   (spacing.32) is the strip the status bar floats over, and the 64px
+   (spacing.64) below it is the header proper. The padding-top reserves the
+   strip, so the header's content box is exactly 64px and everything centres
+   inside it. It paints surface-app rather than sitting transparent, so cards
+   passing underneath do not show through the clock or the title. The status
+   bar is z-index 50 and stays above it.
+   The 40px round back button pulled 12px left so the caret optically lines up
+   with the content below is .sub-head's, unchanged. The page adds the icon
+   chip, the two-line title and the share button.
    Flag: the other sub-pages set their title at 20/26 (headingH2Medium). Here
    the title is a two-line stack sitting next to a 40px chip, and at 20/26 the
    stack (42px) would out-grow the chip and make this header taller than every
    other one. Stepped down one level to headingH3Medium (17/22) — flagged
    rather than silently changed. */
-.wd-head{gap:8px}
+.wd-head{
+  position:sticky;top:0;z-index:20;
+  height:96px;                 /* spacing.32 status-bar strip + spacing.64 header */
+  padding:32px 16px 0;         /* the top 32px is the status-bar strip */
+  background:var(--surface-app);
+  gap:8px;                     /* spacing.8 */
+}
 .wd-title{flex:1;min-width:0;display:flex;flex-direction:column}
 .wd-name{
   font-size:17px;line-height:22px;font-weight:500;color:var(--text-1);   /* typeText.headingH3Medium */
