@@ -259,8 +259,15 @@ body{
    radius.20. Both are as supplied, so the difference is kept and flagged. */
 .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-8)}
 .tile{background:var(--surface-card);border-radius:var(--radius-24);padding:var(--space-16);text-align:left}
+/* Labels and units sit at overline.medium (500), matching the Activity-tab
+   stat chips and the metric detail-page tiles, so every stat label in the app
+   reads at one weight. The supplied component had them at overline.semibold
+   (600); corrected (owner, 2026-08-11). The VALUE deliberately stays at
+   numeric.num-l (24/28) rather than the chips' num-m — a 2x2 grid gives each
+   tile enough width, and the details page should read as a bigger moment than
+   a chip on a tab (owner's call). */
 .tile .label{
-  font:var(--type-overline-semibold);letter-spacing:var(--ls-overline);text-transform:uppercase;
+  font:var(--type-overline-medium);letter-spacing:var(--ls-overline);text-transform:uppercase;
   color:var(--text-2);margin-bottom:var(--space-8);
 }
 .tile .figure{display:flex;align-items:baseline;gap:var(--space-4)}
@@ -279,7 +286,7 @@ body{
   font-feature-settings:normal;
 }
 .tile .unit{
-  font:var(--type-overline-semibold);letter-spacing:var(--ls-overline);text-transform:uppercase;
+  font:var(--type-overline-medium);letter-spacing:var(--ls-overline);text-transform:uppercase;
   color:var(--text-3);
 }
 
@@ -553,10 +560,10 @@ body{
       <div class="val">500 · 11/16 · 0</div><div class="use">“Average” sublabel at rest</div></div></div>
     <div class="row"><span></span><div>
       <div class="path">typography.text.overline.medium</div>
-      <div class="val">500 · 11/16 · 0.08em</div><div class="use">The BPM unit beside the big value</div></div></div>
+      <div class="val">500 · 11/16 · 0.08em</div><div class="use">Stat tile labels and units, the BPM unit beside the big value — the same weight as the Activity-tab chips</div></div></div>
     <div class="row"><span></span><div>
       <div class="path">typography.text.overline.semibold</div>
-      <div class="val">600 · 11/16 · 0.08em</div><div class="use">Tile labels, tile units, zone names</div></div></div>
+      <div class="val">600 · 11/16 · 0.08em</div><div class="use">Zone names only — the one place the screen still uses semibold</div></div></div>
     <div class="row"><span></span><div>
       <div class="path">typography.numeric.num-l</div>
       <div class="val">700 · 24/28 · −0.005em</div><div class="use">Stat tile values, the heart-rate value</div></div></div>

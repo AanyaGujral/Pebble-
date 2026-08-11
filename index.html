@@ -463,7 +463,13 @@ body{
   width:100%;font-family:var(--font-text);
 }
 .wo-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex:none}
-.wo-title{font:500 15px/22px var(--font-text);color:var(--text-1);margin:0}
+/* Card title at headingH3Medium, the same token as .card-title everywhere
+   else in the app. The component shipped at paragraphP1Medium (15/22); every
+   other card header is 17/22 and tokens.json describes heading.h3 as "Card
+   titles", so this was the odd one out (owner, 2026-08-11).
+   Note: Activity Tab/Workout Tab.html is a snapshot of what was approved on
+   2026-08-10 and is deliberately left at 15/22 — it records that moment. */
+.wo-title{font:500 17px/22px var(--font-text);color:var(--text-1);margin:0;white-space:nowrap}
 .wo-meta{font:500 11px/16px var(--font-text);color:var(--text-2);white-space:nowrap}
 .wo-row{
   display:flex;align-items:center;gap:12px;width:100%;
@@ -548,8 +554,15 @@ body{
   background:var(--surface-card);border-radius:24px;padding:16px;               /* radius.24 / spacing.16 */
   border:none;box-shadow:none;text-align:left;
 }
+/* Labels and units sit at overlineMedium (500), matching the Activity-tab
+   stat chips and the metric detail-page tiles, so every stat label in the app
+   reads at one weight. The supplied component had them at overlineSemibold
+   (600); corrected (owner, 2026-08-11). The VALUE deliberately stays at numL
+   (24/28) rather than the chips' numM — a 2x2 grid gives each tile enough
+   width, and the details page should read as a bigger moment than a chip on
+   a tab (owner's call). */
 .wd-tile .label{
-  font:600 11px/16px var(--font-text);      /* typeText.overlineSemibold */
+  font:500 11px/16px var(--font-text);      /* typeText.overlineMedium */
   letter-spacing:0.08em;text-transform:uppercase;
   color:var(--text-2);margin-bottom:8px;    /* spacing.8 */
 }
@@ -571,7 +584,7 @@ body{
   font-feature-settings:normal;
 }
 .wd-tile .unit{
-  font:600 11px/16px var(--font-text);      /* typeText.overlineSemibold */
+  font:500 11px/16px var(--font-text);      /* typeText.overlineMedium */
   letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
 }
 

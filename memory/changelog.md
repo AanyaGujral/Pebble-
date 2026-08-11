@@ -5,6 +5,28 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-11 — **Cross-checked the workout details page against the Activity
+  tab's card-header system** (owner) and corrected three things. The heart
+  rate card's number (numL), BPM unit (overlineMedium) and "Average" sublabel
+  (paragraphP3Medium, 4px top) already matched `.card-metric` exactly, as did
+  the header's flex-start / space-between / 8px gap — no change needed there.
+  What changed:
+  • `.lc-title` 15/22 → **17/22** (paragraphP1Medium → headingH3Medium), plus
+    `white-space:nowrap`. `.card-title` is 17/22 in all 22 places it appears
+    and tokens.json describes heading.h3 as "Card titles". Line-height is
+    unchanged, so the 216px chart card does not move.
+  • Workout stat tile labels and units 600 → **500** (overlineSemibold →
+    overlineMedium), matching the Activity-tab chips and the metric
+    detail-page tiles. The tile VALUE stays at numL (24/28) rather than the
+    chips' numM — owner's call: a 2x2 grid has the width, and the details page
+    should read as a bigger moment than a chip on a tab.
+  • `.wo-title` on the Workouts card 15/22 → **17/22** + nowrap (owner), so
+    every card header in the app is one size. `Activity Tab/Workout Tab.html`
+    is deliberately left at 15/22 — it is a snapshot of what was approved on
+    2026-08-10 and records that moment.
+  Zone names are the one place still at overlineSemibold; they are their own
+  component with no Activity-tab equivalent, so they were left as supplied.
+
 - 2026-08-11 — Effort now reads **"Moderate"** (owner), not a 6.4 / 10 figure.
   Strength training is Moderate, Morning run is Vigorous. That makes the tile
   value a word, and `typeNumeric.numL` is the Spartan face, which tokens.js
