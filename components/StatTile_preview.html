@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StatTile · Pebble design system</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Primitive palette — 10 hue ramps + neutrals. Steps run 0 (lightest) to 900 (darkest);
+   the primary step of every hue is 400. Verbatim from tokens.json / js/tokens.js.
+   Components never reference these directly — use the aliases in colors.css. */
+:root{
+--crimson-0:#FFEAED;--crimson-100:#FFC2C9;--crimson-200:#FD99A5;--crimson-300:#F26E83;--crimson-400:#E43A62;--crimson-500:#C02D50;--crimson-600:#9E2040;--crimson-700:#7C142F;--crimson-800:#5D0820;--crimson-900:#3F0112;
+--terracotta-0:#FFEEE5;--terracotta-100:#FDCEBE;--terracotta-200:#F2AF98;--terracotta-300:#E68F72;--terracotta-400:#D96F4A;--terracotta-500:#B65A3A;--terracotta-600:#93472B;--terracotta-700:#73341D;--terracotta-800:#532210;--terracotta-900:#361104;
+--tangerine-0:#FFF0DF;--tangerine-100:#FFDCBA;--tangerine-200:#FDC894;--tangerine-300:#FAB36C;--tangerine-400:#F59E3B;--tangerine-500:#CA8028;--tangerine-600:#A16315;--tangerine-700:#7A4700;--tangerine-800:#552D00;--tangerine-900:#331500;
+--gold-0:#FBF3DE;--gold-100:#F9E8BE;--gold-200:#F7DD9C;--gold-300:#F5D278;--gold-400:#F2C64B;--gold-500:#C6A034;--gold-600:#9C7C1C;--gold-700:#735901;--gold-800:#4D3900;--gold-900:#2A1B00;
+--lime-0:#EEF8E0;--lime-100:#DCEEBF;--lime-200:#CAE39D;--lime-300:#B8D978;--lime-400:#A6CE4E;--lime-500:#86A839;--lime-600:#688424;--lime-700:#4B620F;--lime-800:#304100;--lime-900:#172300;
+--emerald-0:#E6F9EC;--emerald-100:#C0E8CE;--emerald-200:#9BD7B0;--emerald-300:#73C693;--emerald-400:#43B476;--emerald-500:#329560;--emerald-600:#22774A;--emerald-700:#125B36;--emerald-800:#034023;--emerald-900:#002611;
+--teal-0:#E4F9F4;--teal-100:#C1EDE4;--teal-200:#9EE0D3;--teal-300:#76D4C3;--teal-400:#45C7B3;--teal-500:#31A492;--teal-600:#1D8173;--teal-700:#076155;--teal-800:#004239;--teal-900:#00261F;
+--sky-0:#E7F6FF;--sky-100:#C4E3FA;--sky-200:#A2CFF1;--sky-300:#7EBCE8;--sky-400:#58A8DF;--sky-500:#458ABA;--sky-600:#336E96;--sky-700:#215273;--sky-800:#113952;--sky-900:#032134;
+--violet-0:#F1F1FF;--violet-100:#D6D4FF;--violet-200:#BBB7FC;--violet-300:#A29AF5;--violet-400:#8A7CEC;--violet-500:#7266C6;--violet-600:#5B50A2;--violet-700:#453C7F;--violet-800:#30295E;--violet-900:#1D163E;
+--orchid-0:#FEEDFF;--orchid-100:#F1CFFA;--orchid-200:#E4B1F2;--orchid-300:#D692E8;--orchid-400:#C873DE;--orchid-500:#A65DB9;--orchid-600:#864896;--orchid-700:#663474;--orchid-800:#492053;--orchid-900:#2D0E35;
+--neutral-0:#EFF1F9;--neutral-100:#D5D9EA;--neutral-200:#B8BDD3;--neutral-300:#999FB9;--neutral-400:#7B819C;--neutral-500:#5E637D;--neutral-600:#42465B;--neutral-700:#282B39;--neutral-800:#0F111B;--neutral-900:#07080C;
+}
+
+/* Semantic colour aliases. These are what components reference — never raw hues.
+   Rule from the source (js/tokens.js): metric aliases carry data; semantic colours
+   appear only as glyphs or inside badges, never as chart lines or fills. */
+:root{
+/* surfaces — dark-only system; elevation is expressed by lightness, not shadow */
+--surface-app:var(--neutral-900);
+--surface-card:var(--neutral-800);
+--surface-raised:var(--neutral-700);
+--surface-fill:var(--neutral-600);
+
+/* text */
+--text-1:var(--neutral-0);
+--text-2:var(--neutral-200);
+--text-3:var(--neutral-400);
+
+/* lines */
+--divider:var(--neutral-700);
+--gridline:var(--neutral-700);
+--border-card:var(--neutral-700);
+
+/* metric aliases — one hue per body signal, always step 400 */
+--metric-heart-rate:var(--crimson-400);
+--metric-hrv:var(--terracotta-400);
+--metric-calories:var(--tangerine-400);
+--metric-steps:var(--gold-400);
+--metric-activity:var(--lime-400);
+--metric-distance:var(--emerald-400);
+--metric-readiness:var(--teal-400);
+--metric-spo2:var(--sky-400);
+--metric-sleep:var(--violet-400);
+--metric-skin-temp:var(--orchid-400);
+
+/* metric track — the unfilled portion of a ring or bar for that metric */
+--metric-track:var(--neutral-700);
+
+/* semantic states — bg / fill / icon / text quads */
+--positive-bg:#0E2A1B;--positive-fill:#1E5B38;--positive-icon:#4ADE80;--positive-text:#8AF0B0;
+--negative-bg:#331109;--negative-fill:#6E2418;--negative-icon:#F4604C;--negative-text:#FF9184;
+--caution-bg:#2E2103;--caution-fill:#6B4E0E;--caution-icon:#EFB428;--caution-text:#F5CE6F;
+--neutral-bg:var(--neutral-700);--neutral-fill:var(--neutral-600);--neutral-icon:var(--neutral-300);--neutral-text:var(--neutral-200);
+
+/* interaction — no source hover/press tokens exist; these encode the two
+   observable behaviours in the charts: opacity dim and full-opacity restore */
+--state-dim:0.4; /* @kind other */
+--state-plot-dim:0.28; /* @kind other */
+--state-inactive:0.45; /* @kind other */
+}
+
+/* Two families, two jobs. Text is Google Sans Flex; every numeral is League Spartan
+   with tabular lining figures. Headings carry medium/semibold/bold; paragraphs carry
+   regular/medium/semibold. Never mix more than two weights in one block. */
+:root{
+--font-text:'Google Sans Flex','Google Sans',sans-serif;
+--font-number:'Spartan','League Spartan',sans-serif;
+--font-feature-numeric:'tnum' 1,'lnum' 1;
+
+--weight-regular:400;--weight-medium:500;--weight-semibold:600;--weight-bold:700;
+--tracking-tight:-0.01em;--tracking-normal:0;--tracking-wide:0.08em;
+
+/* text scale — size / line-height / tracking */
+--h1-size:24px;--h1-line:30px;--h1-tracking:-0.01em;
+--h2-size:20px;--h2-line:26px;--h2-tracking:-0.005em;
+--h3-size:17px;--h3-line:22px;--h3-tracking:0;
+--p1-size:15px;--p1-line:22px;--p1-tracking:0;
+--p2-size:13px;--p2-line:18px;--p2-tracking:0;
+--p3-size:11px;--p3-line:16px;--p3-tracking:0;
+--caption-size:10px;--caption-line:14px;--caption-tracking:0.01em;
+--overline-size:11px;--overline-line:16px;--overline-tracking:0.08em;
+
+/* numeric scale — one weight per size: bold at display sizes, medium at data sizes */
+--num-2xl-size:56px;--num-2xl-line:60px;--num-2xl-tracking:-0.01em;--num-2xl-weight:700;
+--num-xl-size:42px;--num-xl-line:46px;--num-xl-tracking:-0.01em;--num-xl-weight:700;
+--num-l-size:24px;--num-l-line:28px;--num-l-tracking:-0.005em;--num-l-weight:700;
+--num-m-size:20px;--num-m-line:24px;--num-m-tracking:0;--num-m-weight:700;
+--num-s-size:13px;--num-s-line:16px;--num-s-tracking:0;--num-s-weight:500;
+--num-xs-size:10px;--num-xs-line:12px;--num-xs-tracking:0.01em;--num-xs-weight:500;
+
+/* ready-made `font:` shorthands for the styles used most */
+--type-h1:var(--weight-semibold) var(--h1-size)/var(--h1-line) var(--font-text);
+--type-h2:var(--weight-semibold) var(--h2-size)/var(--h2-line) var(--font-text);
+--type-h3:var(--weight-medium) var(--h3-size)/var(--h3-line) var(--font-text);
+--type-p1:var(--weight-regular) var(--p1-size)/var(--p1-line) var(--font-text);
+--type-p2:var(--weight-regular) var(--p2-size)/var(--p2-line) var(--font-text);
+--type-p3:var(--weight-regular) var(--p3-size)/var(--p3-line) var(--font-text);
+--type-caption:var(--weight-regular) var(--caption-size)/var(--caption-line) var(--font-text);
+--type-overline:var(--weight-medium) var(--overline-size)/var(--overline-line) var(--font-text);
+--type-num-2xl:var(--num-2xl-weight) var(--num-2xl-size)/var(--num-2xl-line) var(--font-number);
+--type-num-xl:var(--num-xl-weight) var(--num-xl-size)/var(--num-xl-line) var(--font-number);
+--type-num-l:var(--num-l-weight) var(--num-l-size)/var(--num-l-line) var(--font-number);
+--type-num-m:var(--num-m-weight) var(--num-m-size)/var(--num-m-line) var(--font-number);
+--type-num-s:var(--num-s-weight) var(--num-s-size)/var(--num-s-line) var(--font-number);
+--type-num-xs:var(--num-xs-weight) var(--num-xs-size)/var(--num-xs-line) var(--font-number);
+}
+
+/* 4px base, with a 2px half-step. Named by value, so --space-16 is 16px. */
+:root{
+--space-2:2px;--space-4:4px;--space-8:8px;--space-12:12px;--space-16:16px;--space-20:20px;
+--space-24:24px;--space-32:32px;--space-36:36px;--space-40:40px;--space-48:48px;--space-64:64px;
+
+/* layout constants read off the source components */
+--screen-width:360px;      /* base phone width */
+--screen-gutter:16px;      /* left/right page margin */
+--card-pad:16px;           /* chart-card padding */
+--card-gap:12px;           /* vertical rhythm between stacked cards */
+--chart-card-height:216px; /* fixed height of both chart cards */
+--chart-card-min-width:328px;
+--tabbar-height:64px;
+}
+
+/* 4 to 36 in 4px steps, plus full. Cards are 20; pills and rings are full. */
+:root{
+--radius-4:4px;--radius-8:8px;--radius-12:12px;--radius-16:16px;--radius-20:20px;
+--radius-24:24px;--radius-28:28px;--radius-32:32px;--radius-36:36px;--radius-full:999px;
+
+--radius-card:var(--radius-20);
+--radius-chip:var(--radius-8);
+--radius-pill:var(--radius-full);
+--radius-segment:var(--radius-12);
+--radius-bar-cap:var(--radius-4);
+}
+
+/* Two widths only. Hairline (0.5px) draws gridlines and card outlines; thin (1px)
+   draws badge outlines and divider rules. There are no shadows in this system —
+   elevation is surface lightness, so --shadow-none is the only elevation token. */
+:root{
+--border-hairline:0.5px;
+--border-thin:1px;
+--stroke-chart-line:2px;
+--stroke-hover-line:1.5px;
+--shadow-none:none;
+}
+
+/* Motion is minimal and functional: opacity crossfades on scrub, nothing else.
+   Durations are the two used in the source chart components. Every animation must
+   be disabled under prefers-reduced-motion (a hard gate in .claude/rules). */
+:root{
+--duration-fast:120ms; /* @kind other */
+--duration-base:140ms; /* @kind other */
+--duration-slow:240ms; /* @kind other */
+--ease-standard:ease; /* @kind other */
+--transition-dim:opacity var(--duration-fast) var(--ease-standard);
+}
+@media (prefers-reduced-motion:reduce){:root{
+--duration-fast:0ms; /* @kind other */
+--duration-base:0ms; /* @kind other */
+--duration-slow:0ms; /* @kind other */
+}}
+
+/* Minimal document defaults. Dark-only: the app surface is always neutral-900. */
+:root{color-scheme:dark}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--surface-app);color:var(--text-1);font:var(--type-p1);-webkit-font-smoothing:antialiased}
+a{color:var(--metric-readiness);text-decoration:none}
+a:hover{color:var(--teal-300)}
+a:active{color:var(--teal-500)}
+*,*::before,*::after{box-sizing:border-box}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+
+    :root{
+      --act-accent:var(--metric-activity);
+      --act-accent-hi:var(--lime-300);
+      --act-accent-lo:var(--lime-500);
+      --steps-hue:var(--metric-steps);
+      --dist-hue:var(--metric-distance);
+      --cal-hue:var(--metric-calories);
+    }
+    html,body{margin:0;background:var(--surface-app);-webkit-font-smoothing:antialiased}
+    a{color:var(--act-accent);text-decoration:none}
+    a:hover{color:var(--act-accent-hi)}
+    @keyframes pdg-spin{to{transform:rotate(360deg)}}
+    @keyframes pdg-pulse{0%,100%{opacity:1}50%{opacity:0.45}}
+    @media (prefers-reduced-motion: reduce){
+      [data-screen-label] *{transition:none !important;animation:none !important}
+    }
+  
+
+/* ── preview chrome (not part of the component) ───────────────────── */
+body { margin:0; background:var(--surface-app); color:var(--text-1);
+        font:var(--type-p1); -webkit-font-smoothing:antialiased;
+        padding:var(--space-32) var(--screen-gutter) var(--space-64); }
+.wrap { max-width:520px; margin:0 auto; }
+.eyebrow { font:var(--type-overline); font-weight:var(--weight-semibold);
+            letter-spacing:var(--overline-tracking); text-transform:uppercase;
+            color:var(--text-3); margin:var(--space-32) 0 var(--space-8); }
+.wrap > .eyebrow:first-child { margin-top:0; }
+.row { display:grid; grid-template-columns:repeat(3, minmax(0,1fr));
+        gap:var(--space-8); }
+.row.one { grid-template-columns:1fr; }
+@media (max-width:320px) { .row { grid-template-columns:1fr; } }
+
+/* ── StatTile ─────────────────────────────────────────────────────── */
+.tile { background:var(--surface-card);
+         border-radius:var(--radius-card);
+         padding:var(--card-pad);
+         border:none;
+         box-shadow:var(--shadow-none);
+         text-align:center; }
+.tile.outlined { border:var(--border-hairline) solid var(--divider); }
+.tile.a-left { text-align:left; }
+
+.tile .label { font:var(--type-overline);
+                font-weight:var(--weight-semibold);
+                letter-spacing:var(--overline-tracking);
+                text-transform:uppercase;
+                color:var(--text-2);
+                margin-bottom:var(--space-8); }
+
+.tile .figure { display:flex; align-items:baseline;
+                 justify-content:center; gap:var(--space-4); }
+.tile.a-left .figure { justify-content:flex-start; }
+
+.tile .value { font:var(--type-num-l);
+                letter-spacing:var(--num-l-tracking);
+                color:var(--text-1);
+                font-feature-settings:var(--font-feature-numeric); }
+.tile.s-m  .value { font:var(--type-num-m);  letter-spacing:var(--num-m-tracking); }
+.tile.s-xl .value { font:var(--type-num-xl); letter-spacing:var(--num-xl-tracking); }
+
+.tile .unit { font:var(--type-overline);
+               font-weight:var(--weight-semibold);
+               letter-spacing:var(--overline-tracking);
+               text-transform:uppercase;
+               color:var(--text-3); }
+</style></head>
+<body>
+
+  <div class="wrap">
+    <p class="eyebrow">StatTile · default (size l, align center)</p>
+    <div class="row">
+      <section class="tile"><div class="label">Steps</div><div class="figure"><span class="value">7,240</span></div></section>
+      <section class="tile"><div class="label">Distance</div><div class="figure"><span class="value">5.1</span><span class="unit">km</span></div></section>
+      <section class="tile"><div class="label">Calories</div><div class="figure"><span class="value">420</span><span class="unit">kcal</span></div></section>
+    </div>
+
+    <p class="eyebrow">size="m"</p>
+    <div class="row">
+      <section class="tile s-m"><div class="label">Steps</div><div class="figure"><span class="value">7,240</span></div></section>
+      <section class="tile s-m"><div class="label">Distance</div><div class="figure"><span class="value">5.1</span><span class="unit">km</span></div></section>
+      <section class="tile s-m"><div class="label">Calories</div><div class="figure"><span class="value">420</span><span class="unit">kcal</span></div></section>
+    </div>
+
+    <p class="eyebrow">align="left" · variant="outlined"</p>
+    <div class="row">
+      <section class="tile a-left outlined"><div class="label">Steps</div><div class="figure"><span class="value">7,240</span></div></section>
+      <section class="tile a-left outlined"><div class="label">Distance</div><div class="figure"><span class="value">5.1</span><span class="unit">km</span></div></section>
+      <section class="tile a-left outlined"><div class="label">Calories</div><div class="figure"><span class="value">420</span><span class="unit">kcal</span></div></section>
+    </div>
+
+    <p class="eyebrow">size="xl" · one tile, full width</p>
+    <div class="row one">
+      <section class="tile s-xl"><div class="label">Active calories</div><div class="figure"><span class="value">441</span><span class="unit">cal</span></div></section>
+    </div>
+  </div>
+
+</body></html>

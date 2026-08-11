@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pebble · navigation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ---- tokens (subset) ---- */
+  :root{
+    color-scheme: dark;
+    --neutral-0:   #EFF1F9;
+    --neutral-100: #D5D9EA;
+    --neutral-300: #999FB9;
+    --neutral-800: #0F111B;
+    --neutral-900: #07080C;
+    --surface-app:  var(--neutral-900);
+    --surface-card: var(--neutral-800);
+    --radius-full: 999px;
+    --radius-20: 20px;
+    --font-text: 'Google Sans Flex','Google Sans','Inter',Arial,sans-serif;
+  }
+
+  *{ box-sizing: border-box; }
+  body{
+    margin: 0;
+    min-height: 100vh;
+    background: var(--surface-app);
+    font-family: var(--font-text);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  /* ---- demo screen: content behind the bar so the blur has a job ---- */
+  .screen{
+    position: relative;
+    width: 100%;
+    max-width: 390px;
+    min-height: 100vh;
+    padding: 48px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+  }
+  .screen h1{
+    margin: 0 0 4px;
+    font-size: 24px;
+    line-height: 30px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--neutral-100);
+  }
+  .card{ height: 88px; border-radius: var(--radius-20); background: var(--surface-card); flex: none; }
+  .card:nth-of-type(odd){  background-image: linear-gradient(100deg, rgba(138,124,236,.35), rgba(69,199,179,.12)); }
+  .card:nth-of-type(even){ background-image: linear-gradient(100deg, rgba(228,58,98,.28), rgba(245,158,59,.12)); }
+  .nav-slot{
+    position: sticky;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    margin-top: auto;
+    padding-top: 24px;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* ---------------- navigation ---------------- */
+  /* bar 328 × 60 · tabs 72 × 60 · 4px between · 14px side padding */
+  .pebble-nav{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 328px;
+    height: 60px;
+    padding: 0 14px;
+    border-radius: var(--radius-full);
+    background: rgba(15, 17, 27, .8);            /* neutral 800 @ 80% */
+    -webkit-backdrop-filter: blur(26px);          /* Figma background blur 52 */
+    backdrop-filter: blur(26px);
+    box-shadow: 0 8px 24px rgba(7,8,12,.48), 0 2px 6px rgba(7,8,12,.32);
+  }
+
+  .pebble-tab{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 72px;
+    height: 60px;
+    padding: 10px 0;
+    border: 0;
+    background: none;
+    border-radius: var(--radius-full);
+    font-family: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pebble-tab:focus-visible{ outline: 2px solid var(--neutral-0); outline-offset: -2px; }
+
+  .pebble-tab .icon{
+    display: block;
+    height: 24px;
+    color: var(--neutral-300);
+    transition: color 160ms ease, transform 160ms ease;
+  }
+  .pebble-tab .label{
+    font-size: 10px;
+    line-height: 14px;
+    font-weight: 400;
+    letter-spacing: .01em;
+    color: var(--neutral-300);
+    transition: color 160ms ease;
+  }
+  .pebble-tab:active .icon{ transform: scale(.92); }
+
+  /* selected: filled glyph at neutral 0, label at neutral 100 */
+  .pebble-tab[aria-current="page"] .icon{  color: var(--neutral-0); }
+  .pebble-tab[aria-current="page"] .label{ color: var(--neutral-100); }
+
+  @media (prefers-reduced-motion: reduce){
+    .pebble-tab .icon, .pebble-tab .label{ transition: none; }
+    .pebble-tab:active .icon{ transform: none; }
+  }
+</style>
+</head>
+<body>
+
+  <main class="screen">
+    <h1 id="screen-title">Health</h1>
+    <div class="card"></div>
+    <div class="card"></div>
+    <div class="card"></div>
+    <div class="card"></div>
+
+    <div class="nav-slot">
+      <nav class="pebble-nav" aria-label="Primary"></nav>
+    </div>
+  </main>
+
+<script>
+  // Phosphor icons — regular (inactive) and fill (selected).
+  const ICONS = {
+    health: {
+      regular: '<path fill="currentColor" d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z"/>',
+      fill:    '<path fill="currentColor" d="M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z"/>'
+    },
+    activity: {
+      regular: '<path fill="currentColor" d="M231.16,166.63l-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-8-8,48.05,48.05,0,0,1-48-48,8,8,0,0,0-12.83-6.37L30.13,76l-.2.16a16,16,0,0,0-1.24,23.75L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63ZM224,200H151.37L40,88.63l12.87-9.76,38.79,38.79A8,8,0,0,0,103,106.34L65.74,69.11l40-30.31A64.15,64.15,0,0,0,160,87.5v21.89a63.65,63.65,0,0,0,35.38,57.24L224,180.94ZM70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm40,24a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16h54.8A8,8,0,0,1,110.8,208Z"/>',
+      fill:    '<path fill="currentColor" d="M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z"/>'
+    },
+    sleep: {
+      regular: '<path d="M108.11,28.11A96.09,96.09,0,0,0,227.89,147.89,96,96,0,1,1,108.11,28.11Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>',
+      fill:    '<path fill="currentColor" d="M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z"/>'
+    },
+    me: {
+      regular: '<circle cx="128" cy="96" r="64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M32,216c19.37-33.47,54.55-56,96-56s76.63,22.53,96,56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>',
+      fill:    '<path fill="currentColor" d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z"/>'
+    }
+  };
+
+  const TABS = [
+    { id: 'health',   label: 'Health'   },
+    { id: 'activity', label: 'Activity' },
+    { id: 'sleep',    label: 'Sleep'    },
+    { id: 'me',       label: 'Me'       }
+  ];
+
+  const nav   = document.querySelector('.pebble-nav');
+  const title = document.getElementById('screen-title');
+  let active  = 'health';
+
+  function glyph(id, isActive){
+    return '<svg class="icon" width="24" height="24" viewBox="0 0 256 256" aria-hidden="true" focusable="false">'
+      + ICONS[id][isActive ? 'fill' : 'regular'] + '</svg>';
+  }
+
+  function render(){
+    nav.innerHTML = TABS.map(function(tab){
+      const on = tab.id === active;
+      return '<button type="button" class="pebble-tab" data-id="' + tab.id + '"'
+        + (on ? ' aria-current="page"' : '')
+        + ' tabindex="' + (on ? '0' : '-1') + '">'
+        + glyph(tab.id, on)
+        + '<span class="label">' + tab.label + '</span>'
+        + '</button>';
+    }).join('');
+    title.textContent = TABS.find(function(t){ return t.id === active; }).label;
+  }
+
+  function select(id, refocus){
+    if (id === active) return;
+    active = id;
+    render();
+    if (refocus) nav.querySelector('[aria-current="page"]').focus();
+    // Hook up routing here: navigate(id)
+  }
+
+  nav.addEventListener('click', function(e){
+    const btn = e.target.closest('.pebble-tab');
+    if (btn) select(btn.dataset.id, false);
+  });
+
+  // Arrow keys move between tabs, as in a native tab bar.
+  nav.addEventListener('keydown', function(e){
+    const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    if (!dir) return;
+    e.preventDefault();
+    const i = TABS.findIndex(function(t){ return t.id === active; });
+    select(TABS[(i + dir + TABS.length) % TABS.length].id, true);
+  });
+
+  render();
+</script>
+</body>
+</html>
