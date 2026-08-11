@@ -1,0 +1,2711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pebble — Workout Tab</title>
+
+<!--
+  Pebble — WORKOUT TAB
+  ====================
+  Named snapshot of the prototype, saved at the owner's request
+  (2026-08-10). Self-contained: open it by double-clicking, no server.
+  The live working copy stays in index.html — edit there, then re-save
+  this snapshot when the owner asks for a new named version.
+
+  Merged source of truth (2026-08-10).
+  Reconciled from the version reviewed with the owner in a parallel session
+  (metric details pages with D/W/M/Y switcher, two-state control panel)
+  plus this session's StatTile feedback round.
+-->
+
+<!-- Webfonts. Google Sans Flex (text) and League Spartan (numerals) load from
+     Google Fonts, same as the approved chart components. Offline they fall
+     back to system sans — everything still works. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,400..700&family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ==========================================================================
+   1. TOKENS
+   --------------------------------------------------------------------------
+   /* Flag: these custom properties are copied VERBATIM from js/tokens.js
+      (the single source of truth). They are inlined here because the page
+      must open by double-clicking (file://), where ES-module imports are
+      blocked by the browser. If js/tokens.js changes, re-copy the values.
+      This mirrors the approach used in the approved Activity prototype. */
+:root{
+  /* hue ramps — 0 lightest → 900 darkest, primary at 400 */
+  --crimson-0:#FFEAED;--crimson-100:#FFC2C9;--crimson-200:#FD99A5;--crimson-300:#F26E83;--crimson-400:#E43A62;--crimson-500:#C02D50;--crimson-600:#9E2040;--crimson-700:#7C142F;--crimson-800:#5D0820;--crimson-900:#3F0112;
+  --terracotta-0:#FFEEE5;--terracotta-100:#FDCEBE;--terracotta-200:#F2AF98;--terracotta-300:#E68F72;--terracotta-400:#D96F4A;--terracotta-500:#B65A3A;--terracotta-600:#93472B;--terracotta-700:#73341D;--terracotta-800:#532210;--terracotta-900:#361104;
+  --tangerine-0:#FFF0DF;--tangerine-100:#FFDCBA;--tangerine-200:#FDC894;--tangerine-300:#FAB36C;--tangerine-400:#F59E3B;--tangerine-500:#CA8028;--tangerine-600:#A16315;--tangerine-700:#7A4700;--tangerine-800:#552D00;--tangerine-900:#331500;
+  --gold-0:#FBF3DE;--gold-100:#F9E8BE;--gold-200:#F7DD9C;--gold-300:#F5D278;--gold-400:#F2C64B;--gold-500:#C6A034;--gold-600:#9C7C1C;--gold-700:#735901;--gold-800:#4D3900;--gold-900:#2A1B00;
+  --lime-0:#EEF8E0;--lime-100:#DCEEBF;--lime-200:#CAE39D;--lime-300:#B8D978;--lime-400:#A6CE4E;--lime-500:#86A839;--lime-600:#688424;--lime-700:#4B620F;--lime-800:#304100;--lime-900:#172300;
+  --emerald-0:#E6F9EC;--emerald-100:#C0E8CE;--emerald-200:#9BD7B0;--emerald-300:#73C693;--emerald-400:#43B476;--emerald-500:#329560;--emerald-600:#22774A;--emerald-700:#125B36;--emerald-800:#034023;--emerald-900:#002611;
+  --teal-0:#E4F9F4;--teal-100:#C1EDE4;--teal-200:#9EE0D3;--teal-300:#76D4C3;--teal-400:#45C7B3;--teal-500:#31A492;--teal-600:#1D8173;--teal-700:#076155;--teal-800:#004239;--teal-900:#00261F;
+  --sky-0:#E7F6FF;--sky-100:#C4E3FA;--sky-200:#A2CFF1;--sky-300:#7EBCE8;--sky-400:#58A8DF;--sky-500:#458ABA;--sky-600:#336E96;--sky-700:#215273;--sky-800:#113952;--sky-900:#032134;
+  --violet-0:#F1F1FF;--violet-100:#D6D4FF;--violet-200:#BBB7FC;--violet-300:#A29AF5;--violet-400:#8A7CEC;--violet-500:#7266C6;--violet-600:#5B50A2;--violet-700:#453C7F;--violet-800:#30295E;--violet-900:#1D163E;
+  --orchid-0:#FEEDFF;--orchid-100:#F1CFFA;--orchid-200:#E4B1F2;--orchid-300:#D692E8;--orchid-400:#C873DE;--orchid-500:#A65DB9;--orchid-600:#864896;--orchid-700:#663474;--orchid-800:#492053;--orchid-900:#2D0E35;
+  --neutral-0:#EFF1F9;--neutral-100:#D5D9EA;--neutral-200:#B8BDD3;--neutral-300:#999FB9;--neutral-400:#7B819C;--neutral-500:#5E637D;--neutral-600:#42465B;--neutral-700:#282B39;--neutral-800:#0F111B;--neutral-900:#07080C;
+
+  /* surfaces — elevation is lightness, never shadow */
+  --surface-app:var(--neutral-900);
+  --surface-card:var(--neutral-800);
+  --surface-raised:var(--neutral-700);
+  --surface-fill:var(--neutral-600);
+
+  /* text */
+  --text-1:var(--neutral-0);
+  --text-2:var(--neutral-200);
+  --text-3:var(--neutral-400);
+
+  /* lines */
+  --divider:var(--neutral-700);
+  --gridline:var(--neutral-700);
+
+  /* metric aliases — one hue per body signal, always step 400 */
+  --metric-heart-rate:var(--crimson-400);
+  --metric-hrv:var(--terracotta-400);
+  --metric-calories:var(--tangerine-400);
+  --metric-steps:var(--gold-400);
+  --metric-activity:var(--lime-400);
+  --metric-distance:var(--emerald-400);
+  --metric-readiness:var(--teal-400);
+  --metric-spo2:var(--sky-400);
+  --metric-sleep:var(--violet-400);
+  --metric-skin-temp:var(--orchid-400);
+
+  /* semantic quads — glyphs and badges only, never chart lines or fills */
+  --positive-bg:#0E2A1B;--positive-fill:#1E5B38;--positive-icon:#4ADE80;--positive-text:#8AF0B0;
+  --negative-bg:#331109;--negative-fill:#6E2418;--negative-icon:#F4604C;--negative-text:#FF9184;
+  --caution-bg:#2E2103;--caution-fill:#6B4E0E;--caution-icon:#EFB428;--caution-text:#F5CE6F;
+  --neutral-bg:var(--neutral-700);--neutral-fill:var(--neutral-600);--neutral-icon:var(--neutral-300);--neutral-text:var(--neutral-200);
+
+  /* type — Google Sans Flex for words, League Spartan for every numeral */
+  --font-text:'Google Sans Flex','Google Sans',sans-serif;
+  --font-number:'Spartan','League Spartan',sans-serif;
+  --num-features:'tnum' 1,'lnum' 1;
+
+  /* radii, spacing helpers, motion */
+  --radius-card:20px;
+  --duration-fast:120ms;
+  --duration-base:140ms;
+  --duration-slow:240ms;
+}
+
+/* ==========================================================================
+   2. PAGE SCAFFOLD — the desk the phone sits on, plus the control panel
+   ========================================================================== */
+:root{color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+#app{min-height:100vh;background:var(--neutral-900);color:var(--text-1);font-family:var(--font-text);display:flex;align-items:flex-start;justify-content:center;gap:32px;padding:32px 16px;flex-wrap:wrap}
+body{
+  min-height:100vh;
+  background:var(--neutral-900);
+  color:var(--text-1);
+  font-family:var(--font-text);
+  display:flex;align-items:flex-start;justify-content:center;
+  gap:32px;padding:32px 16px;flex-wrap:wrap;
+}
+
+/* Control panel — lives OUTSIDE the phone. Switches the state of every card. */
+.panel{
+  position:sticky;top:32px;
+  width:230px;background:var(--surface-card);
+  border:0.5px solid var(--neutral-700);border-radius:var(--radius-card);
+  padding:16px;
+}
+.panel h2{margin:0;font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.panel .hint{margin:8px 0 12px;font-size:11px;line-height:16px;color:var(--text-3)}
+.panel .opts{display:flex;flex-direction:column;gap:4px}
+.panel label{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:12px;cursor:pointer;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);
+}
+.panel label:hover{background:var(--surface-raised)}
+.panel input{accent-color:var(--metric-readiness);margin:0}
+.panel label.on{background:var(--surface-raised);color:var(--text-1)}
+.panel .desc{display:block;font-size:10px;line-height:14px;font-weight:400;color:var(--text-3)}
+
+/* ==========================================================================
+   3. PHONE MOCKUP — Android, 360px-wide screen, punch-hole camera
+   ========================================================================== */
+.phone{
+  flex:0 0 auto;
+  border-radius:40px;
+  background:var(--neutral-900);
+  border:2px solid var(--neutral-700);
+  outline:6px solid var(--neutral-800);
+  padding:10px;
+}
+.screen{
+  position:relative;width:360px;height:780px;
+  border-radius:32px;overflow:hidden;
+  background:var(--surface-app);
+  display:flex;flex-direction:column;
+}
+/* punch-hole selfie camera */
+.screen::before{
+  content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:12px;height:12px;border-radius:50%;
+  background:var(--neutral-900);border:2px solid var(--neutral-700);
+  z-index:60;pointer-events:none;
+}
+/* The status bar floats OVER the app so tab backgrounds extend all the way
+   to the top edge (owner request, 2026-08-07). A soft scrim in each hero
+   keeps the clock legible. */
+.statusbar{
+  position:absolute;top:0;left:0;right:0;height:32px;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-1);
+  pointer-events:none;
+}
+.statusbar .batt{width:20px;height:10px;border-radius:3px;border:1px solid var(--text-2);padding:1px}
+.statusbar .batt i{display:block;width:12px;height:100%;border-radius:2px;background:var(--text-1)}
+.statusbar .right{display:flex;align-items:center;gap:6px;color:var(--text-2)}
+
+/* the scrollable app area */
+.pages{flex:1;overflow:hidden;position:relative}
+.page{
+  position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  display:none;scrollbar-width:none;
+  padding-bottom:96px; /* room for the floating tab bar */
+}
+.page::-webkit-scrollbar{display:none}
+.page.active{display:block}
+
+/* gesture bar */
+.gesture{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:112px;height:4px;border-radius:999px;background:var(--neutral-600);
+  z-index:60;pointer-events:none;
+}
+
+/* ==========================================================================
+   4. BOTTOM NAVIGATION — owner-supplied component ("pebblenav"):
+      floating 328×60 pill, background blur over the scrolling content,
+      4 tabs of 72×60. Metrics copied from the component file; the bar
+      background is the component's neutral-800 @ 80%, written with
+      color-mix so it stays on tokens.
+      Only Activity is wired up in this flow — Health / Sleep / Me are
+      shown idle and non-clickable (their screens land separately).
+   ========================================================================== */
+.pebble-nav{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:20px;z-index:55;
+  display:flex;align-items:center;gap:4px;
+  width:328px;height:60px;padding:0 14px;
+  border-radius:999px;
+  background:color-mix(in srgb, var(--neutral-800) 80%, transparent);
+  -webkit-backdrop-filter:blur(26px);   /* Figma background blur 52 */
+  backdrop-filter:blur(26px);
+  box-shadow:0 8px 24px color-mix(in srgb, var(--neutral-900) 48%, transparent),
+             0 2px 6px color-mix(in srgb, var(--neutral-900) 32%, transparent);
+}
+.pebble-tab{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  width:72px;height:60px;padding:10px 0;border:0;background:none;border-radius:999px;
+  font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.pebble-tab:focus-visible{outline:2px solid var(--neutral-0);outline-offset:-2px}
+.pebble-tab .icon{display:block;width:24px;height:24px;color:var(--neutral-300);transition:color 160ms ease, transform 160ms ease}
+.pebble-tab .label{font-size:10px;line-height:14px;font-weight:400;letter-spacing:.01em;color:var(--neutral-300);transition:color 160ms ease}
+.pebble-tab:active .icon{transform:scale(.92)}
+.pebble-tab .ico-fill{display:none}
+/* selected: filled glyph at neutral 0, label at neutral 100 */
+.pebble-tab[aria-current="page"] .ico-line{display:none}
+.pebble-tab[aria-current="page"] .ico-fill{display:block}
+.pebble-tab[aria-current="page"] .icon{color:var(--neutral-0)}
+.pebble-tab[aria-current="page"] .label{color:var(--neutral-100)}
+/* tabs whose screens aren't in this flow yet: visible but inert */
+.pebble-tab[aria-disabled="true"]{cursor:default}
+.pebble-tab[aria-disabled="true"]:active .icon{transform:none}
+
+/* ==========================================================================
+   5. SHARED SCREEN PIECES — header, hero ring, stat chips, cards
+   ========================================================================== */
+/* 44px top padding = 32px status bar (now an overlay) + the original 12px */
+.screen-head{padding:44px 16px 0;display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:20}
+
+/* full-bleed tab background: the owner-supplied PNG sits on top of a
+   code-drawn stand-in scene (shown until the PNG file exists on disk) */
+.hero-bg{position:absolute;inset:0 0 auto 0;height:660px;overflow:hidden;pointer-events:none}
+.hero-bg img,.hero-bg svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bg-scrim-top{position:absolute;left:0;top:0;right:0;height:160px;background:linear-gradient(180deg, color-mix(in srgb, var(--surface-app) 55%, transparent) 0%, color-mix(in srgb, var(--surface-app) 18%, transparent) 55%, transparent 100%)}
+.bg-scrim-bottom{position:absolute;left:0;bottom:0;right:0;height:250px;background:linear-gradient(180deg, transparent 0%, var(--surface-app) 88%)}
+.screen-title{font-size:24px;line-height:30px;font-weight:500;letter-spacing:-0.01em;color:var(--text-1)}
+.date-btn{
+  margin:4px 0 0 -8px;display:flex;align-items:center;gap:4px;
+  background:none;border:0;padding:4px 8px;border-radius:12px;cursor:pointer;font-family:inherit;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);
+}
+.date-btn:hover{background:var(--surface-raised)}
+.caret{width:6px;height:6px;border-right:1.2px solid var(--text-3);border-bottom:1.2px solid var(--text-3);transform:rotate(45deg);margin-bottom:3px;display:inline-block}
+.dots-btn{
+  width:44px;height:44px;margin:-8px -12px 0 0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:none;border:0;cursor:pointer;
+}
+.dots-btn span{width:3px;height:3px;border-radius:50%;background:var(--text-2)}
+
+/* dropdown menu behind the 3-dot button */
+.menu{
+  position:absolute;right:16px;top:64px;z-index:40;width:188px;
+  background:var(--surface-card);border:0.5px solid var(--surface-fill);
+  border-radius:20px;padding:8px;display:none;
+}
+.menu.open{display:block}
+.menu button{
+  width:100%;text-align:left;background:none;border:0;padding:8px 12px;border-radius:12px;
+  cursor:pointer;font-family:inherit;font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);
+}
+.menu button:hover{background:var(--surface-raised);color:var(--text-1)}
+
+/* Phosphor icons — injected by JS into .phi placeholders */
+.phi{display:inline-flex;flex:0 0 auto}
+.phi svg{width:100%;height:100%;display:block;fill:currentColor}
+
+/* history calendar — full-month scroll modal ported from the standalone
+   prototypes; newest month sits at the bottom, scroll up for the past */
+.scrim{position:absolute;inset:0;z-index:69;background:color-mix(in srgb, var(--neutral-900) 62%, transparent)}
+.cal-sheet{
+  position:absolute;left:0;right:0;top:96px;bottom:0;z-index:70;
+  background:var(--surface-card);border-radius:24px 24px 0 0;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.cal-grab{padding:8px 0 0;display:flex;justify-content:center;flex:0 0 auto}
+.cal-grab span{width:36px;height:4px;border-radius:999px;background:var(--surface-fill)}
+.cal-head{flex:0 0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cal-head .t{font-size:20px;line-height:26px;font-weight:500;letter-spacing:-0.005em;color:var(--text-1)}
+.iconbtn{
+  width:36px;height:36px;border-radius:999px;background:var(--surface-raised);border:0;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--text-1);
+}
+.iconbtn:hover{background:var(--surface-fill)}
+.cal-week{flex:0 0 auto;padding:0 16px 8px;display:grid;grid-template-columns:repeat(7,1fr);border-bottom:0.5px solid var(--surface-raised)}
+.cal-week span{text-align:center;font-size:11px;line-height:16px;font-weight:500;color:var(--text-3)}
+.cal-scrollwrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+/* extra bottom padding so the sheet opens with the previous month's last
+   ring row tucked up under the fade and the current month sitting higher */
+.cal-scroll{flex:1;min-height:0;overflow-y:auto;padding:0 16px 88px;scrollbar-width:none}
+.cal-scroll::-webkit-scrollbar{display:none}
+/* fade-out over whatever scrolls under the top edge — the previous month's
+   last ring row melts into it, so the current month reads front and center */
+.cal-fade{position:absolute;top:0;left:0;right:0;height:68px;pointer-events:none;
+  background:linear-gradient(180deg, var(--surface-card) 0%, var(--surface-card) 30%, transparent 100%)}
+.cal-month{padding-top:24px}
+.cal-month .mt{text-align:center;font-size:17px;line-height:22px;font-weight:500;color:var(--text-1)}
+.cal-grid{margin-top:16px;display:grid;grid-template-columns:repeat(7,1fr);row-gap:16px;column-gap:2px}
+.cal-day{
+  width:100%;min-height:44px;background:none;border:0;padding:0;cursor:pointer;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.cal-day .dn{font-family:var(--font-number);font-size:13px;line-height:16px;font-weight:500;font-feature-settings:var(--num-features);color:var(--text-1)}
+.cal-day.future{opacity:0.35;cursor:default}
+
+/* sub-pages (About / Goal setting) slide over the tab content */
+.subpage{
+  position:absolute;inset:0;z-index:30;background:var(--surface-app);
+  overflow-y:auto;scrollbar-width:none;padding-bottom:96px;
+}
+.subpage::-webkit-scrollbar{display:none}
+.subpage[hidden]{display:none}
+.sub-head{padding:40px 16px 0;display:flex;align-items:center;gap:4px}
+.sub-head .backbtn{
+  width:40px;height:40px;margin-left:-12px;display:flex;align-items:center;justify-content:center;
+  background:none;border:0;cursor:pointer;border-radius:999px;color:var(--text-1);
+}
+.sub-head .backbtn:hover{background:var(--surface-raised)}
+.sub-head .t{font-size:20px;line-height:26px;font-weight:500;letter-spacing:-0.005em;color:var(--text-1)}
+.sub-body{padding:16px 16px 40px;display:flex;flex-direction:column;gap:12px}
+.sub-body .card p{margin:8px 0 0;font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
+.scorerow{display:flex;align-items:baseline;gap:12px}
+.scorerow .rng{width:56px;flex:0 0 auto;font-family:var(--font-number);font-size:13px;line-height:16px;font-weight:500;font-feature-settings:var(--num-features);color:var(--text-1)}
+.scorerow .dsc{font-size:13px;line-height:18px;color:var(--text-2)}
+.bullet{display:flex;gap:8px}
+.bullet .sw{width:8px;height:8px;border-radius:999px;flex:0 0 auto;margin-top:4px}
+.bullet .bt{font-size:13px;line-height:18px;font-weight:500;color:var(--text-1)}
+.bullet p{margin:2px 0 0 !important}
+
+/* goal-setting cards + edit sheet (Activity) */
+.goalcard{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  background:var(--surface-card);border:0;border-radius:20px;padding:16px;cursor:pointer;font-family:inherit;
+}
+.goalcard:hover{background:var(--surface-raised)}
+.goalcard .nm{flex:1;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.goalcard .gv{display:flex;align-items:baseline;gap:4px}
+.goalcard .gn{font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:700;font-feature-settings:var(--num-features);color:var(--text-1)}
+.goalcard .gu{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.sheet{
+  position:absolute;left:8px;right:8px;bottom:8px;z-index:70;
+  background:var(--surface-card);border-radius:24px;padding:16px 16px 24px;
+}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sheet-head .t{font-size:17px;line-height:22px;font-weight:500;color:var(--text-1)}
+.sheet-rows{margin-top:16px;display:flex;flex-direction:column;gap:2px}
+.sheet-row{
+  width:100%;background:none;border:0;padding:10px;border-radius:12px;cursor:pointer;font-family:inherit;
+  display:flex;justify-content:center;
+}
+.sheet-row .v{font-family:var(--font-number);font-size:15px;line-height:20px;font-weight:500;font-feature-settings:var(--num-features);color:var(--text-3);position:relative}
+.sheet-row.sel{background:var(--surface-raised)}
+.sheet-row.sel .v{font-size:20px;line-height:24px;font-weight:700;color:var(--text-1)}
+/* the unit (steps / km / kcal) shows ONLY next to the focal (selected) value,
+   not on every row — owner request */
+.sheet-row .u{display:none;position:absolute;left:100%;margin-left:8px;top:50%;transform:translateY(-50%);font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2)}
+.sheet-row.sel .u{display:block}
+
+/* toggle switch (Me tab, sleep alarm) */
+.switch{
+  width:46px;height:28px;flex:0 0 auto;border:0;border-radius:999px;cursor:pointer;
+  padding:4px;display:flex;justify-content:flex-start;background:var(--surface-fill);
+}
+.switch.on{justify-content:flex-end;background:var(--on, var(--metric-readiness))}
+.switch i{width:20px;height:20px;border-radius:999px;background:var(--text-1);display:block}
+
+/* Me tab settings rows */
+.settings-group{background:var(--surface-card);border-radius:var(--radius-card);padding:0 16px}
+.setrow{
+  display:flex;align-items:center;gap:12px;padding:14px 0;
+  border-top:0.5px solid var(--divider);cursor:pointer;
+}
+.setrow:first-child{border-top:0}
+.setrow .itile{
+  width:32px;height:32px;border-radius:8px;background:var(--surface-raised);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+}
+.setrow .lab{flex:1;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.setrow .val{font-size:13px;line-height:18px;color:var(--text-3);display:flex;align-items:center;gap:6px}
+.reddot{width:6px;height:6px;border-radius:50%;background:var(--negative-icon);display:inline-block}
+
+/* sleep goal dial */
+.dialwrap{position:relative;margin:20px auto 0;width:248px;height:248px;touch-action:none}
+.dial-handle{
+  position:absolute;width:30px;height:30px;border-radius:999px;background:var(--metric-sleep);
+  display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;
+  transform:translate(-50%,-50%);color:var(--violet-100);
+}
+.dial-lab{position:absolute;transform:translate(-50%,-50%);font-family:var(--font-number);line-height:1;font-weight:500;font-feature-settings:var(--num-features)}
+
+/* hero — score ring + headline + summary */
+.hero{position:relative;z-index:10}
+/* hero content must be positioned so it paints ABOVE the absolutely-
+   positioned night-sky / gradient backdrops */
+.hero-media,.chips{position:relative}
+.hero .ringwrap{margin-top:20px;display:flex;justify-content:center}
+.hero .ringbox{position:relative;width:136px;height:136px}
+.hero .glow{position:absolute;inset:-18px;border-radius:50%}
+.hero .ringnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hero .score{font-family:var(--font-number);font-size:56px;line-height:60px;font-weight:700;letter-spacing:-0.01em;font-feature-settings:var(--num-features);color:var(--text-1)}
+.hero .score-cap{margin-top:-10px;font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2)}
+.hero .headline{margin-top:24px;padding:0 24px;text-align:center;font-size:17px;line-height:22px;font-weight:600;color:var(--text-1)}
+.hero .summary{margin:4px 24px 0;text-align:center;font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
+
+/* three stat chips under the hero */
+.chips{margin-top:20px;padding:0 16px;display:flex;gap:8px}
+.chip{
+  flex:1;border-radius:20px;background:var(--surface-card);
+  border:0.5px solid var(--neutral-700);
+  padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.chip .lab{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2)}
+.chip .val{display:flex;align-items:baseline;gap:4px}
+.chip .num{font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:700;font-feature-settings:var(--num-features);color:var(--text-1)}
+.chip .unit{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+
+/* the card stack that slides over the hero background */
+.stack{
+  position:relative;z-index:10;margin-top:24px;
+  border-radius:24px 24px 0 0;background:var(--surface-app);
+  padding:20px 16px 32px;display:flex;flex-direction:column;gap:12px;
+}
+
+/* metric card */
+.card{background:var(--surface-card);border-radius:var(--radius-card);padding:16px;position:relative}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.card-title{font-size:17px;line-height:22px;font-weight:500;color:var(--text-1);white-space:nowrap}
+.card-metric{text-align:right;flex:0 0 auto}
+.card-metric .val{display:flex;align-items:baseline;justify-content:flex-end;gap:4px}
+.card-metric .num{font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;letter-spacing:-0.005em;font-feature-settings:var(--num-features);color:var(--text-1)}
+.card-metric .unit{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.trend{margin-top:4px;display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:11px;line-height:16px;font-weight:500;color:var(--text-2);white-space:nowrap}
+.tri-up{width:7px;height:5px;background:var(--positive-icon);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.tri-down-bad{width:7px;height:5px;background:var(--negative-icon);clip-path:polygon(0 0,100% 0,50% 100%)}
+.tri-down-good{width:7px;height:5px;background:var(--positive-icon);clip-path:polygon(0 0,100% 0,50% 100%)}
+.dot-flat{width:6px;height:6px;border-radius:50%;background:var(--text-3)}
+.card-body{margin-top:16px}
+.subnote{font-size:11px;line-height:16px;font-weight:400;color:var(--text-3);white-space:nowrap}
+
+/* chart bits */
+.chart{position:relative;touch-action:none;cursor:crosshair}
+.axis{font-family:var(--font-number);font-size:10px;line-height:12px;font-weight:500;letter-spacing:0.01em;font-feature-settings:var(--num-features);fill:var(--text-3);color:var(--text-3)}
+
+/* metric detail pages — Steps / Distance / Calories drill-ins.
+   Opened by tapping the matching chart card on the Activity tab. */
+.card[data-open]{cursor:pointer}
+.card[data-open] .card-title{display:flex;align-items:center;gap:6px}
+/* D / W / M / Y period switcher — full-width pill, from the approved
+   wireframes; segments use the numeric face like the chart components */
+.seg4{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface-card)}
+.seg4 button{
+  flex:1;height:36px;border:0;border-radius:999px;background:none;cursor:pointer;
+  font-family:var(--font-number);font-size:13px;line-height:16px;font-weight:600;
+  font-feature-settings:var(--num-features);color:var(--text-2);
+}
+.seg4 button:hover{color:var(--text-1)}
+.seg4 button.active{background:var(--surface-raised);color:var(--text-1)}
+/* summary row under the detail chart — reuses the Activity-tab stat chips
+   (.chip). Flag: the wireframes print value above label; the chip block
+   is label-above-value — keeping the chip exactly as built, per the
+   owner's "visual blocks picked from the Activity tab" instruction. */
+/* ---- WorkoutsCard — the approved drop-in component (owner HTML).
+   Structure and type scale verbatim; colors come from this file's global
+   tokens rather than the component's own scoped copies (same values). ---- */
+.wo-card{
+  background:var(--surface-card);border-radius:24px;padding:16px;
+  width:100%;font-family:var(--font-text);
+}
+.wo-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex:none}
+.wo-title{font:500 15px/22px var(--font-text);color:var(--text-1);margin:0}
+.wo-meta{font:500 11px/16px var(--font-text);color:var(--text-2);white-space:nowrap}
+.wo-row{
+  display:flex;align-items:center;gap:12px;width:100%;
+  padding:12px 0;margin:0;border:0;border-top:0.5px solid var(--divider);
+  background:none;text-align:left;cursor:pointer;font-family:inherit;
+}
+.wo-row:first-of-type{margin-top:12px}
+.wo-row:last-of-type{padding-bottom:0}
+.wo-row:hover .wo-chip{background:var(--surface-fill)}
+.wo-row:focus-visible{outline:1px solid var(--text-2);outline-offset:2px;border-radius:8px}
+.wo-chip{
+  flex:none;display:grid;place-items:center;width:40px;height:40px;
+  border-radius:12px;background:var(--neutral-bg);
+  transition:background var(--duration-fast) ease;
+}
+.wo-glyph{width:20px;height:20px;color:var(--neutral-100)}
+.wo-body{flex:1;min-width:0}
+.wo-name{display:block;font:500 13px/18px var(--font-text);color:var(--text-1)}
+.wo-detail{display:block;margin-top:2px;font:400 11px/16px var(--font-text);color:var(--text-3)}
+.wo-dur{flex:none;font:500 13px/16px var(--font-number);color:var(--text-1);font-feature-settings:var(--num-features)}
+.wo-caret{flex:none;width:16px;height:16px;color:var(--text-3)}
+@media (prefers-reduced-motion:reduce){.wo-chip{transition:none}}
+
+/* Detail-page summary tiles — same format as the Activity-tab stat chips
+   (owner, 2026-08-10): three equal-width tiles across, 20px radius, hairline
+   border, centered overline label, num-m value, small light unit text.
+   Long numbers are abbreviated in K to stop spillover (see fmtTile in JS). */
+.sumchips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+/* No hairline border on detail-page tiles (owner, 2026-08-10) — the card
+   surface alone separates them. The Activity-tab chips keep theirs. */
+.stattile{
+  border-radius:20px;background:var(--surface-card);border:0;
+  padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.stattile .label{
+  font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--text-2);text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%; /* one line always */
+}
+.stattile .figure{display:flex;align-items:baseline;justify-content:center;gap:4px;white-space:nowrap}
+.stattile .value{font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:700;font-feature-settings:var(--num-features);color:var(--text-1)}
+.stattile .unit{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+
+/* goals rows (Activity — Today's goals) */
+.goalrow{display:grid;grid-template-columns:20px 1fr auto;align-items:center;column-gap:8px;row-gap:8px}
+.goalrow .gname{font-size:15px;line-height:22px;font-weight:500;color:var(--text-2)}
+.goalrow .gval{justify-self:end;display:flex;align-items:baseline;gap:4px;white-space:nowrap}
+.goalrow .gnum{font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:700;font-feature-settings:var(--num-features);color:var(--text-1)}
+.goalrow .ggoal{font-size:11px;line-height:16px;font-weight:400;color:var(--text-3)}
+.gbar{grid-column:1/-1;display:block;height:8px;border-radius:999px;background:var(--surface-raised);box-shadow:inset 0 0 0 0.5px var(--neutral-500);overflow:hidden}
+.gbar i{display:block;height:100%;border-radius:999px}
+
+/* sleep stage summary tiles */
+.stagegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stage{background:var(--surface-raised);border-radius:8px;padding:8px}
+.stage .top{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.stage .nm{font-size:11px;line-height:16px;font-weight:500;color:var(--text-1)}
+.stage .sw{width:6px;height:6px;border-radius:50%;flex:0 0 auto}
+.stage .dur{margin-top:4px;font-family:var(--font-number);font-size:13px;line-height:16px;font-weight:500;font-feature-settings:var(--num-features);color:var(--text-1)}
+.stage .pct{font-family:var(--font-number);font-size:10px;line-height:12px;font-weight:500;font-feature-settings:var(--num-features);color:var(--text-3)}
+
+/* list rows (workouts, naps, settings) */
+.listrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:0.5px solid var(--divider)}
+.listrow:last-child{padding-bottom:0}
+.listrow .lft{display:flex;align-items:center;gap:8px;min-width:0}
+.listrow .txt{display:grid;gap:2px;min-width:0}
+.listrow .t1{font-size:13px;line-height:18px;font-weight:500;color:var(--text-1)}
+.listrow .t2{font-size:11px;line-height:16px;font-weight:500;color:var(--text-3)}
+.listrow .rgt{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.listrow .rnum{font-family:var(--font-number);font-size:13px;line-height:16px;font-weight:500;font-feature-settings:var(--num-features);color:var(--text-2)}
+.chev{width:6px;height:6px;border-right:1.2px solid var(--text-3);border-bottom:1.2px solid var(--text-3);transform:rotate(-45deg);display:inline-block}
+
+/* week grid (Goals met / Sleep continuity) */
+.week7{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.week7 .day{display:flex;flex-direction:column;align-items:center;gap:8px;padding:4px 0}
+.week7 .dlab{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.week7 .dnum{font-family:var(--font-number);font-size:10px;line-height:12px;font-weight:500;letter-spacing:0.01em;font-feature-settings:var(--num-features);color:var(--text-3)}
+.week7 .day.today .dlab,.week7 .day.today .dnum{color:var(--text-1);font-weight:700}
+.week7 .day.future{opacity:0.45}
+
+/* continuity pills */
+.contgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:center}
+.contpill{justify-self:center;width:28px;height:28px;border-radius:999px;display:flex;align-items:center;justify-content:center;border:1px solid var(--surface-fill);background:none}
+.contpill.met{background:var(--violet-800);border-color:var(--violet-600)}
+.contlab{display:flex;align-items:center;gap:8px;font-size:11px;line-height:16px;color:var(--text-2)}
+
+/* Health tab tiles (first pass — no spec yet) */
+.tilegrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0}
+.tile{background:var(--surface-card);border-radius:var(--radius-card);padding:14px;display:flex;flex-direction:column;gap:8px;min-height:104px}
+.tile .tl{display:flex;align-items:center;gap:6px;font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2)}
+.tile .tl .sw{width:8px;height:8px;border-radius:50%}
+.tile .tv{display:flex;align-items:baseline;gap:4px;margin-top:auto}
+.tile .tn{font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;letter-spacing:-0.005em;font-feature-settings:var(--num-features);color:var(--text-1)}
+.tile .tu{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.tile .ts{font-size:11px;line-height:16px;color:var(--text-3)}
+
+/* Me tab */
+.profile{display:flex;align-items:center;gap:14px;padding:20px 16px 8px}
+.avatar{
+  width:56px;height:56px;border-radius:50%;flex:0 0 auto;
+  background:var(--violet-800);color:var(--violet-100);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;line-height:26px;font-weight:600;
+}
+.profile .pname{font-size:20px;line-height:26px;font-weight:600;letter-spacing:-0.005em;color:var(--text-1)}
+.profile .pmail{font-size:13px;line-height:18px;color:var(--text-3)}
+.sectionlab{padding:16px 16px 8px;font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+
+/* ==========================================================================
+   6. CARD STATES — driven by data-state on <body>
+   --------------------------------------------------------------------------
+   default  → everything as designed
+   empty    → the ONE no-data state: values become —, cards show their
+              no-data treatment (watch-not-worn was removed — owner)
+   loading / syncing → kept for later integration, not selectable now
+   ========================================================================== */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.skel{background:var(--surface-raised);border-radius:8px;animation:pulse 1.4s ease-in-out infinite}
+.state-cover{display:none}
+.statechip{display:none;margin-top:12px;align-items:center;gap:6px;font-size:11px;line-height:16px;font-weight:500;color:var(--text-3)}
+.statechip svg{width:14px;height:14px;flex:0 0 auto}
+.statechip.sync svg{animation:spin 1.1s linear infinite}
+
+/* what hides / shows per state (only inside .stateful regions) */
+#app[data-state="loading"]  .stateful .live{display:none !important}
+#app[data-state="empty"]    .stateful .live{display:none !important}
+#app[data-state="loading"]  .stateful .cover-loading{display:block}
+#app[data-state="empty"]    .stateful .cover-empty{display:flex}
+#app[data-state="syncing"]  .stateful .statechip.sync{display:flex}
+#app[data-state="syncing"]  .stateful .card-body{opacity:.6}
+#app[data-state="syncing"]  .stateful .hero-media{opacity:.75}
+
+/* the no-data cover: icon + short line, vertically centered */
+.cover-empty{
+  flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  min-height:96px;border-radius:12px;border:1px dashed var(--neutral-600);
+  padding:16px;text-align:center;
+}
+.cover-empty svg{width:22px;height:22px;color:var(--text-3)}
+.cover-title{font-size:13px;line-height:18px;font-weight:500;color:var(--text-2)}
+.cover-sub{font-size:11px;line-height:16px;color:var(--text-3)}
+.value-dash{display:none;font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;font-feature-settings:var(--num-features);color:var(--text-3)}
+#app[data-state="empty"]   .stateful .value-dash{display:block}
+#app[data-state="loading"] .stateful .value-skel{display:block}
+.value-skel{display:none;width:64px;height:20px;margin-left:auto}
+
+/* hero states */
+#app[data-state="loading"] .hero.stateful .score{visibility:hidden}
+#app[data-state="empty"]   .hero.stateful .score{color:var(--text-3)}
+
+/* ---- Activity-tab empty-state exceptions (owner spec) ----
+   Instead of the generic "no data yet" cover:
+   - steps / distance / calories keep their chart FRAME (gridlines + axis
+     labels) with the data marks hidden          → .empty-frame
+   - today's goals shows its rows zeroed, bars at 0 → .empty-zero
+   - goals met swaps to a "no data" week: dotted rings on past days,
+     empty rings on the days still to come        → .empty-rings
+   - the workouts card hides entirely             → .hide-empty          */
+#app[data-state="empty"] .stateful.empty-frame [data-mount].live{display:block !important}
+#app[data-state="empty"] .stateful.empty-frame .cover-empty{display:none}
+#app[data-state="empty"] .stateful.empty-frame .mark{display:none}
+
+#app[data-state="empty"] .stateful.empty-zero .card-body > .live{display:flex !important}
+#app[data-state="empty"] .stateful.empty-zero .cover-empty{display:none}
+#app[data-state="empty"] .empty-zero .gbar i{width:0 !important}
+.value-zero{display:none} /* the "0" twin of each goal value, empty state only */
+#app[data-state="empty"] .empty-zero .value-zero{display:inline}
+
+#app[data-state="empty"] .hide-empty{display:none}
+
+.week-empty{display:none}
+#app[data-state="empty"] .stateful.empty-rings .week-empty{display:grid}
+#app[data-state="empty"] .stateful.empty-rings .cover-empty{display:none}
+
+/* ==========================================================================
+   7. MOTION SAFETY — hard gate: everything stops under reduced motion
+   ========================================================================== */
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+  .pebble-tab:active .icon{transform:none !important}
+}
+</style>
+</head>
+<body>
+<div id="app" data-state="default">
+
+<!-- ======================= CONTROL PANEL =======================
+     Flag (owner, 2026-08-10): this flow keeps only two states —
+     Default and No data (the old "empty"). Watch-not-worn is removed
+     for good; loading / syncing will be integrated separately, so
+     their CSS/JS plumbing stays below but they are not selectable. -->
+<aside class="panel" aria-label="Prototype controls">
+  <h2>Card states</h2>
+  <p class="hint">Applies to every data card on the Activity tab.</p>
+  <div class="opts" id="stateOpts">
+    <label class="on"><input type="radio" name="cardstate" value="default" checked><span>Default<span class="desc">Live data, as designed</span></span></label>
+    <label><input type="radio" name="cardstate" value="empty"><span>No data<span class="desc">New user, nothing synced yet</span></span></label>
+  </div>
+</aside>
+
+<!-- ======================= PHONE ======================= -->
+<div class="phone">
+  <div class="screen">
+
+    <div class="statusbar">
+      <span>12:30</span>
+      <span class="right">
+        <!-- signal + battery, drawn simply -->
+        <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M1 11h2V8H1v3Zm4 0h2V5H5v6Zm4 0h2V2H9v9Z" fill="currentColor"/></svg>
+        <span class="batt"><i></i></span>
+      </span>
+    </div>
+
+    <div class="pages">
+
+      <!-- =========================================================
+           HEALTH TAB (home)
+           Flag: no approved spec exists for this tab yet — this is a
+           first-pass layout reusing the hero + tile patterns from the
+           approved Sleep/Activity screens. Metrics link to their tabs.
+           ========================================================= -->
+      <!-- Flag: this flow lands on Activity (the tab being built) — Health
+           is kept in the file but is not reachable from the nav for now. -->
+      <section class="page" id="page-health">
+        <div class="hero stateful" style="background:linear-gradient(180deg, color-mix(in srgb, var(--metric-readiness) 10%, var(--surface-app)) 0%, var(--surface-app) 88%)">
+          <div class="screen-head">
+            <div>
+              <!-- greeting replaces the tab name here (owner request) -->
+              <div class="screen-title">Good morning, Aanya</div>
+              <button class="date-btn" data-cal="health"><span data-datelabel>Today, Aug 6</span><span class="caret"></span></button>
+            </div>
+            <button class="dots-btn" data-menubtn aria-label="More"><span></span><span></span><span></span></button>
+          </div>
+          <div class="menu" data-menu>
+            <button>Share</button>
+          </div>
+
+          <div class="hero-media">
+            <!-- three nested rings: sleep (outer) · readiness · activity (inner) -->
+            <div class="ringwrap">
+              <div class="ringbox">
+                <div class="glow" style="background:radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--metric-readiness) 26%, transparent) 0%, transparent 70%)"></div>
+                <svg width="136" height="136" viewBox="0 0 136 136">
+                  <circle cx="68" cy="68" r="61" fill="none" stroke="var(--neutral-700)" stroke-width="11"/>
+                  <circle cx="68" cy="68" r="46" fill="none" stroke="var(--neutral-700)" stroke-width="11"/>
+                  <circle cx="68" cy="68" r="31" fill="none" stroke="var(--neutral-700)" stroke-width="11"/>
+                  <circle class="live" cx="68" cy="68" r="61" fill="none" stroke="var(--metric-sleep)" stroke-width="11"
+                          stroke-linecap="round" stroke-dasharray="298.9 383.27" transform="rotate(-90 68 68)"/>
+                  <circle class="live" cx="68" cy="68" r="46" fill="none" stroke="var(--metric-readiness)" stroke-width="11"
+                          stroke-linecap="round" stroke-dasharray="211.0 289.03" transform="rotate(-90 68 68)"/>
+                  <circle class="live" cx="68" cy="68" r="31" fill="none" stroke="var(--metric-activity)" stroke-width="11"
+                          stroke-linecap="round" stroke-dasharray="132.5 194.78" transform="rotate(-90 68 68)"/>
+                </svg>
+              </div>
+            </div>
+            <div class="headline"><span class="live">You're set up for a solid day</span><span class="value-dash" style="font-size:17px;line-height:22px;font-family:var(--font-text);font-weight:600">&nbsp;</span></div>
+            <p class="summary live">Sleep was restful and your heart is recovered. A workout today would land well.</p>
+            <div class="statechip sync" style="justify-content:center">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing with band…</span>
+            </div>
+          </div>
+
+          <div class="chips stateful">
+            <div class="chip"><div class="lab"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--metric-sleep);margin-right:4px"></span>Sleep</div><div class="val"><span class="num live">78</span><span class="value-dash">—</span></div></div>
+            <div class="chip"><div class="lab"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--metric-readiness);margin-right:4px"></span>Ready</div><div class="val"><span class="num live">73</span><span class="value-dash">—</span></div></div>
+            <div class="chip"><div class="lab"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--metric-activity);margin-right:4px"></span>Active</div><div class="val"><span class="num live">68</span><span class="value-dash">—</span></div></div>
+          </div>
+        </div>
+
+        <div class="stack" style="margin-top:20px">
+          <!-- metric tiles: tap-through to each tab -->
+          <div class="tilegrid">
+            <div class="tile stateful card" data-goto="sleep">
+              <div class="tl"><span class="sw" style="background:var(--metric-sleep)"></span>Sleep</div>
+              <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
+              <div class="cover-empty state-cover mini"></div>
+              <div class="tv live"><span class="tn">7:34</span><span class="tu">hrs</span></div>
+              <div class="ts live">Score 78 · restful</div>
+            </div>
+            <div class="tile stateful card" data-goto="activity">
+              <div class="tl"><span class="sw" style="background:var(--metric-steps)"></span>Steps</div>
+              <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
+              <div class="cover-empty state-cover mini"></div>
+              <div class="tv live"><span class="tn">7,240</span></div>
+              <div class="ts live">Goal 10,000 · 72%</div>
+            </div>
+            <div class="tile stateful card">
+              <div class="tl"><span class="sw" style="background:var(--metric-heart-rate)"></span>Heart rate</div>
+              <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
+              <div class="cover-empty state-cover mini"></div>
+              <div class="tv live"><span class="tn">64</span><span class="tu">bpm</span></div>
+              <div class="ts live">Resting · just now</div>
+            </div>
+            <div class="tile stateful card">
+              <div class="tl"><span class="sw" style="background:var(--metric-hrv)"></span>HRV</div>
+              <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
+              <div class="cover-empty state-cover mini"></div>
+              <div class="tv live"><span class="tn">48</span><span class="tu">ms</span></div>
+              <div class="ts live">7-day avg 45 ms</div>
+            </div>
+            <div class="tile stateful card">
+              <div class="tl"><span class="sw" style="background:var(--metric-spo2)"></span>Blood oxygen</div>
+              <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
+              <div class="cover-empty state-cover mini"></div>
+              <div class="tv live"><span class="tn">96</span><span class="tu">%</span></div>
+              <div class="ts live">Overnight average</div>
+            </div>
+            <div class="tile stateful card">
+              <div class="tl"><span class="sw" style="background:var(--metric-skin-temp)"></span>Skin temp</div>
+              <div class="cover-loading state-cover"><div class="skel" style="width:80px;height:24px;margin-top:20px"></div></div>
+              <div class="cover-empty state-cover mini"></div>
+              <div class="tv live"><span class="tn">33.2</span><span class="tu">°C</span></div>
+              <div class="ts live">Same as baseline</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================
+           ACTIVITY TAB — recreated from the approved standalone
+           prototype (score ring, goals, week rings, 3 charts, workouts)
+           ========================================================= -->
+      <section class="page active" id="page-activity">
+        <div class="hero stateful" style="background:linear-gradient(180deg, color-mix(in srgb, var(--metric-activity) 9%, var(--surface-app)) 0%, var(--surface-app) 90%)">
+          <!-- Owner-supplied dusk-forest background. The PNG loads from
+               assets/backgrounds/ when present; until then a code-drawn
+               stand-in scene (SVG below, painted by JS) approximates it. -->
+          <div class="hero-bg" aria-hidden="true">
+            <svg data-art="activity" viewBox="0 0 360 660" preserveAspectRatio="xMidYMid slice"></svg>
+            <img src="assets/backgrounds/activity-dusk.png" alt="" onerror="this.remove()">
+            <div class="bg-scrim-top"></div>
+            <div class="bg-scrim-bottom"></div>
+          </div>
+          <div class="screen-head">
+            <div>
+              <div class="screen-title">Activity</div>
+              <button class="date-btn" data-cal="activity"><span data-datelabel>Today, Aug 6</span><span class="caret"></span></button>
+            </div>
+            <button class="dots-btn" data-menubtn aria-label="More"><span></span><span></span><span></span></button>
+          </div>
+          <div class="menu" data-menu>
+            <button data-open="sub-about-activity">About activity</button>
+            <button data-open="sub-goal-activity">Goal setting</button>
+            <button>Share</button>
+          </div>
+
+          <div class="hero-media">
+            <div class="ringwrap">
+              <div class="ringbox">
+                <div class="glow" style="background:radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--metric-activity) 30%, transparent) 0%, transparent 70%)"></div>
+                <svg width="136" height="136" viewBox="0 0 136 136">
+                  <defs>
+                    <linearGradient id="ring-act" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="var(--lime-300)"/>
+                      <stop offset="100%" stop-color="var(--lime-500)"/>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="68" cy="68" r="62" fill="none" stroke="var(--neutral-700)" stroke-width="12"/>
+                  <circle class="live" cx="68" cy="68" r="62" fill="none" stroke="url(#ring-act)" stroke-width="12"
+                          stroke-linecap="round" stroke-dasharray="264.9 389.56" transform="rotate(-90 68 68)"/>
+                </svg>
+                <div class="ringnum">
+                  <div class="score"><span class="live">68</span><span class="value-dash" style="font-size:56px;line-height:60px">--</span></div>
+                  <div class="score-cap">Score</div>
+                </div>
+              </div>
+            </div>
+            <div class="headline live">You are ahead of your usual Thursday</div>
+            <p class="summary live">Steps and calories are both on pace. Distance is trailing, so a short walk this afternoon would close it.</p>
+            <div class="statechip sync" style="justify-content:center">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing activity…</span>
+            </div>
+          </div>
+
+          <div class="chips stateful">
+            <div class="chip"><div class="lab">Steps</div><div class="val"><span class="num live">7,240</span><span class="value-dash">—</span></div></div>
+            <div class="chip"><div class="lab">Distance</div><div class="val"><span class="num live">5.1</span><span class="value-dash">—</span><span class="unit">km</span></div></div>
+            <div class="chip"><div class="lab">Calories</div><div class="val"><span class="num live">420</span><span class="value-dash">—</span><span class="unit">kcal</span></div></div>
+          </div>
+        </div>
+
+        <div class="stack">
+
+          <!-- Today's goals (empty state: rows stay, values and bars at 0) -->
+          <div class="card stateful empty-zero" data-cover="Activity">
+            <div class="card-head"><div class="card-title">Today's goals</div></div>
+            <div class="statechip sync">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing activity…</span>
+            </div>
+            <div class="card-body">
+              <div class="live" style="display:flex;flex-direction:column;gap:20px">
+                <div class="goalrow">
+                  <span class="phi" data-ph="footprints" data-weight="fill" style="width:20px;height:20px;color:var(--metric-steps)"></span>
+                  <span class="gname">Steps</span>
+                  <span class="gval"><span class="gnum live">7,240</span><span class="gnum value-zero">0</span><span class="ggoal">/ 10,000</span></span>
+                  <span class="gbar"><i style="width:72%;background:var(--metric-steps)"></i></span>
+                </div>
+                <div class="goalrow">
+                  <span class="phi" data-ph="map-pin" data-weight="fill" style="width:20px;height:20px;color:var(--metric-distance)"></span>
+                  <span class="gname">Distance</span>
+                  <span class="gval"><span class="gnum live">5.1</span><span class="gnum value-zero">0</span><span class="ggoal">/ 8 km</span></span>
+                  <span class="gbar"><i style="width:64%;background:var(--metric-distance)"></i></span>
+                </div>
+                <div class="goalrow">
+                  <span class="phi" data-ph="fire" data-weight="fill" style="width:20px;height:20px;color:var(--metric-calories)"></span>
+                  <span class="gname">Calories</span>
+                  <span class="gval"><span class="gnum live">420</span><span class="gnum value-zero">0</span><span class="ggoal">/ 600 kcal</span></span>
+                  <span class="gbar"><i style="width:70%;background:var(--metric-calories)"></i></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Goals met (week of concentric rings; empty state swaps to a
+               dotted-past / empty-future week, see .week-empty) -->
+          <div class="card stateful empty-rings">
+            <div class="card-head">
+              <div class="card-title">Goals met</div>
+              <span class="subnote">Aug 3 – Aug 9</span>
+            </div>
+            <div class="card-body">
+              <div class="week7 live" id="goalsWeek"><!-- rings drawn by JS --></div>
+            </div>
+          </div>
+
+          <!-- Steps (bar chart; empty state keeps the frame, no bars) -->
+          <div class="card stateful empty-frame" data-chart="steps" data-open="sub-metric-steps">
+            <div class="card-head">
+              <div class="card-title">Steps <span class="chev"></span></div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>7,240</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit">steps</span>
+                </div>
+                <div class="trend live" data-trend><span class="tri-up"></span><span>12% up from yesterday</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- Distance (line chart; empty state keeps the frame, no line) -->
+          <div class="card stateful empty-frame" data-chart="distance" data-open="sub-metric-distance">
+            <div class="card-head">
+              <div class="card-title">Distance <span class="chev"></span></div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>5.1</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit">km</span>
+                </div>
+                <div class="trend live" data-trend><span class="tri-down-bad"></span><span>9% down from yesterday</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- Calories (line chart; empty state keeps the frame, no line) -->
+          <div class="card stateful empty-frame" data-chart="calories" data-open="sub-metric-calories">
+            <div class="card-head">
+              <div class="card-title">Calories <span class="chev"></span></div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>420</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit">kcal</span>
+                </div>
+                <div class="trend live" data-trend><span class="tri-up"></span><span>6% up from yesterday</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- Workouts — the approved WorkoutsCard component (owner HTML,
+               2026-08-10): 40px icon chip per row, name + detail stack,
+               duration in Spartan, Phosphor caret. Rows are buttons; the
+               workout DETAILS page is still pending. Hidden entirely in
+               the no-data state (owner spec).
+               Flag: the component's scoped :root-style token block is
+               dropped — the card reads this file's global tokens instead,
+               which resolve to the same values. -->
+          <div class="wo-card stateful hide-empty">
+            <header class="wo-header">
+              <h3 class="wo-title">Workouts</h3>
+              <span class="wo-meta live">2 workouts · 1h 17m</span>
+            </header>
+            <div class="live">
+              <button class="wo-row" type="button">
+                <span class="wo-chip"><span class="wo-glyph phi" data-ph="person-simple-run" data-weight="fill"></span></span>
+                <span class="wo-body">
+                  <span class="wo-name">Morning run</span>
+                  <span class="wo-detail">7:12 – 7:44 AM · 4.3 km</span>
+                </span>
+                <span class="wo-dur">32 min</span>
+                <span class="wo-caret phi" data-ph="caret-right"></span>
+              </button>
+              <button class="wo-row" type="button">
+                <span class="wo-chip"><span class="wo-glyph phi" data-ph="barbell" data-weight="fill"></span></span>
+                <span class="wo-body">
+                  <span class="wo-name">Strength training</span>
+                  <span class="wo-detail">10:15 – 11:00 AM · 6 exercises</span>
+                </span>
+                <span class="wo-dur">45 min</span>
+                <span class="wo-caret phi" data-ph="caret-right"></span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- =========================================================
+           SLEEP TAB — recreated from the approved standalone prototype
+           (night-sky hero, hypnogram, vitals charts, nap, continuity)
+           ========================================================= -->
+      <section class="page" id="page-sleep">
+        <div class="hero stateful" id="sleepHero" style="background:var(--violet-900)">
+          <!-- Owner-supplied night-sky background. The PNG loads from
+               assets/backgrounds/ when present; until then a code-drawn
+               stand-in scene (SVG below, painted by JS) approximates it. -->
+          <div class="hero-bg" aria-hidden="true">
+            <svg data-art="sleep" viewBox="0 0 360 660" preserveAspectRatio="xMidYMid slice"></svg>
+            <img src="assets/backgrounds/sleep-night.png" alt="" onerror="this.remove()">
+            <div class="bg-scrim-top"></div>
+            <div class="bg-scrim-bottom"></div>
+          </div>
+
+          <div class="screen-head">
+            <div>
+              <div class="screen-title">Sleep</div>
+              <button class="date-btn" data-cal="sleep"><span data-datelabel>Today, Aug 6</span><span class="caret"></span></button>
+            </div>
+            <button class="dots-btn" data-menubtn aria-label="More"><span></span><span></span><span></span></button>
+          </div>
+          <div class="menu" data-menu>
+            <button data-open="sub-about-sleep">About sleep</button>
+            <button data-open="sub-goal-sleep">Goal setting</button>
+            <button>Share</button>
+          </div>
+
+          <div class="hero-media">
+            <div class="ringwrap">
+              <div class="ringbox">
+                <div class="glow" style="background:radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--metric-sleep) 30%, transparent) 0%, transparent 70%)"></div>
+                <svg width="136" height="136" viewBox="0 0 136 136">
+                  <defs>
+                    <linearGradient id="ring-sleep" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="var(--violet-200)"/>
+                      <stop offset="100%" stop-color="var(--violet-500)"/>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="68" cy="68" r="62" fill="none" stroke="var(--neutral-700)" stroke-width="12"/>
+                  <circle class="live" cx="68" cy="68" r="62" fill="none" stroke="url(#ring-sleep)" stroke-width="12"
+                          stroke-linecap="round" stroke-dasharray="303.9 389.56" transform="rotate(-90 68 68)"/>
+                </svg>
+                <div class="ringnum">
+                  <div class="score"><span class="live">78</span><span class="value-dash" style="font-size:56px;line-height:60px">--</span></div>
+                  <div class="score-cap">Score</div>
+                </div>
+              </div>
+            </div>
+            <div class="headline live">That was a restful night</div>
+            <p class="summary live">Your sleep duration was sufficient but your efficiency was low so you might want to take it easy today, keeping activities light.</p>
+            <div class="statechip sync" style="justify-content:center">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing sleep…</span>
+            </div>
+          </div>
+
+          <div class="chips stateful">
+            <div class="chip"><div class="lab">Duration</div><div class="val"><span class="num live">7:34</span><span class="value-dash">—</span></div></div>
+            <div class="chip"><div class="lab">Efficiency</div><div class="val"><span class="num live">64</span><span class="value-dash">—</span><span class="unit">%</span></div></div>
+            <div class="chip"><div class="lab">Asleep in</div><div class="val"><span class="num live">18</span><span class="value-dash">—</span><span class="unit">m</span></div></div>
+          </div>
+        </div>
+
+        <div class="stack">
+
+          <!-- Last night's sleep: hypnogram + stage tiles -->
+          <div class="card stateful" data-chart="hypnogram">
+            <div class="card-head">
+              <div class="card-title">Last night's sleep</div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>7:34</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                </div>
+                <div class="trend live" data-trend><span class="tri-up"></span><span>10% up from last night</span></div>
+              </div>
+            </div>
+            <div class="statechip sync">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing sleep…</span>
+            </div>
+            <div class="card-body">
+              <div class="live">
+                <div class="chartmount" data-mount></div>
+                <div class="stagegrid" style="margin-top:16px">
+                  <div class="stage"><div class="top"><span class="nm">Awake</span><span class="sw" style="background:var(--violet-100)"></span></div><div class="dur">0:22</div><div class="pct">5%</div></div>
+                  <div class="stage"><div class="top"><span class="nm">REM</span><span class="sw" style="background:var(--violet-200)"></span></div><div class="dur">1:38</div><div class="pct">22%</div></div>
+                  <div class="stage"><div class="top"><span class="nm">Light</span><span class="sw" style="background:var(--violet-400)"></span></div><div class="dur">3:56</div><div class="pct">52%</div></div>
+                  <div class="stage"><div class="top"><span class="nm">Deep</span><span class="sw" style="background:var(--violet-600)"></span></div><div class="dur">1:38</div><div class="pct">21%</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Heart rate -->
+          <div class="card stateful" data-chart="hr">
+            <div class="card-head">
+              <div class="card-title">Heart rate</div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>56</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit">bpm</span>
+                </div>
+                <div class="trend live" data-trend><span class="tri-down-good"></span><span>3% down from last night</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- HRV -->
+          <div class="card stateful" data-chart="hrv">
+            <div class="card-head">
+              <div class="card-title">Heart rate variability</div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>48</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit">ms</span>
+                </div>
+                <div class="trend live" data-trend><span class="tri-up"></span><span>8% up from last night</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- Skin temperature -->
+          <div class="card stateful" data-chart="temp">
+            <div class="card-head">
+              <div class="card-title">Skin temperature</div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>33.2</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit" style="text-transform:none">°C</span>
+                </div>
+                <div class="trend live" data-trend><span class="dot-flat"></span><span>Same as last night</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- Blood oxygen -->
+          <div class="card stateful" data-chart="spo2">
+            <div class="card-head">
+              <div class="card-title">Blood oxygen</div>
+              <div class="card-metric">
+                <div class="val">
+                  <span class="num live" data-val>96</span><span class="value-dash">—</span>
+                  <div class="skel value-skel"></div>
+                  <span class="unit">%</span>
+                </div>
+                <div class="trend live" data-trend><span class="tri-down-bad"></span><span>1% down from last night</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+
+          <!-- Nap -->
+          <div class="card stateful">
+            <div class="card-head">
+              <div class="card-title">Nap</div>
+              <span class="subnote live">1 nap · 24 m</span>
+            </div>
+            <div class="card-body" style="margin-top:12px">
+              <div class="live">
+                <div class="listrow" style="padding:8px 0 0;border-top:0.5px solid var(--surface-raised)">
+                  <span class="lft">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--violet-300);flex:0 0 auto"></span>
+                    <span class="rnum" style="color:var(--text-1)">14:10 – 14:34</span>
+                  </span>
+                  <span class="rnum">24 m</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sleep continuity (bed / wake pills, expandable timeline) -->
+          <div class="card stateful" id="contCard">
+            <div class="card-head">
+              <button type="button" id="contToggle" style="border:0;background:none;padding:0;display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-family:inherit">
+                <span class="card-title">Sleep continuity</span>
+                <span id="contCaret" style="width:7px;height:7px;border-right:1.4px solid var(--text-2);border-bottom:1.4px solid var(--text-2);display:inline-block;transform:rotate(225deg);transition:transform var(--duration-base) ease"></span>
+              </button>
+              <span class="subnote">Jul 26 – Aug 1</span>
+            </div>
+            <div class="card-body">
+              <div class="live" style="background:var(--surface-raised);border-radius:12px;padding:12px;display:grid;gap:16px">
+                <div style="display:grid;gap:8px">
+                  <div class="contlab">
+                    <span class="phi" data-ph="moon" data-weight="fill" style="width:14px;height:14px;color:var(--text-1)"></span>
+                    <span>Asleep by 22:00</span>
+                  </div>
+                  <div class="contgrid" data-cont="bed"></div>
+                </div>
+                <div style="display:grid;gap:8px">
+                  <div class="contlab">
+                    <span class="phi" data-ph="sun" data-weight="fill" style="width:14px;height:14px;color:var(--text-1)"></span>
+                    <span>Awake by 09:00</span>
+                  </div>
+                  <div class="contgrid" data-cont="wake"></div>
+                </div>
+                <div class="contgrid" data-cont="days"></div>
+              </div>
+              <!-- expanded state: when each night actually ran, 22:00 → 09:00 -->
+              <div class="live" id="contDetail" style="margin-top:16px;border-top:0.5px solid var(--surface-raised);padding-top:16px">
+                <div style="font-size:11px;line-height:16px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin-bottom:8px">When you slept</div>
+                <div style="position:relative;height:14px;margin-left:30px;margin-bottom:8px">
+                  <span class="axis" style="position:absolute;left:8%;transform:translateX(-50%);font-size:10px;color:var(--text-3);font-family:var(--font-number)">22:00</span>
+                  <span class="axis" style="position:absolute;left:96%;transform:translateX(-100%);font-size:10px;color:var(--text-3);font-family:var(--font-number)">09:00</span>
+                </div>
+                <div style="position:relative;display:grid;gap:4px" id="contNights">
+                  <div style="position:absolute;left:30px;right:0;top:0;bottom:0;z-index:0;pointer-events:none">
+                    <span style="position:absolute;left:8%;top:0;bottom:0;width:1px;background-image:linear-gradient(var(--neutral-500) 45%,transparent 0);background-size:1px 5px;background-repeat:repeat-y"></span>
+                    <span style="position:absolute;left:96%;top:0;bottom:0;width:1px;background-image:linear-gradient(var(--neutral-500) 45%,transparent 0);background-size:1px 5px;background-repeat:repeat-y"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- =========================================================
+           ME TAB (settings: profile, band, preferences)
+           Flag: no approved spec exists for this tab yet — first pass
+           using the list patterns from the approved screens.
+           ========================================================= -->
+      <!-- =========================================================
+           ME TAB — settings, structured after the owner's reference
+           screenshot, restyled with Pebble tokens (colors + type).
+           ========================================================= -->
+      <section class="page" id="page-me">
+        <div style="padding:44px 16px 0;display:grid;grid-template-columns:40px 1fr 40px;align-items:center">
+          <span></span>
+          <div style="text-align:center;font-size:20px;line-height:26px;font-weight:500;letter-spacing:-0.005em;color:var(--text-1)">Me</div>
+          <button class="iconbtn" style="background:none;justify-self:end" aria-label="Add device">
+            <span class="phi" data-ph="plus" style="width:22px;height:22px;color:var(--text-1)"></span>
+          </button>
+        </div>
+
+        <div style="padding:16px 16px 32px;display:flex;flex-direction:column;gap:12px">
+
+          <!-- device card. Flag: no product render supplied — using the
+               Phosphor watch glyph until an asset arrives. -->
+          <div class="card stateful" id="bandCard" style="padding:20px 16px">
+            <div style="display:flex;gap:12px">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:20px;line-height:26px;font-weight:700;letter-spacing:-0.005em;color:var(--text-1)">PBL Qore 2</div>
+                <div style="margin-top:6px;font-family:var(--font-number);font-size:13px;line-height:16px;font-weight:500;font-feature-settings:var(--num-features);color:var(--text-2)">3B:47:25:08:6F:A6</div>
+                <div style="margin-top:4px;font-family:var(--font-number);font-size:13px;line-height:16px;font-weight:500;font-feature-settings:var(--num-features);color:var(--text-2)">1.00.02</div>
+                <button style="margin-top:14px;background:var(--surface-raised);border:0;border-radius:10px;padding:8px 18px;cursor:pointer;font-family:inherit;font-size:15px;line-height:20px;font-weight:500;color:var(--text-1)">Unbind</button>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:8px">
+                <span class="phi" data-ph="watch" data-weight="fill" style="width:56px;height:56px;color:var(--text-2)"></span>
+                <span id="bandStatus" style="font-size:13px;line-height:18px;color:var(--text-2)">Connected</span>
+              </div>
+            </div>
+            <div class="statechip sync">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing…</span>
+            </div>
+          </div>
+
+          <!-- band alerts -->
+          <div class="settings-group">
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="battery-warning" data-weight="fill" style="width:18px;height:18px;color:var(--metric-steps)"></span></span><span class="lab">Low Battery Prompt</span><button class="switch on" aria-label="Low battery prompt"><i></i></button></div>
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="phone" data-weight="fill" style="width:18px;height:18px;color:var(--metric-readiness)"></span></span><span class="lab">Call Notification</span><button class="switch on" aria-label="Call notification"><i></i></button></div>
+          </div>
+
+          <!-- profile + health features -->
+          <div class="settings-group">
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="user" data-weight="fill" style="width:18px;height:18px;color:var(--metric-activity)"></span></span><span class="lab">Profile</span><span class="chev"></span></div>
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="shield-plus" data-weight="fill" style="width:18px;height:18px;color:var(--metric-spo2)"></span></span><span class="lab">Health Monitoring</span><span class="chev"></span></div>
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="bell" data-weight="fill" style="width:18px;height:18px;color:var(--metric-distance)"></span></span><span class="lab">Health Reminder</span><span class="chev"></span></div>
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="camera" data-weight="fill" style="width:18px;height:18px;color:var(--metric-spo2)"></span></span><span class="lab">Take Pictures</span><span class="chev"></span></div>
+            <div class="setrow" data-open="sub-goal-activity"><span class="itile"><span class="phi" data-ph="crosshair" data-weight="fill" style="width:18px;height:18px;color:var(--metric-activity)"></span></span><span class="lab">Goal Setting</span><span class="chev"></span></div>
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="magnifying-glass" data-weight="fill" style="width:18px;height:18px;color:var(--metric-calories)"></span></span><span class="lab">Find Device</span><span class="chev"></span></div>
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="moon" data-weight="fill" style="width:18px;height:18px;color:var(--metric-sleep)"></span></span><span class="lab">Do Not Disturb</span><span class="chev"></span></div>
+          </div>
+
+          <!-- units -->
+          <div class="settings-group">
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="list-dashes" data-weight="fill" style="width:18px;height:18px;color:var(--metric-heart-rate)"></span></span><span class="lab">Units Format</span><span class="val">Metric System</span><span class="chev"></span></div>
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="thermometer" data-weight="fill" style="width:18px;height:18px;color:var(--metric-readiness)"></span></span><span class="lab">Temperature Unit</span><span class="val">°C</span><span class="chev"></span></div>
+          </div>
+
+          <!-- system -->
+          <div class="settings-group">
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="heart" data-weight="fill" style="width:18px;height:18px;color:var(--metric-spo2)"></span></span><span class="lab">Apple Health</span><span class="chev"></span></div>
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="arrow-circle-up" data-weight="fill" style="width:18px;height:18px;color:var(--metric-spo2)"></span></span><span class="lab">Firmware Upgrade</span><span class="val" style="color:var(--metric-readiness)">Upgrade<span class="reddot"></span></span><span class="chev"></span></div>
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="gear" data-weight="fill" style="width:18px;height:18px;color:var(--metric-heart-rate)"></span></span><span class="lab">System Setting</span><span class="chev"></span></div>
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="question" data-weight="fill" style="width:18px;height:18px;color:var(--metric-readiness)"></span></span><span class="lab">FAQ's</span><span class="chev"></span></div>
+            <div class="setrow"><span class="itile"><span class="phi" data-ph="info" data-weight="fill" style="width:18px;height:18px;color:var(--metric-activity)"></span></span><span class="lab">About</span><span class="chev"></span></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- =========================================================
+           SUB-PAGES — reached from each tab's 3-dot menu.
+           Content ported from the approved standalone prototypes.
+           ========================================================= -->
+
+      <!-- About activity (read-only) -->
+      <div class="subpage" id="sub-about-activity" hidden>
+        <div class="sub-head">
+          <button class="backbtn" data-back><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button>
+          <span class="t">About activity</span>
+        </div>
+        <div class="sub-body">
+          <div class="card">
+            <div class="card-title">Total steps</div>
+            <p>Daily steps are a measure of your daily physical activity. The optimal daily step count depends on your age, body type, fitness level and readiness to perform.</p>
+            <p>Aim for more than 8,000 steps per day. If you exercise, you can reduce the number of steps accordingly. More steps are not necessarily better — too many can strain knees and ankles, so keeping the count between 8,000 and 15,000 is recommended.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Total calories</div>
+            <p>Total calories are your total daily energy expenditure — all the calories you burn during the day. Whether you are active or resting, tracking your total calories against your history can help you adjust your intake and maintain a healthy weight.</p>
+            <p>Although exercise increases your daily calorie consumption, most of the total comes from calories burned at rest — your basal metabolic rate (BMR).</p>
+            <p>The band starts calculating your total burn in the early morning and records your estimated BMR. The calculation continues until the end of the day, and calories from daily activity are added to the total.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- About sleep (read-only) -->
+      <div class="subpage" id="sub-about-sleep" hidden>
+        <div class="sub-head">
+          <button class="backbtn" data-back><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button>
+          <span class="t">About sleep</span>
+        </div>
+        <div class="sub-body">
+          <div class="card">
+            <div class="card-title">How sleep is measured</div>
+            <p>Your band reads movement, heart rate, heart rate variability and blood oxygen through the night, then infers when you fell asleep, which stage you were in, and when you woke. Readings are estimates, not clinical measurements. This feature is not intended for medical use — speak to a healthcare professional about any concern with your sleep or breathing.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">How the score is built</div>
+            <p>One number from 0 to 100 weighing four things: total time asleep, sleep efficiency (asleep vs. time in bed), how your stages were distributed, and how settled your night was — wake events, restlessness and overnight vitals. Consistency counts too: going to bed and waking at similar times lifts the score even when a single night runs short.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">What your score means</div>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+              <div class="scorerow"><span class="rng">86–100</span><span class="dsc">Excellent — fully recovered</span></div>
+              <div class="scorerow"><span class="rng">76–85</span><span class="dsc">Good — train and work as planned</span></div>
+              <div class="scorerow"><span class="rng">60–75</span><span class="dsc">Average — keep the day moderate</span></div>
+              <div class="scorerow"><span class="rng">&lt; 60</span><span class="dsc">Poor — prioritise an earlier night</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">The four stages</div>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:12px">
+              <div class="bullet"><span class="sw" style="background:var(--violet-100)"></span><div><div class="bt">Awake</div><p>Brief wakings are normal — most nights hold a handful you never remember.</p></div></div>
+              <div class="bullet"><span class="sw" style="background:var(--violet-300)"></span><div><div class="bt">Light</div><p>The bulk of the night. Breathing and heart rate settle and the body starts to repair.</p></div></div>
+              <div class="bullet"><span class="sw" style="background:var(--metric-sleep)"></span><div><div class="bt">REM</div><p>Where dreaming happens, and where memory and mood consolidate. Longer stretches come late in the night.</p></div></div>
+              <div class="bullet"><span class="sw" style="background:var(--violet-600)"></span><div><div class="bt">Deep</div><p>The hardest to wake from. Tissue repair and immune work concentrate here, mostly in the first half.</p></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Overnight vitals</div>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:12px">
+              <div class="bullet"><span class="sw" style="background:var(--metric-heart-rate)"></span><div><div class="bt">Heart rate</div><p>Should fall through the first half and reach its low point before dawn. A high, flat line often follows a late meal, alcohol or stress.</p></div></div>
+              <div class="bullet"><span class="sw" style="background:var(--metric-hrv)"></span><div><div class="bt">Heart rate variability</div><p>Gaps between beats. Higher usually means better recovery — compare it to your own baseline, never to someone else's.</p></div></div>
+              <div class="bullet"><span class="sw" style="background:var(--metric-skin-temp)"></span><div><div class="bt">Skin temperature</div><p>Shown as a deviation across the night. A sustained rise can precede illness or follow a hard training day.</p></div></div>
+              <div class="bullet"><span class="sw" style="background:var(--metric-spo2)"></span><div><div class="bt">Blood oxygen</div><p>Typically sits between 95% and 100%. Repeated dips are worth mentioning to a clinician.</p></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Goal setting — Activity (cards open the edit sheet) -->
+      <!-- =========================================================
+           METRIC DETAIL PAGES — internal Steps / Distance / Calories
+           screens with Day / Week / Month / Year charts. From the
+           wireframes we take ONLY the D-W-M-Y tab switcher, the axis
+           label counts (7 for week, 8 for month, 12 for year) and the
+           summary information; the chart card + hover states come from
+           the approved chart components as used on the Activity tab.
+           The wireframes' Steps/Distance/Calories pill switcher and the
+           explainer text at the bottom are dropped (owner, 2026-08-10).
+           ========================================================= -->
+      <!-- Steps detail — D/W/M/Y chart + summary (chart card format and
+           scrub behaviour identical to the Activity-tab cards) -->
+      <div class="subpage" id="sub-metric-steps" hidden>
+        <div class="sub-head">
+          <button class="backbtn" data-back><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button>
+          <span class="t">Steps</span>
+        </div>
+        <div class="sub-body">
+          <div class="seg4" data-detail="steps" role="tablist" aria-label="Period">
+            <button data-period="day" class="active" role="tab" aria-selected="true">D</button>
+            <button data-period="week" role="tab" aria-selected="false">W</button>
+            <button data-period="month" role="tab" aria-selected="false">M</button>
+            <button data-period="year" role="tab" aria-selected="false">Y</button>
+          </div>
+          <div class="card stateful empty-frame" data-dcard>
+            <div class="card-head">
+              <div class="card-title" data-dtitle>Total</div>
+              <div class="card-metric">
+                <div class="val"><span class="num live" data-val>7,240</span><span class="value-dash">—</span><span class="unit">steps</span></div>
+                <div class="trend live" data-trend><span>Today</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+          <div class="sumchips stateful" data-dsummary></div>
+        </div>
+      </div>
+
+      <!-- Distance detail — D/W/M/Y chart + summary (chart card format and
+           scrub behaviour identical to the Activity-tab cards) -->
+      <div class="subpage" id="sub-metric-distance" hidden>
+        <div class="sub-head">
+          <button class="backbtn" data-back><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button>
+          <span class="t">Distance</span>
+        </div>
+        <div class="sub-body">
+          <div class="seg4" data-detail="distance" role="tablist" aria-label="Period">
+            <button data-period="day" class="active" role="tab" aria-selected="true">D</button>
+            <button data-period="week" role="tab" aria-selected="false">W</button>
+            <button data-period="month" role="tab" aria-selected="false">M</button>
+            <button data-period="year" role="tab" aria-selected="false">Y</button>
+          </div>
+          <div class="card stateful empty-frame" data-dcard>
+            <div class="card-head">
+              <div class="card-title" data-dtitle>Total</div>
+              <div class="card-metric">
+                <div class="val"><span class="num live" data-val>5.1</span><span class="value-dash">—</span><span class="unit">km</span></div>
+                <div class="trend live" data-trend><span>Today</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+          <div class="sumchips stateful" data-dsummary></div>
+        </div>
+      </div>
+
+      <!-- Calories detail — D/W/M/Y chart + summary (chart card format and
+           scrub behaviour identical to the Activity-tab cards) -->
+      <div class="subpage" id="sub-metric-calories" hidden>
+        <div class="sub-head">
+          <button class="backbtn" data-back><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button>
+          <span class="t">Calories</span>
+        </div>
+        <div class="sub-body">
+          <div class="seg4" data-detail="calories" role="tablist" aria-label="Period">
+            <button data-period="day" class="active" role="tab" aria-selected="true">D</button>
+            <button data-period="week" role="tab" aria-selected="false">W</button>
+            <button data-period="month" role="tab" aria-selected="false">M</button>
+            <button data-period="year" role="tab" aria-selected="false">Y</button>
+          </div>
+          <div class="card stateful empty-frame" data-dcard>
+            <div class="card-head">
+              <div class="card-title" data-dtitle>Total</div>
+              <div class="card-metric">
+                <div class="val"><span class="num live" data-val>420</span><span class="value-dash">—</span><span class="unit">kcal</span></div>
+                <div class="trend live" data-trend><span>Today</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount" data-mount></div></div>
+          </div>
+          <div class="sumchips stateful" data-dsummary></div>
+        </div>
+      </div>
+
+      <div class="subpage" id="sub-goal-activity" hidden>
+        <div class="sub-head">
+          <button class="backbtn" data-back><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button>
+          <span class="t">Goal setting</span>
+        </div>
+        <div class="sub-body">
+          <button class="goalcard" data-goal="steps">
+            <span class="phi" data-ph="footprints" data-weight="fill" style="width:20px;height:20px;color:var(--metric-steps)"></span>
+            <span class="nm">Steps</span>
+            <span class="gv"><span class="gn" data-goalval>10,000</span><span class="gu">steps</span></span>
+            <span class="chev"></span>
+          </button>
+          <button class="goalcard" data-goal="distance">
+            <span class="phi" data-ph="map-pin" data-weight="fill" style="width:20px;height:20px;color:var(--metric-distance)"></span>
+            <span class="nm">Distance</span>
+            <span class="gv"><span class="gn" data-goalval>8</span><span class="gu">km</span></span>
+            <span class="chev"></span>
+          </button>
+          <button class="goalcard" data-goal="calories">
+            <span class="phi" data-ph="fire" data-weight="fill" style="width:20px;height:20px;color:var(--metric-calories)"></span>
+            <span class="nm">Calories</span>
+            <span class="gv"><span class="gn" data-goalval>600</span><span class="gu">kcal</span></span>
+            <span class="chev"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Goal setting — Sleep (bedtime dial, drag either handle) -->
+      <div class="subpage" id="sub-goal-sleep" hidden>
+        <div class="sub-head">
+          <button class="backbtn" data-back><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button>
+          <span class="t">Goal setting</span>
+        </div>
+        <div class="sub-body">
+          <div class="card" style="padding:20px 16px 24px">
+            <div style="display:flex;align-items:flex-start">
+              <div style="flex:1;text-align:center">
+                <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+                  <span class="phi" data-ph="bed" data-weight="fill" style="width:16px;height:16px;color:var(--metric-sleep)"></span>
+                  <span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2)">Bedtime</span>
+                </div>
+                <div id="dialBedTime" style="margin-top:4px;font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;letter-spacing:-0.005em;font-feature-settings:var(--num-features);color:var(--text-1)">23:00</div>
+                <div id="dialBedDay" style="font-size:11px;line-height:16px;color:var(--text-3)">Tonight</div>
+              </div>
+              <div style="width:0.5px;align-self:stretch;background:var(--surface-raised)"></div>
+              <div style="flex:1;text-align:center">
+                <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+                  <span class="phi" data-ph="alarm" data-weight="fill" style="width:16px;height:16px;color:var(--metric-sleep)"></span>
+                  <span style="font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2)">Wake up</span>
+                </div>
+                <div id="dialWakeTime" style="margin-top:4px;font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;letter-spacing:-0.005em;font-feature-settings:var(--num-features);color:var(--text-1)">07:00</div>
+                <div id="dialWakeDay" style="font-size:11px;line-height:16px;color:var(--text-3)">Today</div>
+              </div>
+            </div>
+            <div class="dialwrap" id="sleepDial">
+              <svg width="248" height="248" viewBox="0 0 248 248" style="display:block">
+                <circle cx="124" cy="124" r="104" fill="none" stroke-width="30" style="stroke:var(--surface-app)"/>
+                <path id="dialArc" d="" fill="none" stroke-width="30" stroke-linecap="round" style="stroke:color-mix(in srgb, var(--metric-sleep) 34%, transparent)"/>
+                <circle cx="124" cy="124" r="84" style="fill:var(--surface-raised)"/>
+                <g id="dialTicks"></g>
+              </svg>
+              <span class="phi" data-ph="moon" data-weight="fill" style="position:absolute;left:124px;top:92px;transform:translate(-50%,-50%);width:18px;height:18px;color:var(--metric-sleep)"></span>
+              <span class="phi" data-ph="sun" data-weight="fill" style="position:absolute;left:124px;top:156px;transform:translate(-50%,-50%);width:18px;height:18px;color:var(--gold-400)"></span>
+              <div class="dial-handle" id="dialBedHandle"><span class="phi" data-ph="bed" data-weight="fill" style="width:16px;height:16px"></span></div>
+              <div class="dial-handle" id="dialWakeHandle"><span class="phi" data-ph="alarm" data-weight="fill" style="width:16px;height:16px"></span></div>
+              <div id="dialLabels"></div>
+            </div>
+            <div style="margin-top:16px;text-align:center">
+              <div id="dialDur" style="font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;letter-spacing:-0.005em;font-feature-settings:var(--num-features);color:var(--text-1)">8 hr 00 min</div>
+              <div id="dialNote" style="margin-top:4px;font-size:13px;line-height:18px;color:var(--text-2)">This schedule meets your 8 hr sleep goal.</div>
+            </div>
+          </div>
+          <div class="card" style="padding:8px 16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0">
+              <div>
+                <div style="font-size:17px;line-height:22px;font-weight:500;color:var(--text-1)">Wake-up alarm</div>
+                <div id="alarmNote" style="font-size:11px;line-height:16px;color:var(--text-3)">Rings in your lightest stage near 07:00</div>
+              </div>
+              <button class="switch on" id="alarmSwitch" aria-label="Wake-up alarm" style="--on:var(--metric-sleep)"><i></i></button>
+            </div>
+          </div>
+          <p style="margin:2px 4px 0;font-size:11px;line-height:16px;color:var(--text-3)">Drag either handle to move your schedule. Times snap to 15 minutes.</p>
+        </div>
+      </div>
+
+    </div><!-- /.pages -->
+
+    <!-- ============ HISTORY CALENDAR (shared by all tabs) ============ -->
+    <div id="calModal" hidden>
+      <div class="scrim" data-calclose></div>
+      <div class="cal-sheet">
+        <div class="cal-grab"><span></span></div>
+        <div class="cal-head">
+          <span class="t" id="calTitle">History</span>
+          <button class="iconbtn" data-calclose aria-label="Close"><span class="phi" data-ph="x" style="width:16px;height:16px"></span></button>
+        </div>
+        <div class="cal-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+        <div class="cal-scrollwrap">
+          <div class="cal-scroll" id="calScroll"></div>
+          <!-- fade over the tail row of the previous month, so the current
+               month reads front-and-center when the sheet opens -->
+          <div class="cal-fade" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ GOAL EDIT SHEET (Activity goals) ============ -->
+    <div id="goalSheet" hidden>
+      <div class="scrim" data-sheetcancel></div>
+      <div class="sheet">
+        <div class="sheet-head">
+          <button class="iconbtn" data-sheetcancel aria-label="Cancel"><span class="phi" data-ph="x" style="width:16px;height:16px"></span></button>
+          <span class="t" id="sheetTitle">Steps goal</span>
+          <button class="iconbtn" id="sheetConfirm" aria-label="Confirm"><span class="phi" data-ph="check" style="width:18px;height:18px"></span></button>
+        </div>
+        <div class="sheet-rows" id="sheetRows"></div>
+      </div>
+    </div>
+
+    <!-- ============ BOTTOM NAV — owner-supplied "pebblenav" component ============
+         Icon markup is copied VERBATIM from the owner's component file:
+         Phosphor regular when idle, fill when selected (sleep + me idle
+         glyphs are the stroke-drawn variants from that file).
+         Health / Sleep / Me are non-clickable in this flow (owner) —
+         their screens will be integrated separately. -->
+    <nav class="pebble-nav" aria-label="Primary">
+      <button type="button" class="pebble-tab" data-tab="health" aria-disabled="true">
+        <svg class="icon ico-line" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z"/></svg>
+        <svg class="icon ico-fill" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z"/></svg>
+        <span class="label">Health</span>
+      </button>
+      <button type="button" class="pebble-tab" data-tab="activity" aria-current="page">
+        <svg class="icon ico-line" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M231.16,166.63l-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-8-8,48.05,48.05,0,0,1-48-48,8,8,0,0,0-12.83-6.37L30.13,76l-.2.16a16,16,0,0,0-1.24,23.75L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63ZM224,200H151.37L40,88.63l12.87-9.76,38.79,38.79A8,8,0,0,0,103,106.34L65.74,69.11l40-30.31A64.15,64.15,0,0,0,160,87.5v21.89a63.65,63.65,0,0,0,35.38,57.24L224,180.94ZM70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm40,24a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16h54.8A8,8,0,0,1,110.8,208Z"/></svg>
+        <svg class="icon ico-fill" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z"/></svg>
+        <span class="label">Activity</span>
+      </button>
+      <button type="button" class="pebble-tab" data-tab="sleep" aria-disabled="true">
+        <svg class="icon ico-line" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path d="M108.11,28.11A96.09,96.09,0,0,0,227.89,147.89,96,96,0,1,1,108.11,28.11Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
+        <svg class="icon ico-fill" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z"/></svg>
+        <span class="label">Sleep</span>
+      </button>
+      <button type="button" class="pebble-tab" data-tab="me" aria-disabled="true">
+        <svg class="icon ico-line" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><circle cx="128" cy="96" r="64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M32,216c19.37-33.47,54.55-56,96-56s76.63,22.53,96,56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
+        <svg class="icon ico-fill" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z"/></svg>
+        <span class="label">Me</span>
+      </button>
+    </nav>
+
+    <div class="gesture"></div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   Pebble prototype behaviour
+   --------------------------------------------------------------------------
+   Everything below is plain JavaScript, commented in plain English.
+   Sections: helpers → chart data → chart drawing → scrubbing →
+             week widgets → tab bar / menus → state machine.
+   ========================================================================== */
+
+/* ---------- tiny helpers ---------- */
+const $  = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+const SVGNS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs){
+  const el = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+
+/* ==========================================================================
+   CHART DATA — invented sample data shaped like a real day / night.
+   Values match the numbers shown in the approved prototypes.
+   ========================================================================== */
+
+// Steps per hour (24 values, sums ≈ 7,240): quiet night, morning-run spike.
+const STEPS_HOURLY = [0,0,0,0,0,10,120,980,620,340,410,520,610,380,290,330,420,510,640,420,300,220,110,7];
+
+// Cumulative distance (km) sampled every hour, ends at 5.1.
+const DIST_CUM = [0,0,0,0,0,0,0.1,1.6,2.2,2.4,2.6,2.9,3.2,3.4,3.5,3.7,3.9,4.2,4.6,4.8,4.9,5.0,5.1,5.1];
+
+// Cumulative active calories (kcal), ends at 420.
+const CAL_CUM = [0,0,0,0,0,0,4,60,105,125,150,185,225,255,270,290,315,345,380,398,408,414,419,420];
+
+// Overnight vitals: one sample every 30 min, 23:00 → 07:00 (17 points).
+const HR_NIGHT   = [62,60,58,56,55,54,53,54,55,53,52,54,56,55,57,59,61];
+const HRV_NIGHT  = [38,40,43,45,48,50,52,51,49,52,54,53,50,48,46,44,42];
+const TEMP_NIGHT = [33.6,33.5,33.4,33.2,33.1,33.0,32.9,32.9,33.0,33.1,33.1,33.2,33.3,33.3,33.4,33.5,33.6];
+const SPO2_NIGHT = [97,97,96,96,95,95,94,95,96,96,97,96,96,95,96,97,97];
+
+// Hypnogram: [stage row, duration in minutes]. Rows: 0 Awake, 1 REM, 2 Light, 3 Deep.
+// Night runs 23:12 → 06:46 (454 min).
+const HYPNO = [
+  [0,14],[2,38],[3,42],[2,26],[1,22],[2,30],[3,34],[0,4],[2,36],[1,28],
+  [3,22],[2,40],[1,24],[2,32],[0,4],[1,24],[2,30],[2,4]
+];
+const STAGE_FILL = [
+  'var(--violet-100)', // awake — lightest
+  'var(--violet-200)', // REM
+  'var(--violet-400)', // light
+  'var(--violet-600)'  // deep — darkest
+];
+const STAGE_NAMES = ['Awake','REM','Light','Deep'];
+
+// Night-time axis labels for every sleep chart.
+const NIGHT_TICKS = ['23:00','1:00','3:00','5:00','7:00'];
+const DAY_TICKS   = ['00:00','6:00','12:00','18:00','24:00'];
+
+/* Each chart the state machine + scrubber needs to know about. */
+const CHARTS = {
+  steps:    { kind:'bars', data:STEPS_HOURLY, color:'var(--metric-steps)',    unit:' steps', ticks:DAY_TICKS,
+              yLabels:['3,600','2,400','1,200','0'], yMax:3600,
+              fmt:v => v.toLocaleString('en-US'), stampFmt:i => hourLabel(i) },
+  distance: { kind:'line', data:DIST_CUM, color:'var(--metric-distance)', unit:' km', ticks:DAY_TICKS,
+              yLabels:['6','4','2','0'], yMax:6,
+              fmt:v => v.toFixed(1), stampFmt:i => hourLabel(i) },
+  calories: { kind:'line', data:CAL_CUM, color:'var(--metric-calories)', unit:' kcal', ticks:DAY_TICKS,
+              yLabels:['450','300','150','0'], yMax:450,
+              fmt:v => String(Math.round(v)), stampFmt:i => hourLabel(i) },
+  hr:       { kind:'line', data:HR_NIGHT, color:'var(--metric-heart-rate)', unit:' bpm', ticks:NIGHT_TICKS,
+              yLabels:['80','70','60','50'], yMin:50, yMax:80,
+              fmt:v => String(Math.round(v)), stampFmt:i => nightLabel(i) },
+  hrv:      { kind:'line', data:HRV_NIGHT, color:'var(--metric-hrv)', unit:' ms', ticks:NIGHT_TICKS,
+              yLabels:['60','50','40','30'], yMin:30, yMax:60,
+              fmt:v => String(Math.round(v)), stampFmt:i => nightLabel(i) },
+  temp:     { kind:'line', data:TEMP_NIGHT, color:'var(--metric-skin-temp)', unit:' °C', ticks:NIGHT_TICKS,
+              yLabels:['34','33.5','33','32.5'], yMin:32.5, yMax:34, hiLo:true,
+              fmt:v => v.toFixed(1), stampFmt:i => nightLabel(i) },
+  spo2:     { kind:'line', data:SPO2_NIGHT, color:'var(--metric-spo2)', unit:' %', ticks:NIGHT_TICKS,
+              yLabels:['100','98','96','94'], yMin:94, yMax:100,
+              fmt:v => String(Math.round(v)), stampFmt:i => nightLabel(i) },
+  hypnogram:{ kind:'hypno' }
+};
+
+function hourLabel(i){ return String(i).padStart(2,'0') + ':00'; }
+function nightLabel(i){ // sample i → clock time, 23:00 + i×30min
+  const m = (23*60 + i*30) % (24*60);
+  return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0');
+}
+
+/* ==========================================================================
+   CHART DRAWING — geometry copied from the approved chart cards:
+   plot 0→262 wide, gridlines at y 12 / 39.3 / 66.7 / 94, labels on the right,
+   time ticks along the bottom.
+   ========================================================================== */
+const PLOT_W = 262, VIEW_W = 296, TOP = 12, BOT = 94;
+
+function yFor(v, cfg){
+  const min = cfg.yMin || 0;
+  return BOT - ((v - min) / (cfg.yMax - min)) * (BOT - TOP);
+}
+
+/* Dashed goal line + label — drawn behind the data marks. The wireframes
+   show this on the week / month / year detail views ("Goal 10,000"). */
+function drawGoal(svg, cfg){
+  const gy = yFor(cfg.goal, cfg);
+  svg.append(svgEl('line', { x1:0, x2:PLOT_W, y1:gy, y2:gy, stroke:'var(--text-2)',
+    'stroke-width':1, 'stroke-dasharray':'6 4' }));
+  const t = svgEl('text', { x:PLOT_W-4, y:gy-5, 'text-anchor':'end', class:'axis', fill:'var(--text-2)' });
+  t.textContent = cfg.goalLabel; svg.append(t);
+}
+
+/* Line chart with soft area fill, right-side y labels, bottom ticks. */
+function drawLine(mount, key, cfgOverride){
+  const cfg = cfgOverride || CHARTS[key];   // detail pages pass their own config
+  // detail pages breathe: extra room between the plot and the X-axis labels,
+  // matching the visual gap of the Activity-tab charts (owner, 2026-08-10)
+  const H = cfg.tallAxis ? 130 : 120, tickY = cfg.tallAxis ? 123 : 113;
+  const svg = svgEl('svg', { width:VIEW_W, height:H, viewBox:`0 0 ${VIEW_W} ${H}` });
+
+  // area gradient — fades the metric colour to transparent
+  const defs = svgEl('defs', {});
+  const grad = svgEl('linearGradient', { id:'g-'+key, x1:0, y1:0, x2:0, y2:1 });
+  const s1 = svgEl('stop', { offset:'0%', 'stop-opacity':'0.3' }); s1.style.stopColor = cfg.color;
+  const s2 = svgEl('stop', { offset:'100%', 'stop-opacity':'0' }); s2.style.stopColor = cfg.color;
+  grad.append(s1, s2); defs.append(grad); svg.append(defs);
+
+  // gridlines + y labels
+  const gys = [12, 39.3, 66.7, 94];
+  gys.forEach((y, i) => {
+    svg.append(svgEl('line', { x1:0, x2:PLOT_W, y1:y, y2:y, stroke:'var(--gridline)', 'stroke-width':0.5 }));
+    const t = svgEl('text', { x:VIEW_W-2, y:y+4, 'text-anchor':'end', class:'axis' });
+    t.textContent = cfg.yLabels[i]; svg.append(t);
+  });
+
+  // dashed daily-goal line (detail pages, week/month/year only)
+  if (cfg.goal != null && cfg.goal <= cfg.yMax) drawGoal(svg, cfg);
+
+  // the line itself
+  const pts = cfg.data.map((v, i) => [ i/(cfg.data.length-1)*PLOT_W, yFor(v, cfg) ]);
+  const dLine = 'M' + pts.map(p => p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L');
+  const dArea = dLine + ` L${PLOT_W} ${BOT} L0 ${BOT} Z`;
+  // the area + line carry class "mark" so the empty state can hide just the
+  // data and leave the chart frame (gridlines + labels) standing
+  svg.append(svgEl('path', { d:dArea, fill:`url(#g-${key})`, class:'mark' }));
+  const path = svgEl('path', { d:dLine, fill:'none', stroke:cfg.color, 'stroke-width':2, 'stroke-linecap':'round', 'stroke-linejoin':'round', class:'mark' });
+  svg.append(path);
+
+  // high / low markers (skin temperature only)
+  if (cfg.hiLo){
+    let hi = 0, lo = 0;
+    cfg.data.forEach((v, i) => { if (v > cfg.data[hi]) hi = i; if (v < cfg.data[lo]) lo = i; });
+    svg.append(svgEl('circle', { cx:pts[hi][0], cy:pts[hi][1], r:4, fill:'var(--metric-heart-rate)', stroke:'var(--surface-card)', 'stroke-width':1.5, class:'mark' }));
+    svg.append(svgEl('circle', { cx:pts[lo][0], cy:pts[lo][1], r:4, fill:'var(--metric-spo2)', stroke:'var(--surface-card)', 'stroke-width':1.5, class:'mark' }));
+  }
+
+  // scrub guide (hidden until a finger / cursor lands on the chart)
+  const guide = svgEl('line', { x1:0, x2:0, y1:TOP, y2:BOT, stroke:'var(--text-3)', 'stroke-width':1, 'stroke-dasharray':'3 3', visibility:'hidden' });
+  const dot   = svgEl('circle', { r:4, fill:cfg.color, stroke:'var(--text-1)', 'stroke-width':1.5, visibility:'hidden' });
+  svg.append(guide, dot);
+
+  // bottom time ticks — cfg.tickIdx pins a label to a specific data point
+  // (detail pages); without it labels spread evenly (Activity-tab behaviour)
+  cfg.ticks.forEach((lab, i) => {
+    const x = cfg.tickIdx ? cfg.tickIdx[i]/(cfg.data.length-1)*PLOT_W
+                          : i/(cfg.ticks.length-1)*PLOT_W;
+    const t = svgEl('text', { x, y:tickY, class:'axis',
+      'text-anchor': i === 0 ? 'start' : (i === cfg.ticks.length-1 ? 'end' : 'middle') });
+    t.textContent = lab; svg.append(t);
+  });
+
+  mount.classList.add('chart');
+  mount.append(svg);
+  return { svg, guide, dot, pts, cfg };
+}
+
+/* Hourly bar chart (Steps). */
+function drawBars(mount, key, cfgOverride){
+  const cfg = cfgOverride || CHARTS[key];   // detail pages pass their own config
+  // detail pages breathe: extra room between the plot and the X-axis labels,
+  // matching the visual gap of the Activity-tab charts (owner, 2026-08-10)
+  const H = cfg.tallAxis ? 130 : 120, tickY = cfg.tallAxis ? 123 : 113;
+  const svg = svgEl('svg', { width:VIEW_W, height:H, viewBox:`0 0 ${VIEW_W} ${H}` });
+  const gys = [12, 39.3, 66.7, 94];
+  gys.forEach((y, i) => {
+    svg.append(svgEl('line', { x1:0, x2:PLOT_W, y1:y, y2:y, stroke:'var(--gridline)', 'stroke-width':0.5 }));
+    const t = svgEl('text', { x:VIEW_W-2, y:y+4, 'text-anchor':'end', class:'axis' });
+    t.textContent = cfg.yLabels[i]; svg.append(t);
+  });
+  // dashed daily-goal line (detail pages, week/month/year only)
+  if (cfg.goal != null && cfg.goal <= cfg.yMax) drawGoal(svg, cfg);
+  const n = cfg.data.length, slot = PLOT_W/n, bw = Math.max(4, slot-4);
+  const bars = [], tops = []; // tops = the y where each bar starts, for the scrub line
+  cfg.data.forEach((v, i) => {
+    const h = Math.max(v > 0 ? 2 : 0, (v/cfg.yMax)*(BOT-TOP));
+    const r = svgEl('rect', { x:(i*slot + (slot-bw)/2).toFixed(1), y:(BOT-h).toFixed(1),
+      width:bw.toFixed(1), height:h.toFixed(1), rx:2, fill:cfg.color, class:'mark' });
+    svg.append(r); bars.push(r); tops.push(BOT-h);
+  });
+  cfg.ticks.forEach((lab, i) => {
+    // cfg.tickIdx centres a label under a specific bar (detail pages);
+    // without it labels spread evenly (Activity-tab behaviour)
+    const x = cfg.tickIdx ? (cfg.tickIdx[i] + 0.5) * slot
+                          : i/(cfg.ticks.length-1)*PLOT_W;
+    const t = svgEl('text', { x, y:tickY, class:'axis',
+      'text-anchor': cfg.tickIdx ? 'middle'
+        : (i === 0 ? 'start' : (i === cfg.ticks.length-1 ? 'end' : 'middle')) });
+    t.textContent = lab; svg.append(t);
+  });
+  // scrub guide — dotted line from the touched bar's top to the top of the
+  // chart, exactly like the approved bar-chart component (round caps on a
+  // "0.1 5" dash pattern render the dashes as dots)
+  const hoverLine = svgEl('line', { x1:0, x2:0, y1:TOP, y2:TOP, stroke:'var(--text-1)',
+    'stroke-width':1.5, 'stroke-linecap':'round', 'stroke-dasharray':'0.1 5', visibility:'hidden' });
+  svg.append(hoverLine);
+  mount.classList.add('chart');
+  mount.append(svg);
+  return { svg, bars, tops, hoverLine, cfg, slot };
+}
+
+/* Hypnogram (Last night's sleep): one rounded bar per stage segment,
+   thin 2px connectors between stage changes — same look as the prototype. */
+function drawHypno(mount){
+  const svg = svgEl('svg', { width:VIEW_W, height:114, viewBox:`0 0 ${VIEW_W} 114` });
+  const total = HYPNO.reduce((s, seg) => s + seg[1], 0);
+  const rowY = stage => 4 + stage*20;          // top of each stage row
+  [12, 39.3, 66.7, 84].forEach(y =>
+    svg.append(svgEl('line', { x1:0, x2:VIEW_W, y1:y, y2:y, stroke:'var(--gridline)', 'stroke-width':0.5 })));
+  let x = 0;
+  HYPNO.forEach((seg, i) => {
+    const w = seg[1]/total*VIEW_W;
+    // connector to the previous segment
+    if (i > 0){
+      const prev = HYPNO[i-1];
+      const y1 = Math.min(rowY(prev[0]), rowY(seg[0])) + 8;
+      const y2 = Math.max(rowY(prev[0]), rowY(seg[0])) + 8;
+      svg.append(svgEl('rect', { x:x-1, y:y1, width:2, height:y2-y1, fill:'var(--violet-700)' }));
+    }
+    svg.append(svgEl('rect', { x:x.toFixed(1), y:rowY(seg[0]), width:Math.max(w,3).toFixed(1),
+      height:17, rx:4, fill:STAGE_FILL[seg[0]] }));
+    x += w;
+  });
+  // time ticks under the plot
+  NIGHT_TICKS.forEach((lab, i) => {
+    const t = svgEl('text', { x:i/(NIGHT_TICKS.length-1)*VIEW_W, y:107, class:'axis',
+      'text-anchor': i === 0 ? 'start' : (i === NIGHT_TICKS.length-1 ? 'end' : 'middle') });
+    t.textContent = lab; svg.append(t);
+  });
+  mount.append(svg);
+}
+
+/* ==========================================================================
+   SCRUBBING — press / drag on a chart to read a value at a point in time.
+   The big number in the card header temporarily shows the sampled value
+   and its timestamp, then snaps back when the finger lifts.
+   ========================================================================== */
+function attachScrub(card, chart){
+  const mount   = $('[data-mount]', card);
+  const valEl   = $('[data-val]', card);
+  const trendEl = $('[data-trend]', card);
+  if (!mount || !valEl || !trendEl) return;
+  const restValue = valEl.textContent;
+  const restTrend = trendEl.innerHTML;
+  const cfg = chart.cfg;
+
+  function sample(clientX){
+    const r = mount.getBoundingClientRect();
+    const x = Math.min(Math.max(clientX - r.left, 0), PLOT_W);
+    if (chart.bars){
+      /* Bars sit in equal-width slots, so the touched bar is the slot under
+         the finger — floor(x / slot), the same rule the approved bar-chart
+         component uses. (The old round() rule borrowed from line charts
+         picked the wrong bar around slot edges.) */
+      const i = Math.min(cfg.data.length - 1, Math.floor(x / chart.slot));
+      return { i, x: (i + 0.5) * chart.slot }; // centre of that bar
+    }
+    const i = Math.round(x / PLOT_W * (cfg.data.length - 1));
+    return { i, x: i/(cfg.data.length-1)*PLOT_W };
+  }
+  function show(e){
+    // no scrubbing while the card shows no data
+    if (/loading|empty/.test(document.getElementById('app').dataset.state)) return;
+    const { i, x } = sample(e.clientX);
+    valEl.textContent = cfg.fmt(cfg.data[i]);
+    trendEl.innerHTML = '<span>' + cfg.stampFmt(i) + '</span>';
+    if (chart.guide){ // line charts: dashed guide + dot
+      chart.guide.setAttribute('x1', x); chart.guide.setAttribute('x2', x);
+      chart.guide.setAttribute('visibility', 'visible');
+      chart.dot.setAttribute('cx', x); chart.dot.setAttribute('cy', chart.pts[i][1]);
+      chart.dot.setAttribute('visibility', 'visible');
+    }
+    if (chart.bars){ // bar chart: dim the others (component dims to 0.4),
+      // and run the dotted guide from the touched bar's top to the chart top
+      chart.bars.forEach((b, bi) => b.setAttribute('opacity', bi === i ? 1 : 0.4));
+      chart.hoverLine.setAttribute('x1', x); chart.hoverLine.setAttribute('x2', x);
+      chart.hoverLine.setAttribute('y1', chart.tops[i]);
+      chart.hoverLine.setAttribute('visibility', 'visible');
+    }
+  }
+  function hide(){
+    valEl.textContent = restValue;
+    trendEl.innerHTML = restTrend;
+    if (chart.guide){ chart.guide.setAttribute('visibility','hidden'); chart.dot.setAttribute('visibility','hidden'); }
+    if (chart.bars){
+      chart.bars.forEach(b => b.setAttribute('opacity', 1));
+      chart.hoverLine.setAttribute('visibility', 'hidden');
+    }
+  }
+  mount.addEventListener('pointerdown', show);
+  mount.addEventListener('pointermove', e => { if (e.buttons || e.pointerType === 'mouse') show(e); });
+  mount.addEventListener('pointerup', hide);
+  mount.addEventListener('pointerleave', hide);
+  mount.addEventListener('pointercancel', hide);
+}
+
+/* Build every chart card. */
+$$('[data-chart]').forEach(card => {
+  const key = card.dataset.chart;
+  const mount = $('[data-mount]', card);
+  const cfg = CHARTS[key];
+  if (!mount || !cfg) return;
+  mount.classList.add('live'); // charts hide in loading / empty
+  if (cfg.kind === 'line'){ attachScrub(card, drawLine(mount, key)); }
+  else if (cfg.kind === 'bars'){ attachScrub(card, drawBars(mount, key)); }
+  else if (cfg.kind === 'hypno'){ drawHypno(mount); }
+});
+
+/* ==========================================================================
+   METRIC DETAIL PAGES — Steps / Distance / Calories internal screens.
+   Each has a D/W/M/Y switcher, one chart card (drawn with the same
+   drawBars / drawLine + attachScrub used on the Activity tab, so the
+   hover / scrub states are identical) and a three-block summary row
+   styled like the Activity-tab stat chips.
+   All numbers are SAMPLE DATA, kept consistent with the Activity tab's
+   "today" (7,240 steps · 5.1 km · 420 kcal) and the 10,000 / 8 km /
+   600 kcal goals from Goal setting.
+   ========================================================================== */
+
+// Week runs Monday → Sunday (7 axis labels, per spec); month = last 30
+// days with 8 axis labels; year = 12 months J → D.
+const WEEK_TICKS   = ['M','T','W','T','F','S','S'];
+const WEEK_IDX     = [0,1,2,3,4,5,6];
+const MONTH_TICKS  = ['1','5','9','13','17','21','25','29'];
+const MONTH_IDX    = [0,4,8,12,16,20,24,28];
+const YEAR_TICKS   = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+const YEAR_IDX     = [0,1,2,3,4,5,6,7,8,9,10,11];
+const WEEK_NAMES   = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+const DETAIL_SUBS  = { day:'Today', week:'This week', month:'Last 30 days', year:'Last 12 months' };
+const DETAIL_STAMP = {
+  day:   i => hourLabel(i),
+  week:  i => WEEK_NAMES[i],
+  month: i => 'Day ' + (i + 1),
+  year:  i => MONTH_SHORT[i]
+};
+
+// ---- sample series ----
+// Steps per day, Mon→Sun. Sums to 52,240; only Wed clears the 10,000 goal.
+const STEPS_WEEK = [5940,7620,12589,6510,9480,5320,4781];
+// Steps per day, last 30 days. Total 246,533; best day 11 (14,513); 7 ≥ goal.
+const STEPS_MONTH = [6210,7480,5890,9240,10420,7110,6640,8360,7020,11080,
+                     14513,6890,5480,7740,8910,10240,6120,7350,9860,10930,
+                     5670,6280,8140,7590,11470,6960,7820,10310,6450,8360];
+// Steps: average per day for each of the last 12 months. Best month Sep.
+const STEPS_YEAR = [6420,7180,7460,6950,7820,8240,7610,7050,8930,6840,7480,8110];
+
+// Distance (km) per day. Week total 41.2; month total 181.0, best day 11.
+const DIST_WEEK  = [4.2,6.1,9.3,5.0,7.2,3.8,5.6];
+const DIST_MONTH = [4.4,5.2,3.9,6.8,8.4,5.1,4.6,6.2,5.0,8.9,
+                    10.2,4.8,3.7,5.6,6.5,8.1,4.2,5.3,7.4,8.6,
+                    3.8,4.5,6.1,5.4,9.1,4.9,5.7,8.2,4.4,6.0];
+const DIST_YEAR  = [4.6,5.2,5.5,5.0,5.9,6.4,5.7,5.1,6.8,4.9,5.4,6.1];
+
+// Active calories (kcal) per day. Week total 3,540; month total 14,820.
+const CAL_WEEK  = [430,520,640,470,580,390,510];
+const CAL_MONTH = [410,470,380,560,610,450,420,510,440,630,
+                   720,430,360,480,530,600,400,460,550,620,
+                   370,410,500,470,650,430,490,590,400,480];
+const CAL_YEAR  = [400,440,460,430,480,520,470,430,550,420,450,500];
+
+/* Per-metric, per-period chart configs. Shapes match CHARTS so drawBars /
+   drawLine / attachScrub work unchanged; goal + tickIdx are the two keys
+   the detail pages add. headline / title / summary feed the card header
+   and the chip row. */
+const fmtInt = v => v.toLocaleString('en-US');
+const fmtKm  = v => v.toFixed(1);
+const fmtCal = v => String(Math.round(v));
+
+const DETAIL = {
+  steps: {
+    periods: {
+      day:   { kind:'bars', data:STEPS_HOURLY, color:'var(--metric-steps)', ticks:DAY_TICKS,
+               yLabels:['3,600','2,400','1,200','0'], yMax:3600, fmt:fmtInt, stampFmt:DETAIL_STAMP.day,
+               title:'Total', headline:'7,240',
+               summary:[{lab:'Total',parts:[['v','7,240']]},{lab:'Best hour',parts:[['v','07:00']]},{lab:'Active hrs',parts:[['v','17']]}] },
+      week:  { kind:'bars', data:STEPS_WEEK, color:'var(--metric-steps)', ticks:WEEK_TICKS, tickIdx:WEEK_IDX,
+               yLabels:['13,200','8,800','4,400','0'], yMax:13200, goal:10000, goalLabel:'Goal 10,000',
+               fmt:fmtInt, stampFmt:DETAIL_STAMP.week,
+               title:'Average', headline:'7,463',
+               summary:[{lab:'Total',parts:[['v','52,240']]},{lab:'Best day',parts:[['v','Wed']]},{lab:'Goal met',parts:[['v','1'],['u','of'],['v','7']]}] },
+      month: { kind:'bars', data:STEPS_MONTH, color:'var(--metric-steps)', ticks:MONTH_TICKS, tickIdx:MONTH_IDX,
+               yLabels:['15,000','10,000','5,000','0'], yMax:15000, goal:10000, goalLabel:'Goal 10,000',
+               fmt:fmtInt, stampFmt:DETAIL_STAMP.month,
+               title:'Average', headline:'8,218',
+               summary:[{lab:'Total',parts:[['v','246,533']]},{lab:'Best day',parts:[['u','Day'],['v','11']]},{lab:'Goal met',parts:[['v','7'],['u','of'],['v','30']]}] },
+      year:  { kind:'bars', data:STEPS_YEAR, color:'var(--metric-steps)', ticks:YEAR_TICKS, tickIdx:YEAR_IDX,
+               yLabels:['10,500','7,000','3,500','0'], yMax:10500, goal:10000, goalLabel:'Goal 10,000',
+               fmt:fmtInt, stampFmt:DETAIL_STAMP.year,
+               title:'Average', headline:'7,506',
+               summary:[{lab:'Year total',parts:[['v','2,739,650']]},{lab:'Best month',parts:[['v','Sep']]},{lab:'Goal met',parts:[['v','0'],['u','of'],['v','12']]}] }
+    }
+  },
+  distance: {
+    periods: {
+      day:   { kind:'line', data:DIST_CUM, color:'var(--metric-distance)', ticks:DAY_TICKS,
+               yLabels:['6','4','2','0'], yMax:6, fmt:fmtKm, stampFmt:DETAIL_STAMP.day,
+               title:'Total', headline:'5.1',
+               summary:[{lab:'Total',parts:[['v','5.1'],['u','km']]},{lab:'Best hour',parts:[['v','07:00']]},{lab:'Active hrs',parts:[['v','17']]}] },
+      week:  { kind:'line', data:DIST_WEEK, color:'var(--metric-distance)', ticks:WEEK_TICKS, tickIdx:WEEK_IDX,
+               yLabels:['10.5','7','3.5','0'], yMax:10.5, goal:8, goalLabel:'Goal 8 km',
+               fmt:fmtKm, stampFmt:DETAIL_STAMP.week,
+               title:'Average', headline:'5.9',
+               summary:[{lab:'Total',parts:[['v','41.2'],['u','km']]},{lab:'Best day',parts:[['v','Wed']]},{lab:'Goal met',parts:[['v','1'],['u','of'],['v','7']]}] },
+      month: { kind:'line', data:DIST_MONTH, color:'var(--metric-distance)', ticks:MONTH_TICKS, tickIdx:MONTH_IDX,
+               yLabels:['10.5','7','3.5','0'], yMax:10.5, goal:8, goalLabel:'Goal 8 km',
+               fmt:fmtKm, stampFmt:DETAIL_STAMP.month,
+               title:'Average', headline:'6.0',
+               summary:[{lab:'Total',parts:[['v','181.0'],['u','km']]},{lab:'Best day',parts:[['u','Day'],['v','11']]},{lab:'Goal met',parts:[['v','7'],['u','of'],['v','30']]}] },
+      year:  { kind:'line', data:DIST_YEAR, color:'var(--metric-distance)', ticks:YEAR_TICKS, tickIdx:YEAR_IDX,
+               yLabels:['9','6','3','0'], yMax:9, goal:8, goalLabel:'Goal 8 km',
+               fmt:fmtKm, stampFmt:DETAIL_STAMP.year,
+               title:'Average', headline:'5.5',
+               summary:[{lab:'Year total',parts:[['v','2,025'],['u','km']]},{lab:'Best month',parts:[['v','Sep']]},{lab:'Goal met',parts:[['v','0'],['u','of'],['v','12']]}] }
+    }
+  },
+  calories: {
+    periods: {
+      day:   { kind:'line', data:CAL_CUM, color:'var(--metric-calories)', ticks:DAY_TICKS,
+               yLabels:['450','300','150','0'], yMax:450, fmt:fmtCal, stampFmt:DETAIL_STAMP.day,
+               title:'Total', headline:'420',
+               summary:[{lab:'Total',parts:[['v','420'],['u','kcal']]},{lab:'Best hour',parts:[['v','07:00']]},{lab:'Active hrs',parts:[['v','18']]}] },
+      week:  { kind:'line', data:CAL_WEEK, color:'var(--metric-calories)', ticks:WEEK_TICKS, tickIdx:WEEK_IDX,
+               yLabels:['750','500','250','0'], yMax:750, goal:600, goalLabel:'Goal 600 kcal',
+               fmt:fmtCal, stampFmt:DETAIL_STAMP.week,
+               title:'Average', headline:'506',
+               summary:[{lab:'Total',parts:[['v','3,540'],['u','kcal']]},{lab:'Best day',parts:[['v','Wed']]},{lab:'Goal met',parts:[['v','1'],['u','of'],['v','7']]}] },
+      month: { kind:'line', data:CAL_MONTH, color:'var(--metric-calories)', ticks:MONTH_TICKS, tickIdx:MONTH_IDX,
+               yLabels:['750','500','250','0'], yMax:750, goal:600, goalLabel:'Goal 600 kcal',
+               fmt:fmtCal, stampFmt:DETAIL_STAMP.month,
+               title:'Average', headline:'494',
+               summary:[{lab:'Total',parts:[['v','14,820'],['u','kcal']]},{lab:'Best day',parts:[['u','Day'],['v','11']]},{lab:'Goal met',parts:[['v','6'],['u','of'],['v','30']]}] },
+      year:  { kind:'line', data:CAL_YEAR, color:'var(--metric-calories)', ticks:YEAR_TICKS, tickIdx:YEAR_IDX,
+               yLabels:['750','500','250','0'], yMax:750, goal:600, goalLabel:'Goal 600 kcal',
+               fmt:fmtCal, stampFmt:DETAIL_STAMP.year,
+               title:'Average', headline:'462',
+               summary:[{lab:'Year total',parts:[['v','168,780'],['u','kcal']]},{lab:'Best month',parts:[['v','Sep']]},{lab:'Goal met',parts:[['v','0'],['u','of'],['v','12']]}] }
+    }
+  }
+};
+
+/* Shorten a figure so it always fits a tile: 4+ digit thousands become
+   "52.2K" / "900K", millions become "2.7M". The K/M suffix is set in the
+   small light unit style, like every other bit of text beside a number. */
+function fmtTile(txt){
+  const n = Number(String(txt).replace(/,/g, ''));
+  if (!Number.isFinite(n) || Math.abs(n) < 10000)
+    return '<span class="value">' + txt + '</span>';
+  const [val, suf] = Math.abs(n) >= 1e6 ? [n/1e6, 'M'] : [n/1e3, 'K'];
+  const shown = Math.abs(val) >= 100 ? Math.round(val) : val.toFixed(1);
+  return '<span class="value">' + shown + '</span><span class="unit">' + suf + '</span>';
+}
+
+/* Render one detail page for a period: switcher state, card header,
+   chart and summary chips. The chart mount is replaced with a fresh node
+   so the previous period's scrub listeners are discarded with it. */
+function showDetailPeriod(metric, period){
+  const sub = $('#sub-metric-' + metric);
+  const cfg = DETAIL[metric].periods[period];
+  if (!sub || !cfg) return;
+
+  $$('.seg4 button', sub).forEach(b => {
+    b.classList.toggle('active', b.dataset.period === period);
+    b.setAttribute('aria-selected', b.dataset.period === period);
+  });
+
+  $('[data-dtitle]', sub).textContent = cfg.title;
+  $('[data-val]', sub).textContent = cfg.headline;
+  $('[data-trend]', sub).innerHTML = '<span>' + DETAIL_SUBS[period] + '</span>';
+
+  // Stat tiles use the Activity-tab chip format. Long figures collapse to
+  // K so they never spill the tile (900,000 -> 900K, 2,739,650 -> 2.7M);
+  // the .live / .value-dash pair keeps headers and shows — with no data.
+  $('[data-dsummary]', sub).innerHTML = cfg.summary.map(t =>
+    '<section class="stattile"><div class="label">' + t.lab + '</div><div class="figure">'
+    + '<span class="live" style="display:contents">'
+    + t.parts.map(p => p[0] === 'u'
+        ? '<span class="unit">' + p[1] + '</span>'
+        : fmtTile(p[1])).join('')
+    + '</span><span class="value-dash">—</span></div></section>').join('');
+
+  const card = $('[data-dcard]', sub);
+  const fresh = document.createElement('div');
+  fresh.className = 'chartmount live'; // .live: empty-frame keeps the chart frame
+  cfg.tallAxis = true;                 // extra plot → X-axis space on detail pages
+  fresh.setAttribute('data-mount', '');
+  $('[data-mount]', card).replaceWith(fresh);
+  const chart = cfg.kind === 'bars'
+    ? drawBars(fresh, metric + '-' + period, cfg)
+    : drawLine(fresh, metric + '-' + period, cfg);
+  attachScrub(card, chart);
+}
+
+// D/W/M/Y switchers
+$$('.seg4').forEach(seg => seg.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (b) showDetailPeriod(seg.dataset.detail, b.dataset.period);
+}));
+
+// first paint — every detail page starts on Day
+Object.keys(DETAIL).forEach(m => showDetailPeriod(m, 'day'));
+
+/* ==========================================================================
+   WEEK WIDGETS — Goals-met rings (Activity) and continuity pills (Sleep)
+   ========================================================================== */
+
+// One day cell: three concentric rings (steps / distance / calories).
+// state: {fr:[f,f,f]} fractions 0..1, or 'nodata' (dotted), or 'future'.
+function dayRing(state){
+  const svg = svgEl('svg', { width:34, height:34, viewBox:'0 0 36 36' });
+  const radii = [15.5, 11.5, 7.5];
+  const hues  = ['var(--metric-steps)','var(--metric-distance)','var(--metric-calories)'];
+  if (state === 'nodata'){
+    svg.append(svgEl('circle', { cx:18, cy:18, r:13, fill:'none', stroke:'var(--neutral-500)',
+      'stroke-width':2, 'stroke-dasharray':'2.5 3.5', 'stroke-linecap':'round' }));
+    return svg;
+  }
+  radii.forEach((r, i) => {
+    svg.append(svgEl('circle', { cx:18, cy:18, r, fill:'none', stroke:'var(--surface-fill)', 'stroke-width':3 }));
+    if (state !== 'future'){
+      const f = state.fr[i], C = 2*Math.PI*r;
+      if (f > 0) svg.append(svgEl('circle', { cx:18, cy:18, r, fill:'none', stroke:hues[i], 'stroke-width':3,
+        'stroke-linecap':'round', 'stroke-dasharray':`${(f*C).toFixed(2)} ${C.toFixed(2)}`, transform:'rotate(-90 18 18)' }));
+    }
+  });
+  if (state === 'future') $$('circle', svg).forEach(c => c.setAttribute('stroke','var(--surface-raised)'));
+  return svg;
+}
+
+// The week around "today" (Thu Aug 6) — same days as the prototype.
+const WEEK = [
+  { lab:'M', num:3, state:{ fr:[1,1,1] },        cls:'' },
+  { lab:'T', num:4, state:'nodata',              cls:'' },
+  { lab:'W', num:5, state:{ fr:[1,0.58,0.42] },  cls:'' },
+  { lab:'T', num:6, state:{ fr:[0.72,0.64,0.6] },cls:'today' },
+  { lab:'F', num:7, state:'future',              cls:'future' },
+  { lab:'S', num:8, state:'future',              cls:'future' },
+  { lab:'S', num:9, state:'future',              cls:'future' }
+];
+const weekMount = $('#goalsWeek');
+WEEK.forEach(d => {
+  const cell = document.createElement('span');
+  cell.className = 'day ' + d.cls;
+  const lab = document.createElement('span'); lab.className = 'dlab'; lab.textContent = d.lab;
+  const num = document.createElement('span'); num.className = 'dnum'; num.textContent = d.num;
+  cell.append(lab, dayRing(d.state), num);
+  weekMount.append(cell);
+});
+
+// Empty-state twin of the week (owner spec): with no data yet, past days
+// (and today) show the dotted "no data" ring, and the days still to come
+// keep the three empty rings. Shown only while the app state is "empty".
+const weekEmpty = document.createElement('div');
+weekEmpty.className = 'week7 week-empty';
+WEEK.forEach(d => {
+  const cell = document.createElement('span');
+  cell.className = 'day ' + d.cls;
+  const lab = document.createElement('span'); lab.className = 'dlab'; lab.textContent = d.lab;
+  const num = document.createElement('span'); num.className = 'dnum'; num.textContent = d.num;
+  cell.append(lab, dayRing(d.cls === 'future' ? 'future' : 'nodata'), num);
+  weekEmpty.append(cell);
+});
+weekMount.after(weekEmpty);
+
+// Sleep continuity pills: which nights hit "asleep by 22:00" / "awake by 09:00".
+// (matches CONT_NIGHTS below — nights 29 and 31 made bedtime; every wake did)
+const CONT = { bed:[0,0,0,1,0,1,0], wake:[1,1,1,1,1,1,1] };
+$$('[data-cont]').forEach(grid => {
+  if (!CONT[grid.dataset.cont]) return; // the "days" row is filled later
+  CONT[grid.dataset.cont].forEach(met => {
+    const pill = document.createElement('span');
+    pill.className = 'contpill' + (met ? ' met' : '');
+    if (met) pill.innerHTML =
+      '<svg width="15" height="12" viewBox="0 0 15 12"><path d="M1.6 6.1l4.1 4.1L13.4 1.9" stroke-width="1.6" stroke="var(--violet-200)" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    grid.append(pill);
+  });
+});
+
+/* ==========================================================================
+   STAND-IN TAB BACKGROUNDS
+   --------------------------------------------------------------------------
+   The owner supplied PNG artwork for the Activity (dusk forest) and Sleep
+   (night sky) tabs. Those PNGs belong in assets/backgrounds/ — when they
+   exist, the <img> covers this. Until then, the scenes below are drawn in
+   code to approximate the artwork so the layout can be reviewed.
+   Flag: stand-in only — replace with the real PNGs, do not polish further.
+   ========================================================================== */
+function seeded(seed){ // tiny deterministic random so the scene never flickers
+  return () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+}
+// One mountain ridge: a wandering line from left to right, filled to the bottom.
+function ridgePath(rnd, yBase, amp, spiky){
+  let d = `M0 660 L0 ${yBase}`;
+  let y = yBase;
+  for (let x = 0; x <= 360; x += spiky ? 7 : 24){
+    y = yBase + (rnd() - 0.5) * amp * 2;
+    if (spiky && x % 14 === 7) y -= amp * 0.9; // conifer tips on near ridges
+    d += ` L${x} ${y.toFixed(1)}`;
+  }
+  return d + ' L360 660 Z';
+}
+function paintScene(svg){
+  const kind = svg.dataset.art;
+  const rnd = seeded(kind === 'sleep' ? 7 : 3);
+  const defs = svgEl('defs', {});
+  const sky = svgEl('linearGradient', { id:'sky-'+kind, x1:0, y1:0, x2:0, y2:1 });
+  const stops = kind === 'sleep'
+    ? [ ['0%','var(--violet-900)'], ['55%','color-mix(in srgb, var(--violet-800) 70%, var(--neutral-900))'],
+        ['72%','color-mix(in srgb, var(--orchid-700) 32%, var(--violet-900))'], ['85%','var(--violet-900)'] ]
+    : [ ['0%','color-mix(in srgb, var(--lime-900) 45%, var(--neutral-900))'],
+        ['48%','color-mix(in srgb, var(--lime-900) 70%, var(--neutral-900))'],
+        ['58%','color-mix(in srgb, var(--gold-600) 55%, var(--lime-900))'],
+        ['62%','color-mix(in srgb, var(--tangerine-500) 70%, var(--lime-900))'],
+        ['68%','color-mix(in srgb, var(--lime-900) 60%, var(--neutral-900))'] ];
+  stops.forEach(([o, c]) => { const s = svgEl('stop', { offset:o }); s.style.stopColor = c; sky.append(s); });
+  defs.append(sky); svg.append(defs);
+  svg.append(svgEl('rect', { x:0, y:0, width:360, height:660, fill:`url(#sky-${kind})` }));
+
+  if (kind === 'sleep'){
+    // stars, one bright sparkle, crescent moon top-right (like the artwork)
+    for (let i = 0; i < 42; i++){
+      svg.append(svgEl('circle', { cx:(rnd()*360).toFixed(0), cy:(rnd()*380).toFixed(0),
+        r:(0.6 + rnd()*0.9).toFixed(1), fill:'var(--violet-100)', opacity:(0.2 + rnd()*0.5).toFixed(2) }));
+    }
+    const spark = svgEl('path', { d:'M287 175 l2.4 6 6 2.4 -6 2.4 -2.4 6 -2.4 -6 -6 -2.4 6 -2.4 Z',
+      fill:'var(--sky-200)', opacity:0.9 });
+    svg.append(spark);
+    const mask = svgEl('mask', { id:'moon-cut' });
+    mask.append(svgEl('rect', { x:0, y:0, width:360, height:660, fill:'#fff' }));
+    mask.append(svgEl('circle', { cx:312, cy:82, r:22, fill:'#000' })); // bite
+    svg.append(mask);
+    svg.append(svgEl('circle', { cx:302, cy:92, r:24, fill:'var(--violet-100)', opacity:0.85, mask:'url(#moon-cut)' }));
+    // soft misty ridges
+    const layers = [ [470, 14, 0.5], [510, 18, 0.65], [555, 16, 0.8] ];
+    layers.forEach(([y, amp, dark]) => {
+      const p = svgEl('path', { d:ridgePath(rnd, y, amp, false),
+        fill:`color-mix(in srgb, var(--neutral-900) ${dark*100}%, var(--violet-800))` });
+      svg.append(p);
+    });
+  } else {
+    // sun glow on the horizon
+    const glow = svgEl('radialGradient', { id:'glow-act', cx:'50%', cy:'50%', r:'50%' });
+    const g1 = svgEl('stop', { offset:'0%', 'stop-opacity':'0.55' }); g1.style.stopColor = 'var(--tangerine-400)';
+    const g2 = svgEl('stop', { offset:'100%', 'stop-opacity':'0' }); g2.style.stopColor = 'var(--tangerine-400)';
+    glow.append(g1, g2); svg.append(glow);
+    svg.append(svgEl('ellipse', { cx:180, cy:405, rx:210, ry:70, fill:'url(#glow-act)' }));
+    // receding mountain ridges, nearer ones darker with tree-line spikes
+    const layers = [ [415, 10, 0.30, false], [445, 16, 0.42, false], [480, 20, 0.55, false],
+                     [520, 22, 0.70, true], [575, 26, 0.85, true] ];
+    layers.forEach(([y, amp, dark, spiky]) => {
+      svg.append(svgEl('path', { d:ridgePath(rnd, y, amp, spiky),
+        fill:`color-mix(in srgb, var(--neutral-900) ${dark*100}%, var(--emerald-800))` }));
+    });
+  }
+}
+$$('.hero-bg svg[data-art]').forEach(paintScene);
+
+/* ==========================================================================
+   TAB BAR + MENUS + DATE PICKER
+   ========================================================================== */
+$$('.pebble-tab').forEach(btn => btn.addEventListener('click', () => {
+  // Health / Sleep / Me are inert in this flow — their screens land separately
+  if (btn.getAttribute('aria-disabled') === 'true') return;
+  showTab(btn.dataset.tab);
+}));
+function showTab(name){
+  $$('.pebble-tab').forEach(b => {
+    if (b.dataset.tab === name) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
+  $$('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
+  $('#page-' + name).scrollTop = 0;
+  closeAllMenus();
+  $$('.subpage').forEach(s => { s.hidden = true; });   // leave any sub-page
+  const cal = $('#calModal'), sheet = $('#goalSheet');
+  if (cal) cal.hidden = true;
+  if (sheet) sheet.hidden = true;
+}
+// Health-tab tiles jump to their tab
+$$('[data-goto]').forEach(t => t.addEventListener('click', () => showTab(t.dataset.goto)));
+
+function closeAllMenus(){
+  $$('.menu.open, .datemenu.open').forEach(m => m.classList.remove('open'));
+}
+// 3-dot menus (About / Goal setting / Share — visual only for now;
+// flagged: those subpages exist in the standalone prototypes, not here yet)
+$$('[data-menubtn]').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const menu = $('[data-menu]', btn.closest('.hero'));
+    const was = menu.classList.contains('open');
+    closeAllMenus();
+    if (!was) menu.classList.add('open');
+  });
+});
+
+document.addEventListener('click', closeAllMenus);
+
+/* ==========================================================================
+   PHOSPHOR ICONS — the app's icon set. Path data is copied verbatim from
+   @phosphor-icons/core (256×256 viewBox) and injected into .phi spans.
+   ========================================================================== */
+const PH = {"regular":{"house":"M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z","sneaker-move":"M231.16,166.63l-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-8-8,48.05,48.05,0,0,1-48-48,8,8,0,0,0-12.83-6.37L30.13,76l-.2.16a16,16,0,0,0-1.24,23.75L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63ZM224,200H151.37L40,88.63l12.87-9.76,38.79,38.79A8,8,0,0,0,103,106.34L65.74,69.11l40-30.31A64.15,64.15,0,0,0,160,87.5v21.89a63.65,63.65,0,0,0,35.38,57.24L224,180.94ZM70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm40,24a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16h54.8A8,8,0,0,1,110.8,208Z","moon":"M233.54,142.23a8,8,0,0,0-8-2,88.08,88.08,0,0,1-109.8-109.8,8,8,0,0,0-10-10,104.84,104.84,0,0,0-52.91,37A104,104,0,0,0,136,224a103.09,103.09,0,0,0,62.52-20.88,104.84,104.84,0,0,0,37-52.91A8,8,0,0,0,233.54,142.23ZM188.9,190.34A88,88,0,0,1,65.66,67.11a89,89,0,0,1,31.4-26A106,106,0,0,0,96,56,104.11,104.11,0,0,0,200,160a106,106,0,0,0,14.92-1.06A89,89,0,0,1,188.9,190.34Z","user":"M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z","caret-left":"M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z","caret-down":"M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z","caret-right":"M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z","caret-up":"M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z","x":"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z","check":"M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z","plus":"M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z","watch":"M208,128a79.94,79.94,0,0,0-32.7-64.47l-6.24-34.38A16,16,0,0,0,153.32,16H102.68A16,16,0,0,0,86.94,29.15L80.7,63.53a79.9,79.9,0,0,0,0,128.94l6.24,34.38A16,16,0,0,0,102.68,240h50.64a16,16,0,0,0,15.74-13.15l6.24-34.38A79.94,79.94,0,0,0,208,128ZM102.68,32h50.64l3.91,21.55a79.75,79.75,0,0,0-58.46,0ZM64,128a64,64,0,1,1,64,64A64.07,64.07,0,0,1,64,128Zm89.32,96H102.68l-3.91-21.55a79.75,79.75,0,0,0,58.46,0ZM120,128V88a8,8,0,0,1,16,0v32h32a8,8,0,0,1,0,16H128A8,8,0,0,1,120,128Z","dots-three-vertical":"M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128ZM128,72a12,12,0,1,0-12-12A12,12,0,0,0,128,72Zm0,112a12,12,0,1,0,12,12A12,12,0,0,0,128,184Z"},"fill":{"house":"M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z","sneaker-move":"M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z","moon":"M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z","user":"M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z","footprints":"M216.06,192v12A36,36,0,0,1,144,204V192a8,8,0,0,1,8-8h56A8,8,0,0,1,216.06,192ZM104,160h-56a8,8,0,0,0-8,8v12A36,36,0,0,0,112,180V168A8,8,0,0,0,104,160ZM76,16C64.36,16,53.07,26.31,44.2,45c-13.93,29.38-18.56,73,.29,96a8,8,0,0,0,6.2,2.93h50.55a8,8,0,0,0,6.2-2.93c18.85-23,14.22-66.65.29-96C98.85,26.31,87.57,16,76,16Zm78.8,152h50.55a8,8,0,0,0,6.2-2.93c18.85-23,14.22-66.65.29-96C202.93,50.31,191.64,40,180,40s-22.89,10.31-31.77,29c-13.93,29.38-18.56,73,.29,96A8,8,0,0,0,154.76,168Z","map-pin":"M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z","fire":"M143.38,17.85a8,8,0,0,0-12.63,3.41l-22,60.41L84.59,58.26a8,8,0,0,0-11.93.89C51,87.53,40,116.08,40,144a88,88,0,0,0,176,0C216,84.55,165.21,36,143.38,17.85Zm40.51,135.49a57.6,57.6,0,0,1-46.56,46.55A7.65,7.65,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z","person-simple-run":"M120,56a32,32,0,1,1,32,32A32,32,0,0,1,120,56Zm103.28,74.08a8,8,0,0,0-10.6-4c-.25.12-26.71,10.72-72.18-20.19-52.29-35.54-88-7.77-89.51-6.57a8,8,0,1,0,10,12.48c.26-.21,25.12-19.5,64.07,3.27-4.25,13.35-12.76,31.82-25.25,47-18.56,22.48-41.11,32.56-67,30A8,8,0,0,0,31.2,208a92.29,92.29,0,0,0,9.34.47c27.38,0,52-12.38,71.63-36.18.57-.69,1.14-1.4,1.69-2.1C133.31,175.29,168,190.3,168,232a8,8,0,0,0,16,0c0-24.65-10.08-45.35-29.15-59.86a104.29,104.29,0,0,0-31.31-15.81A169.31,169.31,0,0,0,139,124c26.14,16.09,46.84,20,60.69,20,12.18,0,19.06-3,19.67-3.28A8,8,0,0,0,223.28,130.08Z","barbell":"M200,64V192a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V136H104v56a16,16,0,0,1-16,16H72a16,16,0,0,1-16-16V64A16,16,0,0,1,72,48H88a16,16,0,0,1,16,16v56h48V64a16,16,0,0,1,16-16h16A16,16,0,0,1,200,64ZM36,72H32A16,16,0,0,0,16,88v32H8.27A8.18,8.18,0,0,0,0,127.47,8,8,0,0,0,8,136h8v32a16,16,0,0,0,16,16h4a4,4,0,0,0,4-4V76A4,4,0,0,0,36,72Zm220,55.47a8.18,8.18,0,0,0-8.25-7.47H240V88a16,16,0,0,0-16-16h-4a4,4,0,0,0-4,4V180a4,4,0,0,0,4,4h4a16,16,0,0,0,16-16V136h8A8,8,0,0,0,256,127.47Z","bed":"M216,72H32V48a8,8,0,0,0-16,0V208a8,8,0,0,0,16,0V176H240v32a8,8,0,0,0,16,0V112A40,40,0,0,0,216,72ZM32,88h72v72H32Z","alarm":"M61.66,37.66l-32,32A8,8,0,0,1,18.34,58.34l32-32A8,8,0,0,1,61.66,37.66Zm176,20.68-32-32a8,8,0,0,0-11.32,11.32l32,32a8,8,0,0,0,11.32-11.32ZM224,136a96,96,0,1,1-96-96A96.11,96.11,0,0,1,224,136Zm-32,0a8,8,0,0,0-8-8H136V80a8,8,0,0,0-16,0v56a8,8,0,0,0,8,8h56A8,8,0,0,0,192,136Z","sun":"M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm8,24a64,64,0,1,0,64,64A64.07,64.07,0,0,0,128,64ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z","crosshair":"M232,120h-8.34A96.14,96.14,0,0,0,136,32.34V24a8,8,0,0,0-16,0v8.34A96.14,96.14,0,0,0,32.34,120H24a8,8,0,0,0,0,16h8.34A96.14,96.14,0,0,0,120,223.66V232a8,8,0,0,0,16,0v-8.34A96.14,96.14,0,0,0,223.66,136H232a8,8,0,0,0,0-16Zm-32,16h7.6A80.15,80.15,0,0,1,136,207.6V200a8,8,0,0,0-16,0v7.6A80.15,80.15,0,0,1,48.4,136H56a8,8,0,0,0,0-16H48.4A80.15,80.15,0,0,1,120,48.4V56a8,8,0,0,0,16,0V48.4A80.15,80.15,0,0,1,207.6,120H200a8,8,0,0,0,0,16Zm-32-8a40,40,0,1,1-40-40A40,40,0,0,1,168,128Z","magnifying-glass":"M168,112a56,56,0,1,1-56-56A56,56,0,0,1,168,112Zm61.66,117.66a8,8,0,0,1-11.32,0l-50.06-50.07a88,88,0,1,1,11.32-11.31l50.06,50.06A8,8,0,0,1,229.66,229.66ZM112,184a72,72,0,1,0-72-72A72.08,72.08,0,0,0,112,184Z","list-dashes":"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,184H64a8,8,0,0,1,0-16h8a8,8,0,0,1,0,16Zm0-48H64a8,8,0,0,1,0-16h8a8,8,0,0,1,0,16Zm0-48H64a8,8,0,0,1,0-16h8a8,8,0,0,1,0,16Zm120,96H104a8,8,0,0,1,0-16h88a8,8,0,0,1,0,16Zm0-48H104a8,8,0,0,1,0-16h88a8,8,0,0,1,0,16Zm0-48H104a8,8,0,0,1,0-16h88a8,8,0,0,1,0,16Z","thermometer":"M212,56a28,28,0,1,0,28,28A28,28,0,0,0,212,56Zm0,40a12,12,0,1,1,12-12A12,12,0,0,1,212,96Zm-60,50.08V40a32,32,0,0,0-64,0V146.08a56,56,0,1,0,64,0ZM136,104H104V40a16,16,0,0,1,32,0Z","heart":"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z","arrow-circle-up":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm37.66,101.66a8,8,0,0,1-11.32,0L136,107.31V168a8,8,0,0,1-16,0V107.31l-18.34,18.35a8,8,0,0,1-11.32-11.32l32-32a8,8,0,0,1,11.32,0l32,32A8,8,0,0,1,165.66,125.66Z","gear":"M216,130.16q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.6,107.6,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.29,107.29,0,0,0-26.25-10.86,8,8,0,0,0-7.06,1.48L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.6,107.6,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z","question":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,168a12,12,0,1,1,12-12A12,12,0,0,1,128,192Zm8-48.72V144a8,8,0,0,1-16,0v-8a8,8,0,0,1,8-8c13.23,0,24-9,24-20s-10.77-20-24-20-24,9-24,20v4a8,8,0,0,1-16,0v-4c0-19.85,17.94-36,40-36s40,16.15,40,36C168,125.38,154.24,139.93,136,143.28Z","info":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-4,48a12,12,0,1,1-12,12A12,12,0,0,1,124,72Zm12,112a16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40a8,8,0,0,1,0,16Z","battery-warning":"M200,56H32A24,24,0,0,0,8,80v96a24,24,0,0,0,24,24H200a24,24,0,0,0,24-24V80A24,24,0,0,0,200,56ZM108,88a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,116,176ZM256,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0Z","phone":"M231.88,175.08A56.26,56.26,0,0,1,176,224C96.6,224,32,159.4,32,80A56.26,56.26,0,0,1,80.92,24.12a16,16,0,0,1,16.62,9.52l21.12,47.15,0,.12A16,16,0,0,1,117.39,96c-.18.27-.37.52-.57.77L96,121.45c7.49,15.22,23.41,31,38.83,38.51l24.34-20.71a8.12,8.12,0,0,1,.75-.56,16,16,0,0,1,15.17-1.4l.13.06,47.11,21.11A16,16,0,0,1,231.88,175.08Z","shield-plus":"M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.27,47,25.53a8,8,0,0,0,4.2,0c1-.26,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm-48,96H136v24a8,8,0,0,1-16,0V136H96a8,8,0,0,1,0-16h24V96a8,8,0,0,1,16,0v24h24a8,8,0,0,1,0,16Z","bell":"M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216Z","camera":"M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm-44,76a36,36,0,1,1-36-36A36,36,0,0,1,164,132Z","arrows-clockwise":"M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1-5.66-13.66L180.65,72a79.48,79.48,0,0,0-54.72-22.09h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27,96,96,0,0,1,192,60.7l18.36-18.36A8,8,0,0,1,224,48ZM186.41,183.29A80,80,0,0,1,75.35,184l18.31-18.31A8,8,0,0,0,88,152H40a8,8,0,0,0-8,8v48a8,8,0,0,0,13.66,5.66L64,195.3a95.42,95.42,0,0,0,66,26.76h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z","watch":"M175.3,63.53l-6.24-34.38A16,16,0,0,0,153.32,16H102.68A16,16,0,0,0,86.94,29.15L80.7,63.53a79.9,79.9,0,0,0,0,128.94l6.24,34.38A16,16,0,0,0,102.68,240h50.64a16,16,0,0,0,15.74-13.15l6.24-34.38a79.9,79.9,0,0,0,0-128.94ZM102.68,32h50.64l3.91,21.55a79.75,79.75,0,0,0-58.46,0Zm50.64,192H102.68l-3.91-21.55a79.75,79.75,0,0,0,58.46,0ZM168,136H128a8,8,0,0,1-8-8V88a8,8,0,0,1,16,0v32h32a8,8,0,0,1,0,16Z","target":"M221.87,83.16A104.1,104.1,0,1,1,195.67,49l22.67-22.68a8,8,0,0,1,11.32,11.32L167.6,99.71h0l-37.71,37.71-23.95,23.95a40,40,0,0,0,62-35.67,8,8,0,1,1,16-.9,56,56,0,0,1-95.5,42.79h0a56,56,0,0,1,73.13-84.43L184.3,60.39a87.88,87.88,0,1,0,23.13,29.67,8,8,0,0,1,14.44-6.9Z"}};
+function injectIcons(){
+  $$('.phi').forEach(el => {
+    if (el.dataset.done) return;
+    const weight = el.dataset.weight === 'fill' ? 'fill' : 'regular';
+    const d = PH[weight][el.dataset.ph];
+    if (!d) return;
+    el.innerHTML = `<svg viewBox="0 0 256 256" aria-hidden="true"><path d="${d}"/></svg>`;
+    el.dataset.done = '1';
+  });
+}
+injectIcons();
+
+/* ==========================================================================
+   SUB-PAGES — About / Goal setting screens reached from the 3-dot menus.
+   ========================================================================== */
+$$('[data-open]').forEach(el => el.addEventListener('click', e => {
+  // a press that starts on a chart is a scrub, not a tap-through
+  if (e.target.closest('[data-mount]')) return;
+  e.stopPropagation();
+  closeAllMenus();
+  const sub = $('#' + el.dataset.open);
+  sub.hidden = false;
+  sub.scrollTop = 0;
+  // metric detail pages always open on the Day view
+  const dm = el.dataset.open.match(/^sub-metric-(\w+)$/);
+  if (dm) showDetailPeriod(dm[1], 'day');
+}));
+$$('[data-back]').forEach(b => b.addEventListener('click', () => {
+  b.closest('.subpage').hidden = true;
+}));
+
+/* ==========================================================================
+   HISTORY CALENDAR — month-scroll modal shared by Health / Activity / Sleep.
+   The newest month renders last, so the sheet opens at the present and the
+   owner scrolls UP to reach earlier months (per the standalone prototypes).
+   ========================================================================== */
+const CAL_CFG = {
+  health:   { title:'Health history',   ring:'var(--metric-readiness)', sel:'var(--teal-100)' },
+  activity: { title:'Activity history', ring:'var(--metric-activity)',  sel:'var(--lime-100)' },
+  sleep:    { title:'Sleep history',    ring:'var(--metric-sleep)',     sel:'var(--violet-100)' }
+};
+const TODAY = { y:2026, m:7, d:6 }; // Thu 6 Aug 2026 (m is 0-based)
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAY_SHORT   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const selDate = { health:{...TODAY}, activity:{...TODAY}, sleep:{...TODAY} };
+let calTab = null;
+
+// deterministic pseudo-random "score" per day, same idea as the prototypes
+function dayScore(d, m){ const x = Math.sin(d*12.9898 + (m+3)*78.233) * 43758.5453; return 52 + Math.round((x - Math.floor(x)) * 44); }
+
+function dateLabelFor(tab){
+  const s = selDate[tab];
+  if (s.y === TODAY.y && s.m === TODAY.m && s.d === TODAY.d) return `Today, ${MONTH_SHORT[s.m]} ${s.d}`;
+  const wd = new Date(Date.UTC(s.y, s.m, s.d)).getUTCDay();
+  return `${DAY_SHORT[wd]}, ${MONTH_SHORT[s.m]} ${s.d}`;
+}
+
+function buildCalendar(tab){
+  const cfg = CAL_CFG[tab], scroll = $('#calScroll');
+  const C = 2 * Math.PI * 10.5;
+  scroll.innerHTML = '';
+  for (let k = 3; k >= 0; k--){ // 4 months, oldest first → newest at the bottom
+    let m = TODAY.m - k, y = TODAY.y;
+    while (m < 0){ m += 12; y -= 1; }
+    const first = new Date(Date.UTC(y, m, 1)).getUTCDay();
+    const days  = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    const month = document.createElement('div');
+    month.className = 'cal-month';
+    month.innerHTML = `<div class="mt">${MONTH_NAMES[m]} ${y}</div>`;
+    const grid = document.createElement('div');
+    grid.className = 'cal-grid';
+    for (let i = 0; i < first; i++) grid.append(Object.assign(document.createElement('div'), { style:'min-height:44px' }));
+    for (let d = 1; d <= days; d++){
+      const future = y === TODAY.y && m === TODAY.m && d > TODAY.d;
+      const sel = selDate[tab].y === y && selDate[tab].m === m && selDate[tab].d === d;
+      const btn = document.createElement('button');
+      btn.className = 'cal-day' + (future ? ' future' : '');
+      btn.type = 'button';
+      const dash = (dayScore(d, m)/100*C).toFixed(1) + ' ' + C.toFixed(1);
+      // future days are completely empty — just the day number over a blank
+      // svg (kept for row alignment). No ring, no dot. (owner request)
+      btn.innerHTML =
+        `<span class="dn" style="color:${sel ? cfg.sel : 'var(--text-1)'}">${d}</span>` +
+        (future
+          ? `<svg width="28" height="28" viewBox="0 0 28 28"></svg>`
+          : `<svg width="28" height="28" viewBox="0 0 28 28">
+               <circle cx="14" cy="14" r="10.5" fill="none" stroke-width="3" stroke="var(--surface-raised)"/>
+               <circle cx="14" cy="14" r="10.5" fill="none" stroke-width="3" stroke="${sel ? cfg.sel : cfg.ring}"
+                       stroke-linecap="round" stroke-dasharray="${dash}" transform="rotate(-90 14 14)"/>
+             </svg>`);
+      if (!future) btn.addEventListener('click', () => {
+        selDate[tab] = { y, m, d };
+        $('#page-' + tab + ' [data-datelabel]').textContent = dateLabelFor(tab);
+        closeCalendar();
+      });
+      grid.append(btn);
+    }
+    month.append(grid);
+    scroll.append(month);
+  }
+}
+function openCalendar(tab){
+  calTab = tab;
+  $('#calTitle').textContent = CAL_CFG[tab].title;
+  buildCalendar(tab);
+  $('#calModal').hidden = false;
+  const scroll = $('#calScroll');
+  scroll.scrollTop = scroll.scrollHeight; // open at the present month
+}
+function closeCalendar(){ $('#calModal').hidden = true; }
+$$('[data-cal]').forEach(btn => btn.addEventListener('click', e => {
+  e.stopPropagation(); closeAllMenus(); openCalendar(btn.dataset.cal);
+}));
+$$('[data-calclose]').forEach(el => el.addEventListener('click', closeCalendar));
+
+/* ==========================================================================
+   GOAL EDIT SHEET — Activity goals (steps / distance / calories).
+   Pick a value, confirm with the check, cancel with the X.
+   ========================================================================== */
+const GOAL_OPTS = {
+  steps:    { title:'Steps goal',    unit:'steps', opts:[6000,8000,10000,12000,14000], fmt:v => v.toLocaleString('en-US') },
+  distance: { title:'Distance goal', unit:'km',    opts:[4,6,8,10,12],                 fmt:String },
+  calories: { title:'Calories goal', unit:'kcal',  opts:[400,500,600,700,800],         fmt:String }
+};
+const goalSel = { steps:10000, distance:8, calories:600 };
+let sheetKey = null, sheetPick = null;
+
+function openSheet(key){
+  sheetKey = key; sheetPick = goalSel[key];
+  const cfg = GOAL_OPTS[key];
+  $('#sheetTitle').textContent = cfg.title;
+  const rows = $('#sheetRows');
+  rows.innerHTML = '';
+  cfg.opts.forEach(v => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sheet-row' + (v === sheetPick ? ' sel' : '');
+    b.innerHTML = `<span class="v">${cfg.fmt(v)}<span class="u">${cfg.unit}</span></span>`;
+    b.addEventListener('click', () => {
+      sheetPick = v;
+      $$('.sheet-row', rows).forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel');
+    });
+    rows.append(b);
+  });
+  $('#goalSheet').hidden = false;
+}
+$$('.goalcard').forEach(c => c.addEventListener('click', () => openSheet(c.dataset.goal)));
+$$('[data-sheetcancel]').forEach(el => el.addEventListener('click', () => { $('#goalSheet').hidden = true; }));
+$('#sheetConfirm').addEventListener('click', () => {
+  goalSel[sheetKey] = sheetPick;
+  $(`.goalcard[data-goal="${sheetKey}"] [data-goalval]`).textContent = GOAL_OPTS[sheetKey].fmt(sheetPick);
+  $('#goalSheet').hidden = true;
+});
+
+/* ==========================================================================
+   SLEEP GOAL DIAL — drag the bed / alarm handles around a 24 h dial.
+   Times snap to 15 minutes; the schedule can't shrink below 3 hours.
+   ========================================================================== */
+const dial = { bed:23*60, wake:7*60, drag:null };
+const dialWrap = $('#sleepDial');
+
+function dialPt(r, min){
+  const a = (min/1440)*360 - 90;
+  return [124 + r*Math.cos(a*Math.PI/180), 124 + r*Math.sin(a*Math.PI/180)];
+}
+function hm(m){ const t = ((m%1440)+1440)%1440; return String(Math.floor(t/60)).padStart(2,'0') + ':' + String(t%60).padStart(2,'0'); }
+
+(function buildDialChrome(){
+  const ticks = $('#dialTicks');
+  for (let h = 0; h < 24; h++){
+    const major = h % 6 === 0;
+    const [x1,y1] = dialPt(major ? 68 : 72, h*60), [x2,y2] = dialPt(78, h*60);
+    const l = svgEl('line', { x1:x1.toFixed(1), y1:y1.toFixed(1), x2:x2.toFixed(1), y2:y2.toFixed(1),
+      'stroke-width': major ? 1.4 : 1, 'stroke-linecap':'round' });
+    l.style.stroke = major ? 'var(--text-2)' : 'var(--surface-fill)';
+    ticks.append(l);
+  }
+  const labels = $('#dialLabels');
+  for (let h = 0; h < 24; h += 2){
+    const [x,y] = dialPt(55, h*60), major = h % 6 === 0;
+    const s = document.createElement('span');
+    s.className = 'dial-lab';
+    s.style.cssText = `left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;font-size:${major?'13px':'10px'};color:${major?'var(--text-1)':'var(--text-3)'}`;
+    s.textContent = h;
+    labels.append(s);
+  }
+})();
+
+function renderDial(){
+  const { bed, wake } = dial;
+  const a0 = (bed/1440)*360, a1 = (wake/1440)*360;
+  const sweep = ((a1 - a0) % 360 + 360) % 360;
+  const [x0,y0] = dialPt(104, bed), [x1,y1] = dialPt(104, wake);
+  $('#dialArc').setAttribute('d',
+    `M${x0.toFixed(1)} ${y0.toFixed(1)} A104 104 0 ${sweep > 180 ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`);
+  const bh = $('#dialBedHandle'), wh = $('#dialWakeHandle');
+  bh.style.left = x0.toFixed(1)+'px'; bh.style.top = y0.toFixed(1)+'px';
+  wh.style.left = x1.toFixed(1)+'px'; wh.style.top = y1.toFixed(1)+'px';
+  const dur = ((wake - bed) % 1440 + 1440) % 1440;
+  const hrs = Math.floor(dur/60), mins = dur % 60;
+  $('#dialBedTime').textContent = hm(bed);
+  $('#dialWakeTime').textContent = hm(wake);
+  $('#dialBedDay').textContent = bed < 720 ? 'Today' : 'Tonight';
+  $('#dialDur').textContent = `${hrs} hr ${String(mins).padStart(2,'0')} min`;
+  $('#dialNote').textContent = dur >= 480
+    ? 'This schedule meets your 8 hr sleep goal.'
+    : `This schedule is ${Math.round((480-dur)/5)*5} min short of your 8 hr goal.`;
+  $('#alarmNote').textContent = `Rings in your lightest stage near ${hm(wake)}`;
+}
+$('#dialBedHandle').addEventListener('pointerdown', e => { e.preventDefault(); dial.drag = 'bed'; });
+$('#dialWakeHandle').addEventListener('pointerdown', e => { e.preventDefault(); dial.drag = 'wake'; });
+dialWrap.addEventListener('pointermove', e => {
+  if (!dial.drag) return;
+  const r = dialWrap.getBoundingClientRect();
+  let a = Math.atan2(e.clientY - (r.top + r.height/2), e.clientX - (r.left + r.width/2)) * 180/Math.PI + 90;
+  if (a < 0) a += 360;
+  const m = (Math.round((a/360)*1440/15)*15) % 1440;
+  const bed = dial.drag === 'bed' ? m : dial.bed;
+  const wake = dial.drag === 'wake' ? m : dial.wake;
+  if (((wake - bed) % 1440 + 1440) % 1440 < 180) return; // keep at least 3 h
+  dial[dial.drag] = m;
+  renderDial();
+});
+['pointerup','pointerleave','pointercancel'].forEach(ev => dialWrap.addEventListener(ev, () => { dial.drag = null; }));
+renderDial();
+
+/* toggle switches (Me tab + wake-up alarm) */
+$$('.switch').forEach(s => s.addEventListener('click', () => s.classList.toggle('on')));
+
+/* ==========================================================================
+   SLEEP CONTINUITY — expandable "When you slept" timeline (last 7 nights,
+   22:00 → 09:00 window). Night data ported from the standalone prototype.
+   ========================================================================== */
+const CONT_NIGHTS = [
+  { d:'26', ml:'21.3%', w:'60.3%', bed:'23:40', wake:'07:12', ok:false, wide:true },
+  { d:'27', ml:'14.7%', w:'64.7%', bed:'22:50', wake:'06:55', ok:false, wide:true },
+  { d:'28', ml:'18.7%', w:'66.7%', bed:'23:20', wake:'07:40', ok:false, wide:true },
+  { d:'29', ml:'7.3%',  w:'68.7%', bed:'21:55', wake:'06:30', ok:true,  wide:true },
+  { d:'30', ml:'calc(34.7% - 40px)', w:'30%', bed:'01:20', wake:'05:05', ok:false, wide:false },
+  { d:'31', ml:'6.7%',  w:'71.7%', bed:'21:50', wake:'06:48', ok:true,  wide:true },
+  { d:'1',  ml:'17.6%', w:'60.3%', bed:'23:12', wake:'06:44', ok:false, wide:true }
+];
+(function buildContinuity(){
+  const days = $('[data-cont="days"]');
+  CONT_NIGHTS.forEach(n => {
+    const s = document.createElement('span');
+    s.style.cssText = 'font-family:var(--font-number);font-feature-settings:var(--num-features);font-size:10px;line-height:12px;font-weight:500;color:var(--text-3);text-align:center';
+    s.textContent = n.d;
+    days.append(s);
+  });
+  const wrap = $('#contNights');
+  CONT_NIGHTS.forEach(n => {
+    const row = document.createElement('div');
+    row.style.cssText = 'position:relative;z-index:1;display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:center';
+    const num = 'font-family:var(--font-number);font-feature-settings:var(--num-features);font-size:13px;line-height:16px;font-weight:500';
+    const bg = n.ok ? 'var(--metric-sleep)' : 'color-mix(in srgb, var(--metric-sleep) 16%, transparent)';
+    const bd = n.ok ? 'var(--metric-sleep)' : 'color-mix(in srgb, var(--metric-sleep) 32%, transparent)';
+    const tc = n.ok ? 'var(--surface-app)' : 'var(--text-2)';
+    row.innerHTML = n.wide
+      ? `<span style="${num};color:var(--text-3);text-align:right">${n.d}</span>
+         <span style="display:flex;align-items:center;height:26px">
+           <span style="margin-left:${n.ml};width:${n.w};flex:none;height:26px;box-sizing:border-box;border-radius:999px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;background:${bg};border:1px solid ${bd}">
+             <span style="${num};color:${tc}">${n.bed}</span><span style="${num};color:${tc}">${n.wake}</span>
+           </span>
+         </span>`
+      : `<span style="${num};color:var(--text-3);text-align:right">${n.d}</span>
+         <span style="display:flex;align-items:center;height:26px">
+           <span style="margin-left:${n.ml};flex:none;${num};color:var(--text-3)">${n.bed}</span>
+           <span style="margin-left:8px;width:${n.w};flex:none;height:26px;box-sizing:border-box;border-radius:999px;background:${bg};border:1px solid ${bd}"></span>
+           <span style="margin-left:8px;flex:none;${num};color:var(--text-3)">${n.wake}</span>
+         </span>`;
+    wrap.append(row);
+  });
+})();
+let contOpen = true;
+$('#contToggle').addEventListener('click', () => {
+  contOpen = !contOpen;
+  $('#contDetail').style.display = contOpen ? '' : 'none';
+  $('#contCaret').style.transform = contOpen ? 'rotate(225deg)' : 'rotate(45deg)';
+});
+
+/* ==========================================================================
+   STATE MACHINE — the control panel drives data-state on <body>.
+   CSS does the hiding/showing; this code fills in the cover content
+   (skeletons + messages) once, and tweaks the few text-only spots.
+   ========================================================================== */
+
+// Build the covers for every stateful card that has a chart / body.
+// (Watch-not-worn was removed — "no data" is the only no-data state.)
+const COVER_COPY = {
+  empty:   { title:'No data yet',
+             sub:'Wear your band for a day and this card will fill in.' }
+};
+const MOON_ICON  = '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M233.5,142.2a8.1,8.1,0,0,0-8.5-1.9A88.1,88.1,0,0,1,115.7,31a8,8,0,0,0-10.4-10.4A104,104,0,1,0,235.4,150.7,8.1,8.1,0,0,0,233.5,142.2Z"/></svg>';
+
+$$('.card.stateful').forEach(card => {
+  const body = $('.card-body', card);
+  if (!body) return;
+  // keep layout height stable across states; cards on hidden tabs measure 0,
+  // so fall back to a sensible height (chart cards are ~150px tall)
+  const h = body.offsetHeight || (card.dataset.chart ? 150 : 80);
+
+  const load = document.createElement('div');
+  load.className = 'cover-loading state-cover';
+  load.style.minHeight = Math.max(h, 64) + 'px';
+  load.innerHTML =
+    '<div class="skel" style="height:14px;width:45%;margin-bottom:12px"></div>' +
+    '<div class="skel" style="height:' + Math.max(h-40, 40) + 'px"></div>';
+
+  const empty = document.createElement('div');
+  empty.className = 'cover-empty state-cover';
+  empty.style.minHeight = Math.max(h, 96) + 'px';
+  empty.innerHTML = MOON_ICON +
+    '<div class="cover-title">' + COVER_COPY.empty.title + '</div>' +
+    '<div class="cover-sub">' + COVER_COPY.empty.sub + '</div>';
+
+  body.append(load, empty);
+});
+
+// Small tiles on the Health tab get compact covers (no room for full copy).
+$$('.tile.stateful').forEach(tile => {
+  $('.cover-empty', tile).innerHTML =
+    '<div style="margin-top:14px;color:var(--text-3)">–</div>' +
+    '<div class="cover-sub">No data yet</div>';
+  $('.cover-empty', tile).style.minHeight = '0';
+  $('.cover-empty', tile).style.border = 'none';
+  $('.cover-empty', tile).style.padding = '0';
+});
+
+// Hero copy per state (headline + summary swap).
+const HERO_COPY = {
+  health:  { empty: ['Welcome to Pebble','Wear your band today and your readiness score will appear here.'] },
+  activity:{ empty: ['No activity yet','Your steps, distance and calories will show up after your first sync.'] },
+  sleep:   { empty: ['No sleep data yet','After your first night with the band, your score appears here.'] }
+};
+const heroRest = {};
+$$('.page').forEach(page => {
+  const hero = $('.hero', page); if (!hero) return;
+  const head = $('.headline', hero), sum = $('.summary', hero);
+  if (head && sum) heroRest[page.id] = [head, sum];
+});
+
+const bandStatus = $('#bandStatus');
+const BAND_COPY = {
+  default:'Connected',
+  loading:'Connecting…',   // kept for later integration
+  syncing:'Syncing…',      // kept for later integration
+  empty:  'Disconnected'
+};
+
+function setState(state){
+  document.getElementById('app').dataset.state = state;
+  // hero text: no-data copy in the empty state, original otherwise
+  for (const id in heroRest){
+    const [head, sum] = heroRest[id];
+    const key = id.replace('page-','');
+    if (state === 'empty' && HERO_COPY[key]){
+      head.dataset.rest ??= head.textContent;
+      sum.dataset.rest  ??= sum.textContent;
+      head.textContent = HERO_COPY[key][state][0];
+      sum.textContent  = HERO_COPY[key][state][1];
+      head.classList.remove('live'); sum.classList.remove('live');
+    } else {
+      if (head.dataset.rest){ head.textContent = head.dataset.rest; sum.textContent = sum.dataset.rest; }
+      head.classList.add('live'); sum.classList.add('live');
+    }
+  }
+  bandStatus.textContent = BAND_COPY[state];
+  // highlight the picked option in the panel
+  $$('#stateOpts label').forEach(l => l.classList.toggle('on', $('input', l).value === state));
+}
+
+$$('#stateOpts input').forEach(r => r.addEventListener('change', () => setState(r.value)));
+setState('default');
+</script>
+
+</div>
+</body>
+</html>

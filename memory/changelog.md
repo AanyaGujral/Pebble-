@@ -5,6 +5,12 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-10 — Owner approved the prototype. Saved a named snapshot as
+  `Workout Tab.html` (self-contained, opens by double-clicking; title
+  "Pebble — Workout Tab") and pushed the branch to GitHub. `index.html`
+  remains the live working copy — edit there, re-save the snapshot when a
+  new named version is requested.
+
 - 2026-08-10 (later still) — Detail-page tiles: "Active hours" label
   shortened to "Active hrs" so it stops truncating (applied to distance too,
   same tile), with the now-redundant "hrs" unit dropped from the value;

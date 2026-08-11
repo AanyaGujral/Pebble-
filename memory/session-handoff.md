@@ -7,8 +7,10 @@
 > the tab bar) plus this session's StatTile feedback round (component-styled
 > summary tiles, thousands formatting, one-line headers, DAY-11 best-day
 > format, taller chart axis gap, no-data = headers + — + empty chart frames).
-> Two commits remain local-only; the owner's push approval is still pending.
-> The two background PNGs STILL haven't arrived as file uploads.
+> The owner approved on 2026-08-10 and the branch is now PUSHED. A named
+> snapshot of the approved build lives in `Workout Tab.html`; `index.html`
+> stays the live working copy. The two background PNGs STILL haven't
+> arrived as file uploads, so the code-drawn stand-in scenes are showing.
 
 **Read this first when you (or Claude) pick up work.** It says what shipped,
 what decisions were made, and the exact next steps.
