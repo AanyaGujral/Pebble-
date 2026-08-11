@@ -103,6 +103,7 @@
   /* ---- type styles ----
      Each is a `font` shorthand plus its letter-spacing, because
      letter-spacing cannot ride inside the shorthand. */
+  /* typography.text.heading.h2.semibold */ --type-h2-semibold:600 20px/26px var(--font-text);    --ls-h2-semibold:-0.005em;
   /* typography.text.heading.h3.medium   */ --type-h3-medium:500 17px/22px var(--font-text);      --ls-h3-medium:0;
   /* typography.text.paragraph.p1.medium */ --type-p1-medium:500 15px/22px var(--font-text);      --ls-p1-medium:0;
   /* typography.text.paragraph.p2.medium */ --type-p2-medium:500 13px/18px var(--font-text);      --ls-p2-medium:0;
@@ -267,6 +268,16 @@ body{
 .tile .value{
   font:var(--type-num-l);letter-spacing:var(--ls-num-l);color:var(--text-1);
   font-feature-settings:var(--num-features);
+}
+/* A tile whose value is a word, not a figure — Effort reads "Moderate".
+   numeric.num-l is the Spartan face, and tokens.js scopes that to numerals
+   ("tabular lining figures"), so a word cannot take it. Stepped to
+   heading.h2.semibold: same -0.005em tracking as num-l and one size down,
+   which is right for a word beside a figure and keeps the row's optical
+   weight even. Flagged rather than decided silently. */
+.tile .value.word{
+  font:var(--type-h2-semibold);letter-spacing:var(--ls-h2-semibold);
+  font-feature-settings:normal;
 }
 .tile .unit{
   font:var(--type-overline-semibold);letter-spacing:var(--ls-overline);text-transform:uppercase;
@@ -520,6 +531,9 @@ body{
   <section class="group">
     <h2>Type</h2>
     <div class="row"><span></span><div>
+      <div class="path">typography.text.heading.h2.semibold</div>
+      <div class="val">600 · 20/26 · −0.005em</div><div class="use">The Effort value, because “Moderate” is a word — the numeric face is for figures</div></div></div>
+    <div class="row"><span></span><div>
       <div class="path">typography.text.heading.h3.medium</div>
       <div class="val">500 · 17/22 · 0</div><div class="use">Activity name</div></div></div>
     <div class="row"><span></span><div>
@@ -647,7 +661,7 @@ const WORKOUTS = {
      are from the supplied HeartRateCard and WorkoutStatsTiles components. */
   strength: {
     icon:'barbell', name:'Strength training',
-    start: 10 * 60 + 15, length: 45, calories:'200', effort:'6.4',
+    start: 10 * 60 + 15, length: 45, calories:'200', effort:'Moderate',
     series:[
       72.7,75.6,77.0,78.1,81.9,82.5,84.5,86.2,87.9,88.2,88.8,90.8,90.1,91.4,92.7,94.1,
       93.7,93.7,94.8,96.9,97.2,97.5,97.7,97.4,98.0,99.6,98.0,98.8,100.2,100.9,99.5,100.8,
@@ -670,7 +684,7 @@ const WORKOUTS = {
      that curve. Replace with the real series. */
   run: {
     icon:'person-simple-run', name:'Morning run',
-    start: 7 * 60 + 12, length: 32, calories:'330', effort:'8.1',
+    start: 7 * 60 + 12, length: 32, calories:'330', effort:'Vigorous',
     series:(function(){
       const out = [], N = 129;             /* 32 minutes at one reading per 15s */
       for (let i = 0; i < N; i++){
@@ -712,10 +726,10 @@ function show(key){
     { label:'Duration', value:mmss(w.length * 60) },
     { label:'Calories', value:w.calories, unit:'kcal' },
     { label:'Max HR',   value:String(max), unit:'bpm' },
-    { label:'Effort',   value:w.effort, unit:'/ 10' }
+    { label:'Effort',   value:w.effort, word:true }   /* a word, not a figure */
   ].map(t =>
     '<section class="tile"><div class="label">' + t.label + '</div>' +
-    '<div class="figure"><span class="value">' + t.value + '</span>' +
+    '<div class="figure"><span class="value' + (t.word ? ' word' : '') + '">' + t.value + '</span>' +
     (t.unit ? '<span class="unit">' + t.unit + '</span>' : '') + '</div></section>'
   ).join('');
 

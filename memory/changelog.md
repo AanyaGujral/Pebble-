@@ -5,6 +5,16 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-11 — Effort now reads **"Moderate"** (owner), not a 6.4 / 10 figure.
+  Strength training is Moderate, Morning run is Vigorous. That makes the tile
+  value a word, and `typeNumeric.numL` is the Spartan face, which tokens.js
+  scopes to numerals ("tabular lining figures") — so a word cannot take it.
+  Added a `.value.word` variant at `typeText.headingH2Semibold`: same -0.005em
+  tracking as numL and one size down, which is right for a word beside a
+  figure and keeps the row's optical weight even. Flagged in both files.
+  Still open: nothing in the system defines the effort bands or the heart-rate
+  ranges that produce them — worth pinning down before this ships.
+
 - 2026-08-11 — Workout details header is now **sticky** (owner). The block is
   96px tall and splits in two: the top 32px (spacing.32) is the strip the
   status bar floats over, the 64px below (spacing.64) is the header proper.
