@@ -492,9 +492,10 @@ body{
    border, centered overline label, num-m value, small light unit text.
    Long numbers are abbreviated in K to stop spillover (see fmtTile in JS). */
 .sumchips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+/* No hairline border on detail-page tiles (owner, 2026-08-10) — the card
+   surface alone separates them. The Activity-tab chips keep theirs. */
 .stattile{
-  border-radius:20px;background:var(--surface-card);
-  border:0.5px solid var(--neutral-700);
+  border-radius:20px;background:var(--surface-card);border:0;
   padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;
 }
 .stattile .label{
@@ -1992,7 +1993,7 @@ const DETAIL = {
       day:   { kind:'bars', data:STEPS_HOURLY, color:'var(--metric-steps)', ticks:DAY_TICKS,
                yLabels:['3,600','2,400','1,200','0'], yMax:3600, fmt:fmtInt, stampFmt:DETAIL_STAMP.day,
                title:'Total', headline:'7,240',
-               summary:[{lab:'Total',parts:[['v','7,240']]},{lab:'Best hour',parts:[['v','07:00']]},{lab:'Active hours',parts:[['v','17'],['u','hrs']]}] },
+               summary:[{lab:'Total',parts:[['v','7,240']]},{lab:'Best hour',parts:[['v','07:00']]},{lab:'Active hrs',parts:[['v','17']]}] },
       week:  { kind:'bars', data:STEPS_WEEK, color:'var(--metric-steps)', ticks:WEEK_TICKS, tickIdx:WEEK_IDX,
                yLabels:['13,200','8,800','4,400','0'], yMax:13200, goal:10000, goalLabel:'Goal 10,000',
                fmt:fmtInt, stampFmt:DETAIL_STAMP.week,
@@ -2015,7 +2016,7 @@ const DETAIL = {
       day:   { kind:'line', data:DIST_CUM, color:'var(--metric-distance)', ticks:DAY_TICKS,
                yLabels:['6','4','2','0'], yMax:6, fmt:fmtKm, stampFmt:DETAIL_STAMP.day,
                title:'Total', headline:'5.1',
-               summary:[{lab:'Total',parts:[['v','5.1'],['u','km']]},{lab:'Best hour',parts:[['v','07:00']]},{lab:'Active hours',parts:[['v','17'],['u','hrs']]}] },
+               summary:[{lab:'Total',parts:[['v','5.1'],['u','km']]},{lab:'Best hour',parts:[['v','07:00']]},{lab:'Active hrs',parts:[['v','17']]}] },
       week:  { kind:'line', data:DIST_WEEK, color:'var(--metric-distance)', ticks:WEEK_TICKS, tickIdx:WEEK_IDX,
                yLabels:['10.5','7','3.5','0'], yMax:10.5, goal:8, goalLabel:'Goal 8 km',
                fmt:fmtKm, stampFmt:DETAIL_STAMP.week,
@@ -2038,7 +2039,7 @@ const DETAIL = {
       day:   { kind:'line', data:CAL_CUM, color:'var(--metric-calories)', ticks:DAY_TICKS,
                yLabels:['450','300','150','0'], yMax:450, fmt:fmtCal, stampFmt:DETAIL_STAMP.day,
                title:'Total', headline:'420',
-               summary:[{lab:'Total',parts:[['v','420'],['u','kcal']]},{lab:'Best hour',parts:[['v','07:00']]},{lab:'Active hours',parts:[['v','18'],['u','hrs']]}] },
+               summary:[{lab:'Total',parts:[['v','420'],['u','kcal']]},{lab:'Best hour',parts:[['v','07:00']]},{lab:'Active hrs',parts:[['v','18']]}] },
       week:  { kind:'line', data:CAL_WEEK, color:'var(--metric-calories)', ticks:WEEK_TICKS, tickIdx:WEEK_IDX,
                yLabels:['750','500','250','0'], yMax:750, goal:600, goalLabel:'Goal 600 kcal',
                fmt:fmtCal, stampFmt:DETAIL_STAMP.week,

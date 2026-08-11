@@ -5,6 +5,12 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-10 (later still) — Detail-page tiles: "Active hours" label
+  shortened to "Active hrs" so it stops truncating (applied to distance too,
+  same tile), with the now-redundant "hrs" unit dropped from the value;
+  hairline borders removed from all detail-page metric tiles. Activity-tab
+  chips keep their hairline.
+
 - 2026-08-10 (later) — Detail-page stat tiles switched to the Activity-tab
   chip format (three equal tiles across, 20px radius, hairline border,
   overline label, num-m value, small light unit) per owner screenshot; long
