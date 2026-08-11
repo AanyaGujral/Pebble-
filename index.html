@@ -597,7 +597,14 @@ body{
   display:flex;flex-direction:column;
 }
 .lc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex:none}
-.lc-title{font:500 15px/22px var(--font-text);color:var(--text-1);margin:0}    /* typeText.paragraphP1Medium */
+/* Card title. Matches .card-title on the Activity tab — 17/22, the token
+   tokens.json describes as "Card titles". The supplied HeartRateCard came in
+   at paragraphP1Medium (15/22); corrected to the app's card-header system
+   (owner, 2026-08-11). nowrap mirrors .card-title too. */
+.lc-title{
+  font:500 17px/22px var(--font-text);      /* typeText.headingH3Medium */
+  color:var(--text-1);margin:0;white-space:nowrap;
+}
 .lc-value-block{text-align:right}
 .lc-value-row{display:flex;align-items:baseline;gap:4px;justify-content:flex-end}
 .lc-value{
