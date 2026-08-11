@@ -55,7 +55,15 @@ what decisions were made, and the exact next steps.
 2. Owner approval → push the pending local commits to
    `claude/pebble-app-tabs-prototype-jty6sh`.
 3. Metric detail pages (tap a card → full-screen metric history).
-4. Workout details page for the Activity tab.
+4. ~~Workout details page for the Activity tab.~~ **Done 2026-08-11** —
+   `#sub-workout` in `index.html`, opened by tapping either row in the
+   Workouts card. Header (back / icon chip / name + start–end time / share),
+   2×2 stat tiles (Duration, Calories, Max HR, Effort), then the heart-rate
+   card (line chart + five zone rows, press-drag scrubbing). Open questions
+   for the owner: real Calories and Effort values (both are stand-ins, and
+   Effort's 1–10 scale is a guess), and a real heart-rate recording for
+   Morning run — its curve is currently drawn from a fixed profile. See the
+   changelog entry for the full list of flagged decisions.
 
 ## Done since first build (feedback round, 2026-08-07)
 

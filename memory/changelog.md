@@ -5,6 +5,36 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-11 — Added the **workout details page** (`#sub-workout` in
+  `index.html`), the last of the "exact next steps". Tapping either row in the
+  Workouts card on the Activity tab opens it. Header: back button + 40px
+  activity icon chip (same chip/glyph as the Workouts rows) + activity name
+  with the start–end time beneath + a Phosphor `share-network` button on the
+  right; the header frame, the 40px back button and the 20px caret are taken
+  from the existing sub-page header unchanged. Then the owner's
+  WorkoutStatsTiles component as a 2×2 grid — Duration / Calories / Max HR /
+  Effort — then the owner's HeartRateCard (line chart + five zone rows), with
+  press-and-drag scrubbing kept.
+  Decisions, all flagged in code comments at the point of decision:
+  • Header title stepped from 20/26 down to headingH3Medium 17/22 — at 20/26
+    the two-line stack out-grows the 40px icon chip and makes this header
+    taller than every other sub-head.
+  • The two supplied components disagreed on the sample session (tiles said
+    max 136, the HR card's curve peaks at 158). Average and max HR are now
+    read back off the plotted series, so the tiles, the chart and the zone
+    rows cannot drift apart.
+  • Tiles come in at radius.24 and the HR card at radius.20 — both as the
+    owner supplied them, so the difference is kept rather than harmonised.
+  • Calories and Effort cannot be derived from heart rate; they are plausible
+    stand-ins awaiting real values. Effort is shown on a 1–10 scale — the
+    brief named the tile but not its unit.
+  • No recording was supplied for Morning run, so its curve is drawn from a
+    fixed warm-up / interval / cool-down profile and its zone times are
+    counted off that curve. Strength training keeps the owner's series and
+    the owner's hand-counted zone seconds verbatim.
+  `share-network` added to the embedded Phosphor set. Verified in Chromium:
+  both workouts render, scrub works, and the page scrolls clear of the nav.
+
 - 2026-08-10 — Moved the named snapshot into `Activity Tab/Workout Tab.html`
   (folder layout mirrors `Sleep Tab/`). `index.html` stays the live working
   copy at the repo root. Pushed as is at the owner's request.
