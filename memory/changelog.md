@@ -5,6 +5,18 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-11 — **Page title restored to 20/26** (`typeText.headingH2Medium`),
+  matching About sleep, Goal setting and every other sub-page header. It had
+  been stepped down to 17/22 back when the header height was free-flowing and
+  a 42px two-line stack would have out-grown the 40px icon chip; now that the
+  header is a fixed 64px content box the stack fits with 11px above and below,
+  so the reason no longer held. Audited every rendered text style on the
+  screen against tokens.js afterwards: two font families (Google Sans Flex for
+  words, Spartan for numerals, both straight from
+  `typography.fontFamily`) and 10 of 11 text styles land exactly on a token.
+  The one that does not is the known 11px numeric (zone ranges, zone
+  percentages, scrub timestamp) — still the only off-scale type on the page.
+
 - 2026-08-11 — **Second Activity-tab cross-check: header geometry, icon sizing
   and the phone mock** (owner).
   • Share button pull -12px → **-4px** (spacing.12 → spacing.4). Measured, not

@@ -103,6 +103,7 @@
   /* ---- type styles ----
      Each is a `font` shorthand plus its letter-spacing, because
      letter-spacing cannot ride inside the shorthand. */
+  /* typography.text.heading.h2.medium   */ --type-h2-medium:500 20px/26px var(--font-text);      --ls-h2-medium:-0.005em;
   /* typography.text.heading.h2.semibold */ --type-h2-semibold:600 20px/26px var(--font-text);    --ls-h2-semibold:-0.005em;
   /* typography.text.heading.h3.medium   */ --type-h3-medium:500 17px/22px var(--font-text);      --ls-h3-medium:0;
   /* typography.text.paragraph.p2.medium */ --type-p2-medium:500 13px/18px var(--font-text);      --ls-p2-medium:0;
@@ -303,12 +304,14 @@ body{
 .chip svg{width:20px;height:20px;display:block;fill:var(--neutral-100)}
 
 .title{flex:1;min-width:0;display:flex;flex-direction:column}
-/* Flag: the app's other sub-pages title at heading.h2.medium (20/26). Here
-   the title is a two-line stack beside a 40px chip, and at 20/26 the stack
-   (42px) out-grows the chip and makes this header taller than every other
-   one. Stepped down one level to heading.h3.medium. */
+/* The title matches every other sub-page (About sleep, Goal setting):
+   20/26, heading.h2.medium. It was briefly stepped down to 17/22 when the
+   header height was free-flowing and a 42px two-line stack would have
+   out-grown the 40px chip - but the header is now a fixed 64px content
+   box, so the stack fits with 11px above and below and there is no reason
+   to differ. Restored (owner, 2026-08-11). */
 .title .name{
-  font:var(--type-h3-medium);letter-spacing:var(--ls-h3-medium);color:var(--text-1);
+  font:var(--type-h2-medium);letter-spacing:var(--ls-h2-medium);color:var(--text-1);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .title .when{font:var(--type-p3-regular);letter-spacing:var(--ls-p3-regular);color:var(--text-3)}
@@ -635,11 +638,14 @@ body{
   <section class="group">
     <h2>Type</h2>
     <div class="row"><span></span><div>
-      <div class="path">typography.text.heading.h2.semibold</div>
+      <div class="path">typography.text.heading.h2.medium</div>
+        <div class="val">500 · 20/26 · −0.005em</div><div class="use">Activity name — the same token as the About and Goal setting sub-page titles</div></div></div>
+      <div class="row"><span></span><div>
+        <div class="path">typography.text.heading.h2.semibold</div>
       <div class="val">600 · 20/26 · −0.005em</div><div class="use">The Effort value, because “Moderate” is a word — the numeric face is for figures</div></div></div>
     <div class="row"><span></span><div>
       <div class="path">typography.text.heading.h3.medium</div>
-      <div class="val">500 · 17/22 · 0</div><div class="use">Activity name, and the “Heart rate” card title — the same token as .card-title across the app</div></div></div>
+        <div class="val">500 · 17/22 · 0</div><div class="use">The “Heart rate” card title — the same token as .card-title across the app</div></div></div>
     <div class="row"><span></span><div>
       <div class="path">typography.text.paragraph.p2.medium</div>
       <div class="val">500 · 13/18 · 0</div><div class="use">Status bar clock</div></div></div>

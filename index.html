@@ -517,11 +517,12 @@ body{
    The 40px round back button pulled 12px left so the caret optically lines up
    with the content below is .sub-head's, unchanged. The page adds the icon
    chip, the two-line title and the share button.
-   Flag: the other sub-pages set their title at 20/26 (headingH2Medium). Here
-   the title is a two-line stack sitting next to a 40px chip, and at 20/26 the
-   stack (42px) would out-grow the chip and make this header taller than every
-   other one. Stepped down one level to headingH3Medium (17/22) — flagged
-   rather than silently changed. */
+   The title matches every other sub-page (About sleep, Goal setting): 20/26,
+   headingH2Medium. It was briefly stepped down to 17/22 when the header
+   height was free-flowing and a 42px two-line stack would have out-grown the
+   40px chip — but the header is now a fixed 64px content box, so the stack
+   fits with 11px above and below and there is no reason to differ. Restored
+   (owner, 2026-08-11). */
 .wd-head{
   position:sticky;top:0;z-index:20;
   height:96px;                 /* spacing.32 status-bar strip + spacing.64 header */
@@ -531,7 +532,8 @@ body{
 }
 .wd-title{flex:1;min-width:0;display:flex;flex-direction:column}
 .wd-name{
-  font-size:17px;line-height:22px;font-weight:500;color:var(--text-1);   /* typeText.headingH3Medium */
+  font-size:20px;line-height:26px;font-weight:500;letter-spacing:-0.005em;   /* typeText.headingH2Medium */
+  color:var(--text-1);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .wd-when{font-size:11px;line-height:16px;font-weight:400;color:var(--text-3)}  /* typeText.paragraphP3Regular */
