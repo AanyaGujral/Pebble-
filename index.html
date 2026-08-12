@@ -535,9 +535,15 @@ body{
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .wd-when{font-size:11px;line-height:16px;font-weight:400;color:var(--text-3)}  /* typeText.paragraphP3Regular */
-/* share button mirrors .backbtn on the other end of the header */
+/* Share button, the other end of the header.
+   The back caret is pulled -12px (spacing.12) because a chevron is optically
+   narrow and needs that pull to sit on the 16px content edge. The share glyph
+   fills its box, so the same pull put its ink 17.1px from the screen edge
+   against the caret's 19.6px, and it read as crowding. Pulled -4px
+   (spacing.4) instead, so its ink lands at 25.1px — matching the Activity
+   tab's right-edge control (.dots-btn, 24.5px). Measured, not eyeballed. */
 .wd-share{
-  flex:none;width:40px;height:40px;margin-right:-12px;
+  flex:none;width:40px;height:40px;margin-right:-4px;
   display:flex;align-items:center;justify-content:center;
   background:none;border:0;cursor:pointer;border-radius:999px;color:var(--text-1);
 }

@@ -5,6 +5,32 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-11 — **Second Activity-tab cross-check: header geometry, icon sizing
+  and the phone mock** (owner).
+  • Share button pull -12px → **-4px** (spacing.12 → spacing.4). Measured, not
+    eyeballed: the back caret's ink lands 19.6px from the left screen edge, but
+    the share glyph's landed 17.1px from the right and read as crowding — a
+    chevron is optically narrow so it needs the bigger pull, while the share
+    glyph fills its box. At -4px its ink lands at 25.1px, matching the Activity
+    tab's right-edge control (`.dots-btn`, 24.5px).
+  • The preview files now use the **Activity tab's phone mock verbatim** —
+    360×780 screen, 10px bezel, 40px/32px radii, 6px neutral-800 outline,
+    punch-hole camera — plus the floating nav and gesture bar, so the preview
+    finally shows what the real screen shows. Screen bottom padding raised to
+    96px to clear the nav, same as `.subpage`. The mock zooms to 0.86 below
+    440px so the page never scrolls sideways.
+  • Renamed the preview's header buttons `.iconbtn` → `.hdrbtn`. `.iconbtn` is
+    already a different component in index.html (36px filled button used in the
+    sheets), so the old name would have collided the moment the block was
+    pasted in. index.html itself was never affected — it uses `.backbtn` and
+    `.wd-share`.
+  Confirmed matching, no change needed: the status bar is identical, and the
+  header's first content pixel sits at 44px — 32px status strip + 12px — which
+  is exactly `.screen-head`'s 44px top padding on the Activity tab.
+  Still different, reported to the owner rather than changed: the right-edge
+  hit area is 40×40 here vs `.dots-btn`'s 44×44, and `.wd-head`'s gap is 8px
+  vs `.sub-head`'s 4px.
+
 - 2026-08-11 — **Cross-checked the workout details page against the Activity
   tab's card-header system** (owner) and corrected three things. The heart
   rate card's number (numL), BPM unit (overlineMedium) and "Average" sublabel

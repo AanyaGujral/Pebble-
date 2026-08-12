@@ -170,9 +170,64 @@ body{
   padding:8px 16px;font:var(--type-p3-medium);color:var(--text-3);font-family:var(--font-text);
 }
 .switcher button.on{background:var(--surface-raised);color:var(--text-1)}
+/* Phone mock and status bar are the Activity tab's, verbatim: Android,
+   360x780 screen, 10px bezel, 6px outline, punch-hole selfie camera. */
 .phone{
-  width:360px;height:720px;border-radius:36px;overflow:hidden;position:relative;
-  background:var(--surface-app);border:2px solid var(--neutral-700);
+  flex:0 0 auto;border-radius:40px;background:var(--neutral-900);
+  border:2px solid var(--neutral-700);outline:6px solid var(--neutral-800);
+  padding:10px;
+}
+.screen{
+  position:relative;width:360px;height:780px;
+  border-radius:32px;overflow:hidden;
+  background:var(--surface-app);
+  display:flex;flex-direction:column;
+}
+/* punch-hole selfie camera */
+.screen::before{
+  content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:12px;height:12px;border-radius:50%;
+  background:var(--neutral-900);border:2px solid var(--neutral-700);
+  z-index:60;pointer-events:none;
+}
+/* the mock is a fixed 360px screen; shrink the whole thing on small
+   viewports rather than let the page scroll sideways */
+@media (max-width:440px){ .phone{zoom:0.86} }
+
+.pebble-nav{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:20px;z-index:55;
+  display:flex;align-items:center;gap:4px;
+  width:328px;height:60px;padding:0 14px;
+  border-radius:999px;
+  background:color-mix(in srgb, var(--neutral-800) 80%, transparent);
+  -webkit-backdrop-filter:blur(26px);   /* Figma background blur 52 */
+  backdrop-filter:blur(26px);
+  box-shadow:0 8px 24px color-mix(in srgb, var(--neutral-900) 48%, transparent),
+             0 2px 6px color-mix(in srgb, var(--neutral-900) 32%, transparent);
+}
+.pebble-tab{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  width:72px;height:60px;padding:10px 0;border:0;background:none;border-radius:999px;
+  font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.pebble-tab:focus-visible{outline:2px solid var(--neutral-0);outline-offset:-2px}
+.pebble-tab .icon{display:block;width:24px;height:24px;color:var(--neutral-300);transition:color 160ms ease, transform 160ms ease}
+.pebble-tab .label{font-size:10px;line-height:14px;font-weight:400;letter-spacing:.01em;color:var(--neutral-300);transition:color 160ms ease}
+.pebble-tab:active .icon{transform:scale(.92)}
+.pebble-tab .ico-fill{display:none}
+/* selected: filled glyph at neutral 0, label at neutral 100 */
+.pebble-tab[aria-current="page"] .ico-line{display:none}
+.pebble-tab[aria-current="page"] .ico-fill{display:block}
+.pebble-tab[aria-current="page"] .icon{color:var(--neutral-0)}
+.pebble-tab[aria-current="page"] .label{color:var(--neutral-100)}
+/* tabs whose screens aren't in this flow yet: visible but inert */
+.pebble-tab[aria-disabled="true"]{cursor:default}
+.pebble-tab[aria-disabled="true"]:active .icon{transform:none}
+
+.gesture{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:112px;height:4px;border-radius:999px;background:var(--neutral-600);
+  z-index:60;pointer-events:none;
 }
 .caption{font:var(--type-p3-regular);color:var(--text-3)}
 
@@ -181,7 +236,10 @@ body{
    ========================================================================== */
 .page{
   position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;
-  background:var(--surface-app);padding-bottom:var(--space-40);
+  background:var(--surface-app);
+  /* 96px clears the floating nav, the same clearance .subpage uses in
+     index.html. OFF-SCALE 4 - 96 is not on the spacing scale. */
+  padding-bottom:96px;
 }
 .page::-webkit-scrollbar{display:none}
 
@@ -219,14 +277,20 @@ body{
   background:var(--surface-app);
   display:flex;align-items:center;gap:var(--space-8);
 }
-.iconbtn{
+.hdrbtn{
   flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
   background:none;border:0;cursor:pointer;border-radius:var(--radius-full);color:var(--text-1);
 }
-.iconbtn.back{margin-left:-12px}      /* pulls the caret onto the content edge */
-.iconbtn.share{margin-right:-12px}    /* mirrored on the other end */
-.iconbtn:hover{background:var(--surface-raised)}
-.iconbtn svg{width:20px;height:20px;display:block;fill:currentColor}
+.hdrbtn.back{margin-left:-12px}      /* pulls the caret onto the content edge */
+/* The back caret is pulled -12px (spacing.12) because a chevron is optically
+   narrow and needs that pull to sit on the 16px content edge. The share glyph
+   fills its box, so the same pull put its ink 17.1px from the screen edge
+   against the caret's 19.6px, and it read as crowding. Pulled -4px
+   (spacing.4) instead, so its ink lands at 25.1px - matching the Activity
+   tab's right-edge control (.dots-btn, 24.5px). Measured, not eyeballed. */
+.hdrbtn.share{margin-right:-4px}
+.hdrbtn:hover{background:var(--surface-raised)}
+.hdrbtn svg{width:20px;height:20px;display:block;fill:currentColor}
 
 /* the icon chip is the one from the Workouts card rows, unchanged */
 .chip{
@@ -415,7 +479,7 @@ body{
     <button type="button" data-workout="run" role="tab" aria-selected="false">Morning run</button>
   </div>
 
-  <div class="phone">
+  <div class="phone"><div class="screen">
 
     <!-- status bar — floats over the page, 32px tall -->
     <div class="statusbar">
@@ -431,7 +495,7 @@ body{
 
       <!-- sticky header: 32px status-bar strip + 64px header -->
       <div class="head">
-        <button class="iconbtn back" type="button" aria-label="Back">
+        <button class="hdrbtn back" type="button" aria-label="Back">
           <!-- Phosphor caret-left, regular -->
           <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg>
         </button>
@@ -443,7 +507,7 @@ body{
           <span class="when" id="when">10:15 – 11:00 AM</span>
         </span>
 
-        <button class="iconbtn share" type="button" aria-label="Share workout">
+        <button class="hdrbtn share" type="button" aria-label="Share workout">
           <!-- Phosphor share-network, regular -->
           <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M176,160a39.89,39.89,0,0,0-28.62,12.09l-46.1-29.63a39.8,39.8,0,0,0,0-28.92l46.1-29.63a40,40,0,1,0-8.66-13.45l-46.1,29.63a40,40,0,1,0,0,55.82l46.1,29.63A40,40,0,1,0,176,160Zm0-128a24,24,0,1,1-24,24A24,24,0,0,1,176,32ZM64,152a24,24,0,1,1,24-24A24,24,0,0,1,64,152Zm112,72a24,24,0,1,1,24-24A24,24,0,0,1,176,224Z"/></svg>
         </button>
@@ -476,7 +540,34 @@ body{
       </div>
 
     </div>
-  </div>
+
+    <!-- bottom nav - the same floating pill the tabs use. The page scrolls
+         under it, which is why the screen carries 96px of bottom padding. -->
+    <nav class="pebble-nav" aria-label="Primary">
+          <button type="button" class="pebble-tab" data-tab="health" aria-disabled="true">
+            <svg class="icon ico-line" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z"/></svg>
+            <svg class="icon ico-fill" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z"/></svg>
+            <span class="label">Health</span>
+          </button>
+          <button type="button" class="pebble-tab" data-tab="activity" aria-current="page">
+            <svg class="icon ico-line" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M231.16,166.63l-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-8-8,48.05,48.05,0,0,1-48-48,8,8,0,0,0-12.83-6.37L30.13,76l-.2.16a16,16,0,0,0-1.24,23.75L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63ZM224,200H151.37L40,88.63l12.87-9.76,38.79,38.79A8,8,0,0,0,103,106.34L65.74,69.11l40-30.31A64.15,64.15,0,0,0,160,87.5v21.89a63.65,63.65,0,0,0,35.38,57.24L224,180.94ZM70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm40,24a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16h54.8A8,8,0,0,1,110.8,208Z"/></svg>
+            <svg class="icon ico-fill" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z"/></svg>
+            <span class="label">Activity</span>
+          </button>
+          <button type="button" class="pebble-tab" data-tab="sleep" aria-disabled="true">
+            <svg class="icon ico-line" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path d="M108.11,28.11A96.09,96.09,0,0,0,227.89,147.89,96,96,0,1,1,108.11,28.11Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
+            <svg class="icon ico-fill" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z"/></svg>
+            <span class="label">Sleep</span>
+          </button>
+          <button type="button" class="pebble-tab" data-tab="me" aria-disabled="true">
+            <svg class="icon ico-line" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><circle cx="128" cy="96" r="64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M32,216c19.37-33.47,54.55-56,96-56s76.63,22.53,96,56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
+            <svg class="icon ico-fill" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z"/></svg>
+            <span class="label">Me</span>
+          </button>
+        </nav>
+
+    <div class="gesture"></div>
+  </div></div>
 
   <p class="caption">Scroll the screen — the header stays pinned. Press and drag the chart to scrub.</p>
 </div>
@@ -602,6 +693,8 @@ body{
       <div class="use">The x-axis pills. The chart component specifies “radius.4 / 2”, and half a token is not a token.</div></div>
     <div class="flag" style="margin-bottom:var(--space-8)"><div class="path">color.neutral.100 on the chip glyph</div>
       <div class="use">The icon inside the chip. color.semantic.neutral.icon (neutral.300) is the token that ought to apply. index.html uses neutral.100, and this file matches the screen rather than quietly correcting it — flagging it for you to call.</div></div>
+    <div class="flag"><div class="path">96px bottom clearance</div>
+      <div class="use">The padding that lets the last zone row scroll clear of the floating nav. Carried over from .subpage in index.html; 96 is not on the spacing scale (nearest are 64 and 48).</div></div>
     <div class="flag"><div class="path">Motion durations</div>
       <div class="use">120ms and 140ms, carried over from index.html. tokens.json has no motion scale. The only animation here is the plot dimming on scrub, and it is switched off under prefers-reduced-motion.</div></div>
   </section>
