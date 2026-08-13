@@ -650,7 +650,14 @@ body{
   font:500 11px/16px var(--font-text);color:var(--text-2);margin-top:4px;
   display:flex;align-items:center;justify-content:flex-end;gap:4px;
 }
-.lc-sublabel.scrubbing{font:500 11px/16px var(--font-number);font-feature-settings:var(--num-features)}
+/* Scrub timestamp. numS is 13/16 — the SAME 16px line box as the
+   paragraphP3Medium "Average" it replaces, so the header still does not jump
+   on press. The old 11px numeric matched on font-size but was off-scale;
+   what actually mattered was the line-height (owner, 2026-08-11). */
+.lc-sublabel.scrubbing{
+  font:500 13px/16px var(--font-number);      /* typeNumeric.numS */
+  letter-spacing:0;font-feature-settings:var(--num-features);
+}
 .lc-chart-wrap{position:relative;flex:1;min-height:0;margin-top:16px}          /* spacing.16 */
 .lc-chart-wrap svg{display:block;width:100%;height:100%;touch-action:none}
 .lc-gridline{stroke:var(--gridline);stroke-width:0.5}                          /* borderWidth.hairline */
@@ -680,13 +687,17 @@ body{
   letter-spacing:0.08em;text-transform:uppercase;color:var(--text-1);white-space:nowrap;
 }
 /* every numeral takes the numeric face */
+/* Zone range and percentage sit at numXs — the same token the chart's axis
+   numbers use, one row below. numS (13px) was tried first and truncates
+   "153–171 BPM" on the Anaerobic row; numXs fits with room to spare
+   (owner, 2026-08-11). */
 .hrz-range{
-  font:500 11px/16px var(--font-number);letter-spacing:0.01em;
+  font:500 10px/12px var(--font-number);letter-spacing:0.01em;   /* typeNumeric.numXs */
   font-feature-settings:var(--num-features);color:var(--text-3);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .hrz-pct{                                   /* the zone hue is the only colour in the row */
-  font:500 11px/16px var(--font-number);letter-spacing:0.01em;
+  font:500 10px/12px var(--font-number);letter-spacing:0.01em;   /* typeNumeric.numXs */
   font-feature-settings:var(--num-features);color:var(--zone);white-space:nowrap;
 }
 .hrz-dur{

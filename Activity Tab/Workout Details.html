@@ -28,9 +28,9 @@
 
       /* color.neutral.800 */  --neutral-800:#0F111B;
 
-  Four things on this screen are NOT in the token set. They are marked
-  OFF-SCALE in the token block and listed at the bottom of the right-hand
-  panel, so nothing is quietly invented.
+  Every type, colour, radius and spacing value on this screen now lands on a
+  token. The two things still off-scale are the 96px bottom clearance and the
+  motion durations; both are listed at the bottom of the right-hand panel.
 
   Fonts load from the Google Fonts CDN. Offline the page falls back to system
   sans — the layout still holds, but the type will look wider than it should.
@@ -116,12 +116,6 @@
   /* typography.numeric.num-s  */ --type-num-s:500 13px/16px var(--font-number);  --ls-num-s:0;
   /* typography.numeric.num-xs */ --type-num-xs:500 10px/12px var(--font-number); --ls-num-xs:0.01em;
 
-  /* OFF-SCALE 1 — an 11px numeric style. The HeartRateCard uses it for the
-     zone ranges, the zone percentages and the scrub timestamp. It sits
-     between numeric.num-xs (10px) and numeric.num-s (13px) and has no token.
-     Kept because the scrub timestamp must match the 11px text it replaces,
-     or the header jumps when you press the chart. */
-  --type-num-11:500 11px/16px var(--font-number); --ls-num-11:0.01em;
 
   /* ---- radius ---- */
   /* radius.12   */ --radius-12:12px;
@@ -402,7 +396,14 @@ body{
   font:var(--type-p3-medium);letter-spacing:var(--ls-p3-medium);color:var(--text-2);
   margin-top:var(--space-4);display:flex;align-items:center;justify-content:flex-end;gap:var(--space-4);
 }
-.lc-sub.scrubbing{font:var(--type-num-11);letter-spacing:var(--ls-num-11);font-feature-settings:var(--num-features)}
+/* Scrub timestamp. num-s is 13/16 — the SAME 16px line box as the
+   paragraph.p3.medium "Average" it replaces, so the header still does not
+   jump on press. The old 11px numeric matched on font-size but was
+   off-scale; what actually mattered was the line-height. */
+.lc-sub.scrubbing{
+  font:var(--type-num-s);letter-spacing:var(--ls-num-s);
+  font-feature-settings:var(--num-features);
+}
 .lc-wrap{position:relative;flex:1;min-height:0;margin-top:var(--space-16)}
 .lc-wrap svg{display:block;width:100%;height:100%;touch-action:none}
 .lc-gridline{stroke:var(--gridline);stroke-width:0.5}
@@ -431,13 +432,16 @@ body{
   color:var(--text-1);white-space:nowrap;
 }
 /* every numeral takes the numeric face */
+/* Zone range and percentage sit at num-xs — the same token the chart's axis
+   numbers use, one row below. num-s (13px) was tried first and truncates
+   "153–171 BPM" on the Anaerobic row; num-xs fits with room to spare. */
 .hrz-range{
-  font:var(--type-num-11);letter-spacing:var(--ls-num-11);font-feature-settings:var(--num-features);
+  font:var(--type-num-xs);letter-spacing:var(--ls-num-xs);font-feature-settings:var(--num-features);
   color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 /* the zone hue is the only colour in the row */
 .hrz-pct{
-  font:var(--type-num-11);letter-spacing:var(--ls-num-11);font-feature-settings:var(--num-features);
+  font:var(--type-num-xs);letter-spacing:var(--ls-num-xs);font-feature-settings:var(--num-features);
   color:var(--zone);white-space:nowrap;
 }
 .hrz-dur{
@@ -588,7 +592,7 @@ body{
 <aside class="audit">
   <div>
     <h1>Tokens on this screen</h1>
-    <p class="lede">Every value the screen paints, mapped to its path in tokens.json. Anything without a token is called out at the bottom.</p>
+    <p class="lede">Every value the screen paints, mapped to its path in tokens.json. All type, colour, radius and spacing now lands on a token; the two exceptions left are called out at the bottom.</p>
   </div>
 
   <section class="group">
@@ -675,10 +679,10 @@ body{
       <div class="val">700 · 24/28 · −0.005em</div><div class="use">Stat tile values, the heart-rate value</div></div></div>
     <div class="row"><span></span><div>
       <div class="path">typography.numeric.num-s</div>
-      <div class="val">500 · 13/16 · 0</div><div class="use">Zone durations</div></div></div>
+      <div class="val">500 · 13/16 · 0</div><div class="use">Zone durations, and the scrub timestamp — same 16px line box as the “Average” it replaces, so the header does not jump</div></div></div>
     <div class="row"><span></span><div>
       <div class="path">typography.numeric.num-xs</div>
-      <div class="val">500 · 10/12 · 0.01em</div><div class="use">Chart axis numbers</div></div></div>
+      <div class="val">500 · 10/12 · 0.01em</div><div class="use">Chart axis numbers, and the zone ranges and percentages one row below them</div></div></div>
   </section>
 
   <section class="group">
@@ -689,6 +693,8 @@ body{
       <div class="path">radius.20</div><div class="val">20px</div><div class="use">Heart-rate card</div></div></div>
     <div class="row"><span></span><div>
       <div class="path">radius.24</div><div class="val">24px</div><div class="use">Stat tiles</div></div></div>
+    <div class="row"><span></span><div>
+      <div class="path">radius.4</div><div class="val">4px</div><div class="use">x-axis pill corners</div></div></div>
     <div class="row"><span></span><div>
       <div class="path">radius.full</div><div class="val">999px</div><div class="use">Back and share buttons, zone rails and fills</div></div></div>
     <div class="row"><span></span><div>
@@ -702,10 +708,6 @@ body{
 
   <section class="group">
     <h2>Not in the token set</h2>
-    <div class="flag" style="margin-bottom:var(--space-8)"><div class="path">11px numeric</div>
-      <div class="use">Zone ranges, zone percentages, the scrub timestamp. Sits between numeric.num-xs (10px) and numeric.num-s (13px). Kept because the scrub timestamp has to match the 11px text it replaces, or the header jumps when you press the chart. Worth adding as <em>numeric.num-sm</em> if it keeps recurring.</div></div>
-    <div class="flag" style="margin-bottom:var(--space-8)"><div class="path">2px corner radius</div>
-      <div class="use">The x-axis pills. The chart component specifies “radius.4 / 2”, and half a token is not a token.</div></div>
     <div class="flag" style="margin-bottom:var(--space-8)"><div class="path">color.neutral.100 on the chip glyph</div>
       <div class="use">The icon inside the chip. color.semantic.neutral.icon (neutral.300) is the token that ought to apply. index.html uses neutral.100, and this file matches the screen rather than quietly correcting it — flagging it for you to call.</div></div>
     <div class="flag"><div class="path">96px bottom clearance</div>

@@ -28,8 +28,21 @@ meaningful change. Format: `[date] — what changed — why/notes`
     panel — that file is the token-mapping document.
   • Page title stays at 20/26; the audit still shows two font families and one
     off-scale style (the 11px numeric).
-  Not done: "update the numeric zone basis charts on the activity page" —
-  asked the owner what that refers to.
+  • **The off-scale 11px numeric is gone** — every numeral on the screen now
+    lands on a token (owner: "use the chart for reference, if 13px is
+    available use that, if 10px is fitting better space wise use that").
+    Zone ranges and percentages → `numeric.num-xs` (10/12), the same token the
+    chart's axis numbers use one row below. numS (13px) was measured first and
+    truncates "153–171 BPM" on the Anaerobic row; num-xs fits with 7.6px to
+    spare. Scrub timestamp → `numeric.num-s` (13/16). The original reason for
+    the 11px hack was "it must match the 11px text it replaces or the header
+    jumps" — but what actually mattered was the LINE-HEIGHT, and num-s is
+    13/16, the same 16px line box as the paragraphP3Medium "Average". No jump,
+    no off-scale value.
+  Audit after this round: two font families, and every type, colour, radius
+  and spacing value on the screen resolves to a token. The only things left
+  off the scales are the 96px bottom clearance and the motion durations —
+  neither has a scale in tokens.json to land on.
 
 - 2026-08-11 — **Page title restored to 20/26** (`typeText.headingH2Medium`),
   matching About sleep, Goal setting and every other sub-page header. It had
