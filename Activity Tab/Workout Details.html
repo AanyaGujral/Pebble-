@@ -105,6 +105,7 @@
      letter-spacing cannot ride inside the shorthand. */
   /* typography.text.heading.h2.medium   */ --type-h2-medium:500 20px/26px var(--font-text);      --ls-h2-medium:-0.005em;
   /* typography.text.heading.h2.semibold */ --type-h2-semibold:600 20px/26px var(--font-text);    --ls-h2-semibold:-0.005em;
+  /* typography.text.paragraph.p1.medium */ --type-p1-medium:500 15px/22px var(--font-text);      --ls-p1-medium:0;
   /* typography.text.heading.h3.medium   */ --type-h3-medium:500 17px/22px var(--font-text);      --ls-h3-medium:0;
   /* typography.text.paragraph.p2.medium */ --type-p2-medium:500 13px/18px var(--font-text);      --ls-p2-medium:0;
   /* typography.text.paragraph.p3.regular*/ --type-p3-regular:400 11px/16px var(--font-text);     --ls-p3-regular:0;
@@ -128,9 +129,9 @@
   /* radius.24   */ --radius-24:24px;
   /* radius.full */ --radius-full:999px;
 
-  /* OFF-SCALE 2 — the x-axis pill corner. The chart component specifies
-     radius.4 / 2. Half a token is not a token. */
-  --radius-pill-corner:2px;
+  /* radius.4 */ --radius-4:4px;   /* x-axis pill corner. The component asked
+                                      for "radius.4 / 2"; raised to the whole
+                                      token (owner), so nothing is half a token. */
 
   /* ---- spacing ---- */
   /* spacing.4  */ --space-4:4px;
@@ -275,12 +276,20 @@ body{
   position:sticky;top:0;z-index:20;
   height:calc(var(--space-32) + var(--space-64));   /* 32 status bar + 64 header */
   padding:var(--space-32) var(--space-16) 0;
-  background:var(--surface-app);
+  /* 80% surface.app with a background blur, so content reads through as it
+     scrolls under (owner). color-mix keeps it on the token. 26px = Figma
+     background blur 52, the same conversion .pebble-nav uses. */
+  background:color-mix(in srgb, var(--surface-app) 80%, transparent);
+  -webkit-backdrop-filter:blur(26px);
+  backdrop-filter:blur(26px);
   display:flex;align-items:center;gap:var(--space-8);
 }
 .hdrbtn{
   flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
-  background:none;border:0;cursor:pointer;border-radius:var(--radius-full);color:var(--text-1);
+  background:none;border:0;cursor:pointer;border-radius:var(--radius-full);
+  /* the Workouts-card icon colour (owner), so every glyph in this header
+     is one value - the same neutral.100 .wo-glyph uses */
+  color:var(--neutral-100);
 }
 .hdrbtn.back{margin-left:-12px}      /* pulls the caret onto the content edge */
 /* The back caret is pulled -12px (spacing.12) because a chevron is optically
@@ -375,7 +384,7 @@ body{
    at paragraph.p1.medium (15/22); corrected to the app's card-header system
    (owner, 2026-08-11). nowrap mirrors .card-title too. */
 .lc-title{
-  font:var(--type-h3-medium);letter-spacing:var(--ls-h3-medium);
+  font:var(--type-p1-medium);letter-spacing:var(--ls-p1-medium);
   color:var(--text-1);margin:0;white-space:nowrap;
 }
 .lc-block{text-align:right}
@@ -923,7 +932,7 @@ function draw(){
     const isPill = (i === 0 || i === nT - 1);
     if (isPill){
       const pw = 6 * label.length + 8;            /* text width + 4px each side */
-      el('rect', { class:'lc-pill-bg', x:cx - pw / 2, y:center - pillH / 2, width:pw, height:pillH, rx:2 });
+      el('rect', { class:'lc-pill-bg', x:cx - pw / 2, y:center - pillH / 2, width:pw, height:pillH, rx:4 });   /* radius.4 (owner, was an off-scale 2px) */
     }
     el('text', { class:isPill ? 'lc-pill-label' : 'lc-x-label', x:cx, y:center + 4, 'text-anchor':'middle' }).textContent = label;
   }

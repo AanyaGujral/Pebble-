@@ -5,6 +5,32 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-11 — Owner review round, six changes:
+  • **x-axis pill corner 2px → 4px** (`radius.4`). The chart component asked
+    for "radius.4 / 2"; raised to the whole token, so that off-scale value is
+    gone.
+  • **Header glyphs now `color.neutral.100`** — the Workouts-card icon colour
+    — so every glyph in the header is one value. Scoped to `.wd-head` in
+    index.html so the other sub-pages keep `.sub-head`'s text-1 caret. This
+    also settles the flag about neutral.100 vs `semantic.neutral.icon`:
+    neutral.100 is intentional.
+  • **Card header text 17px → 15px** (`headingH3Medium` → `paragraphP1Medium`).
+    Note this reverses the 15→17 correction made earlier the same day, which
+    was done because `.card-title` is 17/22 in all 22 places it appears — the
+    heart rate card is now deliberately one step below the app's card titles.
+  • **Header background is 80% `surface.app` with `blur(26px)`** (Figma
+    background blur 52 — the same conversion `.pebble-nav` uses), written with
+    color-mix so it stays on tokens. Content now reads through the header as
+    it scrolls under, instead of being cut off flat — which also answers the
+    open question from the sticky-header round.
+  • **Token audit panel removed from the published artifact.** The artifact is
+    now just the phone preview. `Activity Tab/Workout Details.html` keeps its
+    panel — that file is the token-mapping document.
+  • Page title stays at 20/26; the audit still shows two font families and one
+    off-scale style (the 11px numeric).
+  Not done: "update the numeric zone basis charts on the activity page" —
+  asked the owner what that refers to.
+
 - 2026-08-11 — **Page title restored to 20/26** (`typeText.headingH2Medium`),
   matching About sleep, Goal setting and every other sub-page header. It had
   been stepped down to 17/22 back when the header height was free-flowing and
