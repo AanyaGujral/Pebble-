@@ -5,6 +5,20 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-11 — **Page title 20/26 → 15/22** (`typeText.paragraphP1Medium`,
+  owner). This puts the activity name at the same size as the "Heart rate"
+  card title below it, and 5px under the other sub-page titles (About sleep,
+  Goal setting, both headingH2Medium 20/26) — the details page now runs a
+  deliberately quieter header than the rest of the app. Third size the title
+  has taken today (17 → 20 → 15); this one is the owner's, not a system
+  inference.
+  The header's blurred background needed no change — 80% `surface.app` with
+  `blur(26px)` has been in all three files since the previous round, verified
+  by computed style. It reads as solid at the top of the scroll because the
+  fill is 80% of `surface.app` and the page behind it IS `surface.app`; the
+  blur only shows once a card passes under. Worth lowering the opacity if the
+  owner wants the effect to read at rest.
+
 - 2026-08-11 — Owner review round, six changes:
   • **x-axis pill corner 2px → 4px** (`radius.4`). The chart component asked
     for "radius.4 / 2"; raised to the whole token, so that off-scale value is
