@@ -87,7 +87,7 @@ body{margin:0;background:var(--surface-app);color:var(--text-1);
 
 /* ── metric card — typography verbatim from StatTile_preview.html ─────── */
 .card{background:var(--surface-card);border-radius:var(--radius-card);padding:var(--card-pad);
-  min-height:132px;display:flex;flex-direction:column;text-align:left}
+  height:132px;display:flex;flex-direction:column;text-align:left}
 .tile-top{display:flex;align-items:center;gap:var(--space-8);margin-bottom:var(--space-8)}
 .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
 .label{font:var(--type-overline);font-weight:var(--weight-semibold);
@@ -104,7 +104,7 @@ body{margin:0;background:var(--surface-app);color:var(--text-1);
 
 /* ── the Measure All cell ─────────────────────────────────────────────── */
 .ma{background:var(--surface-app);border:var(--border-hairline) solid var(--border-card);
-  border-radius:var(--radius-card);padding:var(--card-pad);min-height:132px;
+  border-radius:var(--radius-card);padding:var(--card-pad);height:132px;
   display:flex;flex-direction:column;font-family:var(--font-text);text-align:left;color:var(--text-1);
   transition:border-color var(--duration-fast) var(--ease-standard)}
 button.ma{cursor:pointer}
@@ -113,7 +113,7 @@ button.ma:hover{border-color:var(--neutral-500)}
 .ma .dot.pulse{animation:cellPulse 1.4s ease-in-out infinite}
 .ma .body{flex:1;display:flex;flex-direction:column}
 .ma .desc{margin-top:var(--space-4);font:var(--type-p2);color:var(--text-3)}
-.ma .rail{margin-top:var(--space-12);height:8px;border-radius:var(--radius-pill);
+.ma .rail{margin-top:var(--space-8);height:8px;border-radius:var(--radius-pill);
   background:var(--surface-raised);box-shadow:inset 0 0 0 var(--border-hairline) var(--neutral-500);
   overflow:hidden}
 .ma .rail i{display:block;height:100%;border-radius:var(--radius-pill);
@@ -121,12 +121,8 @@ button.ma:hover{border-color:var(--neutral-500)}
   transition:width var(--duration-slow) cubic-bezier(0.32,0.72,0,1)}
 .ma .sub{margin-top:auto;padding-top:var(--space-12);
   font:var(--type-p2);color:var(--text-3);font-feature-settings:var(--font-feature-numeric)}
-/* Owner changes 2026-08-14: CTA accent switched from green (--positive-icon)
-   to teal, then sized down to p3 and settled on teal-300 for contrast
-   (11.4:1 on the cell's surface-app vs 9.6:1 teal-400 / 6.5:1 teal-500).
-   The note about a missing action-accent alias still stands. */
-.ma .act{color:var(--teal-300);font-weight:var(--weight-medium);font-size:var(--p3-size);line-height:var(--p3-line)}
-.ma.span2{grid-column:1 / -1;min-height:0}
+.ma .act{color:var(--metric-readiness);font-weight:var(--weight-medium)}
+.ma.span2{grid-column:1 / -1;height:auto;min-height:0}
 .ma.span2 .fr-title{margin-top:var(--space-8);font:var(--weight-medium) var(--p1-size)/var(--p1-line) var(--font-text)}
 
 /* gallery */
@@ -164,8 +160,9 @@ button.ma:hover{border-color:var(--neutral-500)}
     14px) sits after the value and replaces the top-right status circles — it carries both trend
     (direction) and state (colour: positive / caution / negative icon tokens), matching the
     reference photo. Direction and tone are independent params per metric.
-    <b>Token gaps:</b> no --metric-stress alias (aqua-400 placeholder), no cell-surface alias,
-    no action-accent alias for the green CTA.
+    CTA colour is teal-400 via <b>--metric-readiness</b> — the alias the system already uses
+    for links, so no rule-bending. <b>Token gaps:</b> no --metric-stress alias (aqua-400
+    placeholder), no cell-surface alias.
   </div>
 </div>
 
@@ -211,8 +208,7 @@ function metricCard(m){
    Tap affordance = green CTA line (.act). */
 var STATES={
  'idle':{dot:'var(--metric-readiness)',tap:1,ovl:'Measure all',val:'3',unit:'min',
-   desc:'Measure all your metrics now',
-   sub:'<span class="act">Measure now</span>'},
+   sub:'All 5 metrics · <span class="act">Measure now</span>'},
  'cooldown':{dot:'var(--neutral-icon)',tap:0,ovl:'Measure all',val:'14:20',unit:'',
    sub:'Just measured · next in 8 min'},
  'connecting':{dot:'var(--metric-readiness)',pulse:1,tap:0,ovl:'Measure all',val:'\u2026',unit:'',

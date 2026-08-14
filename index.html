@@ -569,29 +569,35 @@ body{
 .ring3row{position:relative;margin-top:28px;padding:0 16px;display:grid;grid-template-columns:repeat(3,1fr);justify-items:center}
 .r3{display:flex;flex-direction:column;align-items:center}
 .r3box{position:relative;width:92px;height:92px}
-/* Ring scores: bigger + lighter (owner, 2026-08-14) — num-xl size (42) at
-   the medium weight token (500). Flag: no numeric token pairs 42px with
-   500; num-xl ships at 700, so the weight is overridden from the fontWeight
-   scale. line-height:1 keeps the digits optically centered in the ring. */
+/* Ring scores: League Spartan semibold at 32px (owner, 2026-08-14).
+   Flag: 32px is not on the numeric size scale (…24, 42…) — owner picked it
+   explicitly, so their spec wins; weight is the semibold token (600).
+   line-height:1 keeps the digits optically centered in the ring. */
 .r3num{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-family:var(--font-number);font-size:42px;line-height:1;font-weight:500;
+  font-family:var(--font-number);font-size:32px;line-height:1;font-weight:600;
   letter-spacing:-0.01em;font-feature-settings:var(--num-features);color:var(--text-1);
 }
 .r3num .value-dash{font-size:inherit;line-height:inherit;font-weight:inherit}
 .r3lab{margin-top:8px;font-size:13px;line-height:18px;font-weight:500;color:var(--text-2)}
 
-/* section headers between card groups (home tab) */
-.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:8px}
+/* section headers between card groups (home tab) — 24px above each section
+   (owner asked for more space between sections, 2026-08-14) */
+.sechead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:24px}
 .sechead:first-child{margin-top:0}
 .sechead .t{font-size:17px;line-height:22px;font-weight:600;color:var(--text-1)}
+/* right-side meta in section heads ("64 active mins", "Updated 14:20")
+   pulls in 16px from the card edge — owner flagged it reading as if it
+   escaped the page padding when flush with the cards (2026-08-14) */
+.sechead .subnote,.hm .upd{padding-right:16px}
 
-/* Start Workout — full-width pill, light-on-dark (from the wireframe).
+/* Start Workout — full-width pill, teal on dark (owner, 2026-08-14 —
+   was white). teal-400 ground with neutral-900 text: 9.6:1 contrast.
    Visual only for now; the workout flow isn't in this prototype. */
 .startbtn{
   display:flex;align-items:center;justify-content:center;gap:8px;
-  width:100%;height:56px;margin-top:8px;border:0;border-radius:999px;
-  background:var(--neutral-0);color:var(--neutral-900);
+  width:100%;height:48px;margin-top:8px;border:0;border-radius:999px;
+  background:var(--metric-readiness);color:var(--neutral-900);
   font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:600;cursor:pointer;
 }
 .startbtn .phi{color:var(--neutral-900)}
@@ -611,7 +617,7 @@ body{
 .hm .sec-head h2{margin:0;font:600 20px/26px var(--font-text);letter-spacing:-0.005em;color:var(--text-1)}
 .hm .upd{font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
 .hm .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.hm .card{min-height:132px;display:flex;flex-direction:column;text-align:left}
+.hm .card{height:132px;display:flex;flex-direction:column;text-align:left}
 .hm .tile-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .hm .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
 .hm .label{font:600 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -622,7 +628,7 @@ body{
 .hm .card-foot{margin-top:auto;padding-top:12px;font:400 13px/18px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
 .hm .ma{
   background:var(--surface-app);border:0.5px solid var(--divider);border-radius:20px;
-  padding:16px;min-height:132px;display:flex;flex-direction:column;
+  padding:16px;height:132px;display:flex;flex-direction:column;
   font-family:var(--font-text);text-align:left;color:var(--text-1);
   transition:border-color var(--duration-fast) ease;
 }
@@ -632,15 +638,15 @@ body{
 .hm .ma .dot.pulse{animation:pulse 1.4s ease-in-out infinite}
 .hm .ma .body{flex:1;display:flex;flex-direction:column}
 .hm .ma .desc{margin-top:4px;font:400 13px/18px var(--font-text);color:var(--text-3)}
-.hm .ma .rail{margin-top:12px;height:8px;border-radius:999px;background:var(--surface-raised);box-shadow:inset 0 0 0 0.5px var(--neutral-500);overflow:hidden}
+.hm .ma .rail{margin-top:8px;height:8px;border-radius:999px;background:var(--surface-raised);box-shadow:inset 0 0 0 0.5px var(--neutral-500);overflow:hidden}
 .hm .ma .rail i{display:block;height:100%;border-radius:999px;background:var(--metric-readiness);transition:width var(--duration-slow) cubic-bezier(0.32,0.72,0,1)}
 .hm .ma .sub{margin-top:auto;padding-top:12px;font:400 13px/18px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
-/* CTA accent — teal-300, one step smaller than the sub line (owner,
-   2026-08-14: "reduce size, teal 300/400/500, check contrast"). On the
-   cell's surface-app background: teal-300 11.4:1, teal-400 9.6:1,
-   teal-500 6.5:1 — teal-300 picked for the strongest contrast at 11px. */
-.hm .ma .act{color:var(--teal-300);font-weight:500;font-size:11px;line-height:16px}
-.hm .ma.span2{grid-column:1/-1;min-height:0}
+/* CTA accent — v2 of the component settles this: teal-400 via the
+   --metric-readiness alias (the system's link accent), medium weight, at
+   the sub line's 13px. Supersedes the earlier teal-300/11px pass.
+   Contrast on the cell's surface-app: 9.6:1 — passes AA comfortably. */
+.hm .ma .act{color:var(--metric-readiness);font-weight:500}
+.hm .ma.span2{grid-column:1/-1;height:auto;min-height:0}
 .hm .ma.span2 .fr-title{margin-top:8px;font:500 15px/22px var(--font-text)}
 
 /* Me tab */
@@ -861,17 +867,23 @@ body{
                (em-dash cards + "Take your first reading"). -->
           <!-- "Averages from 42 readings" footer removed (owner, 2026-08-14) -->
           <div class="hm">
-            <div class="sec-head"><h2>Health Monitor</h2><span class="upd" id="hmUpd">Updated 14:20</span></div>
+            <!-- sentence case per owner ("Health monitor — M not large") -->
+            <div class="sec-head"><h2>Health monitor</h2><span class="upd" id="hmUpd">Updated 14:20</span></div>
             <div class="grid" id="hmGrid"></div>
           </div>
 
-          <!-- Activity Monitor — steps / distance / calories with progress
+          <!-- Activity monitor — steps / distance / calories with progress
                bars, same rows as the Activity tab's "Today's goals" card.
+               Owner (2026-08-14): the workout card merges under THIS
+               heading — order is progress card, workouts card, then the
+               Start Workout CTA. Sentence case to match "Health monitor"
+               (flag: owner only named the health heading; applied to both
+               for consistency).
                Flag: the wireframe shows 8.4k / 6.1 km / 512 kcal and
                "71 active mins" — this prototype's sample day is 7,240 /
                5.1 km / 420 kcal, so those numbers are used everywhere for
                consistency; the active-mins figure is scaled to match. -->
-          <div class="sechead"><span class="t">Activity Monitor</span><span class="subnote">64 active mins</span></div>
+          <div class="sechead"><span class="t">Activity monitor</span><span class="subnote">64 active mins</span></div>
           <div class="card stateful empty-zero">
             <div class="statechip sync">
               <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
@@ -901,20 +913,12 @@ body{
             </div>
           </div>
 
-          <!-- Start Workout — visual only; the workout flow isn't built -->
-          <button class="startbtn" type="button">
-            <span class="phi" data-ph="play" data-weight="fill" style="width:16px;height:16px"></span>
-            Start Workout
-          </button>
-
           <!-- Workout summary — the same approved WorkoutsCard as the
                Activity tab (same rows, same sample day). Hidden entirely
-               in the no-data state, matching that tab.
-               Flag: the wireframe has a "Workout" section header AND the
-               component keeps its own "Workouts" card title — both are
-               kept (wireframe + untouched component win); drop the
-               section header if the doubled title reads badly. -->
-          <div class="sechead"><span class="t">Workout</span></div>
+               in the no-data state, matching that tab. Merged under the
+               Activity monitor heading (owner, 2026-08-14) — its separate
+               "Workout" section header is gone, which also resolves the
+               earlier doubled-title flag. -->
           <div class="wo-card stateful hide-empty">
             <header class="wo-header">
               <h3 class="wo-title">Workouts</h3>
@@ -941,6 +945,14 @@ body{
               </button>
             </div>
           </div>
+
+          <!-- Start Workout — visual only; the workout flow isn't built.
+               Closes the Activity monitor section (owner order:
+               progress card, workouts card, then CTA). -->
+          <button class="startbtn" type="button">
+            <span class="phi" data-ph="play" data-weight="fill" style="width:16px;height:16px"></span>
+            Start Workout
+          </button>
 
         </div>
       </section>
@@ -2788,11 +2800,11 @@ $('#contToggle').addEventListener('click', () => {
 
 /* ==========================================================================
    HEALTH MONITOR — owner-supplied component (components/measure-all-cell.html,
-   2026-08-14): five metric cards + the "Measure All" cell state machine.
-   Data and states copied verbatim from the component. Two integration notes:
-   - the CTA (.act) renders teal-400 per the owner (component shipped green);
-   - the app's no-data state shows the component's own first-run mode
-     (em-dash cards + "Take your first reading"), and taps are inert there.
+   v2, 2026-08-14): five metric cards + the "Measure All" cell state machine.
+   Data and states copied verbatim from the component (v2 CTA = teal-400 via
+   the --metric-readiness alias). One integration note: the app's no-data
+   state shows the component's own first-run mode (em-dash cards + "Take
+   your first reading"), and taps are inert there.
    ========================================================================== */
 const HM_TONE = { pos:'var(--positive-icon)', neg:'var(--negative-icon)', caution:'var(--caution-icon)' };
 // soft triangle indicator — rounded joins, up/down, semantic tone
@@ -2821,7 +2833,7 @@ function hmMetricCard(m){
    neutral = resting. Tap affordance = the teal CTA line (.act). */
 const HM_STATES = {
   'idle':             { dot:'var(--metric-readiness)', tap:1, ovl:'Measure all', val:'3', unit:'min',
-                        desc:'Measure all your metrics now', sub:'<span class="act">Measure now</span>' },
+                        sub:'All 5 metrics · <span class="act">Measure now</span>' },
   'cooldown':         { dot:'var(--neutral-icon)', tap:0, ovl:'Measure all', val:'14:20', unit:'',
                         sub:'Just measured · next in 8 min' },
   'connecting':       { dot:'var(--metric-readiness)', pulse:1, tap:0, ovl:'Measure all', val:'…', unit:'',

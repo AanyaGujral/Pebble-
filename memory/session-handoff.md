@@ -15,9 +15,13 @@
 > (paintScene 'home'); the owner's Measure All component is plugged in as
 > the Health Monitor (components/measure-all-cell.html) with its CTA
 > switched to teal (settled on teal-300 in round 3 for contrast at 11px).
-> Round 3 polish: no 3-dot menu on home, greeting at h2 medium, 42px medium
-> ring scores, generic hero copy, "Updated 14:20" center-aligned, averages
-> footer removed. Open items: add a real
+> Round 3 polish: no 3-dot menu on home, greeting at h2 medium, generic
+> hero copy, averages footer removed. Round 4: owner's v2 component adopted
+> (CTA teal-400 via --metric-readiness, 13px — supersedes teal-300/11px),
+> ring scores 32px semibold, sentence-case section headers with 24px
+> spacing, right header meta inset 16px, teal 48px Start Workout, workout
+> card merged under Activity monitor (order: progress card, workouts, CTA).
+> Open items: add a real
 > stress token to js/tokens.js (Stress card uses the component's aqua
 > placeholder); owner to decide on the doubled "Workout"/"Workouts" title
 > above the reused card.

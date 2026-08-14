@@ -5,6 +5,21 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-14 (round 4) — Home feedback round on the owner's v2 Measure All
+  component (replaces v1 at components/measure-all-cell.html — fixed 132px
+  cells, tighter rail spacing, idle copy "All 5 metrics · Measure now", CTA
+  teal-400 via the --metric-readiness alias, superseding round 3's
+  teal-300/11px). Ring scores now League Spartan semibold at 32px (flagged:
+  32 isn't on the numeric size scale — owner's explicit spec). Section
+  headers sentence-cased ("Health monitor" per owner; "Activity monitor"
+  matched for consistency, flagged) and given 24px top spacing. Right-side
+  header meta ("Updated 14:20", "64 active mins") pulled in 16px from the
+  card edge (owner saw it escaping the page padding). Start Workout is now
+  teal-400 with neutral-900 text (9.6:1) at 48px height, and the workout
+  card merged under the Activity monitor heading — order: progress card,
+  workouts card, then the CTA (separate "Workout" header removed, resolving
+  the doubled-title flag).
+
 - 2026-08-14 (round 3) — Home polish from owner feedback: 3-dot menu removed
   from the home header; greeting stepped down to h2 medium (20/26, 500);
   ring scores up to num-xl size (42px) at medium weight — flagged: no
