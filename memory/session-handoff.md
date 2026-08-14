@@ -9,9 +9,15 @@
 > component is being built separately and will plug in there), Activity
 > Monitor progress card, Start Workout button (visual only), and the
 > WorkoutsCard reused from the Activity tab. All four nav tabs are live;
-> the flow lands on Home. Open items: plug in the Health Monitor component
-> when it arrives; owner to decide on the doubled "Workout"/"Workouts"
-> title above the reused card.
+> the flow lands on Home. Round 2 (same day, owner reference image): AI
+> summary is a plain centered headline + body (bordered insight card
+> dropped); top section has a code-drawn green-teal speckle background
+> (paintScene 'home'); the owner's Measure All component is plugged in as
+> the Health Monitor (components/measure-all-cell.html) with its CTA
+> switched to teal-400 (only requested change). Open items: add a real
+> stress token to js/tokens.js (Stress card uses the component's aqua
+> placeholder); owner to decide on the doubled "Workout"/"Workouts" title
+> above the reused card.
 
 > **2026-08-10 — previous status.** `index.html` is now the MERGED source of
 > truth: it adopts the parallel session's build (metric details pages with a

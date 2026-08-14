@@ -5,6 +5,22 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-14 (later) — Home page round 2, from the owner's reference image:
+  the AI summary is now a plain centered headline + body over the hero
+  background (the bordered "Insight of the Day" card is gone); the top
+  section gets a code-drawn background — quiet green-teal wash with faint
+  speckles fading out exactly at the metrics divide (paintScene 'home',
+  no image slot — owner said gradient only). Plugged in the owner's Measure
+  All component (saved at components/measure-all-cell.html): five metric
+  cards + the Measure All cell with its full state machine, replacing the
+  placeholder tiles. ONE requested change applied: the CTA line is teal-400
+  instead of the component's green (changed in the component copy AND the
+  integrated styles). App no-data state shows the component's first-run
+  mode. Ring order / simple-tiles decisions from the earlier round stand
+  (owner kept ring order + swapped tiles for this component). Flag: the
+  Stress card still uses the component's --aqua-400 placeholder — no stress
+  token exists in js/tokens.js yet.
+
 - 2026-08-14 — Rebuilt the Health tab as the HOME page from the owner's
   wireframe: greeting + date picker, then THREE side-by-side score rings
   (sleep / readiness / activity — replacing the nested-rings hero), then the

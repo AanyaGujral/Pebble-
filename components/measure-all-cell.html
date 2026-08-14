@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pebble — Measure All cell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Pebble tokens (verbatim aliases from design system) ─────────────── */
+:root{
+--neutral-0:#EFF1F9;--neutral-100:#D5D9EA;--neutral-200:#B8BDD3;--neutral-300:#999FB9;
+--neutral-400:#7B819C;--neutral-500:#5E637D;--neutral-600:#42465B;--neutral-700:#282B39;
+--neutral-800:#0F111B;--neutral-900:#07080C;
+
+--crimson-400:#E43A62;--terracotta-400:#D96F4A;--tangerine-400:#F59E3B;--gold-400:#F2C64B;
+--lime-400:#A6CE4E;--emerald-400:#43B476;--teal-400:#45C7B3;--teal-300:#76D4C3;--teal-500:#31A492;
+--sky-400:#58A8DF;--violet-400:#8A7CEC;--orchid-400:#C873DE;
+--aqua-400:rgb(61,210,243); /* Figma-generated token; see decisions note */
+
+--surface-app:var(--neutral-900);--surface-card:var(--neutral-800);
+--surface-raised:var(--neutral-700);--surface-fill:var(--neutral-600);
+--text-1:var(--neutral-0);--text-2:var(--neutral-200);--text-3:var(--neutral-400);
+--divider:var(--neutral-700);--gridline:var(--neutral-700);--border-card:var(--neutral-700);
+
+--metric-heart-rate:var(--crimson-400);--metric-hrv:var(--terracotta-400);
+--metric-readiness:var(--teal-400);--metric-spo2:var(--sky-400);--metric-skin-temp:var(--orchid-400);
+
+--positive-bg:#0E2A1B;--positive-icon:#4ADE80;--positive-text:#8AF0B0;
+--negative-bg:#331109;--negative-icon:#F4604C;--negative-text:#FF9184;
+--caution-bg:#2E2103;--caution-icon:#EFB428;--caution-text:#F5CE6F;
+--neutral-icon:var(--neutral-300);--neutral-text:var(--neutral-200);
+--state-inactive:0.45;
+
+/* typography — shorthands as defined by the design system */
+--font-text:'Google Sans Flex','Google Sans',sans-serif;
+--font-number:'Spartan','League Spartan',sans-serif;
+--font-feature-numeric:'tnum' 1,'lnum' 1;
+--weight-regular:400;--weight-medium:500;--weight-semibold:600;
+
+--p1-size:15px;--p1-line:22px;--p2-size:13px;--p2-line:18px;--p3-size:11px;--p3-line:16px;
+--overline-size:11px;--overline-line:16px;--overline-tracking:0.08em;
+--h2-size:20px;--h2-line:26px;--h2-tracking:-0.005em;
+--num-l-size:24px;--num-l-line:28px;--num-l-tracking:-0.005em;--num-l-weight:700;
+
+--type-p1:var(--weight-regular) var(--p1-size)/var(--p1-line) var(--font-text);
+--type-p2:var(--weight-regular) var(--p2-size)/var(--p2-line) var(--font-text);
+--type-p3:var(--weight-regular) var(--p3-size)/var(--p3-line) var(--font-text);
+--type-h2:var(--weight-semibold) var(--h2-size)/var(--h2-line) var(--font-text);
+--type-overline:var(--weight-medium) var(--overline-size)/var(--overline-line) var(--font-text);
+--type-num-l:var(--num-l-weight) var(--num-l-size)/var(--num-l-line) var(--font-number);
+
+--space-2:2px;--space-4:4px;--space-8:8px;--space-12:12px;--space-16:16px;--space-20:20px;--space-24:24px;
+--screen-width:360px;--screen-gutter:16px;--card-pad:16px;--card-gap:12px;
+
+--radius-card:20px;--radius-pill:999px;--radius-bar-cap:4px;
+--border-hairline:0.5px;--border-thin:1px;
+--duration-fast:120ms;--duration-slow:240ms;--ease-standard:ease;
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@keyframes cellPulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* ── page chrome ──────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--surface-app);color:var(--text-1);
+  font:var(--type-p1);-webkit-font-smoothing:antialiased}
+.stage{width:var(--screen-width);margin:0 auto;padding:24px var(--screen-gutter) 64px}
+.demo-h{font:var(--type-overline);font-weight:var(--weight-semibold);
+  letter-spacing:var(--overline-tracking);
+  text-transform:uppercase;color:var(--text-3);margin:32px 0 12px;font-size:13px;line-height:18px}
+
+/* state switcher chips (pattern from Activity tab dev chips) */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{font:var(--weight-medium) 11px/16px var(--font-text);border:0;
+  border-radius:var(--radius-pill);padding:4px 12px;cursor:pointer;
+  background:var(--surface-card);color:var(--text-3)}
+.chips button[aria-pressed="true"]{background:var(--metric-readiness);color:var(--neutral-900)}
+
+/* ── section ──────────────────────────────────────────────────────────── */
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 var(--space-16)}
+.sec-head h2{margin:0;font:var(--type-h2);letter-spacing:var(--h2-tracking)}
+.sec-head .upd{font:var(--type-p3);font-weight:var(--weight-medium);color:var(--text-3);
+  font-feature-settings:var(--font-feature-numeric)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--card-gap)}
+.sec-foot{margin-top:var(--space-12);font:var(--type-p3);color:var(--text-3)}
+
+/* ── metric card — typography verbatim from StatTile_preview.html ─────── */
+.card{background:var(--surface-card);border-radius:var(--radius-card);padding:var(--card-pad);
+  min-height:132px;display:flex;flex-direction:column;text-align:left}
+.tile-top{display:flex;align-items:center;gap:var(--space-8);margin-bottom:var(--space-8)}
+.dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.label{font:var(--type-overline);font-weight:var(--weight-semibold);
+  letter-spacing:var(--overline-tracking);text-transform:uppercase;color:var(--text-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.figure{display:flex;align-items:baseline;justify-content:flex-start;gap:var(--space-4)}
+.value{font:var(--type-num-l);letter-spacing:var(--num-l-tracking);color:var(--text-1);
+  font-feature-settings:var(--font-feature-numeric)}
+.unit{font:var(--type-overline);font-weight:var(--weight-semibold);
+  letter-spacing:var(--overline-tracking);text-transform:uppercase;color:var(--text-3)}
+.tri{align-self:center;margin-left:var(--space-4);flex:0 0 auto;display:block}
+.card-foot{margin-top:auto;padding-top:var(--space-12);
+  font:var(--type-p2);color:var(--text-3);font-feature-settings:var(--font-feature-numeric)}
+
+/* ── the Measure All cell ─────────────────────────────────────────────── */
+.ma{background:var(--surface-app);border:var(--border-hairline) solid var(--border-card);
+  border-radius:var(--radius-card);padding:var(--card-pad);min-height:132px;
+  display:flex;flex-direction:column;font-family:var(--font-text);text-align:left;color:var(--text-1);
+  transition:border-color var(--duration-fast) var(--ease-standard)}
+button.ma{cursor:pointer}
+button.ma:hover{border-color:var(--neutral-500)}
+.ma[aria-disabled="true"]{cursor:default}
+.ma .dot.pulse{animation:cellPulse 1.4s ease-in-out infinite}
+.ma .body{flex:1;display:flex;flex-direction:column}
+.ma .desc{margin-top:var(--space-4);font:var(--type-p2);color:var(--text-3)}
+.ma .rail{margin-top:var(--space-12);height:8px;border-radius:var(--radius-pill);
+  background:var(--surface-raised);box-shadow:inset 0 0 0 var(--border-hairline) var(--neutral-500);
+  overflow:hidden}
+.ma .rail i{display:block;height:100%;border-radius:var(--radius-pill);
+  background:var(--metric-readiness);
+  transition:width var(--duration-slow) cubic-bezier(0.32,0.72,0,1)}
+.ma .sub{margin-top:auto;padding-top:var(--space-12);
+  font:var(--type-p2);color:var(--text-3);font-feature-settings:var(--font-feature-numeric)}
+/* Owner change 2026-08-14: CTA accent switched from green (--positive-icon)
+   to teal-400 — the component's note about a missing action-accent alias
+   still stands. */
+.ma .act{color:var(--teal-400);font-weight:var(--weight-medium)}
+.ma.span2{grid-column:1 / -1;min-height:0}
+.ma.span2 .fr-title{margin-top:var(--space-8);font:var(--weight-medium) var(--p1-size)/var(--p1-line) var(--font-text)}
+
+/* gallery */
+.gal{display:grid;grid-template-columns:1fr 1fr;gap:var(--card-gap)}
+.gal .lbl{grid-column:1 / -1;margin:var(--space-8) 0 0;
+  font:var(--type-p3);font-weight:var(--weight-medium);color:var(--text-3)}
+.note{margin-top:var(--space-24);border-top:var(--border-hairline) solid var(--divider);
+  padding-top:var(--space-16);font:var(--type-p2);color:var(--text-3)}
+.note b{color:var(--text-2);font-weight:var(--weight-medium)}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="demo-h">Cell state</div>
+  <div class="chips" id="chips" role="group" aria-label="Preview state"></div>
+
+  <div class="demo-h">In section — Health Monitor</div>
+  <section aria-label="Health Monitor">
+    <div class="sec-head">
+      <h2>Health Monitor</h2>
+      <span class="upd" id="secUpd">Updated 14:20</span>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="sec-foot" id="secFoot">Averages from 42 readings today</div>
+  </section>
+
+  <div class="demo-h">All states</div>
+  <div class="gal" id="gal"></div>
+
+  <div class="note">
+    <b>Decisions to confirm.</b> Label and unit are now <b>--type-overline at semibold</b> and
+    the value is <b>--type-num-l</b> via the shorthand — verbatim from StatTile_preview.html
+    (my previous medium-weight labels were off-spec). The <b>soft triangle</b> (rounded SVG,
+    14px) sits after the value and replaces the top-right status circles — it carries both trend
+    (direction) and state (colour: positive / caution / negative icon tokens), matching the
+    reference photo. Direction and tone are independent params per metric.
+    <b>Token gaps:</b> no --metric-stress alias (aqua-400 placeholder), no cell-surface alias,
+    no action-accent alias for the green CTA.
+  </div>
+</div>
+
+<script>
+/* ── soft triangle indicator — rounded joins, up/down, semantic tone ──── */
+var TONE={pos:'var(--positive-icon)',neg:'var(--negative-icon)',caution:'var(--caution-icon)'};
+function tri(t){
+  if(!t)return '';
+  var d=t.d==='down'?'M12 19 L4.5 6.5 H19.5 Z':'M12 5 L19.5 17.5 H4.5 Z';
+  return '<svg class="tri" viewBox="0 0 24 24" width="14" height="14" role="img" '
+    +'aria-label="'+(t.d==='down'?'down':'up')+', '+t.tone+'">'
+    +'<path d="'+d+'" fill="'+TONE[t.tone]+'" stroke="'+TONE[t.tone]
+    +'" stroke-width="5" stroke-linejoin="round"/></svg>';
+}
+
+/* ── metric cards — footers modeled on the stat-tile screenshot ───────── */
+var METRICS=[
+ {n:'HRV',       c:'var(--metric-hrv)',        v:'57',   u:'ms',  t:{d:'up',tone:'pos'},   f:'7-day avg 54 ms'},
+ {n:'Heart Rate',c:'var(--metric-heart-rate)', v:'72',   u:'bpm', t:{d:'down',tone:'pos'}, f:'Resting · just now'},
+ {n:'Stress',    c:'var(--aqua-400)',          v:'38',   u:'',    t:{d:'down',tone:'pos'}, f:'Below your baseline'},
+ {n:'Skin Temp', c:'var(--metric-skin-temp)',  v:'36.4', u:'°C',  t:{d:'up',tone:'pos'},   f:'Same as baseline'},
+ {n:'SpO₂',      c:'var(--metric-spo2)',       v:'97',   u:'%',   t:{d:'up',tone:'pos'},   f:'Overnight low 95%'}
+];
+var METRICS_EMPTY=METRICS.map(function(m){
+  return {n:m.n,c:m.c,v:'—',u:'',t:null,f:'No readings yet'};
+});
+function metricCard(m){
+  return '<div class="card">'
+    +'<div class="tile-top">'
+    +'<span class="dot" style="background:'+m.c+'"></span>'
+    +'<span class="label">'+m.n+'</span>'
+    +'</div>'
+    +'<div class="figure"><span class="value">'+m.v+'</span>'
+    +(m.u?'<span class="unit">'+m.u+'</span>':'')
+    +tri(m.t)
+    +'</div>'
+    +'<div class="card-foot">'+m.f+'</div>'
+    +'</div>';
+}
+
+/* ── Measure All cell states ──────────────────────────────────────────── */
+/* dot: teal = actionable · pulse = in flight · semantic = outcome/blocked · neutral = resting.
+   Tap affordance = green CTA line (.act). */
+var STATES={
+ 'idle':{dot:'var(--metric-readiness)',tap:1,ovl:'Measure all',val:'3',unit:'min',
+   desc:'Measure all your metrics now',
+   sub:'<span class="act">Measure now</span>'},
+ 'cooldown':{dot:'var(--neutral-icon)',tap:0,ovl:'Measure all',val:'14:20',unit:'',
+   sub:'Just measured · next in 8 min'},
+ 'connecting':{dot:'var(--metric-readiness)',pulse:1,tap:0,ovl:'Measure all',val:'\u2026',unit:'',
+   sub:'Connecting to Pebble\u2026'},
+ 'measuring':{dot:'var(--metric-readiness)',pulse:1,tap:1,ovl:'Measuring',val:'2/5',unit:'',
+   rail:40,sub:'Skin Temp · <span class="act">Cancel</span>'},
+ 'interrupted':{dot:'var(--caution-icon)',tap:1,ovl:'Measuring',val:'2/5',unit:'',
+   rail:40,sub:'Reading disturbed · <span class="act">Resume</span>'},
+ 'complete-all':{dot:'var(--positive-icon)',tap:0,ovl:'Measure all',val:'5/5',unit:'',
+   sub:'All metrics updated · 14:23'},
+ 'complete-partial':{dot:'var(--caution-icon)',tap:1,ovl:'Measure all',val:'3/5',unit:'',
+   sub:'2 didn\u2019t finish · <span class="act">Retry</span>'},
+ 'complete-none':{dot:'var(--negative-icon)',tap:1,ovl:'Measure all',val:'0/5',unit:'',
+   sub:'Couldn\u2019t measure · <span class="act">Try again</span>'},
+ 'cancelled':{dot:'var(--neutral-icon)',tap:1,ovl:'Measure all',val:'\u2014',unit:'',
+   sub:'Cancelled · <span class="act">Start again</span>'},
+ 'blocked-not-worn':{dot:'var(--caution-icon)',tap:0,ovl:'Measure all',val:'\u2014',unit:'',
+   sub:'Not on wrist'},
+ 'first-run':{dot:'var(--metric-readiness)',tap:1,span2:1,ovl:'First reading',
+   title:'Take your first reading',
+   sub:'3 min · builds your baseline · <span class="act">Start</span>'}
+};
+var NEXT={'idle':'connecting','connecting':'measuring','measuring':'cancelled',
+  'interrupted':'measuring','complete-partial':'connecting','complete-none':'connecting',
+  'cancelled':'connecting','first-run':'connecting'};
+
+function maCell(key,inGrid){
+  var s=STATES[key];
+  var tag=s.tap?'button':'div';
+  var body='';
+  if(s.title){body='<div class="fr-title">'+s.title+'</div>';}
+  else{
+    body='<div class="figure"><span class="value">'+s.val+'</span>'
+      +(s.unit?'<span class="unit">'+s.unit+'</span>':'')+'</div>';
+    if(s.desc)body+='<div class="desc">'+s.desc+'</div>';
+    if(s.rail!=null)body+='<div class="rail" role="progressbar" aria-valuenow="'+s.rail
+      +'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+s.rail+'%"></i></div>';
+  }
+  return '<'+tag+' class="ma'+(s.span2?' span2':'')+'"'
+    +(s.tap?' type="button"':' aria-disabled="true"')
+    +(inGrid?' data-live="1"':'')+' data-state="'+key+'">'
+    +'<div class="tile-top">'
+    +'<span class="dot'+(s.pulse?' pulse':'')+'" style="background:'+s.dot+'"></span>'
+    +'<span class="label">'+s.ovl+'</span>'
+    +'</div>'
+    +'<div class="body">'+body+(s.sub?'<div class="sub">'+s.sub+'</div>':'')+'</div>'
+    +'</'+tag+'>';
+}
+
+/* ── render ───────────────────────────────────────────────────────────── */
+var current='idle';
+var ORDER=Object.keys(STATES);
+
+function renderGrid(){
+  var firstRun=current==='first-run';
+  var cards=(firstRun?METRICS_EMPTY:METRICS).map(metricCard).join('');
+  document.getElementById('grid').innerHTML=cards+maCell(current,true);
+  document.getElementById('secUpd').textContent=firstRun?'':'Updated 14:20';
+  document.getElementById('secFoot').textContent=firstRun?'':'Averages from 42 readings today';
+}
+function renderChips(){
+  var c=document.getElementById('chips');
+  c.innerHTML=ORDER.map(function(k){
+    return '<button type="button" aria-pressed="'+(k===current)+'" data-k="'+k+'">'+k+'</button>';
+  }).join('');
+}
+function setState(k){
+  if(!STATES[k])return;
+  current=k;
+  renderChips();
+  renderGrid();
+}
+
+/* event delegation — survives re-renders, one listener each */
+document.getElementById('chips').addEventListener('click',function(e){
+  var b=e.target.closest('button[data-k]');
+  if(b)setState(b.dataset.k);
+});
+document.getElementById('grid').addEventListener('click',function(e){
+  var b=e.target.closest('button.ma[data-live]');
+  if(b&&NEXT[current])setState(NEXT[current]);
+});
+/* gallery cells jump the live grid to that state */
+document.getElementById('gal').addEventListener('click',function(e){
+  var b=e.target.closest('.ma[data-state]');
+  if(b){setState(b.dataset.state);
+    document.querySelector('.sec-head').scrollIntoView({behavior:'smooth',block:'start'});}
+});
+
+function renderGallery(){
+  var groups=[
+    ['Ready & resting',['idle','cooldown','cancelled']],
+    ['In flight',['connecting','measuring','interrupted']],
+    ['Outcomes',['complete-all','complete-partial','complete-none']],
+    ['Blocked',['blocked-not-worn']],
+    ['First run — spans both columns',['first-run']]
+  ];
+  document.getElementById('gal').innerHTML=groups.map(function(g){
+    return '<div class="lbl">'+g[0]+'</div>'+g[1].map(function(k){return maCell(k,false);}).join('');
+  }).join('');
+}
+
+renderChips();
+renderGrid();
+renderGallery();
+</script>
+</body>
+</html>
