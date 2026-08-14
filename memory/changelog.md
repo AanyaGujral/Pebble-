@@ -5,6 +5,15 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-10 — Split the home (Health) screen out into its own standalone
+  file, `Home Tab/Home Tab.html`, as a starting point for building it up in a
+  fresh session. It carries the greeting header, three-ring hero (sleep /
+  readiness / activity) with legend chips, the six metric tiles, the
+  month-scroll history calendar, the 3-dot menu and a two-state control
+  panel — with purpose-written JS rather than the full app's, so the file
+  stays small. Webfonts are embedded, so it opens standalone with correct
+  type. The same build is published as an artifact for review.
+
 - 2026-08-10 — Moved the named snapshot into `Activity Tab/Workout Tab.html`
   (folder layout mirrors `Sleep Tab/`). `index.html` stays the live working
   copy at the repo root. Pushed as is at the owner's request.
