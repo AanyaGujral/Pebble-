@@ -5,6 +5,19 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-14 (round 3) — Home polish from owner feedback: 3-dot menu removed
+  from the home header; greeting stepped down to h2 medium (20/26, 500);
+  ring scores up to num-xl size (42px) at medium weight — flagged: no
+  numeric token pairs 42px with 500, weight overridden from the fontWeight
+  scale — with line-height:1 keeping them centered in the rings; hero copy
+  made generic ("You're set up for a good day", no sleep reference);
+  Health Monitor "Updated 14:20" center-aligned against the heading
+  (measurement showed it already sat on the 16px padding — the off look was
+  baseline alignment); "Averages from 42 readings today" footer removed;
+  Measure All CTA reduced to p3 (11px) and settled on teal-300 for contrast
+  (11.4:1 on the cell's surface-app vs 9.6:1 teal-400 / 6.5:1 teal-500) —
+  synced into components/measure-all-cell.html too.
+
 - 2026-08-14 (later) — Home page round 2, from the owner's reference image:
   the AI summary is now a plain centered headline + body over the hero
   background (the bordered "Insight of the Day" card is gone); the top

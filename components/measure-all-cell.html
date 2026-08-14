@@ -121,10 +121,11 @@ button.ma:hover{border-color:var(--neutral-500)}
   transition:width var(--duration-slow) cubic-bezier(0.32,0.72,0,1)}
 .ma .sub{margin-top:auto;padding-top:var(--space-12);
   font:var(--type-p2);color:var(--text-3);font-feature-settings:var(--font-feature-numeric)}
-/* Owner change 2026-08-14: CTA accent switched from green (--positive-icon)
-   to teal-400 — the component's note about a missing action-accent alias
-   still stands. */
-.ma .act{color:var(--teal-400);font-weight:var(--weight-medium)}
+/* Owner changes 2026-08-14: CTA accent switched from green (--positive-icon)
+   to teal, then sized down to p3 and settled on teal-300 for contrast
+   (11.4:1 on the cell's surface-app vs 9.6:1 teal-400 / 6.5:1 teal-500).
+   The note about a missing action-accent alias still stands. */
+.ma .act{color:var(--teal-300);font-weight:var(--weight-medium);font-size:var(--p3-size);line-height:var(--p3-line)}
 .ma.span2{grid-column:1 / -1;min-height:0}
 .ma.span2 .fr-title{margin-top:var(--space-8);font:var(--weight-medium) var(--p1-size)/var(--p1-line) var(--font-text)}
 
