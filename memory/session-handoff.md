@@ -1,6 +1,19 @@
 # Session Handoff
 
-> **2026-08-10 — read this first.** `index.html` is now the MERGED source of
+> **2026-08-14 — read this first.** The Health tab is now the HOME page,
+> rebuilt from the owner's wireframe on branch
+> `claude/home-page-redesign-rings-y8m302`: greeting + date, three
+> side-by-side score rings, AI "Insight of the Day" card (top block on a
+> token gradient — owner said no background image for this tab), then
+> Health Monitor (simple tiles as a PLACEHOLDER — the real sparkline-card
+> component is being built separately and will plug in there), Activity
+> Monitor progress card, Start Workout button (visual only), and the
+> WorkoutsCard reused from the Activity tab. All four nav tabs are live;
+> the flow lands on Home. Open items: plug in the Health Monitor component
+> when it arrives; owner to decide on the doubled "Workout"/"Workouts"
+> title above the reused card.
+
+> **2026-08-10 — previous status.** `index.html` is now the MERGED source of
 > truth: it adopts the parallel session's build (metric details pages with a
 > D/W/M/Y period switcher; control panel reduced to Default + No data and
 > scoped to the Activity tab — Health/Sleep/Me tabs temporarily disabled in

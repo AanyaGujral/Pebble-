@@ -5,6 +5,22 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-14 — Rebuilt the Health tab as the HOME page from the owner's
+  wireframe: greeting + date picker, then THREE side-by-side score rings
+  (sleep / readiness / activity — replacing the nested-rings hero), then the
+  AI "Insight of the Day" card; that whole top block sits on the hero
+  background (gradient only — owner said no image for this tab). Below, the
+  separated card stack: Health Monitor section (simple tiles kept as a
+  PLACEHOLDER — the real sparkline-card component is being built separately
+  and plugs in here), Activity Monitor card (steps / distance / calories
+  progress rows, same data as the Activity tab), a Start Workout pill button
+  (visual only), and the approved WorkoutsCard reused verbatim. No chevrons
+  or tap-throughs on rings/tiles (owner request). All four nav tabs are now
+  clickable and the flow lands on Home. Flags in code: Activity ring is
+  lime per tokens (wireframe shows yellow); scores use this prototype's
+  sample data, not the wireframe placeholders; insight copy greets Aanya,
+  not the wireframe's "Komal"; sparkle/play icons are hand-drawn stand-ins.
+
 - 2026-08-10 — Moved the named snapshot into `Activity Tab/Workout Tab.html`
   (folder layout mirrors `Sleep Tab/`). `index.html` stays the live working
   copy at the repo root. Pushed as is at the owner's request.
