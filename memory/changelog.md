@@ -5,6 +5,23 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-14 (round 6) — Three alignment/type fixes from the owner.
+  (1) Ring scores now optically centred. The cause was font metrics, not
+  layout: League Spartan reserves 0.219em of descender space that digits
+  never use, so flex-centring the text box left the ink 3.6px high in the
+  92px ring. Nudged down by half the descender (translateY(0.109em));
+  measured ink centre is now 46.0 of 92. Note for future numeral work: this
+  only shows when the real webfont loads — with a fallback face the metrics
+  differ and it looked centred already, which is why it wasn't caught
+  earlier. (2) Section headers baseline-aligned, so "Health monitor" and
+  "Updated 14:20" share a bottom line; same for Activity monitor. This
+  reverses round 3's centre alignment, which was set when the title was
+  20px. (3) All header secondary text unified on the Workouts card's
+  "2 workouts · 1h 17m" as the reference — 11/16 medium at text-2, one rule
+  covering .subnote, .hm .upd and .wo-meta so they can't drift. Previously
+  .subnote and .upd were regular weight at text-3. Tabular figures added to
+  all three (the only change to the reference itself).
+
 - 2026-08-14 (round 5) — Health monitor replaced with the owner's v4
   component (components/measure-all-cell.html). The in-grid "Measure All"
   cell and its 11-state machine are gone; v4 ships five metric cards, then

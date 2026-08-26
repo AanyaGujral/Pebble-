@@ -453,7 +453,18 @@ body{
 .tri-down-good{width:7px;height:5px;background:var(--positive-icon);clip-path:polygon(0 0,100% 0,50% 100%)}
 .dot-flat{width:6px;height:6px;border-radius:50%;background:var(--text-3)}
 .card-body{margin-top:16px}
-.subnote{font-size:11px;line-height:16px;font-weight:400;color:var(--text-3);white-space:nowrap}
+/* Header secondary text — ONE style everywhere (owner, 2026-08-14), taken
+   from the Workouts card's "2 workouts · 1h 17m": 11/16 medium, text-2.
+   Used by .subnote (section subheads, weekly ranges), .hm .upd ("Updated
+   14:20") and .wo-meta itself; the rule lives with all three selectors so
+   they can't drift apart again. Was 11/16 regular at text-3 for .subnote
+   and .upd — both are a step brighter and heavier now.
+   Tabular figures added to all three so the numerals line up (this file's
+   rule for every numeral); on the reference that's the only change. */
+.subnote,.hm .upd,.wo-meta{
+  font:500 11px/16px var(--font-text);color:var(--text-2);white-space:nowrap;
+  font-feature-settings:var(--num-features);
+}
 
 /* chart bits */
 .chart{position:relative;touch-action:none;cursor:crosshair}
@@ -486,7 +497,8 @@ body{
 }
 .wo-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex:none}
 .wo-title{font:500 15px/22px var(--font-text);color:var(--text-1);margin:0}
-.wo-meta{font:500 11px/16px var(--font-text);color:var(--text-2);white-space:nowrap}
+/* .wo-meta is styled with the other header secondary text further up —
+   it's the reference all of them follow */
 .wo-row{
   display:flex;align-items:center;gap:12px;width:100%;
   padding:12px 0;margin:0;border:0;border-top:0.5px solid var(--divider);
@@ -591,13 +603,28 @@ body{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font-family:var(--font-number);font-size:32px;line-height:1;font-weight:600;
   letter-spacing:-0.01em;font-feature-settings:var(--num-features);color:var(--text-1);
+  /* Optical centring (owner, 2026-08-14: "numbers read high in the ring").
+     Centring the text BOX isn't the same as centring the digits: League
+     Spartan reserves descender space below the baseline (0.219em) that
+     digits never use, so the ink ends up half a descender — 3.5px at 32px —
+     above the ring's true centre. Nudging down by that half-descender lands
+     the digits dead centre; measured ink centre 46.0 in the 92px ring.
+     Flag: this is tuned to League Spartan's metrics. If the webfont fails to
+     load and a fallback renders, the nudge is 3.5px too much — acceptable,
+     since the design system mandates this face for every numeral. */
+  transform:translateY(0.109em);
 }
 .r3num .value-dash{font-size:inherit;line-height:inherit;font-weight:inherit}
 .r3lab{margin-top:8px;font-size:13px;line-height:18px;font-weight:500;color:var(--text-2)}
 
 /* section headers between card groups (home tab) — 24px above each section
-   (owner asked for more space between sections, 2026-08-14) */
-.sechead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:24px}
+   (owner asked for more space between sections, 2026-08-14).
+   baseline, not center: the title and its secondary text now sit on one
+   shared baseline, so their bottoms line up (owner, 2026-08-14). This
+   replaces the earlier center alignment — that was set when the title was
+   20px; at 17px the baseline reads level, not dropped. Same alignment the
+   Workouts card header already used. */
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:24px}
 .sechead:first-child{margin-top:0}
 /* 17px medium — the same heading style as "Health monitor" (owner,
    2026-08-14). See the note on .hm .sec-head h2: 17/22 is the H3 scale, so
@@ -639,11 +666,13 @@ body{
    monitor). Flag: the owner called this "the 17px paragraph token", but the
    system has no 17px paragraph style — 17/22 is the H3 scale, so this is
    headingH3Medium (17/22, weight 500), which is the size and weight asked
-   for. Center-aligned (not baseline) so the small timestamp doesn't read as
-   dropped next to the heading. */
-.hm .sec-head{display:flex;align-items:center;justify-content:space-between;margin:8px 0 16px}
+   for. Baseline-aligned so "Health monitor" and "Updated 14:20" share one
+   bottom line (owner, 2026-08-14) — see the note on .sechead; this replaces
+   the earlier center alignment, which was set when the title was 20px. */
+.hm .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:8px 0 16px}
 .hm .sec-head h2{margin:0;font:500 17px/22px var(--font-text);letter-spacing:0;color:var(--text-1)}
-.hm .upd{font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
+/* .hm .upd ("Updated 14:20") is styled with the other header secondary
+   text further up, so it matches "2 workouts · 1h 17m" exactly */
 .hm .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .hm .card{height:132px;display:flex;flex-direction:column;text-align:left}
 /* shared atoms — the same dot/label/figure appear in the cards AND in the
