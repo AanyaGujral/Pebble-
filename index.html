@@ -104,6 +104,64 @@
   --ease-standard:ease;
   --ease-emphasis:cubic-bezier(0.32,0.72,0,1);
   --state-inactive:0.45;
+
+  /* Added 2026-08-14 with the Measure All animation and the workout flow —
+     both reference these by name. Spacing and border widths were already in
+     js/tokens.js but had never been mirrored into this file (it used raw px);
+     --border-card is the card outline the components ask for, which this file
+     had been spelling as --divider. Raw radius steps are named too, since the
+     animation asks for 24 and 12 by number. */
+  --space-2:2px;--space-4:4px;--space-8:8px;--space-12:12px;
+  --space-16:16px;--space-20:20px;--space-24:24px;--space-32:32px;
+  --border-hairline:0.5px;
+  --border-thin:1px;
+  --border-card:var(--neutral-700);
+  --radius-12:12px;
+  --radius-24:24px;
+  --radius-8:8px;--radius-16:16px;--radius-20:20px;--radius-28:28px;--radius-32:32px;
+  --radius-full:var(--radius-pill);
+  --space-40:40px;--space-48:48px;
+  --gutter:16px;                /* the screen's side margin */
+  --weight-regular:400;--weight-medium:500;--weight-semibold:600;--weight-bold:700;
+  --stroke-chart-line:2px;
+
+  /* ---- workout flow ----
+     Accent for the flow's own controls: the spec names teal for the discard
+     dialog's primary button, so teal-400 carries the whole flow — countdown
+     numeral, pause button, End & Save, dialog primary.
+     FLAG (raised by the flow's author, carried here): the owner's screenshots
+     show these in a mint green (~#73C693, emerald-300). Tokens win until
+     told otherwise. */
+  --accent:var(--metric-readiness);
+  --accent-press:var(--teal-500);
+  --on-accent:var(--neutral-900);
+
+  /* Heart-rate zones. Aliases over existing hues, coolest to hottest — now
+     also in js/tokens.js as `zone`, since zones are a system concept rather
+     than something the workout flow invented. */
+  --zone-warmup:var(--sky-400);
+  --zone-fatburn:var(--emerald-400);
+  --zone-aerobic:var(--gold-400);
+  --zone-anaerobic:var(--tangerine-400);
+  --zone-limit:var(--crimson-400);
+
+  /* MAP PREVIEW PALETTE — the one deliberate exception to "tokens only",
+     flagged by the flow's author and left as they wrote it. The owner
+     supplied a Google Maps screenshot (Kolkata: the Maidan, Victoria
+     Memorial, the Race Course) as the map view, and a map has to look like
+     that map to read as one. The design system has no map palette, so these
+     are Google's own values, kept together and used nowhere else. */
+  --gmap-land:#F8F9FA;
+  --gmap-built:#F2EEE5;      /* built-up blocks, the warm beige */
+  --gmap-park:#C8E6C9;
+  --gmap-park-deep:#AEDCAF;  /* the Maidan's darker green */
+  --gmap-water:#A9D9F2;
+  --gmap-road:#FFFFFF;
+  --gmap-casing:#DADCE0;
+  --gmap-metro:#1A3FAF;
+  --gmap-label:#5F6368;
+  --gmap-label-park:#3C8B3C;
+  --gmap-label-poi:#C5221F;
 }
 
 /* ==========================================================================
@@ -170,7 +228,7 @@ body{
    to the top edge (owner request, 2026-08-07). A soft scrim in each hero
    keeps the clock legible. */
 .statusbar{
-  position:absolute;top:0;left:0;right:0;height:32px;z-index:50;
+  position:absolute;top:0;left:0;right:0;height:32px;z-index:62;
   display:flex;align-items:center;justify-content:space-between;
   padding:0 16px;
   font-size:13px;line-height:18px;font-weight:500;color:var(--text-1);
@@ -719,117 +777,784 @@ body{
 /* disabled — cooling down, with a live tabular countdown */
 .hm .cta.is-disabled{background:var(--surface-card);color:var(--text-3);cursor:default}
 
-/* ---- readings sheet — opens when a measurement completes ---- */
-.hm-scrim{
-  position:absolute;inset:0;z-index:69;
-  background:color-mix(in srgb, var(--neutral-900) 72%, transparent);
-  display:flex;align-items:flex-end;justify-content:center;
-  animation:hmScrimIn 220ms var(--ease-standard) both;
+/* ==========================================================================
+   MEASURE ALL — the owner's animated reading scene
+   (Measure_All_Metrics.html, 2026-08-14). Replaces BOTH the old CTA progress
+   fill and the centre-out sheet bloom from the previous round.
+
+   The scene, in the author's own scene list:
+     Sensing (0–2.8s)  the app dims back and a teal orb breathes at centre
+     Orbit   (2.8–7s)  the orb spins and pushes in as the progress ring fills
+     Bloom   (7–9s)    the core blooms into a teal flash covering the frame
+     Reveal  (9–11.6s) the Reading complete sheet rises, rows land one by one
+     Settle  (11.6s+)  the Done button settles
+
+   The source is a React composition driven by one authored-time axis. This is
+   the same thing in plain JS: a rAF loop sets CSS custom properties from the
+   same cue times and easings (see the HEALTH MONITOR script section). Every
+   value below is the authored one.
+
+   Colour note: the source writes the orb's glows as raw rgba so it can carry
+   alpha. Each one is a token — rgba(49,164,146) is teal-500, (29,129,115) is
+   teal-600, (158,224,211) is teal-200, (118,212,195) is teal-300, (69,199,179)
+   is teal-400 — so they're written here with color-mix on those tokens
+   instead, same as the rest of this file.
+   ========================================================================== */
+.ma-scene{position:absolute;inset:0;z-index:69;overflow:hidden}
+.ma-scene[hidden]{display:none}
+/* the app itself is the backdrop: blurred and veiled while the reading runs */
+#page-health.ma-behind{filter:blur(13px)}
+.ma-veil{position:absolute;inset:0;background:var(--surface-app);opacity:var(--ma-dim,.58)}
+.ma-veil2{position:absolute;inset:0;background:color-mix(in srgb, var(--neutral-900) 55%, transparent);opacity:var(--ma-veil2,0)}
+
+/* ---- the orb: halo, two swirling crescents, inner lobe, core, ring ---- */
+.ma-orb{
+  position:absolute;left:50%;top:39%;width:0;height:0;
+  opacity:var(--ma-orb-o,0);transform:scale(var(--ma-orb-zoom,1));transform-origin:50% 50%;
 }
-.hm-scrim[hidden]{display:none}
-/* Entry (owner, 2026-08-14 — the old version "filled like a PPT transition"):
-   the sheet opens from the middle of the screen outward, as a circular reveal
-   that races past the corners in 460ms. Nothing wipes or slides. */
+.ma-orb i{display:block;position:absolute;border-radius:50%}
+.ma-halo{
+  left:-240px;top:-240px;width:480px;height:480px;
+  background:radial-gradient(circle,
+    color-mix(in srgb, var(--teal-500) 58%, transparent) 0%,
+    color-mix(in srgb, var(--teal-600) 30%, transparent) 38%,
+    color-mix(in srgb, var(--teal-900) 0%, transparent) 70%);
+  filter:blur(38px);opacity:.75;transform:scale(var(--ma-breathe,1));
+}
+/* the two crescents are ring-masked conic sweeps, counter-rotating */
+.ma-cres{
+  left:-100px;top:-100px;width:200px;height:200px;
+  -webkit-mask-image:radial-gradient(closest-side, transparent 58%, #000 66%, #000 100%);
+          mask-image:radial-gradient(closest-side, transparent 58%, #000 66%, #000 100%);
+}
+.ma-cres1{
+  background:conic-gradient(from 0deg,
+    color-mix(in srgb, var(--teal-500) 0%, transparent) 0deg,
+    color-mix(in srgb, var(--teal-500) 90%, transparent) 70deg,
+    color-mix(in srgb, var(--teal-200) 88%, transparent) 135deg,
+    color-mix(in srgb, var(--teal-300) 50%, transparent) 190deg,
+    color-mix(in srgb, var(--teal-500) 0%, transparent) 250deg);
+  filter:blur(8px);opacity:.8;
+  transform:rotate(calc(var(--ma-spin,0) * 1deg)) scale(var(--ma-breathe,1));
+}
+.ma-cres2{
+  background:conic-gradient(from 150deg,
+    color-mix(in srgb, var(--teal-500) 0%, transparent) 0deg,
+    color-mix(in srgb, var(--teal-500) 90%, transparent) 70deg,
+    color-mix(in srgb, var(--teal-200) 88%, transparent) 135deg,
+    color-mix(in srgb, var(--teal-300) 50%, transparent) 190deg,
+    color-mix(in srgb, var(--teal-500) 0%, transparent) 250deg);
+  filter:blur(14px);opacity:.55;
+  transform:rotate(calc(var(--ma-spin,0) * -0.62deg)) scale(calc(var(--ma-breathe,1) * 1.12));
+}
+.ma-lobe{
+  left:-74px;top:-86px;width:148px;height:172px;
+  background:radial-gradient(circle at 55% 45%,
+    color-mix(in srgb, var(--teal-200) 82%, transparent) 0%,
+    color-mix(in srgb, var(--teal-500) 40%, transparent) 55%,
+    color-mix(in srgb, var(--teal-500) 0%, transparent) 78%);
+  filter:blur(22px);
+  transform:rotate(calc(var(--ma-spin,0) * 0.35deg)) scale(var(--ma-breathe,1));
+}
+.ma-core{
+  left:-70px;top:-70px;width:140px;height:140px;
+  background:radial-gradient(circle at 48% 46%,
+    var(--teal-200) 0%, var(--teal-300) 22%,
+    color-mix(in srgb, var(--teal-400) 80%, transparent) 48%,
+    color-mix(in srgb, var(--teal-500) 0%, transparent) 74%);
+  filter:blur(16px);transform:scale(var(--ma-core,1));
+}
+.ma-ring{position:absolute;left:-130px;top:-130px;transform:rotate(-90deg)}
+
+/* ---- caption under the orb ---- */
+.ma-cap{
+  position:absolute;left:0;right:0;top:67%;text-align:center;
+  display:flex;flex-direction:column;gap:var(--space-4);opacity:var(--ma-cap,0);
+}
+.ma-cap .t{font:600 17px/22px var(--font-text);color:var(--text-1)}
+.ma-cap .s{font:400 13px/18px var(--font-text);color:var(--text-2)}
+
+/* ---- the bloom flash that covers the frame between orb and sheet ---- */
+.ma-flash{
+  position:absolute;inset:0;pointer-events:none;opacity:var(--ma-flash,0);
+  background:radial-gradient(circle at 50% 47%,
+    color-mix(in srgb, var(--teal-200) 90%, transparent) 0%,
+    color-mix(in srgb, var(--teal-300) 80%, transparent) 28%,
+    color-mix(in srgb, var(--teal-500) 38%, transparent) 55%,
+    color-mix(in srgb, var(--neutral-900) 0%, transparent) 80%);
+}
+
+/* ---- the readings sheet, exactly as the scene draws it ----
+   Note this is a different sheet from the previous round: an inset card with
+   all four corners rounded (radius-24) rather than a full-width bottom sheet,
+   a two-radial teal tint on surface-card rather than a drifting gradient
+   field, and 54px rows at radius-12. The scene's own values win. */
 .hm-sheet{
-  position:relative;width:100%;overflow:hidden;
-  background:var(--neutral-900);
-  border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;
-  padding:32px 16px 24px;
-  animation:hmSheetBloom 460ms var(--ease-emphasis) both;
-}
-/* Fluid gradient field (owner reference: Dribbble "Fluid Gradient Loops").
-   Two blurred blob layers drifting on long, offset loops — because they run
-   at different speeds and never land on the same frame twice, the field keeps
-   moving instead of settling into a static wash. Both layers are inset past
-   the sheet edges so a blob's soft edge never shows.
-   Flag (carried from the component): color-mix() keeps the teal steps as
-   tokens instead of hard-coded rgba. */
-.hm-sheet::before,.hm-sheet::after{content:'';position:absolute;inset:-35%;pointer-events:none;z-index:0}
-.hm-sheet::before{
+  position:absolute;left:8px;right:8px;bottom:8px;height:498px;
+  border-radius:var(--radius-24);overflow:hidden;
+  opacity:var(--ma-sheet-o,0);transform:translateY(var(--ma-sheet-y,120px));
   background:
-    radial-gradient(36% 30% at 32% 30%, color-mix(in srgb, var(--teal-700) 68%, transparent) 0%, transparent 70%),
-    radial-gradient(32% 26% at 72% 20%, color-mix(in srgb, var(--teal-600) 40%, transparent) 0%, transparent 72%);
-  filter:blur(8px);
-  animation:hmDriftA 15s var(--ease-standard) infinite alternate;
+    radial-gradient(120% 70% at 12% 4%, color-mix(in srgb, var(--teal-400) 16%, transparent) 0%, transparent 58%),
+    radial-gradient(90% 50% at 92% 96%, color-mix(in srgb, var(--teal-600) 14%, transparent) 0%, transparent 60%),
+    var(--surface-card);
+  border:var(--border-hairline) solid var(--border-card);
+  padding:var(--space-24) var(--space-20) var(--space-20);
+  display:flex;flex-direction:column;gap:var(--space-12);
 }
-.hm-sheet::after{
-  background:
-    radial-gradient(30% 24% at 64% 44%, color-mix(in srgb, var(--emerald-400) 18%, transparent) 0%, transparent 68%),
-    radial-gradient(42% 34% at 20% 66%, color-mix(in srgb, var(--teal-900) 90%, transparent) 0%, transparent 74%);
-  filter:blur(14px);
-  animation:hmDriftB 21s var(--ease-standard) infinite alternate;
-}
-.hm-sheet>*{position:relative;z-index:1}
-.hm-sheet h3{margin:0;font:700 20px/26px var(--font-text);letter-spacing:-0.005em;color:var(--text-1);text-align:center}
-.hm-sheet .when{margin:4px auto 20px;max-width:30ch;font:400 15px/22px var(--font-text);color:var(--text-2);text-align:center}
-/* the header rises as the bloom lands, then the readings arrive at 3s and
-   cascade 90ms apart, secondary CTA last.
-   FLAG: that 3s hold is the component's own timing ("metrics land at 3s"),
-   kept as specified — but it now sits behind a 460ms entry, so the sheet
-   waits with just a heading for most of it. Say the word and I'll pull the
-   cascade in to ~600ms. */
-.hm-sheet h3,.hm-sheet .when{animation:hmRiseIn 420ms var(--ease-emphasis) both;animation-delay:160ms}
-.hm-sheet .when{animation-delay:240ms}
-.hm-sheet .rd{animation:hmRiseIn 460ms var(--ease-emphasis) both}
-.hm-sheet .rd:nth-child(1){animation-delay:3000ms}
-.hm-sheet .rd:nth-child(2){animation-delay:3090ms}
-.hm-sheet .rd:nth-child(3){animation-delay:3180ms}
-.hm-sheet .rd:nth-child(4){animation-delay:3270ms}
-.hm-sheet .rd:nth-child(5){animation-delay:3360ms}
-.hm-sheet .done{animation:hmRiseIn 460ms var(--ease-emphasis) both;animation-delay:3560ms}
-/* reading rows — translucent + blurred so edges stay legible on the wash */
+.hm-sheet .head{text-align:center;display:flex;flex-direction:column;gap:var(--space-4);padding-bottom:var(--space-4)}
+.hm-sheet h3{margin:0;font:600 17px/22px var(--font-text);color:var(--text-1)}
+.hm-sheet .when{margin:0;padding:0 var(--space-8);font:400 13px/18px var(--font-text);color:var(--text-2);text-wrap:pretty}
+.hm-sheet .rows{display:flex;flex-direction:column;gap:var(--space-8)}
 .hm-sheet .rd{
-  display:flex;align-items:center;gap:8px;
-  background:color-mix(in srgb, var(--neutral-800) 20%, transparent);
-  -webkit-backdrop-filter:blur(var(--blur-card));backdrop-filter:blur(var(--blur-card));
-  border:1px solid color-mix(in srgb, var(--neutral-0) 12%, transparent);
-  border-radius:var(--radius-row);padding:16px;margin-bottom:8px;
+  display:flex;align-items:center;justify-content:space-between;
+  height:54px;padding:0 var(--space-16);border-radius:var(--radius-12);
+  background:color-mix(in srgb, var(--surface-raised) 15%, transparent);
+  border:var(--border-hairline) solid var(--border-card);
+  opacity:var(--o,0);transform:translateY(var(--y,14px));
 }
-.hm-sheet .rd .label{flex:1}
+.hm-sheet .rd .who{display:flex;align-items:center;gap:var(--space-8)}
 .hm-sheet .rd .figure{flex:0 0 auto}
-/* secondary CTA — inverse of the primary: dark translucent fill, teal label */
 .hm-sheet .done{
-  width:100%;height:var(--cta-height);margin-top:12px;
-  border:0.5px solid var(--metric-readiness);border-radius:var(--radius-pill);
-  font:600 15px/22px var(--font-text);cursor:pointer;
-  background:color-mix(in srgb, var(--neutral-900) 72%, transparent);
-  -webkit-backdrop-filter:blur(var(--blur-card));backdrop-filter:blur(var(--blur-card));
-  color:var(--metric-readiness);
+  margin-top:auto;width:100%;height:var(--cta-height);border-radius:var(--radius-pill);
+  border:var(--border-thin) solid var(--metric-readiness);background:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font:500 15px/22px var(--font-text);color:var(--metric-readiness);
+  opacity:var(--ma-done-o,0);transform:translateY(var(--ma-done-y,10px));
 }
 .hm-sheet .done:active{background:var(--neutral-800)}
-@keyframes hmScrimIn{from{opacity:0}to{opacity:1}}
-@keyframes hmRiseIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-/* Centre-out bloom: a circle grows from the middle of the sheet until it
-   clears the corners (75% already covers the box, so 150% finishes well past
-   them). The slight scale-up underneath stops it reading as a flat iris wipe. */
-@keyframes hmSheetBloom{
-  from{clip-path:circle(0% at 50% 50%);transform:scale(.94);opacity:.5}
-  to  {clip-path:circle(150% at 50% 50%);transform:scale(1);opacity:1}
-}
-/* the two gradient loops — different distances, speeds and directions, so the
-   field never repeats the same frame */
-@keyframes hmDriftA{
-  0%  {transform:translate3d(-5%,-3%,0) scale(1)}
-  50% {transform:translate3d(7%,5%,0)   scale(1.14)}
-  100%{transform:translate3d(-2%,8%,0)  scale(1.05)}
-}
-@keyframes hmDriftB{
-  0%  {transform:translate3d(6%,4%,0)   scale(1.08) rotate(0deg)}
-  50% {transform:translate3d(-6%,-2%,0) scale(1)    rotate(8deg)}
-  100%{transform:translate3d(3%,-6%,0)  scale(1.12) rotate(-5deg)}
-}
-/* Design gate: every animation above is off under reduced motion — the sheet
-   and its contents simply appear at rest, and the gradient field holds still
-   instead of looping. */
+
+/* Design gate: under reduced motion the scene doesn't play at all — the sheet
+   is shown at rest the moment the reading finishes (see hmStartRun). */
 @media (prefers-reduced-motion:reduce){
   .hm .cta{transition:none}
   .hm .cta.is-measuring .ico{animation:none}
   .hm .cta .fill{transition:none !important}
-  .hm-scrim,.hm-sheet,.hm-sheet::before,.hm-sheet::after,
-  .hm-sheet h3,.hm-sheet .when,.hm-sheet .rd,.hm-sheet .done{
-    animation:none;opacity:1;transform:none;clip-path:none;
-  }
+  #page-health.ma-behind{filter:none}
+  .ma-orb,.ma-cap,.ma-flash{display:none}
 }
+
+/* ==========================================================================
+   WORKOUT FLOW — the owner's Start Workout flow, ported in
+   (artifact "Pebble — Workout Flow", 2026-08-14):
+     Start Workout -> choose activity -> 3-2-1 countdown -> live workout ->
+     pause -> discard (confirm) or End & Save -> workout details -> full map.
+
+   The flow shipped as its own standalone page with its own phone frame and
+   generic class names (.page, .card, .screen, .num…) that collide with this
+   file. Every rule below is therefore scoped under #wf, and the flow's own
+   phone chrome — frame, status bar, gesture bar, preview panel and home stub
+   — was dropped, because this file already provides all of it. Nothing else
+   about the flow was changed.
+   ========================================================================== */
+/* the overlay sits above the tab bar but below the status bar and the modals */
+#wf{position:absolute;inset:0;z-index:58;font-family:var(--font-text)}
+#wf[hidden]{display:none}
+/* over the light map the near-white clock would disappear */
+.screen.wf-on-light .statusbar{color:#3C4043}
+
+/* ---- collision resets ----
+   Six class names mean different things in this file and in the flow, and
+   this file's versions are bare class selectors, so their properties leak
+   into the overlay even though every flow rule is scoped. Each reset below
+   clears exactly the properties this file sets, so the flow's own rules
+   (further down) land on a clean slate:
+     .caret  here a bordered box rotated 45°, in the flow a Phosphor glyph
+     .chip   here a hero stat card, in the flow the details-header icon
+     .hero   here the tab's header block, in the flow the live bpm readout
+     .page   here a tab (scrolls itself, 96px tab-bar gutter), in the flow a
+             screen whose own .scroll child does the scrolling
+     .scrim  here the goal sheet's backdrop, in the flow the discard dialog's
+     .pebble-nav  the same component, but positioned differently here */
+#wf .caret{width:auto;height:auto;border:0;transform:none;margin-bottom:0;display:inline-flex}
+#wf .chip{flex:none;border:0;border-radius:0;background:none;padding:0;gap:0}
+#wf .hero{z-index:auto}
+#wf .page{overflow:visible;padding-bottom:0}
+#wf .scrim{z-index:auto;background:none}
+#wf .pebble-nav{position:static;left:auto;bottom:auto;transform:none;z-index:auto}
+/* ── 1. TOKENS — mirrored from js/tokens.js ─────────────────────────────── */
+
+#wf *, #wf *::before, #wf *::after{box-sizing:border-box}
+
+/* Gate from .claude/rules/design-system.md — all motion off when the reader
+   asks for reduced motion. Nothing in this flow depends on animation to be
+   understandable: the countdown still counts, the route still draws. */
+@media (prefers-reduced-motion:reduce){
+  #wf *, #wf *::before, #wf *::after{animation:none!important;transition:none!important}
+}
+
+/* ── 2. STAGE + PHONE ──────────────────────────────────────────────────── */
+
+
+
+/* Preview-only chrome — the panel lives OUTSIDE the phone, like the control
+   panel in index.html. It exists so the details page can be reviewed with a
+   realistic session length without sitting through 45 real minutes. */
+
+
+
+
+
+
+
+
+
+
+
+
+/* punch-hole selfie camera */
+
+/* The status bar floats over the app, same as the rest of the prototype. */
+
+
+
+
+/* Over the light map the near-white clock would disappear. */
+
+
+/* One screen at a time. Each .page fills the glass; long pages scroll. */
+
+#wf .page{
+  position:absolute;inset:0;
+  display:none;flex-direction:column;
+  background:var(--surface-app);
+}
+#wf .page.on{display:flex}
+#wf .scroll{
+  flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  scrollbar-width:none;
+}
+#wf .scroll::-webkit-scrollbar{display:none}
+
+/* ── 3. BOTTOM NAV — the supplied navigation component ─────────────────── */
+/* bar 328x60 · tabs 72x60 · 4px between · 14px side padding.
+   Flag: the owner's details-page screenshot labels the tabs
+   Today / Sleep / Activity / Me, but the attached nav component (and
+   index.html) ship Health / Activity / Sleep / Me — the component wins. */
+#wf .nav-slot{padding:0 var(--gutter) calc(var(--space-24)) ;display:flex;justify-content:center;flex:none}
+#wf .pebble-nav{
+  display:flex;align-items:center;gap:var(--space-4);
+  width:328px;height:60px;padding:0 14px;
+  border-radius:var(--radius-full);
+  background:rgba(15,17,27,.8);
+  -webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px);
+  box-shadow:0 8px 24px rgba(7,8,12,.48),0 2px 6px rgba(7,8,12,.32);
+}
+#wf .pebble-tab{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-2);
+  width:72px;height:60px;padding:10px 0;border:0;background:none;
+  border-radius:var(--radius-full);font-family:inherit;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+#wf .pebble-tab .icon{display:block;width:24px;height:24px;color:var(--neutral-300);transition:color var(--duration-base) var(--ease-standard)}
+#wf .pebble-tab .label{font-size:10px;line-height:14px;letter-spacing:.01em;color:var(--neutral-300)}
+#wf .pebble-tab[aria-current="page"] .icon{color:var(--neutral-0)}
+#wf .pebble-tab[aria-current="page"] .label{color:var(--neutral-100)}
+
+/* ── shared bits ───────────────────────────────────────────────────────── */
+#wf .card{background:var(--surface-card);border-radius:var(--radius-card);padding:var(--space-16)}
+#wf .icon-btn{
+  width:44px;height:44px;border-radius:var(--radius-full);
+  background:var(--surface-card);border:none;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-1);cursor:pointer;flex:none;
+  transition:background var(--duration-fast) var(--ease-standard);
+}
+#wf .icon-btn:hover{background:var(--surface-raised)}
+#wf .icon-btn svg{display:block;width:20px;height:20px}
+/* Glyph only, no circle behind it (owner) — the 44px box stays for the tap
+   target, it just isn't painted. */
+#wf .icon-btn.plain{background:none}
+#wf .icon-btn.plain:hover{background:none;color:var(--text-2)}
+#wf .overline{
+  font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+}
+#wf .num{font-family:var(--font-number);font-feature-settings:var(--num-features)}
+
+/* Buttons. Primary = accent fill; secondary = accent hairline + accent text
+   (the pattern the discard dialog spec asks for). */
+#wf .btn{
+  height:var(--cta-height);border-radius:var(--radius-full);
+  border:none;cursor:pointer;font-family:inherit;
+  font-size:15px;line-height:22px;font-weight:var(--weight-semibold);
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--space-8);
+  transition:background var(--duration-fast) var(--ease-standard);
+}
+#wf .btn-primary{background:var(--accent);color:var(--on-accent)}
+#wf .btn-primary:hover{background:var(--accent-press)}
+#wf .btn-secondary{
+  background:transparent;color:var(--accent);
+  border:var(--border-hairline) solid var(--accent);
+}
+#wf .btn-secondary:hover{background:rgba(69,199,179,.10)}
+
+/* ── 4. SCREEN 1 — HOME STUB ───────────────────────────────────────────── */
+/* Only what's needed to launch the flow. The real home screen is the
+   separate Pebble Home prototype; this stub keeps that link untouched. */
+
+
+
+
+
+#wf .startbtn{
+  width:100%;margin:var(--space-16) 0 var(--space-24);
+  background:var(--accent);color:var(--on-accent);
+}
+#wf .startbtn svg{width:16px;height:16px}
+
+/* ── 5. SCREEN 2 — CHOOSE ACTIVITY ─────────────────────────────────────── */
+#wf .pk-head{
+  flex:none;display:flex;align-items:center;gap:var(--space-12);
+  padding:40px var(--gutter) var(--space-16);
+}
+#wf .pk-head .t{
+  flex:1;text-align:center;margin-right:44px;    /* balances the X button */
+  font-size:17px;line-height:22px;font-weight:var(--weight-semibold);
+}
+#wf .search{
+  flex:none;margin:0 var(--gutter) var(--space-20);
+  display:flex;align-items:center;gap:var(--space-8);
+  height:48px;padding:0 var(--space-16);
+  background:var(--surface-card);border-radius:var(--radius-full);
+}
+#wf .search svg{width:20px;height:20px;color:var(--text-3);flex:none}
+#wf .search input{
+  flex:1;min-width:0;background:none;border:none;outline:none;
+  font-family:inherit;font-size:15px;line-height:22px;color:var(--text-1);
+}
+#wf .search input::placeholder{color:var(--text-3)}
+#wf .search .clear{
+  border:none;background:none;padding:0;cursor:pointer;color:var(--text-3);
+  display:none;align-items:center;
+}
+#wf .search.has-text .clear{display:flex}
+
+#wf .sec-label{
+  /* No hairline running out to the edge (owner) — the label stands alone. */
+  margin:0 var(--gutter) var(--space-8);
+}
+#wf .sec-label span{
+  font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+}
+
+/* Activity rows, built to the owner's measurements: a 20px glyph inside a
+   32px box (unpainted — no chip), 16px in from the top and the left, 8px
+   from that box to the name, name at 13/18 medium in text-1, glyph in
+   neutral-200, and the chevron at the Workouts-card size and colour
+   (16px, text-3). The hairline between rows is inset 16px each side. */
+#wf .act-list{
+  margin:0 var(--gutter) var(--space-24);
+  background:var(--surface-card);border-radius:var(--radius-card);overflow:hidden;
+}
+#wf .act-row{
+  position:relative;width:100%;
+  display:flex;align-items:center;gap:var(--space-8);
+  padding:var(--space-16);border:none;background:none;cursor:pointer;
+  font-family:inherit;text-align:left;
+  transition:background var(--duration-fast) var(--ease-standard);
+}
+#wf .act-row + .act-row::after{
+  content:"";position:absolute;top:0;left:var(--space-16);right:var(--space-16);
+  height:var(--border-hairline);background:var(--divider);
+}
+#wf .act-row:hover{background:var(--surface-raised)}
+#wf .act-row .glyph{
+  flex:none;width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--neutral-200);
+}
+#wf .act-row .glyph svg{width:20px;height:20px;display:block}
+#wf .act-row .name{flex:1;font-size:13px;line-height:18px;font-weight:var(--weight-medium);color:var(--text-1)}
+#wf .act-row .caret{flex:none;width:16px;height:16px;color:var(--text-3)}
+#wf .act-row .caret svg{width:100%;height:100%;display:block}
+
+#wf .no-results{
+  display:none;padding:var(--space-48) var(--gutter);text-align:center;
+  font-size:15px;line-height:22px;color:var(--text-3);
+}
+#wf .picker.empty .no-results{display:block}
+#wf .picker.empty .sec-label, #wf .picker.empty .act-list{display:none}
+
+/* ── 6. SCREEN 3 — COUNTDOWN ───────────────────────────────────────────── */
+#wf .cd{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:var(--space-24);padding:var(--gutter);
+}
+#wf .cd .who{color:var(--text-3)}
+#wf .cd .num{
+  font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-weight:var(--weight-bold);font-size:120px;line-height:1;
+  color:var(--accent);
+}
+/* Each number lands big and settles smaller, then the next one replaces it. */
+@keyframes cd-shrink{
+  from{transform:scale(1.35);opacity:0}
+  25%{opacity:1}
+  to{transform:scale(1);opacity:1}
+}
+#wf .cd .num.tick{animation:cd-shrink var(--duration-slow) var(--ease-emphasis) both}
+#wf .cd .cancel{
+  border:none;background:none;cursor:pointer;font-family:inherit;
+  font-size:15px;line-height:22px;color:var(--text-2);padding:var(--space-8) var(--space-16);
+}
+#wf .cd .cancel:hover{color:var(--text-1)}
+
+/* ── 7. SCREEN 4 — LIVE WORKOUT ────────────────────────────────────────── */
+/* Immersive: no bottom nav while a workout is running. */
+#wf .aw{flex:1;min-height:0;display:flex;flex-direction:column;padding:32px var(--gutter) var(--space-32)}
+
+/* Pause reveals Discard / End & Save at the top of the screen. */
+#wf .aw-bar{
+  /* Reaches up behind the floating status bar, so the buttons sit clear of
+     the clock instead of colliding with it. */
+  flex:none;height:88px;margin:-32px calc(-1 * var(--gutter)) 0;
+  padding:32px var(--space-8) var(--space-8);
+  display:none;align-items:center;justify-content:space-between;
+  background:var(--surface-card);
+}
+#wf .aw.paused .aw-bar{display:flex}
+#wf .aw-bar button{
+  display:inline-flex;align-items:center;gap:var(--space-8);
+  border:none;background:none;cursor:pointer;font-family:inherit;
+  font-size:15px;line-height:22px;font-weight:var(--weight-semibold);
+  padding:var(--space-8) var(--space-12);border-radius:var(--radius-12);
+}
+#wf .aw-bar svg{width:18px;height:18px}
+#wf .aw-bar .discard{color:var(--negative-text)}
+#wf .aw-bar .discard svg{color:var(--negative-icon)}
+#wf .aw-bar .save{color:var(--accent)}
+#wf .aw-title{
+  flex:none;text-align:center;padding:var(--space-16) 0 0;
+  font-size:17px;line-height:22px;font-weight:var(--weight-semibold);
+}
+#wf .aw.paused .aw-title{padding-top:var(--space-12)}
+#wf .aw .spacer{flex:1;min-height:var(--space-8)}
+
+/* Heart rate is the centre of this screen. Neutral text-1 on the app
+   background (owner's call) — the crimson HR hue stays for glyphs. */
+#wf .hero{flex:none;text-align:center}
+#wf .hero .bpm{
+  font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-weight:var(--weight-bold);font-size:88px;line-height:0.92;
+  letter-spacing:-0.01em;color:var(--text-1);
+  display:block;
+}
+#wf .hero .unit{
+  display:inline-flex;align-items:center;gap:var(--space-8);
+  margin-top:var(--space-8);
+}
+#wf .hero .unit svg{width:16px;height:16px;color:var(--metric-heart-rate)}
+#wf .hero .unit span{
+  font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+}
+/* A slow pulse on the HR glyph, so the screen reads as live. */
+@keyframes hr-beat{0%,100%{transform:scale(1)}18%{transform:scale(1.18)}36%{transform:scale(1)}}
+#wf .aw:not(.paused) .hero .unit svg{animation:hr-beat 1.4s var(--ease-standard) infinite}
+
+/* Duration · calories · the per-activity third metric. */
+/* Three separate boxes, uppercase label on top and the figure under it,
+   following the owner's stat-box screenshot — not one card split by rules. */
+#wf .aw-stats{
+  flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:var(--space-8);margin-top:var(--space-32);
+}
+#wf .aw-stats .cell{
+  background:var(--surface-card);border-radius:var(--radius-24);
+  padding:var(--space-12) var(--space-8);text-align:center;
+}
+#wf .aw-stats .k{
+  display:block;
+  font-size:11px;line-height:16px;font-weight:var(--weight-medium);
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);
+}
+#wf .aw-stats .v{
+  display:block;margin-top:var(--space-4);
+  font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-weight:var(--weight-bold);font-size:20px;line-height:24px;color:var(--text-1);
+}
+
+#wf .aw-foot{flex:none;display:flex;justify-content:center;padding-top:var(--space-32)}
+#wf .pausebtn{
+  width:72px;height:72px;border-radius:var(--radius-full);
+  border:none;cursor:pointer;background:var(--accent);color:var(--on-accent);
+  display:flex;align-items:center;justify-content:center;
+  transition:background var(--duration-fast) var(--ease-standard);
+}
+#wf .pausebtn:hover{background:var(--accent-press)}
+#wf .pausebtn svg{width:28px;height:28px}
+
+/* ── GPS map — walking, running, cycling, hiking, skiing, snowboarding ───
+   A map preview in the Google Maps idiom — land, blocks, a park, water, road
+   casings, arterials, street labels — drawn in SVG from the neutral tokens,
+   with the route in Pebble teal.
+   Why drawn and not a real Google tile: an artifact page can't reach any
+   external host (the CSP allows Google Fonts and nothing else), and the
+   Static Maps API needs a key. The card therefore carries an <img> slot
+   pointed at `assets/maps/route-newdelhi.png` — drop a real Google Maps
+   screenshot there and it takes over the basemap automatically, with the
+   teal route still drawn on top (same pattern as the hero backgrounds). */
+#wf .map-card{
+  flex:none;position:relative;margin-top:var(--space-20);
+  border-radius:var(--radius-16);overflow:hidden;
+  background:var(--gmap-land);
+  border:var(--border-hairline) solid var(--neutral-700);   /* hairline, neutral dark */
+}
+#wf .map-card svg{display:block;width:100%;height:auto;position:relative;z-index:1}
+#wf .map-card .photo{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;
+}
+#wf .map-card.has-photo .basemap{display:none}
+
+/* map paint — shared by the card and the full-screen view */
+#wf .map-card .land{fill:var(--gmap-land)}
+#wf .map-card .built{fill:var(--gmap-built)}
+#wf .map-card .park{fill:var(--gmap-park)}
+#wf .map-card .park.deep{fill:var(--gmap-park-deep)}
+#wf .map-card .water{fill:var(--gmap-water)}
+#wf .map-card .casing{stroke:var(--gmap-casing)}
+#wf .map-card .road{stroke:var(--gmap-road)}
+#wf .map-card .metro{stroke:var(--gmap-metro);stroke-linecap:round}
+#wf .map-card .maplabel{
+  font-family:var(--font-text);font-weight:var(--weight-medium);
+  fill:var(--gmap-label);letter-spacing:0.02em;
+}
+#wf .map-card .maplabel.park-name{fill:var(--gmap-label-park)}
+#wf .map-card .maplabel.poi{fill:var(--gmap-label-poi)}
+/* The route is the only saturated line on the map. A white casing under the
+   teal keeps it legible over park green and road white alike — the same
+   trick Google's own route line uses. */
+#wf .map-card .route-casing{
+  fill:none;stroke:#FFFFFF;stroke-width:7;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+#wf .map-card .route{
+  fill:none;stroke:var(--accent);stroke-width:4;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+#wf .map-card .dot{fill:#FFFFFF;stroke:var(--accent);stroke-width:3}
+#wf .map-card .dot.head{fill:var(--accent);stroke:#FFFFFF;stroke-width:2}
+
+/* ---- full-screen map preview (opens from the card's place row) ---- */
+#wf .map-full{
+  position:absolute;inset:0;overflow:hidden;background:var(--gmap-land);
+  border-radius:0;margin:0;border:0;
+}
+#wf .map-full svg{width:100%;height:100%}
+/* Back control: a low-opacity dark disc so it stays readable wherever it
+   lands on a light map. */
+#wf .map-back{
+  position:absolute;top:44px;left:var(--gutter);z-index:70;
+  width:40px;height:40px;border:0;border-radius:var(--radius-full);cursor:pointer;
+  background:color-mix(in srgb, var(--neutral-900) 55%, transparent);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  color:var(--neutral-0);
+  display:flex;align-items:center;justify-content:center;
+}
+#wf .map-back:hover{background:color-mix(in srgb, var(--neutral-900) 72%, transparent)}
+#wf .map-back [data-icon]{width:20px;height:20px}
+
+/* the place row is the affordance that opens the full map */
+#wf .map-head{cursor:pointer}
+#wf .map-head{
+  display:flex;align-items:center;gap:var(--space-8);
+  padding:var(--space-12) var(--space-16) var(--space-8);
+}
+#wf .map-head svg{width:16px;height:16px;color:var(--text-2)}
+#wf .map-head .place{flex:1;font-size:15px;line-height:22px;font-weight:var(--weight-semibold)}
+#wf .map-head .caret{width:16px;height:16px;color:var(--text-3)}
+
+/* ── Discard confirmation ──────────────────────────────────────────────── */
+#wf .scrim{
+  position:absolute;inset:0;z-index:70;
+  background:rgba(7,8,12,.72);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;padding:var(--space-24);
+}
+#wf .scrim.on{display:flex}
+#wf .dialog{
+  width:100%;background:var(--surface-card);
+  border-radius:var(--radius-28);padding:var(--space-24);
+  animation:dlg-in var(--duration-slow) var(--ease-emphasis) both;
+}
+@keyframes dlg-in{from{transform:translateY(8px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+#wf .dialog p{
+  margin:0 0 var(--space-24);text-align:center;
+  font-size:17px;line-height:22px;font-weight:var(--weight-medium);color:var(--text-1);
+}
+/* Cancel on the left, Discard on the right — owner spec. */
+#wf .dialog .btns{display:flex;gap:var(--space-12)}
+#wf .dialog .btns .btn{flex:1}
+
+/* ── 8. SCREEN 5 — WORKOUT DETAILS ─────────────────────────────────────────
+   The approved Workout details screen (artifact 1a19949a), reproduced here
+   and wired to the session that just finished: sticky header, stat tiles,
+   then one heart-rate card holding the scrubbable chart and the five zone
+   rows. The only addition is the map card for GPS activities. */
+#wf #p-details.on{display:flex;flex-direction:column}
+#wf .wd-scroll{padding-bottom:96px}   /* clears the floating nav pill */
+#wf .nav-float{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:20px;z-index:55;
+}
+
+/* Sticky header. 96px total: the top 32px is the strip the status bar floats
+   over, the 64px below is the header proper. It paints app background at 80%
+   with a blur, so cards read through as they scroll under it. */
+#wf .head{
+  position:sticky;top:0;z-index:20;
+  height:calc(var(--space-32) + 64px);
+  padding:var(--space-32) var(--gutter) 0;
+  background:color-mix(in srgb, var(--surface-app) 80%, transparent);
+  -webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px);
+  display:flex;align-items:center;gap:var(--space-8);
+}
+#wf .hdrbtn{
+  flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  background:none;border:0;cursor:pointer;border-radius:var(--radius-full);
+  color:var(--neutral-100);
+}
+#wf .hdrbtn.back{margin-left:-12px}    /* pulls the optically narrow caret onto the content edge */
+#wf .hdrbtn.share{margin-right:-4px}
+#wf .hdrbtn:hover{background:var(--surface-raised)}
+#wf .hdrbtn [data-icon]{width:20px;height:20px}
+
+/* the icon chip from the Workouts card rows, unchanged */
+#wf .chip{
+  flex:none;display:grid;place-items:center;width:40px;height:40px;
+  border-radius:var(--radius-12);background:var(--neutral-700);
+  color:var(--neutral-100);
+}
+#wf .chip [data-icon]{width:20px;height:20px}
+
+#wf .wd-title{flex:1;min-width:0;display:flex;flex-direction:column}
+#wf .wd-title .name{
+  font-size:15px;line-height:22px;font-weight:var(--weight-medium);color:var(--text-1);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#wf .wd-title .when{font-size:11px;line-height:16px;color:var(--text-3)}
+
+#wf .body{padding:var(--space-16) var(--gutter) var(--space-40);display:flex;flex-direction:column;gap:var(--space-12)}
+
+/* ---- stat tiles: label on top, figure under it, one box each ---- */
+#wf .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-8)}
+#wf .tile{background:var(--surface-card);border-radius:var(--radius-24);padding:var(--space-16)}
+#wf .tile .label{
+  font-size:11px;line-height:16px;font-weight:var(--weight-medium);
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);
+  margin-bottom:var(--space-8);
+}
+#wf .tile .figure{display:flex;align-items:baseline;gap:var(--space-4)}
+#wf .tile .value{
+  font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-variant-numeric:tabular-nums lining-nums;
+  font-weight:var(--weight-bold);font-size:24px;line-height:28px;letter-spacing:-0.005em;
+  color:var(--text-1);
+}
+/* A value that is a word, not a figure — Spartan is numerals-only, so Effort
+   steps to the text face at heading h2 semibold: same tracking, one size down. */
+#wf .tile .value.word{
+  font-family:var(--font-text);font-size:20px;line-height:28px;font-weight:var(--weight-semibold);
+  font-variant-numeric:normal;font-feature-settings:normal;
+}
+#wf .tile .unit{
+  font-size:11px;line-height:16px;font-weight:var(--weight-medium);
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+}
+
+/* ---- the map card (GPS activities only) ---- */
+#wf .mapcard{background:var(--surface-card);border-radius:var(--radius-card);padding:var(--space-12)}
+#wf .mapcard .map-card{margin-top:0}
+
+/* ---- heart-rate card: chart + zones in one surface ---- */
+#wf .hr-card{background:var(--surface-card);border-radius:var(--radius-20);width:100%}
+#wf .hr-rule{height:0;margin:0 var(--space-16);border-top:var(--border-hairline) solid var(--divider)}
+#wf .lc{
+  --chart-accent:var(--metric-heart-rate);
+  padding:var(--space-16);height:216px;display:flex;flex-direction:column;
+}
+#wf .lc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-8);flex:none}
+#wf .lc-title{margin:0;font-size:15px;line-height:22px;font-weight:var(--weight-medium);color:var(--text-1);white-space:nowrap}
+#wf .lc-block{text-align:right}
+#wf .lc-row{display:flex;align-items:baseline;gap:var(--space-4);justify-content:flex-end}
+#wf .lc-value{
+  font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-variant-numeric:tabular-nums lining-nums;
+  font-weight:var(--weight-bold);font-size:24px;line-height:28px;letter-spacing:-0.005em;color:var(--text-1);
+}
+#wf .lc-unit{
+  font-size:11px;line-height:16px;font-weight:var(--weight-medium);
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+}
+/* resting and scrubbing labels share a 16px line box, so pressing the chart
+   never shifts the header */
+#wf .lc-sub{
+  margin-top:var(--space-4);display:flex;align-items:center;justify-content:flex-end;gap:var(--space-4);
+  font-size:11px;line-height:16px;font-weight:var(--weight-medium);color:var(--text-2);
+}
+#wf .lc-sub.scrubbing{
+  font-family:var(--font-number);font-size:13px;line-height:16px;
+  font-feature-settings:var(--num-features);
+}
+#wf .lc-wrap{position:relative;flex:1;min-height:0;margin-top:var(--space-16)}
+#wf .lc-wrap svg{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+#wf .lc-gridline{stroke:var(--gridline);stroke-width:0.5}
+#wf .lc-y-label, #wf .lc-x-label{
+  font-family:var(--font-number);font-size:10px;font-feature-settings:var(--num-features);
+  letter-spacing:0.01em;fill:var(--text-3);
+}
+#wf .lc-pill-bg{fill:var(--neutral-700)}
+#wf .lc-pill-label{
+  font-family:var(--font-number);font-size:10px;font-feature-settings:var(--num-features);
+  letter-spacing:0.01em;fill:var(--text-2);
+}
+#wf .lc-line{fill:none;stroke:var(--chart-accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+#wf .lc-plot{transition:opacity var(--duration-base) var(--ease-standard)}
+#wf .lc-plot.dim{opacity:0.28}
+#wf .lc-hover-line{stroke:var(--text-3);stroke-width:1;stroke-dasharray:3 3;opacity:0}
+#wf .lc-hover-dot{fill:var(--chart-accent);stroke:var(--text-1);stroke-width:1.5;opacity:0}
+@media (prefers-reduced-motion:reduce){ #wf .lc-plot{transition:none} }
+
+/* ---- zones: five rows, no container per zone ---- */
+#wf .hrz{padding:var(--space-16);display:flex;flex-direction:column;gap:var(--space-16)}
+#wf .hrz-row{display:grid;grid-template-columns:1fr auto;align-items:baseline;column-gap:var(--space-8);row-gap:var(--space-8)}
+#wf .hrz-label{display:flex;align-items:baseline;gap:6px;min-width:0}
+#wf .hrz-name{
+  font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-1);white-space:nowrap;
+}
+#wf .hrz-range, #wf .hrz-pct{
+  font-family:var(--font-number);font-size:10px;line-height:12px;letter-spacing:0.01em;
+  font-feature-settings:var(--num-features);white-space:nowrap;
+}
+#wf .hrz-range{color:var(--text-3);overflow:hidden;text-overflow:ellipsis}
+#wf .hrz-pct{color:var(--zone)}          /* the zone hue is the only colour in the row */
+#wf .hrz-dur{
+  justify-self:end;font-family:var(--font-number);font-size:13px;line-height:16px;
+  font-weight:var(--weight-medium);font-variant-numeric:tabular-nums lining-nums;
+  font-feature-settings:var(--num-features);color:var(--text-1);white-space:nowrap;
+}
+#wf .hrz-bar{
+  grid-column:1/-1;display:block;height:var(--space-8);border-radius:var(--radius-full);
+  background:var(--surface-raised);
+  box-shadow:inset 0 0 0 var(--border-hairline) var(--neutral-500);
+  overflow:hidden;
+}
+#wf .hrz-bar i{display:block;height:100%;border-radius:var(--radius-full);background:var(--zone)}
+
+/* Android gesture bar — phone chrome, sits over everything. */
+#wf .gesture{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:112px;height:4px;border-radius:var(--radius-full);
+  background:var(--neutral-600);z-index:60;pointer-events:none;
+}
+
+/* Narrow viewports: drop the desk, let the phone fill the glass. */
+@media (max-width:820px){
+  #wf body{padding:var(--space-16) var(--space-8)}
+  #wf .panel{position:static;width:100%;max-width:344px;order:2}
+}
+
 
 /* Me tab */
 .profile{display:flex;align-items:center;gap:14px;padding:20px 16px 8px}
@@ -936,6 +1661,16 @@ body{
     <label class="on"><input type="radio" name="cardstate" value="default" checked><span>Default<span class="desc">Live data, as designed</span></span></label>
     <label><input type="radio" name="cardstate" value="empty"><span>No data<span class="desc">New user, nothing synced yet</span></span></label>
   </div>
+    <h2 style="margin-top:18px">Workout clock</h2>
+    <p class="hint">Not part of the app. The fast clock exists so the workout
+      details page can be reviewed with a full-length session instead of a
+      40-second one.</p>
+    <div class="opts" id="wfSpeed">
+      <label class="on"><input type="radio" name="wfspeed" value="1" checked>
+        <span>Real time<span class="desc">1 second = 1 second</span></span></label>
+      <label><input type="radio" name="wfspeed" value="60">
+        <span>Fast demo<span class="desc">1 second = 1 minute</span></span></label>
+    </div>
 </aside>
 
 <!-- ======================= PHONE ======================= -->
@@ -1923,17 +2658,221 @@ body{
       </div>
     </div>
 
-    <!-- ============ READINGS SHEET — Measure All (component v4) ============
-         Opens when a measurement finishes. Sits inside .screen (absolute,
-         not fixed) so it stays inside the phone mockup instead of covering
-         the whole browser window; z-indexes match the app's goal sheet. -->
-    <div class="hm-scrim" id="hmScrim" hidden role="dialog" aria-modal="true" aria-labelledby="hmShTitle">
-      <div class="hm-sheet">
-        <h3 id="hmShTitle">Reading complete</h3>
-        <div class="when">Your metrics say you’re in a state of calm and relaxation, Aanya</div>
-        <div id="hmShList"></div>
+    <!-- ============ MEASURE ALL — the animated reading scene ============
+         The owner's Measure_All_Metrics.html, ported to plain CSS + JS. Runs
+         from the moment Measure All is tapped through to the readings sheet:
+         the app dims and blurs behind a breathing teal orb, the orb's ring
+         fills as the reading runs, the core blooms into a flash, and the
+         sheet rises out of it. One rAF loop drives the whole thing from the
+         authored cue times — see the HEALTH MONITOR script section.
+         Sits inside .screen (absolute, not fixed) so it stays in the phone
+         mockup; z-index matches the app's goal sheet. -->
+    <div class="ma-scene" id="maScene" hidden role="dialog" aria-modal="true" aria-labelledby="hmShTitle">
+      <div class="ma-veil"></div>
+      <div class="ma-veil2"></div>
+
+      <div class="ma-orb" id="maOrb">
+        <i class="ma-halo"></i>
+        <i class="ma-cres ma-cres1"></i>
+        <i class="ma-cres ma-cres2"></i>
+        <i class="ma-lobe"></i>
+        <i class="ma-core"></i>
+        <!-- progress ring: r=113, so the path is 226π ≈ 710 long -->
+        <svg class="ma-ring" width="260" height="260" viewBox="0 0 260 260" aria-hidden="true">
+          <circle cx="130" cy="130" r="113" fill="none" stroke="var(--neutral-700)" stroke-width="2" opacity="0.55"/>
+          <circle id="maRing" cx="130" cy="130" r="113" fill="none" stroke="var(--teal-400)" stroke-width="2"
+                  stroke-linecap="round" stroke-dasharray="710" stroke-dashoffset="710" opacity="0.9"/>
+        </svg>
+      </div>
+
+      <div class="ma-cap">
+        <div class="t">Measuring all metrics</div>
+        <div class="s">Keep your hand still</div>
+      </div>
+
+      <div class="ma-flash"></div>
+
+      <div class="hm-sheet" id="hmSheet">
+        <div class="head">
+          <h3 id="hmShTitle">Reading complete</h3>
+          <p class="when">Your metrics say you’re in a state of calm and relaxation, Aanya</p>
+        </div>
+        <div class="rows" id="hmShList"></div>
         <button class="done" type="button" id="hmShDone">Done</button>
       </div>
+    </div>
+
+
+    <!-- ============ WORKOUT FLOW ============
+         Screens 2–6 of the owner's Workout Flow artifact, verbatim. Screen 1
+         there was a stub standing in for this app's home screen, so it's
+         dropped — the real Start Workout button below opens this overlay at
+         "Choose activity". Everything is inside #wf so the flow's generic
+         class names stay out of the rest of the file. -->
+    <div id="wf" hidden>
+  <!-- ── SCREEN 2 · Choose Activity ────────────────────────────────── -->
+        <section class="page picker" id="p-picker">
+          <div class="pk-head">
+            <button class="icon-btn plain" type="button" id="btn-picker-close" aria-label="Close">
+              <span data-icon="x"></span>
+            </button>
+            <span class="t">Choose activity</span>
+          </div>
+
+          <!-- Search filters by activity name, across both sections. -->
+          <div class="search" id="search">
+            <span data-icon="magnifying-glass"></span>
+            <input type="search" id="search-input" placeholder="Search activities"
+                   autocomplete="off" spellcheck="false" aria-label="Search activities">
+            <button class="clear" type="button" id="btn-search-clear" aria-label="Clear search">
+              <span data-icon="x"></span>
+            </button>
+          </div>
+
+          <div class="scroll">
+            <!-- Most recent: the five the owner's screenshot shows, re-ordered
+                 as sessions are saved in this prototype. -->
+            <div class="sec-label" data-recent-label><span>Most recent</span></div>
+            <div class="act-list" id="list-recent"></div>
+
+            <div class="act-list" id="list-all"></div>
+
+            <p class="no-results">No results found</p>
+          </div>
+        </section>
+
+        <!-- ── SCREEN 3 · Countdown ──────────────────────────────────────── -->
+        <section class="page" id="p-countdown">
+          <div class="cd">
+            <div class="overline who" id="cd-name">Strength Training</div>
+            <div class="num" id="cd-num">3</div>
+            <button class="cancel" type="button" id="btn-cd-cancel">Cancel</button>
+          </div>
+        </section>
+
+        <!-- ── SCREEN 4 · Live workout ───────────────────────────────────── -->
+        <section class="page" id="p-active">
+          <div class="aw" id="aw">
+            <!-- Appears on pause. -->
+            <div class="aw-bar">
+              <button type="button" class="discard" id="btn-discard">
+                <span data-icon="trash" data-weight="fill"></span> Discard
+              </button>
+              <button type="button" class="save" id="btn-save">
+                <span data-icon="floppy-disk" data-weight="fill"></span> End &amp; Save
+              </button>
+            </div>
+
+            <div class="aw-title" id="aw-title">Strength Training</div>
+
+            <!-- GPS map — distance activities only; hidden otherwise. -->
+            <div class="map-card" id="aw-map" hidden></div>
+
+            <div class="spacer"></div>
+
+            <div class="hero">
+              <span class="bpm" id="aw-bpm">96</span>
+              <span class="unit">
+                <span data-icon="heart" data-weight="fill"></span>
+                <span>bpm</span>
+              </span>
+            </div>
+
+            <div class="aw-stats">
+              <div class="cell"><span class="k">Duration</span><span class="v" id="aw-dur">00:00</span></div>
+              <div class="cell"><span class="k">Kcal</span><span class="v" id="aw-kcal">0</span></div>
+              <div class="cell"><span class="k" id="aw-third-label">Reps</span><span class="v" id="aw-third">0</span></div>
+            </div>
+
+            <div class="spacer"></div>
+
+            <div class="aw-foot">
+              <button class="pausebtn" type="button" id="btn-pause" aria-label="Pause workout">
+                <span data-icon="pause" data-weight="fill"></span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── SCREEN 5 · Workout details (the saved session) ────────────── -->
+        <!-- Structure and styling are the approved Workout details screen; the
+             numbers are read back from the session that just ran. -->
+        <section class="page" id="p-details">
+          <div class="scroll wd-scroll">
+
+            <header class="head">
+              <button class="hdrbtn back" type="button" id="btn-wd-back" aria-label="Back">
+                <span data-icon="caret-left"></span>
+              </button>
+              <span class="chip" id="wd-chip" aria-hidden="true"></span>
+              <span class="wd-title">
+                <span class="name" id="wd-name">Strength training</span>
+                <span class="when" id="wd-when">10:15 – 11:00 AM</span>
+              </span>
+              <button class="hdrbtn share" type="button" aria-label="Share workout">
+                <span data-icon="share-network"></span>
+              </button>
+            </header>
+
+            <div class="body">
+
+              <!-- Route map — GPS activities only. -->
+              <section class="mapcard" id="wd-map-card" hidden>
+                <!-- Tapping the row opens the full-screen map. Flag: the place
+                     name follows the owner's screenshot, which is Kolkata — the
+                     earlier "New Delhi" label came from the first wireframe. -->
+                <div class="map-head" id="btn-map-open" role="button" tabindex="0">
+                  <span data-icon="navigation-arrow" data-weight="fill"></span>
+                  <span class="place">Maidan, Kolkata</span>
+                  <span class="caret" data-icon="caret-right"></span>
+                </div>
+                <div class="map-card" id="wd-map"></div>
+              </section>
+
+              <div class="tiles" id="wd-tiles"></div>
+
+              <div class="hr-card">
+                <div class="lc">
+                  <div class="lc-header">
+                    <h3 class="lc-title">Heart rate</h3>
+                    <div class="lc-block">
+                      <div class="lc-row">
+                        <span class="lc-value" id="hrValue">0</span>
+                        <span class="lc-unit">bpm</span>
+                      </div>
+                      <div class="lc-sub" id="hrSub"><span id="hrSubText">Average</span></div>
+                    </div>
+                  </div>
+                  <div class="lc-wrap" id="chartWrap">
+                    <svg id="chart" role="img" aria-label="Heart rate through the workout"></svg>
+                  </div>
+                </div>
+                <div class="hr-rule"></div>
+                <div class="hrz" id="wd-zones"></div>
+              </div>
+
+            </div>
+          </div>
+          <div class="nav-float"><nav class="pebble-nav" aria-label="Primary" data-nav></nav></div>
+        </section>
+
+        <!-- ── Full-screen map preview — opens from the details map card ── -->
+        <section class="page" id="p-map">
+          <div class="map-card map-full" id="map-full"></div>
+          <button class="map-back" type="button" id="btn-map-back" aria-label="Back to workout">
+            <span data-icon="caret-left"></span>
+          </button>
+        </section>
+
+  <!-- Discard confirmation — owner copy, Cancel on the left. -->
+      <div class="scrim" id="scrim" role="dialog" aria-modal="true" aria-labelledby="dlg-copy">
+        <div class="dialog">
+          <p id="dlg-copy">Are you sure you want to discard this activity?</p>
+          <div class="btns">
+            <button class="btn btn-secondary" type="button" id="btn-dlg-cancel">Cancel</button>
+            <button class="btn btn-primary" type="button" id="btn-dlg-discard">Discard</button>
+          </div>
+        </div></div>
     </div>
 
     <!-- ============ BOTTOM NAV — owner-supplied "pebblenav" component ============
@@ -3062,9 +4001,7 @@ function hmCtaHTML(key, label){
     + `${HM_PULSE}<span class="txt">${txt}</span></button>`;
 }
 
-const HM_STEP_MS = 700;                                  // per metric
-const HM_RUN_MS  = HM_METRICS.length * HM_STEP_MS;       // whole measurement
-const hmReduced  = matchMedia('(prefers-reduced-motion: reduce)');
+const hmReduced = matchMedia('(prefers-reduced-motion: reduce)');
 
 let hmState = 'idle', hmRemaining = HM_COOLDOWN, hmRunTimer = null, hmCdTimer = null;
 function hmClearTimers(){
@@ -3088,10 +4025,9 @@ function hmSetState(k){
   if (k === 'measuring') hmStartRun();
   if (k === 'disabled')  hmStartCountdown();
 }
-/* The fill is ONE continuous sweep across the whole measurement (owner,
-   2026-08-14 — it used to jump a fifth of the way per metric, which read as
-   five steps with pauses between them). Linear timing, so the edge glides at
-   a constant pace from empty to full, then the sheet opens. */
+/* Tapping Measure All plays the owner's reading scene (Measure_All_Metrics
+   .html) and lands on the sheet. The CTA's own fill runs underneath for the
+   same span, so if it's glimpsed through the blur it agrees with the ring. */
 function hmStartRun(){
   const f = $('#hmCtaFill');
   if (f){
@@ -3105,7 +4041,117 @@ function hmStartRun(){
       });
     }
   }
-  hmRunTimer = setTimeout(() => { hmClearTimers(); hmOpenSheet(); }, HM_RUN_MS);
+  maPlay();
+}
+
+/* ==========================================================================
+   THE READING SCENE — ported from the owner's Measure_All_Metrics.html
+   --------------------------------------------------------------------------
+   The source is a React composition: one element tree drawn as a pure
+   function of a single authored-time axis, with a scene list giving each
+   section its length. This is the same idea in plain JS — one rAF loop works
+   out T (seconds since the tap), evaluates the author's curves at that T, and
+   writes the results into CSS custom properties. Every cue time, easing and
+   value below is the authored one; nothing was re-timed.
+   ========================================================================== */
+const MA_CUE = { orbit:2.8, bloom:7.0, reveal:9.0, settle:11.6 };
+/* Nothing changes after the Done button settles at reveal+1.6, so the loop
+   stops there rather than running out the authored 14s.
+   FLAG: that still means ~9s from tap to sheet — the reading is the long part,
+   by design. MA_SPEED is here so it can be dialled without re-timing anything:
+   1 is the authored pace, 1.8 would land the sheet in ~5s. */
+const MA_SPEED = 1;
+const MA_END = MA_CUE.reveal + 1.7;
+// the CTA's fill runs for exactly as long as the reading does
+const HM_RUN_MS = (MA_CUE.reveal / MA_SPEED) * 1000;
+
+/* the author's three easings */
+const maEase = {
+  enter: t => 1 - Math.pow(1 - t, 3),                       // easeOutCubic
+  glide: t => -(Math.cos(Math.PI * t) - 1) / 2,             // easeInOutSine
+  pop:   t => { const c1 = 1.70158, c3 = c1 + 1;            // easeOutBack
+                return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); }
+};
+// value of one authored tween at time T
+function maAt(T, from, to, start, end, ease){
+  const t = Math.min(1, Math.max(0, (T - start) / (end - start)));
+  return from + (to - from) * maEase[ease](t);
+}
+
+let maRAF = null, maT0 = 0;
+const maRoot = () => document.getElementById('maScene');
+
+function maPlay(){
+  const scene = maRoot();
+  hmBuildRows();
+  scene.hidden = false;
+  $('#page-health').classList.add('ma-behind');
+  // Reduced motion: no orb, no bloom, no rise — the sheet is simply there.
+  if (hmReduced.matches){ maFrame(MA_END); return; }
+  maT0 = performance.now();
+  cancelAnimationFrame(maRAF);
+  const step = now => {
+    const T = (now - maT0) / 1000 * MA_SPEED;
+    maFrame(Math.min(T, MA_END));
+    if (T < MA_END) maRAF = requestAnimationFrame(step);
+  };
+  maRAF = requestAnimationFrame(step);
+}
+function maStop(){
+  cancelAnimationFrame(maRAF); maRAF = null;
+  maRoot().hidden = true;
+  $('#page-health').classList.remove('ma-behind');
+}
+
+/* One frame: every line here is a curve from the source composition. */
+function maFrame(T){
+  const s = maRoot().style, R = MA_CUE.reveal;
+
+  /* p drives the orbit section — the orb's spin picks up speed with it */
+  const p = maAt(T, 0, 1, MA_CUE.orbit - 0.3, MA_CUE.bloom + 0.6, 'glide');
+
+  /* orb: a slow breath and core pulse all the way through, plus the bloom
+     swell and the push-in over the last 2s before the sheet */
+  const breathe = 1 + Math.sin(T * 1.5) * 0.035
+                + maAt(T, 0, 0.22, MA_CUE.bloom, MA_CUE.bloom + 1.4, 'glide');
+  const core    = 1 + Math.sin(T * 1.9 + 1) * 0.05
+                + maAt(T, 0, 3.2, MA_CUE.bloom + 0.15, R - 0.1, 'glide');
+  const orbIn   = maAt(T, 0, 1, 0.15, 1.1, 'enter');
+  const orbOut  = maAt(T, 0, 1, R - 0.3, R + 0.2, 'glide');
+  s.setProperty('--ma-spin',    (T * 26 + p * 260).toFixed(2));
+  s.setProperty('--ma-breathe', breathe.toFixed(4));
+  s.setProperty('--ma-core',    core.toFixed(4));
+  s.setProperty('--ma-orb-o',   (orbIn * (1 - orbOut) * 0.9).toFixed(4));
+  s.setProperty('--ma-orb-zoom',(1 + maAt(T, 0, 2.4, R - 2, R - 0.1, 'glide')).toFixed(4));
+
+  /* the ring fills across the whole reading, finishing as the bloom starts */
+  const ring = maAt(T, 0, 1, 0.5, MA_CUE.bloom, 'glide');
+  $('#maRing').setAttribute('stroke-dashoffset', (710 * (1 - ring)).toFixed(1));
+
+  /* caption in early, out just before the bloom */
+  s.setProperty('--ma-cap', (maAt(T, 0, 1, 0.5, 1.2, 'enter')
+                           - maAt(T, 0, 1, MA_CUE.bloom - 0.6, MA_CUE.bloom, 'glide')).toFixed(4));
+
+  /* the flash covers the hand-off from orb to sheet */
+  const flash = maAt(T, 0, 1, R - 0.6, R - 0.12, 'glide')
+              - maAt(T, 0, 1, R - 0.05, R + 0.7, 'glide');
+  s.setProperty('--ma-flash', Math.min(1, Math.max(0, flash)).toFixed(4));
+
+  /* the app behind: dimmed as the orbit closes in, dimmer again at reveal */
+  const revealDim = maAt(T, 0, 1, R - 0.2, R + 0.6, 'glide');
+  s.setProperty('--ma-dim',   (1 - (0.42 - 0.24 * revealDim) * (1 - 0.5 * p)).toFixed(4));
+  s.setProperty('--ma-veil2', revealDim.toFixed(4));
+
+  /* the sheet rises, then the rows land one by one, then Done settles */
+  s.setProperty('--ma-sheet-y', maAt(T, 120, 0, R - 0.05, R + 0.8, 'enter').toFixed(2) + 'px');
+  s.setProperty('--ma-sheet-o', maAt(T, 0, 1, R - 0.05, R + 0.3, 'enter').toFixed(4));
+  $$('#hmShList .rd').forEach((row, i) => {
+    const st = R + 0.4 + i * 0.11;
+    row.style.setProperty('--o', maAt(T, 0, 1, st, st + 0.32, 'enter').toFixed(4));
+    row.style.setProperty('--y', maAt(T, 14, 0, st, st + 0.42, 'enter').toFixed(2) + 'px');
+  });
+  s.setProperty('--ma-done-o', maAt(T, 0, 1, R + 1.05, R + 1.45, 'enter').toFixed(4));
+  s.setProperty('--ma-done-y', maAt(T, 10, 0, R + 1.05, R + 1.6, 'pop').toFixed(2) + 'px');
 }
 function hmStartCountdown(){
   hmCdTimer = setInterval(() => {
@@ -3116,17 +4162,16 @@ function hmStartCountdown(){
   }, 1000);
 }
 
-/* readings sheet */
-function hmOpenSheet(){
+/* readings sheet — the rows the scene reveals. Label and dot on the left,
+   figure on the right, as the scene lays them out. */
+function hmBuildRows(){
   $('#hmShList').innerHTML = HM_METRICS.map(m =>
     '<div class="rd">'
-    + `<span class="dot" style="background:${m.c}"></span>`
-    + `<span class="label">${m.n}</span>`
+    + `<span class="who"><span class="dot" style="background:${m.c}"></span><span class="label">${m.n}</span></span>`
     + `<div class="figure"><span class="value">${m.v}</span>${m.u ? `<span class="unit">${m.u}</span>` : ''}${hmTri(m.t)}</div>`
     + '</div>').join('');
-  $('#hmScrim').hidden = false;
 }
-function hmCloseSheet(){ $('#hmScrim').hidden = true; }
+function hmCloseSheet(){ maStop(); }
 
 // inert in the no-data state, as the first-run cell was — there are no
 // readings to produce until the band has synced
@@ -3135,9 +4180,12 @@ $('#hmCtaSlot').addEventListener('click', e => {
   if (e.target.closest('.cta') && hmState === 'idle') hmSetState('measuring');
 });
 $('#hmShDone').addEventListener('click', () => { hmCloseSheet(); hmSetState('disabled'); });
-// tapping the dimmed area behind the sheet dismisses it, same as Done
-$('#hmScrim').addEventListener('click', e => {
-  if (e.target.id === 'hmScrim'){ hmCloseSheet(); hmSetState('disabled'); }
+// tapping the dimmed area outside the sheet dismisses it, same as Done — but
+// only once the sheet is actually there, so a tap can't cut the reading short
+$('#maScene').addEventListener('click', e => {
+  if (e.target.closest('.hm-sheet')) return;
+  if (maRAF) return;
+  hmCloseSheet(); hmSetState('disabled');
 });
 
 /* ==========================================================================
@@ -3227,6 +4275,784 @@ function setState(state){
 
 $$('#stateOpts input').forEach(r => r.addEventListener('change', () => setState(r.value)));
 setState('default');
+
+
+/* ==========================================================================
+   WORKOUT FLOW — script from the owner's Workout Flow artifact.
+   Wrapped in an IIFE so its helpers ($ / $$ / SVGNS) and its module-level
+   state can't collide with this file's; inside, $ and $$ look only within
+   #wf, so the flow's `.page` queries can't reach this file's tab pages.
+   The only edits to the flow's own code: the three exits that returned to
+   its home stub now close the overlay, and the clock-speed control reads
+   from this file's panel instead of the artifact's.
+   ========================================================================== */
+(function(){
+const WF_ROOT = document.getElementById('wf');
+const APP_SCREEN = document.querySelector('.screen');
+
+/* Opening the flow from the real Start Workout button, and closing it back
+   to the Health tab. The flow's own screens do the rest. */
+function openFlow(){
+  WF_ROOT.hidden = false;
+  $('#search-input').value = '';
+  $('#search').classList.remove('has-text');
+  renderPicker('');
+  show('p-picker');
+}
+function closeFlow(){
+  WF_ROOT.hidden = true;
+  APP_SCREEN.classList.remove('wf-on-light');
+}
+document.querySelector('.startbtn').addEventListener('click', openFlow);
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   1. ICONS — Phosphor, regular + fill weights, path data embedded so the
+   file works offline. Rendered into any <span data-icon="name"
+   data-weight="fill"> found in the DOM.
+   ══════════════════════════════════════════════════════════════════════════ */
+const ICONS = {"regular":{"x":"<path d=\"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z\"/>","magnifying-glass":"<path d=\"M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z\"/>","caret-right":"<path d=\"M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z\"/>","caret-left":"<path d=\"M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z\"/>","play":"<path d=\"M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z\"/>","pause":"<path d=\"M200,32H160a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16h40a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm0,176H160V48h40ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Zm0,176H56V48H96Z\"/>","trash":"<path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z\"/>","floppy-disk":"<path d=\"M219.31,72,184,36.69A15.86,15.86,0,0,0,172.69,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V83.31A15.86,15.86,0,0,0,219.31,72ZM168,208H88V152h80Zm40,0H184V152a16,16,0,0,0-16-16H88a16,16,0,0,0-16,16v56H48V48H172.69L208,83.31ZM160,72a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h56A8,8,0,0,1,160,72Z\"/>","export":"<path d=\"M216,112v96a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V112A16,16,0,0,1,56,96H80a8,8,0,0,1,0,16H56v96H200V112H176a8,8,0,0,1,0-16h24A16,16,0,0,1,216,112ZM93.66,69.66,120,43.31V136a8,8,0,0,0,16,0V43.31l26.34,26.35a8,8,0,0,0,11.32-11.32l-40-40a8,8,0,0,0-11.32,0l-40,40A8,8,0,0,0,93.66,69.66Z\"/>","sparkle":"<path d=\"M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z\"/>","navigation-arrow":"<path d=\"M237.33,106.21,61.41,41l-.16-.05A16,16,0,0,0,40.9,61.25a1,1,0,0,0,.05.16l65.26,175.92A15.77,15.77,0,0,0,121.28,248h.3a15.77,15.77,0,0,0,15-11.29l.06-.2,21.84-78,78-21.84.2-.06a16,16,0,0,0,.62-30.38ZM149.84,144.3a8,8,0,0,0-5.54,5.54L121.3,232l-.06-.17L56,56l175.82,65.22.16.06Z\"/>","clock":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z\"/>","heart":"<path d=\"M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,228.66,240,172,240,102A62.07,62.07,0,0,0,178,40ZM128,214.8C109.74,204.16,32,155.69,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,155.61,146.24,204.15,128,214.8Z\"/>","fire":"<path d=\"M183.89,153.34a57.6,57.6,0,0,1-46.56,46.55A8.75,8.75,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68ZM216,144a88,88,0,0,1-176,0c0-27.92,11-56.47,32.66-84.85a8,8,0,0,1,11.93-.89l24.12,23.41,22-60.41a8,8,0,0,1,12.63-3.41C165.21,36,216,84.55,216,144Zm-16,0c0-46.09-35.79-85.92-58.21-106.33L119.52,98.74a8,8,0,0,1-13.09,3L80.06,76.16C64.09,99.21,56,122,56,144a72,72,0,0,0,144,0Z\"/>","gauge":"<path d=\"M207.06,72.67A111.24,111.24,0,0,0,128,40h-.4C66.07,40.21,16,91,16,153.13V176a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V152A111.25,111.25,0,0,0,207.06,72.67ZM224,176H119.71l54.76-75.3a8,8,0,0,0-12.94-9.42L99.92,176H32V153.13c0-3.08.15-6.12.43-9.13H56a8,8,0,0,0,0-16H35.27c10.32-38.86,44-68.24,84.73-71.66V80a8,8,0,0,0,16,0V56.33A96.14,96.14,0,0,1,221,128H200a8,8,0,0,0,0,16h23.67c.21,2.65.33,5.31.33,8Z\"/>","speedometer":"<path d=\"M114.34,154.34l96-96a8,8,0,0,1,11.32,11.32l-96,96a8,8,0,0,1-11.32-11.32ZM128,88a63.9,63.9,0,0,1,20.44,3.33,8,8,0,1,0,5.11-15.16A80,80,0,0,0,48.49,160.88,8,8,0,0,0,56.43,168c.29,0,.59,0,.89-.05a8,8,0,0,0,7.07-8.83A64.92,64.92,0,0,1,64,152,64.07,64.07,0,0,1,128,88Zm99.74,13a8,8,0,0,0-14.24,7.3,96.27,96.27,0,0,1,5,75.71l-181.1-.07A96.24,96.24,0,0,1,128,56h.88a95,95,0,0,1,42.82,10.5A8,8,0,1,0,179,52.27a112,112,0,0,0-156.66,137A16.07,16.07,0,0,0,37.46,200H218.53a16,16,0,0,0,15.11-10.71,112.35,112.35,0,0,0-5.9-88.3Z\"/>","ruler":"<path d=\"M235.32,73.37,182.63,20.69a16,16,0,0,0-22.63,0L20.68,160a16,16,0,0,0,0,22.63l52.69,52.68a16,16,0,0,0,22.63,0L235.32,96A16,16,0,0,0,235.32,73.37ZM84.68,224,32,171.31l32-32,26.34,26.35a8,8,0,0,0,11.32-11.32L75.31,128,96,107.31l26.34,26.35a8,8,0,0,0,11.32-11.32L107.31,96,128,75.31l26.34,26.35a8,8,0,0,0,11.32-11.32L139.31,64l32-32L224,84.69Z\"/>","map-pin":"<path d=\"M128,64a40,40,0,1,0,40,40A40,40,0,0,0,128,64Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,128Zm0-112a88.1,88.1,0,0,0-88,88c0,31.4,14.51,64.68,42,96.25a254.19,254.19,0,0,0,41.45,38.3,8,8,0,0,0,9.18,0A254.19,254.19,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25A88.1,88.1,0,0,0,128,16Zm0,206c-16.53-13-72-60.75-72-118a72,72,0,0,1,144,0C200,161.23,144.53,209,128,222Z\"/>","timer":"<path d=\"M128,40a96,96,0,1,0,96,96A96.11,96.11,0,0,0,128,40Zm0,176a80,80,0,1,1,80-80A80.09,80.09,0,0,1,128,216ZM173.66,90.34a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32l40-40A8,8,0,0,1,173.66,90.34ZM96,16a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,16Z\"/>","house":"<path d=\"M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z\"/>","sneaker-move":"<path d=\"M231.16,166.63l-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-8-8,48.05,48.05,0,0,1-48-48,8,8,0,0,0-12.83-6.37L30.13,76l-.2.16a16,16,0,0,0-1.24,23.75L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63ZM224,200H151.37L40,88.63l12.87-9.76,38.79,38.79A8,8,0,0,0,103,106.34L65.74,69.11l40-30.31A64.15,64.15,0,0,0,160,87.5v21.89a63.65,63.65,0,0,0,35.38,57.24L224,180.94ZM70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm40,24a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16h54.8A8,8,0,0,1,110.8,208Z\"/>","moon":"<path d=\"M233.54,142.23a8,8,0,0,0-8-2,88.08,88.08,0,0,1-109.8-109.8,8,8,0,0,0-10-10,104.84,104.84,0,0,0-52.91,37A104,104,0,0,0,136,224a103.09,103.09,0,0,0,62.52-20.88,104.84,104.84,0,0,0,37-52.91A8,8,0,0,0,233.54,142.23ZM188.9,190.34A88,88,0,0,1,65.66,67.11a89,89,0,0,1,31.4-26A106,106,0,0,0,96,56,104.11,104.11,0,0,0,200,160a106,106,0,0,0,14.92-1.06A89,89,0,0,1,188.9,190.34Z\"/>","user":"<path d=\"M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z\"/>","barbell":"<path d=\"M248,120h-8V88a16,16,0,0,0-16-16H208V64a16,16,0,0,0-16-16H168a16,16,0,0,0-16,16v56H104V64A16,16,0,0,0,88,48H64A16,16,0,0,0,48,64v8H32A16,16,0,0,0,16,88v32H8a8,8,0,0,0,0,16h8v32a16,16,0,0,0,16,16H48v8a16,16,0,0,0,16,16H88a16,16,0,0,0,16-16V136h48v56a16,16,0,0,0,16,16h24a16,16,0,0,0,16-16v-8h16a16,16,0,0,0,16-16V136h8a8,8,0,0,0,0-16ZM32,168V88H48v80Zm56,24H64V64H88V192Zm104,0H168V64h24V175.82c0,.06,0,.12,0,.18s0,.12,0,.18V192Zm32-24H208V88h16Z\"/>","person-arms-spread":"<path d=\"M160,40a32,32,0,1,0-32,32A32,32,0,0,0,160,40ZM128,56a16,16,0,1,1,16-16A16,16,0,0,1,128,56ZM231.5,87.71A19.62,19.62,0,0,0,212,72H44a20,20,0,0,0-8.38,38.16l.13,0,50.75,22.35-21,79.72A20,20,0,0,0,102,228.8l26-44.87,26,44.87a20,20,0,0,0,36.4-16.52l-21-79.72,50.75-22.35.13,0A19.64,19.64,0,0,0,231.5,87.71Zm-17.8,7.9-56.93,25.06a8,8,0,0,0-4.51,9.36L175.13,217a7,7,0,0,0,.49,1.35,4,4,0,0,1-5,5.45,4,4,0,0,1-2.25-2.07,6.31,6.31,0,0,0-.34-.63L134.92,164a8,8,0,0,0-13.84,0L88,221.05a6.31,6.31,0,0,0-.34.63,4,4,0,0,1-2.25,2.07,4,4,0,0,1-5-5.45,7,7,0,0,0,.49-1.35L103.74,130a8,8,0,0,0-4.51-9.36L42.3,95.61A4,4,0,0,1,44,88H212a4,4,0,0,1,1.73,7.61Z\"/>","person-simple-walk":"<path d=\"M152,80a32,32,0,1,0-32-32A32,32,0,0,0,152,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,152,32Zm64,112a8,8,0,0,1-8,8c-35.31,0-52.95-17.81-67.12-32.12-2.74-2.77-5.36-5.4-8-7.84l-13.43,30.88,37.2,26.57A8,8,0,0,1,160,176v56a8,8,0,0,1-16,0V180.12l-31.07-22.2L79.34,235.19A8,8,0,0,1,72,240a7.84,7.84,0,0,1-3.19-.67,8,8,0,0,1-4.15-10.52l54.08-124.37c-9.31-1.65-20.92,1.2-34.7,8.58a163.88,163.88,0,0,0-30.57,21.77,8,8,0,0,1-10.95-11.66c2.5-2.35,61.69-57.23,98.72-25.08,3.83,3.32,7.48,7,11,10.57C166.19,122.7,179.36,136,208,136A8,8,0,0,1,216,144Z\"/>","person-simple-run":"<path d=\"M152,88a32,32,0,1,0-32-32A32,32,0,0,0,152,88Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,152,40Zm67.31,100.68c-.61.28-7.49,3.28-19.67,3.28-13.85,0-34.55-3.88-60.69-20a169.31,169.31,0,0,1-15.41,32.34,104.29,104.29,0,0,1,31.31,15.81C173.92,186.65,184,207.35,184,232a8,8,0,0,1-16,0c0-41.7-34.69-56.71-54.14-61.85-.55.7-1.12,1.41-1.69,2.1-19.64,23.8-44.25,36.18-71.63,36.18A92.29,92.29,0,0,1,31.2,208,8,8,0,0,1,32.8,192c25.92,2.58,48.47-7.49,67-30,12.49-15.14,21-33.61,25.25-47C86.13,92.35,61.27,111.63,61,111.84A8,8,0,1,1,51,99.36c1.5-1.2,37.22-29,89.51,6.57,45.47,30.91,71.93,20.31,72.18,20.19a8,8,0,1,1,6.63,14.56Z\"/>","person-simple-bike":"<path d=\"M164,80a28,28,0,1,0-28-28A28,28,0,0,0,164,80Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,164,40Zm36,96a40,40,0,1,0,40,40A40,40,0,0,0,200,136Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,200,200ZM56,136a40,40,0,1,0,40,40A40,40,0,0,0,56,136Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,56,200Zm136-80H152a8,8,0,0,1-5.66-2.34L120,91.31,99.31,112l34.35,34.34A8,8,0,0,1,136,152v48a8,8,0,0,1-16,0V155.31L82.34,117.66a8,8,0,0,1,0-11.32l32-32a8,8,0,0,1,11.32,0L155.31,104H192a8,8,0,0,1,0,16Z\"/>","person-simple-hike":"<path d=\"M152,80a32,32,0,1,0-32-32A32,32,0,0,0,152,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,152,32Zm48,112v88a8,8,0,0,1-16,0V151.66c-25.75-2.25-34.35-15.52-42-27.36-2.85-4.39-5.56-8.57-9.13-12.19l-13.4,30.81,37.2,26.57A8,8,0,0,1,160,176v56a8,8,0,0,1-16,0V180.12l-31.07-22.2L79.34,235.19A8,8,0,0,1,72,240a7.84,7.84,0,0,1-3.19-.67,8,8,0,0,1-4.14-10.52L122.19,96.5a8,8,0,0,1,11-3.92,40.92,40.92,0,0,1,8,5.47c6.37,5.52,10.51,11.91,14.16,17.55,7.68,11.84,13.22,20.4,36.6,20.4A8,8,0,0,1,200,144ZM72,152a8,8,0,0,0,7.35-4.85l24-56a8,8,0,0,0-4.2-10.5l-28-12a8,8,0,0,0-10.5,4.2l-24,56a8,8,0,0,0,4.2,10.5l28,12A8,8,0,0,0,72,152ZM54.51,127.8,72.2,86.5l13.3,5.7L67.8,133.49Z\"/>","lightning":"<path d=\"M215.79,118.17a8,8,0,0,0-5-5.66L153.18,90.9l14.66-73.33a8,8,0,0,0-13.69-7l-112,120a8,8,0,0,0,3,13l57.63,21.61L88.16,238.43a8,8,0,0,0,13.69,7l112-120A8,8,0,0,0,215.79,118.17ZM109.37,214l10.47-52.38a8,8,0,0,0-5-9.06L62,132.71l84.62-90.66L136.16,94.43a8,8,0,0,0,5,9.06l52.8,19.8Z\"/>","person-simple-tai-chi":"<path d=\"M128,80A32,32,0,1,0,96,48,32,32,0,0,0,128,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,128,32Zm96,72a8,8,0,0,1-8,8H136v26.72l51.15,21.93A8,8,0,0,1,192,168v48a8,8,0,0,1-16,0V173.28l-46.45-19.91L53.35,222a8,8,0,1,1-10.7-11.9L120,140.44V112H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,104Z\"/>","person-simple":"<path d=\"M128,80A32,32,0,1,0,96,48,32,32,0,0,0,128,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,128,32ZM230.86,132.12a8,8,0,0,1-11,2.74c-.35-.21-35.11-20.59-83.88-22.67V149l62,69.73a8,8,0,1,1-12,10.62L128,164,70,229.31a8,8,0,1,1-12-10.62L120,149V112.18c-49,2.08-83.52,22.46-83.88,22.68a8,8,0,1,1-8.23-13.72C29.6,120.11,70.45,96,128,96s98.4,24.11,100.12,25.14A8,8,0,0,1,230.86,132.12Z\"/>","boat":"<path d=\"M221.06,110.59,208,106.23V56a16,16,0,0,0-16-16H136V24a8,8,0,0,0-16,0V40H64A16,16,0,0,0,48,56v50.23l-13.06,4.36A16,16,0,0,0,24,125.77V152c0,61.54,97.89,86.72,102.06,87.76a8,8,0,0,0,3.88,0C134.11,238.72,232,213.54,232,152V125.77A16,16,0,0,0,221.06,110.59ZM64,56H192v44.9L130.53,80.41a8,8,0,0,0-5.06,0L64,100.9Zm152,96c0,24.91-23.68,43-43.55,53.83A228.13,228.13,0,0,1,128,223.72,226.85,226.85,0,0,1,83.81,206C47.6,186.35,40,165.79,40,152V125.77L120,99.1V168a8,8,0,0,0,16,0V99.1l80,26.67Z\"/>","person-simple-swim":"<path d=\"M176,104a32,32,0,1,0-32-32A32,32,0,0,0,176,104Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,176,56Zm46.16,129.24a8,8,0,0,1-1,11.26c-17.36,14.39-32.86,19.5-47,19.5-18.58,0-34.82-8.82-49.93-17-25.35-13.76-47.24-25.65-79.07.74a8,8,0,1,1-10.22-12.31c40.17-33.29,70.32-16.93,96.93-2.49,25.35,13.77,47.24,25.65,79.07-.74A8,8,0,0,1,222.16,185.24ZM34.89,147.42a8,8,0,1,0,10.22,12.31c31.83-26.38,53.72-14.5,79.07-.74,15.11,8.2,31.35,17,49.93,17,14.14,0,29.64-5.11,47-19.5a8,8,0,1,0-10.22-12.31,75.79,75.79,0,0,1-19.28,12.06l-53.84-53.82A103.34,103.34,0,0,0,64.24,72H40a8,8,0,0,0,0,16H64.24a87.66,87.66,0,0,1,41.88,10.56L76.49,128.17C63.82,129.35,50.07,134.84,34.89,147.42Zm91.57-33.67,46.13,46.12c-14-.43-26.88-7.39-40.77-14.93-10.75-5.84-22.09-12-34.42-15.05l22.26-22.26A87.14,87.14,0,0,1,126.46,113.75Z\"/>","stairs":"<path d=\"M200,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V40A16,16,0,0,0,200,24ZM152,144h48v24H112V144Zm8-16V104h40v24Zm40-88V88H152a8,8,0,0,0-8,8v32H104a8,8,0,0,0-8,8v32H56V40Zm0,176H56V184H200v32Z\"/>","person-simple-circle":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM112,80a16,16,0,1,1,16,16A16,16,0,0,1,112,80Zm72,32a8,8,0,0,1-8,8H136v13.58l30.66,46a8,8,0,0,1-13.32,8.88l-25.34-38-25.34,38a8,8,0,1,1-13.32-8.88l30.66-46V120H80a8,8,0,0,1,0-16h96A8,8,0,0,1,184,112Z\"/>","mountains":"<path d=\"M164,80a28,28,0,1,0-28-28A28,28,0,0,0,164,80Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,164,40Zm90.88,155.92-54.56-92.08A15.87,15.87,0,0,0,186.55,96h0a15.85,15.85,0,0,0-13.76,7.84L146.63,148l-44.84-76.1a16,16,0,0,0-27.58,0L1.11,195.94A8,8,0,0,0,8,208H248a8,8,0,0,0,6.88-12.08ZM88,80l23.57,40H64.43ZM22,192l33-56h66l18.74,31.8,0,0L154,192Zm150.57,0-16.66-28.28L186.55,112,234,192Z\"/>","boxing-glove":"<path d=\"M168,16H120A56.06,56.06,0,0,0,64,72H56a32,32,0,0,0-32,32v29.19a16.09,16.09,0,0,0,3.51,10,8,8,0,0,0,.62.69L64,179.34V216a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V177.12l15.38-53.85a15.89,15.89,0,0,0,.62-4.39V72A56.06,56.06,0,0,0,168,16Zm40,102.88L192.31,173.8A7.85,7.85,0,0,0,192,176v40H80V176a8,8,0,0,0-2.38-5.69L40,133.12V104A16,16,0,0,1,56,88h8v16a8,8,0,0,0,16,0V72a40,40,0,0,1,40-40h48a40,40,0,0,1,40,40Zm-36.42,48.28L153.89,176l17.69,8.84a8,8,0,0,1-7.16,14.32L136,184.94l-28.42,14.22a8,8,0,1,1-7.16-14.32L118.11,176l-17.69-8.84a8,8,0,1,1,7.16-14.32L136,167.06l28.42-14.22a8,8,0,1,1,7.16,14.32Z\"/>","basketball":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM60,72.17A87.2,87.2,0,0,1,79.63,120H40.37A87.54,87.54,0,0,1,60,72.17ZM136,120V40.37a87.59,87.59,0,0,1,48.68,20.37A103.06,103.06,0,0,0,160.3,120Zm-16,0H95.7A103.06,103.06,0,0,0,71.32,60.74,87.59,87.59,0,0,1,120,40.37ZM79.63,136A87.2,87.2,0,0,1,60,183.83,87.54,87.54,0,0,1,40.37,136Zm16.07,0H120v79.63a87.59,87.59,0,0,1-48.68-20.37A103.09,103.09,0,0,0,95.7,136Zm40.3,0h24.3a103.09,103.09,0,0,0,24.38,59.26A87.59,87.59,0,0,1,136,215.63Zm40.37,0h39.26A87.54,87.54,0,0,1,196,183.83,87.2,87.2,0,0,1,176.37,136Zm0-16A87.2,87.2,0,0,1,196,72.17,87.54,87.54,0,0,1,215.63,120Z\"/>","soccer-ball":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm76.52,147.42H170.9l-9.26-12.76,12.63-36.78,15-4.89,26.24,20.13A87.38,87.38,0,0,1,204.52,171.42Zm-164-34.3L66.71,117l15,4.89,12.63,36.78L85.1,171.42H51.48A87.38,87.38,0,0,1,40.47,137.12Zm10-50.64,5.51,18.6L40.71,116.77A87.33,87.33,0,0,1,50.43,86.48ZM109,152,97.54,118.65,128,97.71l30.46,20.94L147,152Zm91.07-46.92,5.51-18.6a87.33,87.33,0,0,1,9.72,30.29Zm-6.2-35.38-9.51,32.08-15.07,4.89L136,83.79V68.21l29.09-20A88.58,88.58,0,0,1,193.86,69.7ZM146.07,41.87,128,54.29,109.93,41.87a88.24,88.24,0,0,1,36.14,0ZM90.91,48.21l29.09,20V83.79L86.72,106.67l-15.07-4.89L62.14,69.7A88.58,88.58,0,0,1,90.91,48.21ZM63.15,187.42H83.52l7.17,20.27A88.4,88.4,0,0,1,63.15,187.42ZM110,214.13,98.12,180.71,107.35,168h41.3l9.23,12.71-11.83,33.42a88,88,0,0,1-36.1,0Zm55.36-6.44,7.17-20.27h20.37A88.4,88.4,0,0,1,165.31,207.69Z\"/>","tennis-ball":"<path d=\"M201.57,54.46a104,104,0,1,0,0,147.08A103.4,103.4,0,0,0,201.57,54.46ZM65.75,65.77a87.63,87.63,0,0,1,53.66-25.31A87.31,87.31,0,0,1,94,94.06a87.42,87.42,0,0,1-53.62,25.35A87.58,87.58,0,0,1,65.75,65.77ZM40.33,135.48a103.29,103.29,0,0,0,65-30.11,103.24,103.24,0,0,0,30.13-65,87.78,87.78,0,0,1,80.18,80.14,104,104,0,0,0-95.16,95.1,87.78,87.78,0,0,1-80.18-80.14Zm149.92,54.75a87.69,87.69,0,0,1-53.66,25.31,88,88,0,0,1,79-78.95A87.58,87.58,0,0,1,190.25,190.23Z\"/>","ping-pong":"<path d=\"M240,196a16,16,0,0,0-6.65-11.7l-38-27.15,17-16.95a39.67,39.67,0,0,0,11-35.79,99.52,99.52,0,0,0-35.4-57.89A101.93,101.93,0,0,0,122.58,24,100.29,100.29,0,0,0,24,122.58a102.12,102.12,0,0,0,22.55,65.28,99.52,99.52,0,0,0,57.89,35.4,39.68,39.68,0,0,0,35.79-11l16.95-17,27.15,38A16,16,0,0,0,196,240c.44,0,.88.05,1.32.05a16,16,0,0,0,11.31-4.69l26.64-26.64A16,16,0,0,0,240,196ZM59,177.83a86.09,86.09,0,0,1-19-55A84.27,84.27,0,0,1,122.8,40a86.28,86.28,0,0,1,55,19A85.08,85.08,0,0,1,196.58,80.1L80.1,196.58A85.08,85.08,0,0,1,59,177.83ZM197.35,224l-32.63-45.69a8,8,0,0,0-5.85-3.32q-.33,0-.66,0a8,8,0,0,0-5.66,2.34l-23.63,23.63a23.68,23.68,0,0,1-21.36,6.63,80.3,80.3,0,0,1-12.3-3.5l108.8-108.8a80.63,80.63,0,0,1,3.5,12.3,23.67,23.67,0,0,1-6.63,21.36L177.3,152.55a8,8,0,0,0,1,12.17L224,197.35Z\"/>","racquet":"<path d=\"M230,26.05C202-1.88,151.53,3.16,117.4,37.3c-31.79,31.79-38.33,77.77-16.51,106.49L71.33,173.35l-.68-.68a16,16,0,0,0-22.64,0L20.69,200a16,16,0,0,0,0,22.64l12.69,12.69a16,16,0,0,0,22.63,0h0L83.34,208a16,16,0,0,0,0-22.63l-.69-.69,29.56-29.56c11.29,8.58,25.24,12.79,40,12.79,22.72,0,47.25-10,66.54-29.3C252.83,104.47,257.88,54,230,26.05ZM44.7,224,32,211.31,59.33,184l6.33,6.34h0L72,196.67ZM224.23,104H200.06v-32h32A72.45,72.45,0,0,1,224.23,104ZM136,149.61A44.15,44.15,0,0,1,106.39,120H136ZM104,104a72.24,72.24,0,0,1,7.86-32H136v32Zm48-32h32v32h-32Zm77.67-16H200.06V26.28a44.23,44.23,0,0,1,29.66,29.66Zm-45.82-32h.16v32h-32V31.76A72.47,72.47,0,0,1,183.9,23.9ZM136,42.06V55.94H122.16a89.72,89.72,0,0,1,6.56-7.32A93.17,93.17,0,0,1,136,42.06Zm16,109.92V120h32v24.16A72.24,72.24,0,0,1,152.05,152Zm48-18.14V120H214a91.62,91.62,0,0,1-6.56,7.32A89.64,89.64,0,0,1,200.06,133.84Z\"/>","cricket":"<path d=\"M243.31,81.37,190.63,28.69a16,16,0,0,0-22.63,0L60.69,136a16,16,0,0,0,0,22.63l20.68,20.68-47,47a8,8,0,0,0,11.32,11.32l47-47,20.68,20.68a16,16,0,0,0,22.63,0L243.31,104a16,16,0,0,0,0-22.63ZM124.69,200,104,179.31l29.66-29.65a8,8,0,0,0-11.32-11.32L92.69,168,72,147.31,107.31,112H160v52.69ZM232,92.69l-56,56V104a8,8,0,0,0-8-8H123.31l56-56L232,92.68ZM60,88A28,28,0,1,0,32,60,28,28,0,0,0,60,88Zm0-40A12,12,0,1,1,48,60,12,12,0,0,1,60,48Z\"/>","music-notes":"<path d=\"M212.92,17.69a8,8,0,0,0-6.86-1.45l-128,32A8,8,0,0,0,72,56V166.08A36,36,0,1,0,88,196V110.25l112-28v51.83A36,36,0,1,0,216,164V24A8,8,0,0,0,212.92,17.69ZM52,216a20,20,0,1,1,20-20A20,20,0,0,1,52,216ZM88,93.75V62.25l112-28v31.5ZM180,184a20,20,0,1,1,20-20A20,20,0,0,1,180,184Z\"/>","flower-lotus":"<path d=\"M245.83,121.63a15.53,15.53,0,0,0-9.52-7.33,73.51,73.51,0,0,0-22.17-2.22c4-19.85,1-35.55-2.06-44.86a16.15,16.15,0,0,0-18.79-10.88,85.53,85.53,0,0,0-28.55,12.12,94.58,94.58,0,0,0-27.11-33.25,16.05,16.05,0,0,0-19.26,0A94.48,94.48,0,0,0,91.26,68.46,85.53,85.53,0,0,0,62.71,56.34,16.15,16.15,0,0,0,43.92,67.22c-3,9.31-6,25-2.06,44.86a73.51,73.51,0,0,0-22.17,2.22,15.53,15.53,0,0,0-9.52,7.33,16,16,0,0,0-1.6,12.27c3.39,12.57,13.8,36.48,45.33,55.32S113.13,208,128.05,208s42.67,0,74-18.78c31.53-18.84,41.94-42.75,45.33-55.32A16,16,0,0,0,245.83,121.63ZM59.14,72.14a.2.2,0,0,1,.23-.15A70.43,70.43,0,0,1,85.18,83.66,118.65,118.65,0,0,0,80,119.17c0,18.74,3.77,34,9.11,46.28A123.59,123.59,0,0,1,69.57,140C51.55,108.62,55.3,84,59.14,72.14Zm3,103.35C35.47,159.57,26.82,140.05,24,129.7a59.82,59.82,0,0,1,22.5-1.17,129.08,129.08,0,0,0,9.15,19.41,142.28,142.28,0,0,0,34,39.56A114.92,114.92,0,0,1,62.1,175.49ZM128,190.4c-9.33-6.94-32-28.23-32-71.23C96,76.7,118.38,55.24,128,48c9.62,7.26,32,28.72,32,71.19C160,162.17,137.33,183.46,128,190.4ZM170.82,83.66A70.43,70.43,0,0,1,196.63,72a.2.2,0,0,1,.23.15C200.7,84,204.45,108.62,186.43,140a123.32,123.32,0,0,1-19.54,25.48c5.34-12.26,9.11-27.54,9.11-46.28A118.65,118.65,0,0,0,170.82,83.66ZM232,129.72c-2.77,10.25-11.4,29.81-38.09,45.77a114.92,114.92,0,0,1-27.55,12,142.28,142.28,0,0,0,34-39.56,129.08,129.08,0,0,0,9.15-19.41A59.69,59.69,0,0,1,232,129.71Z\"/>","person-simple-ski":"<path d=\"M172,88a28,28,0,1,0-28-28A28,28,0,0,0,172,88Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,172,48ZM32.32,77.76a8,8,0,0,1,9.92-5.44L112,92.67l10.32-10.33a8,8,0,0,1,11.32,0L163.31,112H200a8,8,0,0,1,0,16H160a8,8,0,0,1-5.66-2.34L148.73,120l-111-32.36A8,8,0,0,1,32.32,77.76ZM236.44,204.24a69.78,69.78,0,0,1-58.37,8.95L21.77,167.67a8,8,0,1,1,4.47-15.36l76,22.13L128.73,148,85.8,135.69a8,8,0,0,1,4.4-15.39l56,16a8,8,0,0,1,3.46,13.35l-29.9,29.9,62.79,18.28a53.78,53.78,0,0,0,45-6.9,8,8,0,1,1,8.88,13.31Z\"/>","person-simple-snowboard":"<path d=\"M164,80a28,28,0,1,0-28-28A28,28,0,0,0,164,80Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,164,40Zm54.25,72.32-136-40a8,8,0,1,0-4.52,15.35l40.85,12L85.07,150,40.34,137a25.18,25.18,0,1,0-14.13,48.34L183.65,231a25.88,25.88,0,0,0,7.14,1,25.17,25.17,0,0,0,7-49.36l-50.89-14.75,19.75-29.44a8,8,0,0,0-4.42-12.14l-35.33-10.23,7.78-11.67,79.07,23.26a8,8,0,0,0,4.51-15.35ZM200,206.81a9.07,9.07,0,0,1-3.67,7.3,9.27,9.27,0,0,1-8.22,1.5L30.67,170a9.24,9.24,0,0,1-6.67-8.8,9.06,9.06,0,0,1,3.66-7.3,9.26,9.26,0,0,1,8.23-1.5L193.33,198A9.23,9.23,0,0,1,200,206.81Zm-52.75-68.18-16.49,24.59-29.58-8.58,16.4-24.6Z\"/>","share-network":"<path d=\"M176,160a39.89,39.89,0,0,0-28.62,12.09l-46.1-29.63a39.8,39.8,0,0,0,0-28.92l46.1-29.63a40,40,0,1,0-8.66-13.45l-46.1,29.63a40,40,0,1,0,0,55.82l46.1,29.63A40,40,0,1,0,176,160Zm0-128a24,24,0,1,1-24,24A24,24,0,0,1,176,32ZM64,152a24,24,0,1,1,24-24A24,24,0,0,1,64,152Zm112,72a24,24,0,1,1,24-24A24,24,0,0,1,176,224Z\"/>"},"fill":{"play":"<path d=\"M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z\"/>","pause":"<path d=\"M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z\"/>","trash":"<path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM112,168a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm0-120H96V40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z\"/>","floppy-disk":"<path d=\"M219.31,72,184,36.69A15.86,15.86,0,0,0,172.69,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V83.31A15.86,15.86,0,0,0,219.31,72ZM208,208H184V152a16,16,0,0,0-16-16H88a16,16,0,0,0-16,16v56H48V48H172.69L208,83.31ZM160,72a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h56A8,8,0,0,1,160,72Z\"/>","sparkle":"<path d=\"M208,144a15.78,15.78,0,0,1-10.42,14.94L146,178l-19,51.62a15.92,15.92,0,0,1-29.88,0L78,178l-51.62-19a15.92,15.92,0,0,1,0-29.88L78,110l19-51.62a15.92,15.92,0,0,1,29.88,0L146,110l51.62,19A15.78,15.78,0,0,1,208,144ZM152,48h16V64a8,8,0,0,0,16,0V48h16a8,8,0,0,0,0-16H184V16a8,8,0,0,0-16,0V32H152a8,8,0,0,0,0,16Zm88,32h-8V72a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0V96h8a8,8,0,0,0,0-16Z\"/>","navigation-arrow":"<path d=\"M248,121.58a15.76,15.76,0,0,1-11.29,15l-.2.06-78,21.84-21.84,78-.06.2a15.77,15.77,0,0,1-15,11.29h-.3a15.77,15.77,0,0,1-15.07-10.67L41,61.41a1,1,0,0,1-.05-.16A16,16,0,0,1,61.25,40.9l.16.05,175.92,65.26A15.78,15.78,0,0,1,248,121.58Z\"/>","heart":"<path d=\"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z\"/>","fire":"<path d=\"M143.38,17.85a8,8,0,0,0-12.63,3.41l-22,60.41L84.59,58.26a8,8,0,0,0-11.93.89C51,87.53,40,116.08,40,144a88,88,0,0,0,176,0C216,84.55,165.21,36,143.38,17.85Zm40.51,135.49a57.6,57.6,0,0,1-46.56,46.55A7.65,7.65,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z\"/>","house":"<path d=\"M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z\"/>","sneaker-move":"<path d=\"M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z\"/>","moon":"<path d=\"M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z\"/>","user":"<path d=\"M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z\"/>","barbell":"<path d=\"M200,64V192a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V136H104v56a16,16,0,0,1-16,16H72a16,16,0,0,1-16-16V64A16,16,0,0,1,72,48H88a16,16,0,0,1,16,16v56h48V64a16,16,0,0,1,16-16h16A16,16,0,0,1,200,64ZM36,72H32A16,16,0,0,0,16,88v32H8.27A8.18,8.18,0,0,0,0,127.47,8,8,0,0,0,8,136h8v32a16,16,0,0,0,16,16h4a4,4,0,0,0,4-4V76A4,4,0,0,0,36,72Zm220,55.47a8.18,8.18,0,0,0-8.25-7.47H240V88a16,16,0,0,0-16-16h-4a4,4,0,0,0-4,4V180a4,4,0,0,0,4,4h4a16,16,0,0,0,16-16V136h8A8,8,0,0,0,256,127.47Z\"/>","person-simple-run":"<path d=\"M120,56a32,32,0,1,1,32,32A32,32,0,0,1,120,56Zm103.28,74.08a8,8,0,0,0-10.6-4c-.25.12-26.71,10.72-72.18-20.19-52.29-35.54-88-7.77-89.51-6.57a8,8,0,1,0,10,12.48c.26-.21,25.12-19.5,64.07,3.27-4.25,13.35-12.76,31.82-25.25,47-18.56,22.48-41.11,32.56-67,30A8,8,0,0,0,31.2,208a92.29,92.29,0,0,0,9.34.47c27.38,0,52-12.38,71.63-36.18.57-.69,1.14-1.4,1.69-2.1C133.31,175.29,168,190.3,168,232a8,8,0,0,0,16,0c0-24.65-10.08-45.35-29.15-59.86a104.29,104.29,0,0,0-31.31-15.81A169.31,169.31,0,0,0,139,124c26.14,16.09,46.84,20,60.69,20,12.18,0,19.06-3,19.67-3.28A8,8,0,0,0,223.28,130.08Z\"/>","person-simple-walk":"<path d=\"M120,48a32,32,0,1,1,32,32A32,32,0,0,1,120,48Zm88,88c-28.64,0-41.81-13.3-55.75-27.37-3.53-3.57-7.18-7.26-11-10.58-37-32.14-96.22,22.73-98.72,25.08a8,8,0,0,0,10.95,11.66A163.88,163.88,0,0,1,84,113c13.78-7.38,25.39-10.23,34.7-8.58L64.66,228.81a8,8,0,0,0,4.15,10.52A7.84,7.84,0,0,0,72,240a8,8,0,0,0,7.34-4.81l33.59-77.27L144,180.12V232a8,8,0,0,0,16,0V176a8,8,0,0,0-3.35-6.51l-37.2-26.57L132.88,112c2.64,2.44,5.26,5.07,8,7.84C155.05,134.19,172.69,152,208,152a8,8,0,0,0,0-16Z\"/>","person-simple-bike":"<path d=\"M136,52a28,28,0,1,1,28,28A28,28,0,0,1,136,52ZM240,176a40,40,0,1,1-40-40A40,40,0,0,1,240,176Zm-16,0a24,24,0,1,0-24,24A24,24,0,0,0,224,176Zm-24-64a8,8,0,0,0-8-8H155.31L125.66,74.34a8,8,0,0,0-11.32,0l-32,32a8,8,0,0,0,0,11.32L120,155.31V200a8,8,0,0,0,16,0V152a8,8,0,0,0-2.34-5.66L99.31,112,120,91.31l26.34,26.35A8,8,0,0,0,152,120h40A8,8,0,0,0,200,112ZM96,176a40,40,0,1,1-40-40A40,40,0,0,1,96,176Zm-16,0a24,24,0,1,0-24,24A24,24,0,0,0,80,176Z\"/>","clock":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm56,112H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z\"/>","map-pin":"<path d=\"M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z\"/>","racquet":"<path d=\"M230,26.05C202-1.88,151.53,3.16,117.4,37.3c-31.79,31.79-38.33,77.77-16.51,106.49L71.33,173.35l-.68-.68a16,16,0,0,0-22.64,0L20.69,200a16,16,0,0,0,0,22.64l12.69,12.69a16,16,0,0,0,22.63,0h0L83.34,208a16,16,0,0,0,0-22.63l-.69-.69,29.56-29.56c11.29,8.58,25.24,12.79,40,12.79,22.72,0,47.25-10,66.54-29.3C252.83,104.47,257.88,54,230,26.05ZM224.23,104H200.06v-32h32A72.45,72.45,0,0,1,224.23,104ZM136,149.61A44.15,44.15,0,0,1,106.39,120H136ZM104,104a72.24,72.24,0,0,1,7.86-32H136v32Zm48-32h32v32h-32Zm77.67-16H200.06V26.28a44.23,44.23,0,0,1,29.66,29.66Zm-45.82-32h.16v32h-32V31.76A72.47,72.47,0,0,1,183.9,23.9ZM136,42.06V55.94H122.16a89.72,89.72,0,0,1,6.56-7.32A93.17,93.17,0,0,1,136,42.06Zm16,109.92V120h32v24.16A72.24,72.24,0,0,1,152.05,152Zm48-18.14V120H214a91.62,91.62,0,0,1-6.56,7.32A89.64,89.64,0,0,1,200.06,133.84Z\"/>","basketball":"<path d=\"M63.6,46.39a103.48,103.48,0,0,1,52-21.65,4,4,0,0,1,4.45,4V120H95.7A103.77,103.77,0,0,0,63.38,52.44,4,4,0,0,1,63.6,46.39ZM46,64.07a103.51,103.51,0,0,0-21.29,51.46,4,4,0,0,0,4,4.47H79.63A87.86,87.86,0,0,0,51.89,63.59,4,4,0,0,0,46,64.07ZM192.4,46.39a103.48,103.48,0,0,0-52-21.65,4,4,0,0,0-4.45,4V120h24.3a103.77,103.77,0,0,1,32.32-67.56A4,4,0,0,0,192.4,46.39Zm38.86,69.14A103.51,103.51,0,0,0,210,64.07a4,4,0,0,0-5.86-.48A87.86,87.86,0,0,0,176.37,120h50.91A4,4,0,0,0,231.26,115.53ZM24.74,140.47A103.51,103.51,0,0,0,46,191.93a4,4,0,0,0,5.86.48A87.86,87.86,0,0,0,79.63,136H28.72A4,4,0,0,0,24.74,140.47ZM210,191.93a103.51,103.51,0,0,0,21.29-51.46,4,4,0,0,0-4-4.47H176.37a87.86,87.86,0,0,0,27.74,56.41A4,4,0,0,0,210,191.93ZM63.6,209.61a103.48,103.48,0,0,0,52,21.65,4,4,0,0,0,4.45-4V136H95.7a103.77,103.77,0,0,1-32.32,67.56A4,4,0,0,0,63.6,209.61ZM160.3,136H136v91.28a4,4,0,0,0,4.45,4,103.48,103.48,0,0,0,52-21.65,4,4,0,0,0,.22-6.05A103.77,103.77,0,0,1,160.3,136Z\"/>","boxing-glove":"<path d=\"M168,16H120A56,56,0,0,0,64,72v31.73A8.17,8.17,0,0,1,56.53,112,8,8,0,0,1,48,104V78.7a4,4,0,0,0-5.63-3.65A32,32,0,0,0,24,104v29.19a16.14,16.14,0,0,0,3.5,10q.3.36.63.69L64,179.34V216a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V177.12l15.38-53.84a16,16,0,0,0,.62-4.4V72A56,56,0,0,0,168,16Zm3.58,168.84a8,8,0,0,1-7.16,14.32L136,184.94l-28.42,14.22a8,8,0,1,1-7.16-14.32L118.11,176l-17.69-8.84a8,8,0,1,1,7.16-14.32L136,167.06l28.42-14.22a8,8,0,1,1,7.16,14.32L153.89,176Z\"/>","mountains":"<path d=\"M254.88,195.92l-54.56-92.08A15.87,15.87,0,0,0,186.55,96h0a15.85,15.85,0,0,0-13.76,7.84l-15.64,26.39a4,4,0,0,0,0,4.07l26.8,45.47a8.13,8.13,0,0,1-1.89,10.55,8,8,0,0,1-11.8-2.26L101.79,71.88a16,16,0,0,0-27.58,0L1.11,195.94a8,8,0,0,0,1,9.52A8.23,8.23,0,0,0,8.23,208H247.77a8.29,8.29,0,0,0,6.09-2.55A8,8,0,0,0,254.88,195.92ZM64.43,120,88,80l23.57,40ZM140,52a24,24,0,1,1,24,24A24,24,0,0,1,140,52Z\"/>","cricket":"<path d=\"M243.31,81.37,190.63,28.69a16,16,0,0,0-22.63,0L60.69,136a16,16,0,0,0,0,22.63l20.68,20.68-47,47a8,8,0,0,0,11.32,11.32l47-47,20.68,20.68a16,16,0,0,0,22.63,0L243.31,104a16,16,0,0,0,0-22.63ZM124.69,200,104,179.31l29.66-29.65a8,8,0,0,0-11.32-11.32L92.69,168,72,147.31,107.31,112H160v52.69ZM32,60A28,28,0,1,1,60,88,28,28,0,0,1,32,60Z\"/>","music-notes":"<path d=\"M212.92,17.71a7.89,7.89,0,0,0-6.86-1.46l-128,32A8,8,0,0,0,72,56V166.1A36,36,0,1,0,88,196V102.25l112-28V134.1A36,36,0,1,0,216,164V24A8,8,0,0,0,212.92,17.71Z\"/>","person-simple-circle":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,40a16,16,0,1,1-16,16A16,16,0,0,1,128,64Zm48,56H136v13.58l30.66,46a8,8,0,0,1-13.32,8.88l-25.34-38-25.34,38a8,8,0,1,1-13.32-8.88l30.66-46V120H80a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Z\"/>","soccer-ball":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,39.38,24.79-17.05a88.41,88.41,0,0,1,36.18,27l-8,26.94c-.2,0-.41.1-.61.17l-22.82,7.41a7.59,7.59,0,0,0-1,.4L136,88.62c0-.2,0-.41,0-.62V64C136,63.79,136,63.58,136,63.38ZM95.24,46.33,120,63.38c0,.2,0,.41,0,.62V88c0,.21,0,.42,0,.62L91.44,108.29a7.59,7.59,0,0,0-1-.4l-22.82-7.41c-.2-.07-.41-.12-.61-.17l-8-26.94A88.41,88.41,0,0,1,95.24,46.33Zm-13,129.09H53.9a87.4,87.4,0,0,1-13.79-43.07l22-16.88a5.77,5.77,0,0,0,.58.22l22.83,7.42a7.83,7.83,0,0,0,.93.22l10.79,31.42c-.15.18-.3.36-.44.55L82.7,174.71A7.8,7.8,0,0,0,82.24,175.42ZM150.69,213a88.16,88.16,0,0,1-45.38,0L95.25,184.6c.13-.16.27-.31.39-.48l14.11-19.42a7.66,7.66,0,0,0,.46-.7h35.58a7.66,7.66,0,0,0,.46.7l14.11,19.42c.12.17.26.32.39.48Zm23.07-37.61a7.8,7.8,0,0,0-.46-.71L159.19,155.3c-.14-.19-.29-.37-.44-.55l10.79-31.42a7.83,7.83,0,0,0,.93-.22l22.83-7.42a5.77,5.77,0,0,0,.58-.22l22,16.88a87.4,87.4,0,0,1-13.79,43.07Z\"/>","person-arms-spread":"<path d=\"M100,36a28,28,0,1,1,28,28A28,28,0,0,1,100,36ZM227.6,92.57A15.7,15.7,0,0,0,212,80H44a16,16,0,0,0-6.7,30.53l.06,0,53.89,23.73-21.92,83.3a16,16,0,0,0,7.9,20.91A15.83,15.83,0,0,0,84,240a16,16,0,0,0,14.44-9.06L128,180l29.58,51a16,16,0,0,0,29.07-13.35l-21.92-83.3,54-23.76A15.7,15.7,0,0,0,227.6,92.57Z\"/>","lightning":"<path d=\"M213.85,125.46l-112,120a8,8,0,0,1-13.69-7l14.66-73.33L45.19,143.49a8,8,0,0,1-3-13l112-120a8,8,0,0,1,13.69,7L153.18,90.9l57.63,21.61a8,8,0,0,1,3,12.95Z\"/>","person-simple-hike":"<path d=\"M120,48a32,32,0,1,1,32,32A32,32,0,0,1,120,48Zm72,88c-23.37,0-28.92-8.56-36.6-20.4-3.65-5.64-7.79-12-14.16-17.55a40.92,40.92,0,0,0-8-5.47,8,8,0,0,0-11,3.92L64.66,228.81a8,8,0,0,0,4.15,10.52A7.84,7.84,0,0,0,72,240a8,8,0,0,0,7.34-4.81l33.59-77.27L144,180.12V232a8,8,0,0,0,16,0V176a8,8,0,0,0-3.35-6.51l-37.2-26.57,13.4-30.81c3.57,3.62,6.28,7.8,9.13,12.19,7.67,11.84,16.27,25.11,42,27.36V232a8,8,0,0,0,16,0V144A8,8,0,0,0,192,136ZM72,152a8,8,0,0,0,7.36-4.85l24-56a8,8,0,0,0-4.2-10.5l-28-12a8,8,0,0,0-10.5,4.2l-24,56a8,8,0,0,0,4.2,10.5l28,12A8,8,0,0,0,72,152Z\"/>","flower-lotus":"<path d=\"M245.83,121.63a15.53,15.53,0,0,0-9.52-7.33,73.55,73.55,0,0,0-22.17-2.22c4-19.85,1-35.55-2-44.86a16.17,16.17,0,0,0-18.8-10.88,85.53,85.53,0,0,0-28.55,12.12,94.58,94.58,0,0,0-27.11-33.25,16.05,16.05,0,0,0-19.26,0A94.58,94.58,0,0,0,91.26,68.46,85.53,85.53,0,0,0,62.71,56.34,16.14,16.14,0,0,0,43.92,67.22c-3,9.31-6,25-2.06,44.86a73.55,73.55,0,0,0-22.17,2.22,15.53,15.53,0,0,0-9.52,7.33,16,16,0,0,0-1.6,12.26c3.39,12.58,13.8,36.49,45.33,55.33S113.13,208,128.05,208s42.67,0,74-18.78c31.53-18.84,41.94-42.75,45.33-55.33A16,16,0,0,0,245.83,121.63ZM62.1,175.49C35.47,159.57,26.82,140.05,24,129.7a59.61,59.61,0,0,1,22.5-1.17,129.08,129.08,0,0,0,9.15,19.41,142.28,142.28,0,0,0,34,39.56A114.92,114.92,0,0,1,62.1,175.49ZM128,190.4c-9.33-6.94-32-28.23-32-71.23C96,76.7,118.38,55.24,128,48c9.62,7.26,32,28.72,32,71.19C160,162.17,137.33,183.46,128,190.4Zm104-60.68c-2.77,10.24-11.4,29.81-38.09,45.77a114.92,114.92,0,0,1-27.55,12,142.28,142.28,0,0,0,34-39.56,129.08,129.08,0,0,0,9.15-19.41A59.69,59.69,0,0,1,232,129.71Z\"/>","person-simple":"<path d=\"M95.89,48a32,32,0,1,1,32,32A32,32,0,0,1,95.89,48Zm132.23,73.14C226.4,120.11,185.55,96,128,96S29.6,120.11,27.88,121.14a8,8,0,0,0,8.24,13.72c.36-.22,34.91-20.6,83.88-22.68V149L58,218.69a8,8,0,1,0,12,10.62L128,164l58,65.27a8,8,0,0,0,12-10.62L136,149V112.19c48.77,2.08,83.53,22.46,83.88,22.67a8,8,0,1,0,8.24-13.72Z\"/>","boat":"<path d=\"M221.06,110.59,208,106.23V56a16,16,0,0,0-16-16H136V24a8,8,0,0,0-16,0V40H64A16,16,0,0,0,48,56v50.23l-13.06,4.36A16,16,0,0,0,24,125.77V152c0,61.54,97.89,86.72,102.06,87.76a8,8,0,0,0,3.88,0C134.11,238.72,232,213.54,232,152V125.77A16,16,0,0,0,221.06,110.59ZM136,168a8,8,0,0,1-16,0V104.87a8,8,0,0,1,16,0Zm56-67.1L130.53,80.41a8,8,0,0,0-5.06,0L64,100.9V56H192Z\"/>","person-simple-ski":"<path d=\"M144,60a28,28,0,1,1,28,28A28,28,0,0,1,144,60ZM37.76,87.68l111,32.36,5.61,5.61A8,8,0,0,0,160,128h40a8,8,0,0,0,0-16H163.31l-4.72-4.72,0,0-24.9-24.9a8,8,0,0,0-11.32,0L112,92.67,42.24,72.32a8,8,0,0,0-4.48,15.36Zm200.9,105.47a8,8,0,0,0-11.1-2.22,53.78,53.78,0,0,1-45,6.9l-62.79-18.28,29.9-29.9a8,8,0,0,0-3.46-13.35l-56-16a8,8,0,0,0-4.4,15.39L128.73,148l-26.5,26.49-76-22.13a8,8,0,1,0-4.48,15.36l156.31,45.52a69.78,69.78,0,0,0,58.37-8.95A8,8,0,0,0,238.66,193.15Z\"/>","person-simple-snowboard":"<path d=\"M136,52a28,28,0,1,1,28,28A28,28,0,0,1,136,52Zm87.67,70.25a8,8,0,0,1-9.93,5.42l-79.07-23.26-7.78,11.67,35.33,10.23a8,8,0,0,1,4.42,12.14l-19.75,29.44,50.89,14.75A25.32,25.32,0,0,1,216,206.81,25.28,25.28,0,0,1,190.79,232a25.88,25.88,0,0,1-7.14-1L26.21,185.35A25.32,25.32,0,0,1,8,161.18,25.25,25.25,0,0,1,40.34,137l44.73,13,33.52-50.28-40.85-12a8,8,0,1,1,4.52-15.35l136,40A8,8,0,0,1,223.67,122.25ZM117.58,130l-16.4,24.6,29.58,8.58,16.49-24.59Z\"/>","stairs":"<path d=\"M200,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V40A16,16,0,0,0,200,24Zm-40,80h40v24H160Zm-48,40h88v24H112Zm88,72H56V184H200v32Z\"/>","person-simple-swim":"<path d=\"M144,72a32,32,0,1,1,32,32A32,32,0,0,1,144,72Zm66.89,112.19c-31.83,26.39-53.72,14.51-79.07.74-26.61-14.44-56.76-30.81-96.93,2.49a8,8,0,1,0,10.22,12.31c31.83-26.39,53.72-14.5,79.07-.74,15.11,8.2,31.35,17,49.93,17,14.14,0,29.64-5.11,47-19.5a8,8,0,0,0-10.22-12.32Zm-176-36.76a8,8,0,1,0,10.22,12.31c31.83-26.38,53.72-14.5,79.07-.74,15.11,8.2,31.35,17,49.93,17,14.14,0,29.64-5.11,47-19.5a8,8,0,1,0-10.22-12.31,75.79,75.79,0,0,1-19.28,12.06l-53.84-53.82A103.34,103.34,0,0,0,64.24,72H40a8,8,0,0,0,0,16H64.24a87.66,87.66,0,0,1,41.88,10.56L76.49,128.17C63.82,129.36,50.07,134.84,34.89,147.42Z\"/>","ping-pong":"<path d=\"M240,196a16,16,0,0,0-6.65-11.7l-38-27.15,17-16.95a39.67,39.67,0,0,0,11-35.79,99.52,99.52,0,0,0-35.4-57.89A101.93,101.93,0,0,0,122.58,24,100.29,100.29,0,0,0,24,122.58a102.12,102.12,0,0,0,22.55,65.28,99.52,99.52,0,0,0,57.89,35.4,39.68,39.68,0,0,0,35.79-11l16.95-17,27.15,38A16,16,0,0,0,196,240c.44,0,.88.05,1.32.05a16,16,0,0,0,11.31-4.69l26.64-26.64A16,16,0,0,0,240,196Zm-42.6,28-32.63-45.69a8,8,0,0,0-5.85-3.32q-.33,0-.66,0a8,8,0,0,0-5.66,2.34l-23.63,23.63a23.68,23.68,0,0,1-21.36,6.63,80.3,80.3,0,0,1-12.3-3.5l108.8-108.8a80.63,80.63,0,0,1,3.5,12.3,23.67,23.67,0,0,1-6.63,21.36L177.3,152.55a8,8,0,0,0,1,12.17L224,197.36Z\"/>","tennis-ball":"<path d=\"M24.81,115.41a103.9,103.9,0,0,1,90.6-90.65,4,4,0,0,1,4.47,3.79,87.82,87.82,0,0,1-91.27,91.33A4,4,0,0,1,24.81,115.41Zm202.54,20.7c-1.12,0-2.23-.07-3.35-.07a87.84,87.84,0,0,0-87.88,91.41,4,4,0,0,0,4.47,3.79,103.9,103.9,0,0,0,90.6-90.66A4,4,0,0,0,227.35,136.11Zm-76.89,14.35A103.33,103.33,0,0,1,224,120c1,0,2.06,0,3.09,0a4,4,0,0,0,4.12-4.43,103.91,103.91,0,0,0-90.88-90.89,4,4,0,0,0-4.43,4.12,103.72,103.72,0,0,1-30.36,76.7A103.33,103.33,0,0,1,32,136c-1,0-2.06,0-3.09,0a4,4,0,0,0-4.12,4.43,103.91,103.91,0,0,0,90.88,90.89,4,4,0,0,0,4.43-4.12A103.72,103.72,0,0,1,150.46,150.46Z\"/>","person-simple-tai-chi":"<path d=\"M96,48a32,32,0,1,1,32,32A32,32,0,0,1,96,48ZM216,96H40a8,8,0,0,0,0,16h80v28.44L42.65,210.05A8,8,0,0,0,53.35,222l76.2-68.58L176,173.28V216a8,8,0,0,0,16,0V168a8,8,0,0,0-4.85-7.35L136,138.72V112h80a8,8,0,0,0,0-16Z\"/>"}};
+
+function renderIcons(root){
+  (root || document).querySelectorAll('[data-icon]').forEach(function(el){
+    if (el.dataset.done) return;
+    var weight = el.dataset.weight === 'fill' ? 'fill' : 'regular';
+    var inner = (ICONS[weight] && ICONS[weight][el.dataset.icon]) || (ICONS.regular && ICONS.regular[el.dataset.icon]);
+    if (!inner) return;                       // unknown name: leave the slot empty
+    el.innerHTML = '<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false">' + inner + '</svg>';
+    el.dataset.done = '1';
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   2. THE ACTIVITY TABLE
+   One row per activity. `third` is the metric that changes per workout —
+   reps for strength work, km for anything distance-based, and so on.
+   `gps:true` gets the map card on both the live screen and the saved
+   session. Rates are per workout-minute; they only shape the sample data.
+   ══════════════════════════════════════════════════════════════════════════ */
+const ACTIVITIES = [
+  /* name                 icon                       gps    third label   unit  per-min  kcal/min  HR base/peak */
+  ['Badminton',          'racquet',                  false, 'Steps',      '',   55,      7.5,  115, 150],
+  ['Basketball',         'basketball',               false, 'Steps',      '',   90,      9,    125, 165],
+  ['Boxing',             'boxing-glove',             false, 'Rounds',     '',   0.33,    11,   130, 168],
+  ['Climbing',           'mountains',                false, 'Routes',     '',   0.5,     8,    120, 155],
+  ['Cricket',            'cricket',                  false, 'Steps',      '',   30,      5,    100, 130],
+  ['Cycling',            'person-simple-bike',       true,  'Km',         'km', 0.3667,  9,    120, 155],
+  ['Dance',              'music-notes',              false, 'Steps',      '',   70,      6.5,  115, 150],
+  ['Elliptical',         'person-simple-circle',     false, 'Km',         'km', 0.1667,  8,    120, 150],
+  ['Football',           'soccer-ball',              false, 'Steps',      '',   95,      9.5,  125, 168],
+  ['Functional Fitness', 'person-arms-spread',       false, 'Reps',       '',   10,      7,    105, 145],
+  ['HIIT',               'lightning',                false, 'Rounds',     '',   0.8,     12,   130, 175],
+  ['Hiking',             'person-simple-hike',       true,  'Km',         'km', 0.075,   6,    110, 140],
+  ['Meditation',         'flower-lotus',             false, 'Breaths',    '',   8,       1.5,  62,  78 ],
+  ['Pilates',            'person-simple',            false, 'Reps',       '',   7,       4,    90,  120],
+  ['Rowing',             'boat',                     false, 'Km',         'km', 0.2,     10,   125, 158],
+  ['Running',            'person-simple-run',        true,  'Km',         'km', 0.1667,  12,   130, 165],
+  ['Skiing',             'person-simple-ski',        true,  'Km',         'km', 0.3,     8,    115, 145],
+  ['Snowboarding',       'person-simple-snowboard',  true,  'Km',         'km', 0.2333,  7,    112, 142],
+  ['Stair Climber',      'stairs',                   false, 'Floors',     '',   4,       10,   125, 155],
+  ['Strength Training',  'barbell',                  false, 'Reps',       '',   8,       4.5,  95,  136],
+  ['Swimming',           'person-simple-swim',       false, 'Laps',       '',   1.2,     9,    120, 150],
+  ['Table Tennis',       'ping-pong',                false, 'Steps',      '',   35,      5,    100, 135],
+  ['Tennis',             'tennis-ball',              false, 'Steps',      '',   60,      8,    118, 155],
+  ['Treadmill',          'sneaker-move',             false, 'Km',         'km', 0.15,    11,   128, 160],
+  ['Walking',            'person-simple-walk',       true,  'Km',         'km', 0.0833,  4.5,  100, 125],
+  ['Yoga',               'person-simple-tai-chi',    false, 'Poses',      '',   1.5,     3.5,  80,  110]
+].map(function(r){
+  return {
+    name:r[0], icon:r[1], gps:r[2],
+    thirdLabel:r[3], thirdUnit:r[4], thirdPerMin:r[5],
+    kcalPerMin:r[6], hrBase:r[7], hrPeak:r[8],
+    isDistance:r[4] === 'km'
+  };
+});
+
+function activityByName(name){
+  return ACTIVITIES.filter(function(a){ return a.name === name; })[0];
+}
+
+/* The five the owner's screenshot shows. Saving a session moves that
+   activity to the front of this list. */
+let recents = ['Strength Training','Functional Fitness','Walking','Running','Cycling'];
+
+/* ══════════════════════════════════════════════════════════════════════════
+   3. SCREEN SWITCHING + BOTTOM NAV
+   ══════════════════════════════════════════════════════════════════════════ */
+const $  = function(sel,root){ return (root||WF_ROOT).querySelector(sel); };
+const $$ = function(sel,root){ return Array.prototype.slice.call((root||WF_ROOT).querySelectorAll(sel)); };
+
+function show(id){
+  $$('.page').forEach(function(p){ p.classList.toggle('on', p.id === id); });
+  document.querySelector('.screen').classList.toggle('wf-on-light', id === 'p-map');   /* light map = dark status bar */
+  var sc = $('#'+id+' .scroll');
+  if (sc) sc.scrollTop = 0;
+}
+
+/* The supplied navigation component. Health is the current tab throughout
+   this flow — the tabs are visual here, since only the workout screens are
+   built in this file. */
+const NAV = [
+  { icon:'house',        label:'Health',   current:true },
+  { icon:'sneaker-move', label:'Activity' },
+  { icon:'moon',         label:'Sleep' },
+  { icon:'user',         label:'Me' }
+];
+
+function renderNav(){
+  $$('[data-nav]').forEach(function(nav){
+    nav.innerHTML = NAV.map(function(t){
+      var weight = t.current ? 'fill' : 'regular';
+      var glyph  = (ICONS[weight] && ICONS[weight][t.icon]) || '';
+      return '<button type="button" class="pebble-tab"' + (t.current ? ' aria-current="page"' : '') + '>'
+           + '<svg class="icon" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">' + glyph + '</svg>'
+           + '<span class="label">' + t.label + '</span></button>';
+    }).join('');
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   4. CHOOSE ACTIVITY — list, search, no-results
+   ══════════════════════════════════════════════════════════════════════════ */
+function rowHTML(a){
+  return '<button class="act-row" type="button" data-act="' + a.name + '">'
+       + '<span class="glyph" data-icon="' + a.icon + '" data-weight="fill"></span>'
+       + '<span class="name">' + a.name + '</span>'
+       + '<span class="caret" data-icon="caret-right"></span>'
+       + '</button>';
+}
+
+function renderPicker(query){
+  var q = (query || '').trim().toLowerCase();
+  var match = function(a){ return !q || a.name.toLowerCase().indexOf(q) !== -1; };
+
+  var recentList = recents.map(activityByName).filter(Boolean).filter(match);
+  var allList    = ACTIVITIES.filter(match);          // ACTIVITIES is already A–Z
+
+  $('#list-recent').innerHTML = recentList.map(rowHTML).join('');
+  $('#list-all').innerHTML    = allList.map(rowHTML).join('');
+
+  /* Most recent hides while searching — the A–Z list already holds every
+     match, and two copies of the same hit reads as a bug. */
+  var showRecent = !q && recentList.length > 0;
+  $('[data-recent-label]').style.display = showRecent ? '' : 'none';
+  $('#list-recent').style.display        = showRecent ? '' : 'none';
+
+  /* No matches anywhere -> the empty state takes the whole list area. */
+  $('#p-picker').classList.toggle('empty', allList.length === 0);
+  renderIcons($('#p-picker'));
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   5. THE GPS MAP — code-drawn streets plus the route
+   Nothing is fetched: the grid and the route are SVG, so the card renders
+   offline and inside the artifact sandbox. The route is revealed in step
+   with elapsed time, which is what makes the live card feel live.
+   ══════════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════════════
+   5. THE MAP
+   Modelled on the owner's Google Maps screenshot — Kolkata: the Maidan, the
+   Race Course, Victoria Memorial, Queens Way, the metro line — in Google's
+   light style, so the card reads as a map preview rather than as a diagram.
+   Everything is drawn in one "design space" and then transformed, which is
+   what lets the same route appear at card scale and again zoomed in the
+   full-screen view without redrawing it.
+
+   Why drawn and not the real screenshot: an artifact page can reach Google
+   Fonts and nothing else (CSP), the Static Maps API needs a key, and every
+   tile host is blocked here — and the owner's screenshot arrived as an
+   inline preview, not a file. So each map carries an <img> slot pointed at
+   `assets/maps/route-kolkata.png`; drop the real screenshot there and it
+   takes over the basemap, with the teal route still drawn on top.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Design space is 328 x 160 — the card. The route sits on the road grid. */
+const ROUTE_PTS = [[64,132],[104,132],[104,86],[152,86],[152,42],[196,42],[196,86],[252,86],[252,120],[288,120]];
+const ROUTE_D = 'M' + ROUTE_PTS.map(function(p){ return p[0] + ',' + p[1]; }).join(' L');
+const ROUTE_FULL_SECONDS = 30 * 60;     /* a 30-minute session draws it all */
+
+/* Roads the route runs on, plus the ones around them. Drawn well past the
+   card so the same content still fills the frame when it is zoomed. */
+const MAP_V = [-84,-40,4,20,64,104,152,196,252,288,340,384,428];
+const MAP_H = [-246,-202,-158,-114,-70,-26,10,42,86,120,132,176,220,264,308,352,396];
+const MAP_EXTENT = { x:-500, y:-500, w:1400, h:1200 };
+
+function mapSVG(idPrefix, w, h, zoom){
+  var k  = zoom || 1;
+  /* keep the route centred: design-space centre (176,86) lands on the
+     canvas centre, so zooming reads as zooming rather than panning away */
+  var tx = w / 2 - k * 176, ty = h / 2 - k * 86;
+  var E  = MAP_EXTENT;
+  var line = function(cls, x1, y1, x2, y2, sw){
+    return '<line class="' + cls + '" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke-width="' + sw + '"/>';
+  };
+  var roads = function(cls, sw){
+    var out = [];
+    MAP_V.forEach(function(x){ out.push(line(cls, x, E.y, x, E.y + E.h, sw)); });
+    MAP_H.forEach(function(y){ out.push(line(cls, E.x, y, E.x + E.w, y, sw)); });
+    return out.join('');
+  };
+  /* side streets, halfway between the through roads */
+  var streets = function(cls, sw){
+    var out = [];
+    [-62,-18,42,84,128,174,224,270,314,362,406].forEach(function(x){ out.push(line(cls, x, E.y, x, E.y + E.h, sw)); });
+    [-224,-180,-136,-92,-48,26,64,103,150,198,242,286,330,374].forEach(function(y){ out.push(line(cls, E.x, y, E.x + E.w, y, sw)); });
+    return out.join('');
+  };
+  var label = function(x, y, size, cls, text){
+    return '<text class="maplabel' + (cls ? ' ' + cls : '') + '" x="' + x + '" y="' + y
+         + '" font-size="' + size + '" text-anchor="middle">' + text + '</text>';
+  };
+
+  return '<img class="photo" src="assets/maps/route-kolkata.png" alt=""'
+       + ' onload="this.closest(\'.map-card,.map-full\').classList.add(\'has-photo\')"'
+       + ' onerror="this.remove()">'
+       + '<svg viewBox="0 0 ' + w + ' ' + h + '" role="img"'
+       + ' aria-label="Map of the route taken on this workout">'
+       + '<g transform="translate(' + tx.toFixed(1) + ',' + ty.toFixed(1) + ') scale(' + k + ')">'
+       + '<g class="basemap">'
+       +   '<rect class="land" x="' + E.x + '" y="' + E.y + '" width="' + E.w + '" height="' + E.h + '"/>'
+       /* built-up quarter to the east, the beige side of the screenshot */
+       +   '<rect class="built" x="266" y="' + E.y + '" width="' + (E.x + E.w - 266) + '" height="' + E.h + '"/>'
+       +   '<rect class="built" x="' + E.x + '" y="' + E.y + '" width="' + (266 - E.x) + '" height="' + (-60 - E.y) + '"/>'
+       +   '<rect class="built" x="' + E.x + '" y="230" width="' + (266 - E.x) + '" height="' + (E.y + E.h - 230) + '"/>'
+       /* the Maidan — one big park the route runs through */
+       +   '<path class="park deep" d="M96,-10 L262,-10 L258,104 L206,132 L120,124 L92,60 Z"/>'
+       /* the Race Course oval, and a smaller garden east of the park */
+       +   '<ellipse class="park" cx="46" cy="112" rx="46" ry="40"/>'
+       +   '<rect class="park" x="216" y="52" width="34" height="26" rx="6"/>'
+       +   '<rect class="park" x="86" y="192" width="118" height="46" rx="8"/>'
+       +   '<rect class="park" x="150" y="-118" width="96" height="52" rx="8"/>'
+       /* water: two tanks by the memorial, and the river off to the west */
+       +   '<rect class="water" x="150" y="96" width="18" height="10" rx="2"/>'
+       +   '<rect class="water" x="176" y="96" width="18" height="10" rx="2"/>'
+       +   '<path class="water" d="M' + E.x + ',150 L-30,150 C-40,120 -46,60 -34,' + E.y + ' L' + E.x + ',' + E.y + ' Z"/>'
+       /* roads: casing under white fill, the way Google draws them */
+       +   '<g fill="none" stroke-linecap="square">'
+       +     streets('casing', 4) + roads('casing', 8)
+       +     streets('road', 2.5) + roads('road', 6)
+       /* Queens Way, cutting across the Maidan */
+       +     line('casing', 96, 138, 268, 78, 9) + line('road', 96, 138, 268, 78, 7)
+       /* the metro line */
+       +     line('metro', 268, E.y, 258, E.y + E.h, 2.5)
+       +   '</g>'
+       +   label(176, 30, 7, 'park-name', 'Maidan')
+       +   label(46, 116, 6.5, 'park-name', 'Race Course')
+       +   label(172, 116, 6, '', 'Victoria Memorial')
+       +   label(233, 48, 5.5, 'park-name', 'Elliot Park')
+       +   label(196, 132, 5.5, '', 'Queens Way')
+       +   label(145, 218, 6, 'park-name', 'Alipore')
+       +   label(198, -88, 6, 'park-name', 'Eden Gardens')
+       + '</g>'
+       + '<path class="route-casing" d="' + ROUTE_D + '" id="' + idPrefix + '-casing"/>'
+       + '<path class="route" d="' + ROUTE_D + '" id="' + idPrefix + '-route"/>'
+       + '<circle class="dot" cx="' + ROUTE_PTS[0][0] + '" cy="' + ROUTE_PTS[0][1] + '" r="5"/>'
+       + '<circle class="dot head" id="' + idPrefix + '-head" cx="' + ROUTE_PTS[0][0] + '" cy="' + ROUTE_PTS[0][1] + '" r="5"/>'
+       + '</g></svg>';
+}
+
+/* fraction 0..1 of the route to show; the head dot rides the drawn end. */
+function drawRoute(idPrefix, fraction){
+  var path = document.getElementById(idPrefix + '-route');
+  if (!path) return;
+  var casing = document.getElementById(idPrefix + '-casing');
+  var head   = document.getElementById(idPrefix + '-head');
+  var len = path.getTotalLength();
+  var f   = Math.max(0, Math.min(1, fraction));
+  [path, casing].forEach(function(el){
+    if (!el) return;
+    el.style.strokeDasharray  = len;
+    el.style.strokeDashoffset = len * (1 - f);
+  });
+  if (head){
+    var pt = path.getPointAtLength(len * f);
+    head.setAttribute('cx', pt.x);
+    head.setAttribute('cy', pt.y);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   6. THE LIVE SESSION
+   One second of wall clock advances the workout by `speed` seconds (the
+   preview panel switches 1x / 60x). Heart rate is a random walk toward a
+   per-activity target; calories and the third metric accumulate at the
+   table's rates. Every sample is kept, because the saved session's chart,
+   averages and zone split are all read back out of them.
+   ══════════════════════════════════════════════════════════════════════════ */
+let session = null;
+let timer   = null;
+let speed   = 1;
+
+function newSession(act){
+  return {
+    act:act,
+    startedAt:new Date(),
+    elapsed:0,          /* workout seconds */
+    kcal:0,
+    third:0,
+    hr:act.hrBase,
+    hrs:[],             /* one heart-rate reading per tick */
+    secs:[],            /* how many workout seconds that reading covers */
+    running:false
+  };
+}
+
+function tick(){
+  var s = session;
+  if (!s || !s.running) return;
+  var a = s.act;
+
+  s.elapsed += speed;
+
+  /* Warm-up ramp: the target climbs from base toward peak over ~6 minutes,
+     then drifts around it. */
+  var ramp   = Math.min(1, s.elapsed / 360);
+  var target = a.hrBase + (a.hrPeak - a.hrBase) * (0.35 + 0.55 * ramp);
+  s.hr += (target - s.hr) * 0.25 + (Math.random() - 0.5) * 5;
+  s.hr = Math.max(a.hrBase - 6, Math.min(a.hrPeak + 4, s.hr));
+
+  s.kcal  += a.kcalPerMin  * (speed / 60);
+  s.third += a.thirdPerMin * (speed / 60);
+  s.hrs.push(Math.round(s.hr));
+  s.secs.push(speed);
+
+  paintActive();
+}
+
+function fmtClock(sec){
+  var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), x = Math.floor(sec % 60);
+  var pad = function(n){ return String(n).padStart(2, '0'); };
+  return (h ? pad(h) + ':' : '') + pad(m) + ':' + pad(x);
+}
+
+function fmtThird(s){
+  return s.act.isDistance ? s.third.toFixed(2) : String(Math.floor(s.third));
+}
+
+function paintActive(){
+  var s = session;
+  if (!s) return;
+  $('#aw-bpm').textContent   = Math.round(s.hr);
+  $('#aw-dur').textContent   = fmtClock(s.elapsed);
+  $('#aw-kcal').textContent  = Math.round(s.kcal);
+  $('#aw-third').textContent = fmtThird(s);
+  if (s.act.gps) drawRoute('aw', s.elapsed / ROUTE_FULL_SECONDS);
+}
+
+function startWorkout(act){
+  session = newSession(act);
+  session.running = true;
+  session.hrs.push(act.hrBase);   /* first reading, before the clock moves */
+  session.secs.push(1);
+
+  $('#aw-title').textContent       = act.name;
+  $('#aw-third-label').textContent = act.thirdLabel;
+  $('#aw').classList.remove('paused');
+  setPauseGlyph('pause');
+
+  var map = $('#aw-map');
+  map.hidden = !act.gps;
+  map.innerHTML = act.gps ? mapSVG('aw', 328, 160, 1) : '';
+
+  show('p-active');
+  paintActive();
+  clearInterval(timer);
+  timer = setInterval(tick, 1000);
+}
+
+function setPauseGlyph(name){
+  var btn = $('#btn-pause');
+  btn.setAttribute('aria-label', name === 'pause' ? 'Pause workout' : 'Resume workout');
+  btn.innerHTML = '<span data-icon="' + name + '" data-weight="fill"></span>';
+  renderIcons(btn);
+}
+
+function togglePause(){
+  if (!session) return;
+  session.running = !session.running;
+  $('#aw').classList.toggle('paused', !session.running);
+  setPauseGlyph(session.running ? 'pause' : 'play');
+}
+
+function endSession(){
+  clearInterval(timer);
+  timer = null;
+  if (session) session.running = false;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   7. THE SAVED SESSION
+   The approved Workout details screen, filled in from the readings the live
+   screen collected: stat tiles, the scrubbable heart-rate chart, and the five
+   zone rows. Ranges, colours and layout are that screen's; the numbers are
+   this session's.
+   ══════════════════════════════════════════════════════════════════════════ */
+const ZONES = [
+  { name:'Limit',               range:'172+ BPM',    min:172, color:'var(--zone-limit)'     },
+  { name:'Anaerobic endurance', range:'153–171 BPM', min:153, color:'var(--zone-anaerobic)' },
+  { name:'Aerobic endurance',   range:'134–152 BPM', min:134, color:'var(--zone-aerobic)'   },
+  { name:'Fat burning',         range:'115–133 BPM', min:115, color:'var(--zone-fatburn)'   },
+  { name:'Warm up',             range:'<115 BPM',    min:0,   color:'var(--zone-warmup)'    }
+];
+
+function zoneOf(bpm){
+  for (var i = 0; i < ZONES.length; i++) if (bpm >= ZONES[i].min) return i;
+  return ZONES.length - 1;
+}
+
+function sessionStats(s){
+  var total = s.secs.reduce(function(a,b){ return a + b; }, 0) || 1;
+  var sum = 0, max = 0, buckets = ZONES.map(function(){ return 0; });
+  s.hrs.forEach(function(hr, i){
+    sum += hr * s.secs[i];
+    if (hr > max) max = hr;
+    buckets[zoneOf(hr)] += s.secs[i];
+  });
+  var avg = Math.round(sum / total);
+  return {
+    total:total, avg:avg, max:max, buckets:buckets,
+    effort: avg < 100 ? 'Light' : avg < 130 ? 'Moderate' : avg < 150 ? 'Vigorous' : 'Max'
+  };
+}
+
+function fmtTime(d){ return d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }); }
+function fmtHM(d){ return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+function fmtPace(secPerKm){
+  var m = Math.floor(secPerKm / 60), sec = Math.round(secPerKm % 60);
+  if (sec === 60){ m += 1; sec = 0; }
+  return m + "'" + String(sec).padStart(2,'0') + '"';
+}
+/* "10:15 – 11:00 AM" — the first AM/PM is dropped when both ends share it. */
+function fmtSpan(start, end){
+  var same = (start.getHours() < 12) === (end.getHours() < 12);
+  var a = fmtTime(start);
+  return (same ? a.replace(/\s?[AP]M$/, '') : a) + ' – ' + fmtTime(end);
+}
+
+function tileHTML(label, value, unit, isWord){
+  return '<section class="tile"><div class="label">' + label + '</div>'
+       + '<div class="figure"><span class="value' + (isWord ? ' word' : '') + '">' + value + '</span>'
+       + (unit ? '<span class="unit">' + unit + '</span>' : '') + '</div></section>';
+}
+
+/* ---- the chart ----------------------------------------------------------
+   Ported from the approved details screen: a smooth Catmull-Rom line in the
+   heart-rate hue over a fading fill, gridlines at 60/100/140/180 bpm, clock
+   labels along the x axis with the session's start and end on pills. Press
+   and drag dims the plot and swaps the header to the reading under the
+   pointer. */
+const SVGNS = 'http://www.w3.org/2000/svg';
+const CFG = { yTicks:[60,100,140,180], yMin:60, yMax:180, yAxisWidth:34, xAxisHeight:26, topPad:12, frameW:50, xTicks:5 };
+let chartSession = null, geom = null;
+
+function drawChart(){
+  var wrap = $('#chartWrap'), svg = $('#chart');
+  if (!chartSession || !wrap || !svg) return;
+  var W = wrap.clientWidth, H = wrap.clientHeight;
+  if (W < 40 || H < 40) return;
+  var plotW = W - CFG.yAxisWidth, plotH = H - CFG.xAxisHeight;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+  var el = function(n, attrs, parent){
+    var e = document.createElementNS(SVGNS, n);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    (parent || svg).appendChild(e);
+    return e;
+  };
+  var span = chartSession.length || 1;                       /* minutes */
+  var x = function(v){ return (v / span) * plotW; };
+  var y = function(v){
+    var c = Math.max(CFG.yMin, Math.min(CFG.yMax, v));
+    return plotH - ((c - CFG.yMin) / (CFG.yMax - CFG.yMin)) * (plotH - CFG.topPad);
+  };
+
+  var grad = el('linearGradient', { id:'hrfill', x1:0, y1:0, x2:0, y2:1 }, el('defs', {}));
+  el('stop', { offset:'0%',   style:'stop-color:var(--chart-accent);stop-opacity:0.30' }, grad);
+  el('stop', { offset:'100%', style:'stop-color:var(--chart-accent);stop-opacity:0' }, grad);
+
+  CFG.yTicks.forEach(function(t){
+    el('line', { class:'lc-gridline', x1:0, x2:plotW, y1:y(t), y2:y(t) });
+    el('text', { class:'lc-y-label', x:W - 2, y:y(t) + 4, 'text-anchor':'end' }).textContent = t;
+  });
+
+  var plot = el('g', { class:'lc-plot' });
+  var pts = chartSession.data.map(function(pt){ return { px:x(pt.x), py:y(pt.value) }; });
+  if (pts.length === 1) pts.push({ px:plotW, py:pts[0].py });
+  var seg = function(i){
+    var p0 = pts[Math.max(i - 1, 0)], p1 = pts[i];
+    var p2 = pts[i + 1], p3 = pts[Math.min(i + 2, pts.length - 1)];
+    return 'C' + (p1.px + (p2.px - p0.px) / 6).toFixed(1) + ' ' + (p1.py + (p2.py - p0.py) / 6).toFixed(1)
+         + ' ' + (p2.px - (p3.px - p1.px) / 6).toFixed(1) + ' ' + (p2.py - (p3.py - p1.py) / 6).toFixed(1)
+         + ' ' + p2.px.toFixed(1) + ' ' + p2.py.toFixed(1);
+  };
+  var d = 'M' + pts[0].px.toFixed(1) + ' ' + pts[0].py.toFixed(1);
+  for (var i = 0; i < pts.length - 1; i++) d += seg(i);
+  el('path', { d:d + 'L' + pts[pts.length - 1].px.toFixed(1) + ' ' + plotH + 'L' + pts[0].px.toFixed(1) + ' ' + plotH + 'Z', fill:'url(#hrfill)' }, plot);
+  el('path', { class:'lc-line', d:d }, plot);
+
+  /* x axis: evenly spaced clock times; the two ends sit on pills, because
+     they are the session's start and end rather than interval marks. */
+  var pillH = 16, nT = CFG.xTicks, center = plotH + CFG.xAxisHeight / 2 + 2;
+  for (var t = 0; t < nT; t++){
+    var cx = CFG.frameW / 2 + t * (plotW - CFG.frameW) / (nT - 1);
+    var at = new Date(chartSession.startedAt.getTime() + (t / (nT - 1)) * span * 60000);
+    var label = fmtHM(at);
+    var isPill = (t === 0 || t === nT - 1);
+    if (isPill){
+      var pw = 6 * label.length + 8;
+      el('rect', { class:'lc-pill-bg', x:cx - pw / 2, y:center - pillH / 2, width:pw, height:pillH, rx:4 });
+    }
+    el('text', { class:isPill ? 'lc-pill-label' : 'lc-x-label', x:cx, y:center + 4, 'text-anchor':'middle' }).textContent = label;
+  }
+
+  geom = {
+    x:x, y:y, plotW:plotW, plot:plot,
+    hoverLine: el('line', { class:'lc-hover-line', y1:CFG.topPad, y2:plotH, x1:0, x2:0 }),
+    hoverDot:  el('circle', { class:'lc-hover-dot', r:4 })
+  };
+}
+
+function scrubChart(evt){
+  if (!geom || !chartSession) return;
+  var svg = $('#chart');
+  var px = (evt.touches ? evt.touches[0].clientX : evt.clientX) - svg.getBoundingClientRect().left;
+  if (px < 0 || px > geom.plotW){ releaseChart(); return; }
+  var xv = (px / geom.plotW) * chartSession.length;
+  var best = chartSession.data[0], bd = Infinity;
+  chartSession.data.forEach(function(pt){
+    var dist = Math.abs(pt.x - xv);
+    if (dist < bd){ bd = dist; best = pt; }
+  });
+  geom.plot.classList.add('dim');
+  geom.hoverLine.setAttribute('x1', geom.x(best.x));
+  geom.hoverLine.setAttribute('x2', geom.x(best.x));
+  geom.hoverLine.style.opacity = 1;
+  geom.hoverDot.setAttribute('cx', geom.x(best.x));
+  geom.hoverDot.setAttribute('cy', geom.y(best.value));
+  geom.hoverDot.style.opacity = 1;
+  $('#hrValue').textContent = Math.round(best.value);
+  $('#hrSubText').textContent = fmtTime(new Date(chartSession.startedAt.getTime() + best.x * 60000));
+  $('#hrSub').classList.add('scrubbing');
+}
+
+function releaseChart(){
+  if (geom){
+    geom.plot.classList.remove('dim');
+    geom.hoverLine.style.opacity = 0;
+    geom.hoverDot.style.opacity = 0;
+  }
+  if (chartSession) $('#hrValue').textContent = chartSession.avg;
+  $('#hrSubText').textContent = 'Average';
+  $('#hrSub').classList.remove('scrubbing');
+}
+
+function renderDetails(){
+  var s  = session;
+  var a  = s.act;
+  var st = sessionStats(s);
+  var end = new Date(s.startedAt.getTime() + s.elapsed * 1000);
+
+  $('#wd-chip').innerHTML   = '<span data-icon="' + a.icon + '" data-weight="fill"></span>';
+  $('#wd-name').textContent = a.name;
+  $('#wd-when').textContent = fmtSpan(s.startedAt, end);
+
+  /* Route map — GPS activities only. */
+  var mapCard = $('#wd-map-card');
+  mapCard.hidden = !a.gps;
+  if (a.gps) $('#wd-map').innerHTML = mapSVG('wd', 328, 160, 1);
+
+  /* Tiles. Duration / Calories / Max HR / Effort are the approved four; the
+     activity's own metric (distance, reps, laps…) and one more heart-rate
+     figure fill the grid out, because a saved session that doesn't show what
+     you actually did isn't much of a record. */
+  var tiles;
+  if (a.isDistance){
+    var pace = s.third > 0.02 ? fmtPace(s.elapsed / s.third) : '--';
+    tiles = [
+      tileHTML('Distance', s.third.toFixed(2), 'km'),
+      tileHTML('Duration', fmtClock(s.elapsed), ''),
+      tileHTML('Avg pace', pace, '/km'),
+      tileHTML('Calories', Math.round(s.kcal), 'kcal'),
+      tileHTML('Max HR',   st.max, 'bpm'),
+      tileHTML('Effort',   st.effort, '', true)
+    ];
+  } else {
+    tiles = [
+      tileHTML(a.thirdLabel, Math.floor(s.third), a.thirdUnit),
+      tileHTML('Duration',   fmtClock(s.elapsed), ''),
+      tileHTML('Calories',   Math.round(s.kcal), 'kcal'),
+      tileHTML('Avg HR',     st.avg, 'bpm'),
+      tileHTML('Max HR',     st.max, 'bpm'),
+      tileHTML('Effort',     st.effort, '', true)
+    ];
+  }
+  $('#wd-tiles').innerHTML = tiles.join('');
+
+  /* Zone rows. Seconds are the source of truth — the percentage and the bar
+     width both derive from them, so they can't disagree. */
+  var host = $('#wd-zones');
+  host.innerHTML = '';
+  ZONES.forEach(function(z, i){
+    var share = st.buckets[i] / st.total;
+    var row = document.createElement('div');
+    row.className = 'hrz-row';
+    row.style.setProperty('--zone', z.color);
+    row.innerHTML = '<div class="hrz-label"><span class="hrz-name"></span>'
+                  + '<span class="hrz-range"></span><span class="hrz-pct"></span></div>'
+                  + '<span class="hrz-dur"></span><span class="hrz-bar" role="img"><i></i></span>';
+    $('.hrz-name', row).textContent  = z.name;
+    $('.hrz-range', row).textContent = z.range;
+    $('.hrz-pct', row).textContent   = Math.round(share * 100) + '%';
+    $('.hrz-dur', row).textContent   = fmtClock(st.buckets[i]);
+    $('.hrz-bar i', row).style.width = (share * 100).toFixed(2) + '%';
+    $('.hrz-bar', row).setAttribute('aria-label', z.name + ', ' + z.range + ', ' + fmtClock(st.buckets[i]));
+    host.appendChild(row);
+  });
+
+  /* The chart reads the session's own readings; each covers an equal slice
+     of the elapsed time, so x is minutes from the start. */
+  var lengthMin = Math.max(s.elapsed / 60, 1 / 60);
+  chartSession = {
+    startedAt:s.startedAt, length:lengthMin, avg:st.avg,
+    data:s.hrs.map(function(hr, i){
+      return { x: s.hrs.length > 1 ? i * (lengthMin / (s.hrs.length - 1)) : 0, value:hr };
+    })
+  };
+
+  renderIcons($('#p-details'));
+  show('p-details');
+  releaseChart();
+  drawChart();
+  if (a.gps) drawRoute('wd', Math.min(1, s.elapsed / ROUTE_FULL_SECONDS) || 0.02);
+
+  /* Saving pushes this activity to the front of Most recent. */
+  recents = [a.name].concat(recents.filter(function(n){ return n !== a.name; })).slice(0, 5);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   8. WIRING
+   ══════════════════════════════════════════════════════════════════════════ */
+/* Start Workout -> the activity list: wired to this file's own CTA above. */
+
+$('#btn-picker-close').addEventListener('click', closeFlow);
+
+$('#search-input').addEventListener('input', function(e){
+  $('#search').classList.toggle('has-text', e.target.value.length > 0);
+  renderPicker(e.target.value);
+});
+$('#btn-search-clear').addEventListener('click', function(){
+  var input = $('#search-input');
+  input.value = '';
+  $('#search').classList.remove('has-text');
+  renderPicker('');
+  input.focus();
+});
+
+/* Picking an activity runs the 3-2-1 countdown. Each number lands large and
+   settles smaller before the next one replaces it. */
+let countdownTimer = null;
+
+$('#p-picker').addEventListener('click', function(e){
+  var row = e.target.closest('.act-row');
+  if (!row) return;
+  var act = activityByName(row.dataset.act);
+  if (!act) return;
+
+  $('#cd-name').textContent = act.name;
+  show('p-countdown');
+
+  var n = 3;
+  var num = $('#cd-num');
+  var paint = function(){
+    num.textContent = n;
+    num.classList.remove('tick');
+    void num.offsetWidth;            /* restart the animation for each number */
+    num.classList.add('tick');
+  };
+  paint();
+  clearInterval(countdownTimer);
+  countdownTimer = setInterval(function(){
+    n -= 1;
+    if (n === 0){
+      clearInterval(countdownTimer);
+      startWorkout(act);
+      return;
+    }
+    paint();
+  }, 1000);
+});
+
+$('#btn-cd-cancel').addEventListener('click', function(){
+  clearInterval(countdownTimer);
+  show('p-picker');
+});
+
+$('#btn-pause').addEventListener('click', togglePause);
+
+/* Discard asks first. */
+$('#btn-discard').addEventListener('click', function(){ $('#scrim').classList.add('on'); });
+$('#btn-dlg-cancel').addEventListener('click', function(){ $('#scrim').classList.remove('on'); });
+$('#btn-dlg-discard').addEventListener('click', function(){
+  $('#scrim').classList.remove('on');
+  endSession();
+  session = null;
+  /* Flag: the spec doesn't say where discard lands. It returns to the home
+     screen here — the activity is gone, so there's nothing to come back to. */
+  closeFlow();
+});
+
+/* End & Save writes the session into the details page. */
+$('#btn-save').addEventListener('click', function(){
+  endSession();
+  renderDetails();
+});
+
+$('#btn-wd-back').addEventListener('click', function(){
+  session = null;
+  closeFlow();
+});
+
+/* The map card's place row opens the full-screen preview, zoomed in on the
+   same route. Back returns to the saved session. */
+function openFullMap(){
+  if (!session) return;
+  $('#map-full').innerHTML = mapSVG('full', 360, 780, 1.35);
+  show('p-map');
+  drawRoute('full', Math.min(1, session.elapsed / ROUTE_FULL_SECONDS) || 0.02);
+}
+$('#btn-map-open').addEventListener('click', openFullMap);
+$('#btn-map-open').addEventListener('keydown', function(e){
+  if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openFullMap(); }
+});
+$('#btn-map-back').addEventListener('click', function(){ show('p-details'); });
+
+/* Press and drag the chart to read a single moment. */
+(function(){
+  var svg = $('#chart');
+  svg.addEventListener('pointermove', scrubChart);
+  svg.addEventListener('pointerdown', scrubChart);
+  svg.addEventListener('pointerleave', releaseChart);
+  svg.addEventListener('pointerup', releaseChart);
+  var wrap = $('#chartWrap');
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(function(){ drawChart(); }).observe(wrap);
+  else window.addEventListener('resize', drawChart);
+})();
+
+/* Workout clock speed — driven from index.html's control panel. */
+Array.prototype.slice.call(document.querySelectorAll('#wfSpeed input')).forEach(function(r){
+  r.addEventListener('change', function(){
+    speed = Number(r.value) || 1;
+    Array.prototype.slice.call(document.querySelectorAll('#wfSpeed label')).forEach(function(l){ l.classList.toggle('on', l.contains(r)); });
+  });
+});
+
+/* First paint. */
+renderIcons();
+renderNav();
+renderPicker('');
+
+})();
 </script>
 
 </div>

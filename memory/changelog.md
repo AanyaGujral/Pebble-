@@ -5,6 +5,38 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-14 (round 8) — Two owner-supplied flows replaced what was there.
+  (1) MEASURE ALL: the tap-to-sheet interaction is now the owner's animated
+  reading scene (Measure_All_Metrics.html). The source is a React composition
+  driven by one authored-time axis; it's ported here as a rAF loop writing CSS
+  custom properties from the same cue times, easings and values — Sensing 0–2.8
+  (app dims and blurs behind a breathing teal orb), Orbit 2.8–7 (spin + push-in
+  as the ring fills), Bloom 7–9 (core blooms into a flash), Reveal 9–11.6 (the
+  sheet rises, rows land). This supersedes round 7's centre-out bloom AND the
+  fluid gradient field, and the sheet itself is now the scene's: an inset card
+  at radius-24 with a two-radial teal tint, 54px rows at radius-12, h3-semibold
+  title, outlined Done. FLAGGED in code: ~9s from tap to sheet is the authored
+  pace; MA_SPEED is there to dial it without re-timing anything.
+  (2) WORKOUT FLOW: the Start Workout CTA now opens the owner's full flow
+  (artifact "Pebble — Workout Flow") — choose activity, 3-2-1 countdown, live
+  workout with GPS map, pause, discard-with-confirm or End & Save, workout
+  details with HR chart and zones, full-screen map. It shipped as a standalone
+  page whose generic class names (.page, .card, .hero, .caret, .scrim, .chip,
+  .pebble-nav) collide with this file, so every rule is scoped under #wf, its
+  own phone chrome and home stub were dropped, and its script is wrapped in an
+  IIFE with $/$$ bound to the overlay. Six of this file's own bare-class rules
+  leaked in regardless; each is reset at the top of the #wf block with a note
+  on what the name means on each side. The status bar moved to z-62 so it
+  floats above the overlay; its clock still flips dark over the light map.
+  The flow's preview-only clock-speed control became a "Workout clock" group
+  in this file's panel.
+  Tokens: added --space-*, --border-hairline/thin, --border-card, named radius
+  steps, --gutter, --weight-*, --stroke-chart-line, --accent/-press/--on-accent
+  and the five --zone-* aliases; js/tokens.js gained `zone` and `stroke`. Two
+  exceptions are carried through as flags rather than resolved — see the notes
+  in :root on --accent (owner's screenshots show mint green, not teal) and the
+  --gmap-* map palette (Google's own values; the system has no map palette).
+
 - 2026-08-14 (round 7) — (1) Date pill ("Today, Aug 6" + chevron) matched to
   the owner's Sleep Tab file (Sleep Tab/Sleep Tab.html): 6px gap, 6px/10px
   padding, 14px radius, -10px left pull, hover wash neutral-0 @ 8% written

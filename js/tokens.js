@@ -503,11 +503,26 @@ export const opacity = {
   stateInactive: 0.45  // dimmed/disabled content
 };
 
+/** Heart-rate zones, coolest to hottest. Aliases over existing hues — added
+ *  with the workout flow, which needed names for them. */
+export const zone = {
+  warmup: '#58A8DF',     // sky-400
+  fatBurn: '#43B476',    // emerald-400
+  aerobic: '#F2C64B',    // gold-400
+  anaerobic: '#F59E3B',  // tangerine-400
+  limit: '#E43A62'       // crimson-400
+};
+
+/** Stroke widths for charts, in px. */
+export const stroke = {
+  chartLine: 2
+};
+
 const tokens = {
   color, neutral, surface, textColor, metric, semantic,
   fontFamily, fontWeight, typeText, typeNumeric,
   radius, spacing, borderWidth,
-  radiusRole, size, blur, motion, layout, opacity,
+  radiusRole, size, blur, motion, layout, opacity, zone, stroke,
 };
 
 export default tokens;

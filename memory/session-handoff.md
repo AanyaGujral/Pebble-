@@ -25,6 +25,11 @@
 > .screen); both section headings 17/22 medium; js/tokens.js gained the
 > tokens the component needed (metric.stress, radiusRole, size, blur,
 > motion, layout, opacity) in a marked hand-added block.
+> Round 8: Measure All now plays the owner's animated reading scene
+> (components/measure-all-metrics-animation.html, ported to a rAF timeline —
+> MA_SPEED dials the ~9s pace); Start Workout opens the owner's full workout
+> flow (components/workout-flow.html), scoped under #wf with collision resets
+> at the top of that CSS block.
 > Open items: add a real
 > stress token to js/tokens.js (Stress card uses the component's aqua
 > placeholder); owner to decide on the doubled "Workout"/"Workouts" title
