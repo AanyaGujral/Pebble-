@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI card loading · Pebble design system</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================================
+   AI CARD LOADING — a 3-second "thinking" animation for AI insight cards.
+
+   WHAT THIS IS
+   A drop-in overlay you place inside any card while its AI copy is being
+   generated. Teal data streaks fly in from the edges, gather into a glowing
+   core at the centre, flash once, then settle. As they settle the centre of
+   the card goes dark and blurry, so the real text can fade in on top of it
+   and still read cleanly.
+
+   HOW TO USE IT ON A SCREEN
+   1. Copy the two blocks marked "COPY ME" below (tokens + component CSS).
+   2. Wrap the card's own content in `.ai-card__content` so it sits above the
+      overlay, then add the overlay as the card's last child:
+        <div class="card" aria-busy="true">
+          <div class="ai-card__content"> …eyebrow, and the text in .ai-reveal… </div>
+          <div class="ai-load is-running" aria-hidden="true"> …six layers… </div>
+        </div>
+      (the full markup is in the "COPY ME · markup" comment further down)
+   3. When the data lands, add `is-revealed` to the `.ai-reveal` wrapper and
+      drop `is-running` — or remove the overlay entirely. Everything holds on
+      its final frame, so there is no flicker if the request runs long.
+
+   THE CLASSES, IN ONE PLACE
+     .ai-load            the overlay itself; transparent, absolute, no pointer events
+     .ai-load.is-running starts the 3 s clock
+     .ai-load.is-settled skips to the held end frame (no motion)
+     .ai-card__content   put the card's own content in this so it stays sharp
+     .ai-reveal          content that waits for the data
+     .ai-reveal.is-revealed  fades it in
+
+   FLAGGED DECISIONS (per CLAUDE.md rule 3 — flag, don't silently decide)
+   - The Pinterest reference the owner supplied could not be opened from this
+     environment (pinterest.com is blocked by the network proxy), so the motion
+     here is built from the written brief: teal, 3 seconds, data gathering in
+     the centre, dark + blurred end frame. If the reference showed something
+     different, this is the piece to re-cut.
+   - "Readiness" and "teal 400–500" are the same hue in the system
+     (--metric-readiness is teal-400), so the animation uses the teal ramp
+     400 / 500 for the streaks and 300 for the hot centre only.
+   - The overlay's own background is transparent. The darkening at the end is a
+     radial wash of neutral-900 that fades out to nothing at the card edges,
+     so whatever screen it sits on shows through around it.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   COPY ME · 1 of 2 — tokens
+   Primitive palette + aliases, verbatim from tokens.json / js/tokens.js.
+   Only the parts this component needs are mirrored here; if you are dropping
+   it into a screen that already defines these, skip this block.
+   ------------------------------------------------------------------------ */
+:root{
+/* teal ramp — the readiness hue */
+--teal-0:#E4F9F4;--teal-100:#C1EDE4;--teal-200:#9EE0D3;--teal-300:#76D4C3;--teal-400:#45C7B3;--teal-500:#31A492;--teal-600:#1D8173;--teal-700:#076155;--teal-800:#004239;--teal-900:#00261F;
+/* neutrals — used for the surrounding preview chrome and the dark end wash */
+--neutral-0:#EFF1F9;--neutral-100:#D5D9EA;--neutral-200:#B8BDD3;--neutral-300:#999FB9;--neutral-400:#7B819C;--neutral-500:#5E637D;--neutral-600:#42465B;--neutral-700:#282B39;--neutral-800:#0F111B;--neutral-900:#07080C;
+/* violet + gold — only for the sample cards in the preview, not the animation */
+--violet-400:#8A7CEC;--gold-400:#F2C64B;
+}
+:root{
+/* surfaces + text + metric aliases */
+--surface-app:var(--neutral-900);
+--surface-card:var(--neutral-800);
+--surface-raised:var(--neutral-700);
+--text-1:var(--neutral-0);
+--text-2:var(--neutral-200);
+--text-3:var(--neutral-400);
+--divider:var(--neutral-700);
+--metric-readiness:var(--teal-400);
+--metric-sleep:var(--violet-400);
+--metric-steps:var(--gold-400);
+/* type */
+--font-text:'Google Sans Flex','Google Sans',sans-serif;
+--font-number:'Spartan','League Spartan',sans-serif;
+--font-feature-numeric:'tnum' 1,'lnum' 1;
+/* radius + spacing */
+--radius-8:8px;--radius-12:12px;--radius-16:16px;--radius-20:20px;--radius-full:999px;
+--space-4:4px;--space-8:8px;--space-12:12px;--space-16:16px;--space-20:20px;--space-24:24px;
+}
+
+/* ---------------------------------------------------------------------------
+   COPY ME · 2 of 2 — the component
+
+   Six stacked layers, bottom to top:
+     1 .ai-load__blur   blurs the card content behind the centre
+     2 .ai-load__wash   darkens the centre (radial, fades out at the edges)
+     3 .ai-load__field  16 teal streaks flying inward
+     4 .ai-load__ring   two thin arcs sweeping and contracting
+     5 .ai-load__core   the glowing centre that swells and flashes
+     6 .ai-load__wave   one ring that pops outward at the moment of impact
+
+   The whole thing is driven by CSS only. `.is-running` starts the clock;
+   every animation runs ONCE and holds its last frame (animation-fill-mode:
+   forwards), which is what makes the dark, blurred end state stick.
+   ------------------------------------------------------------------------ */
+.ai-load{
+  /* --- knobs you can set per instance --- */
+  --ai-dur:3000ms;                 /* total run time — the brief's 3 seconds */
+  --ai-size:200px;                 /* diameter of the gathering area        */
+  --ai-blur:9px;                   /* how soft the end frame gets           */
+  --ai-dark:0.84;                  /* how dark the centre gets (0–1)        */
+
+  position:absolute; inset:0;
+  overflow:hidden;                 /* keeps the blur inside the card corners */
+  border-radius:inherit;           /* follow whatever card it sits in        */
+  background:transparent;          /* ← transparent so it drops onto any screen */
+  pointer-events:none;             /* purely decorative; never eats taps    */
+  isolation:isolate;
+  z-index:1;
+}
+
+/* Wrap the card's own content in this and it sits ABOVE the overlay, so the
+   dark blurred end frame becomes a backdrop for the text rather than smearing
+   it. That is the point of the end frame: the AI copy lands in the middle, on
+   a patch that has been quietly darkened and softened to receive it.
+   If instead you want the loader to frost STALE data while it refreshes,
+   leave this class off — the overlay will then blur whatever is underneath. */
+.ai-card__content{ position:relative; z-index:2; }
+
+/* Every layer is centred on the same point — the data lands in the middle.
+   Note: centring uses the standalone `translate` property, which leaves
+   `transform` free for the animations to own. */
+.ai-load__blur,.ai-load__wash,.ai-load__field,.ai-load__ring,.ai-load__core,.ai-load__wave{
+  position:absolute; left:50%; top:50%; translate:-50% -50%;
+}
+
+/* 1 — BLUR. Frosts whatever is behind the card's centre. Deliberately a
+   SQUARE sized off --ai-size (not a % of the card) so the frosted patch stays
+   the same shape whatever the card's proportions are. `closest-side` makes the
+   mask stops mean what they look like: a soft circle that reaches sharp,
+   unblurred pixels well before the card edge.
+
+   FLAGGED: the `#000` / `rgba(0,0,0,.45)` in the mask below are the only
+   literal colours in this component, and they are not colours — a mask reads
+   only the alpha channel, so black means "keep these pixels" and transparent
+   means "drop them". There is no token for that, and inventing one would be
+   misleading. Same for the mask on .ai-load__ring. */
+.ai-load__blur{
+  width:calc(var(--ai-size) * 1.75); height:calc(var(--ai-size) * 1.75);
+  backdrop-filter:blur(0px); -webkit-backdrop-filter:blur(0px);
+  -webkit-mask-image:radial-gradient(circle closest-side,#000 0 26%,rgba(0,0,0,.45) 50%,transparent 72%);
+          mask-image:radial-gradient(circle closest-side,#000 0 26%,rgba(0,0,0,.45) 50%,transparent 72%);
+}
+
+/* 2 — DARK WASH. neutral-900 at the centre, nothing by the rim.
+   color-mix keeps this on the token (no hand-written rgba values). */
+.ai-load__wash{
+  width:calc(var(--ai-size) * 2); height:calc(var(--ai-size) * 2); opacity:0;
+  background:radial-gradient(circle closest-side,
+    color-mix(in srgb,var(--neutral-900) 100%,transparent) 0%,
+    color-mix(in srgb,var(--neutral-900) 78%,transparent) 30%,
+    color-mix(in srgb,var(--neutral-900) 34%,transparent) 52%,
+    color-mix(in srgb,var(--neutral-900) 0%,transparent) 74%);
+}
+
+/* 3 — STREAK FIELD. A square box the streaks rotate inside. */
+.ai-load__field{ width:var(--ai-size); height:var(--ai-size); }
+
+/* One streak. Its transform-origin is pinned to the centre of the loader, so
+   `rotate(--a)` aims it and `translateX(--d)` throws it out to its start
+   point; the animation walks --d back to nearly zero, flying it at the core.
+   Because the rotate happens first, the capsule's long side always lies along
+   its own flight path — that's what makes it read as a comet, not a spoke.
+   Per-streak variables: --a angle, --d start distance, --l length,
+   --sd its own duration, --t its own delay. The last two are what keep the
+   field from moving in lockstep (which would look like a pulsing sunburst). */
+.ai-load__streak{
+  position:absolute; left:50%; top:50%;
+  width:calc(var(--ai-size) * var(--l,.2)); height:1.5px; margin:-0.75px 0 0 0;
+  border-radius:var(--radius-full);
+  transform-origin:0 50%;
+  /* Bright head at 0% — that end sits nearest the centre, so the streak reads
+     as flying inward with its tail trailing out behind it. */
+  background:linear-gradient(90deg,
+    var(--teal-400) 0%,
+    color-mix(in srgb,var(--teal-500) 55%,transparent) 40%,
+    color-mix(in srgb,var(--teal-600) 0%,transparent) 100%);
+  opacity:0;
+}
+/* the brighter third of the field — a few streaks run hot */
+.ai-load__streak.is-hot{
+  height:2px; margin-top:-1px;
+  background:linear-gradient(90deg,
+    var(--teal-200) 0%,
+    color-mix(in srgb,var(--teal-400) 62%,transparent) 40%,
+    color-mix(in srgb,var(--teal-500) 0%,transparent) 100%);
+}
+
+/* 4 — SWEEP ARCS. A conic gradient masked down to a HAIRLINE ring, so only a
+   slice of the circle is lit — it reads as a scan going round. The mask stops
+   are in px off the ring's own radius, which is how you get a 1.5px line at
+   any --ai-size instead of a thick donut. */
+.ai-load__ring{
+  width:var(--ai-size); height:var(--ai-size);
+  border-radius:50%; opacity:0;
+  background:conic-gradient(from 0deg,
+    transparent 0 46%,
+    color-mix(in srgb,var(--teal-600) 60%,transparent) 66%,
+    color-mix(in srgb,var(--teal-400) 85%,transparent) 84%,
+    var(--teal-300) 90%,
+    transparent 91% 100%);
+  -webkit-mask-image:radial-gradient(circle closest-side,transparent 0 calc(100% - 1.6px),#000 calc(100% - 1.2px) 100%);
+          mask-image:radial-gradient(circle closest-side,transparent 0 calc(100% - 1.6px),#000 calc(100% - 1.2px) 100%);
+}
+.ai-load__ring--b{
+  width:calc(var(--ai-size) * 0.62); height:calc(var(--ai-size) * 0.62);
+  background:conic-gradient(from 200deg,
+    transparent 0 58%,
+    color-mix(in srgb,var(--teal-500) 45%,transparent) 76%,
+    color-mix(in srgb,var(--teal-300) 80%,transparent) 92%,
+    transparent 94% 100%);
+}
+
+/* 5 — CORE. A soft glow, not a ball: low-opacity stops that run out to
+   nothing well before the edge, plus a blur to kill any banding. The tight
+   hot pip in the ::after is the only near-solid pixel in the whole thing. */
+.ai-load__core{
+  width:calc(var(--ai-size) * 0.62); height:calc(var(--ai-size) * 0.62);
+  border-radius:50%; opacity:0;
+  background:radial-gradient(circle closest-side,
+    color-mix(in srgb,var(--teal-100) 62%,transparent) 0%,
+    color-mix(in srgb,var(--teal-300) 40%,transparent) 20%,
+    color-mix(in srgb,var(--teal-400) 22%,transparent) 38%,
+    color-mix(in srgb,var(--teal-500) 9%,transparent) 58%,
+    color-mix(in srgb,var(--teal-600) 0%,transparent) 78%);
+  filter:blur(9px);
+}
+.ai-load__core::after{                 /* the tight hot pip in the very middle */
+  content:''; position:absolute; left:50%; top:50%; translate:-50% -50%;
+  width:15%; height:15%; border-radius:50%;
+  background:radial-gradient(circle closest-side,
+    var(--teal-0) 0%,
+    color-mix(in srgb,var(--teal-200) 72%,transparent) 45%,
+    color-mix(in srgb,var(--teal-400) 0%,transparent) 100%);
+  filter:blur(1.5px);
+}
+
+/* 6 — IMPACT WAVE. Fires once, when the streaks land. */
+.ai-load__wave{
+  width:calc(var(--ai-size) * 0.42); height:calc(var(--ai-size) * 0.42);
+  border-radius:50%; opacity:0;
+  border:1px solid color-mix(in srgb,var(--teal-300) 65%,transparent);
+  box-shadow:0 0 14px color-mix(in srgb,var(--teal-400) 30%,transparent);
+}
+
+/* --- the clock ------------------------------------------------------------
+   The four full-length layers share --ai-dur so the whole thing lands
+   together at 3 s. Percentages in their keyframes are shares of that 3 s:
+   60% = 1.8 s, 72% = 2.16 s, and so on. The streaks and the wave run on
+   their own shorter clocks, timed to finish inside it.                     */
+
+.ai-load.is-running .ai-load__blur{
+  animation:ai-blur-in var(--ai-dur) cubic-bezier(.5,0,.3,1) forwards;
+}
+.ai-load.is-running .ai-load__wash{
+  animation:ai-wash-in var(--ai-dur) cubic-bezier(.5,0,.3,1) forwards;
+}
+.ai-load.is-running .ai-load__streak{
+  /* Two passes each. Both the duration (--sd) and the delay (--t) differ per
+     streak, so the field arrives as a scattered stream right up to ~2.1 s. */
+  animation:ai-streak var(--sd,860ms) cubic-bezier(.35,0,.45,1) var(--t,0ms) 2 forwards;
+}
+.ai-load.is-running .ai-load__ring{
+  animation:ai-ring-a var(--ai-dur) cubic-bezier(.3,0,.3,1) forwards;
+}
+.ai-load.is-running .ai-load__ring--b{
+  animation:ai-ring-b var(--ai-dur) cubic-bezier(.3,0,.3,1) forwards;
+}
+.ai-load.is-running .ai-load__core{
+  animation:ai-core var(--ai-dur) cubic-bezier(.4,0,.3,1) forwards;
+}
+.ai-load.is-running .ai-load__wave{
+  /* 0.65 × 3000 = 1950 ms in — the moment the core flashes */
+  animation:ai-wave 780ms cubic-bezier(.15,.6,.3,1) calc(var(--ai-dur) * 0.65) 1 forwards;
+}
+
+/* Streaks: fade up, fly in, shrink into the core and vanish. */
+@keyframes ai-streak{
+  /* --d is a MULTIPLE of --ai-size, not a percentage: a percentage in
+     translateX would resolve against the streak's own tiny width and the whole
+     field would bunch up around the centre. 0.5 = the rim of the field, so
+     anything above that starts just off-card and flies in. */
+  0%   { opacity:0;   transform:rotate(var(--a)) translateX(calc(var(--ai-size) * var(--d))) scaleX(1); }
+  16%  { opacity:.9; }
+  70%  { opacity:.9; }
+  /* gone by 88%, so the tails don't pile up into a little sunburst at the
+     centre — they read as absorbed by the core */
+  88%  { opacity:0; }
+  100% { opacity:0;   transform:rotate(var(--a)) translateX(calc(var(--ai-size) * .02)) scaleX(.18); }
+}
+
+/* Core: breathes small → swells and flashes at 72% → settles to a soft glow
+   that the incoming text sits on top of. */
+@keyframes ai-core{
+  0%   { opacity:0;   transform:scale(.26); }
+  16%  { opacity:.42; transform:scale(.40); }
+  42%  { opacity:.62; transform:scale(.52); }
+  58%  { opacity:.72; transform:scale(.48); }
+  72%  { opacity:1;   transform:scale(1.10); }   /* impact */
+  82%  { opacity:.86; transform:scale(.86); }
+  100% { opacity:.80; transform:scale(1.00); }   /* held end frame */
+}
+
+/* Arcs: sweep round while contracting, then fade out before the end so the
+   final frame is clean — just glow, dark and blur. */
+@keyframes ai-ring-a{
+  0%   { opacity:0;   transform:rotate(0deg)   scale(1.00); }
+  10%  { opacity:.9; }
+  58%  { opacity:.6; }
+  78%  { opacity:0;   transform:rotate(305deg) scale(.44); }
+  100% { opacity:0;   transform:rotate(320deg) scale(.40); }
+}
+@keyframes ai-ring-b{
+  0%   { opacity:0;   transform:rotate(0deg)    scale(1.08); }
+  14%  { opacity:.75; }
+  60%  { opacity:.5; }
+  76%  { opacity:0;   transform:rotate(-250deg) scale(.5); }
+  100% { opacity:0;   transform:rotate(-270deg) scale(.46); }
+}
+
+/* Impact wave: one quick ring outward. */
+@keyframes ai-wave{
+  0%   { opacity:0;   transform:scale(.4); }
+  10%  { opacity:.8; }
+  100% { opacity:0;   transform:scale(2.3); }
+}
+
+/* Dark wash: held back until the streaks are most of the way in, so the card
+   underneath stays legible early and only goes dark as the data settles.
+   This is the "end screen" the brief asked for. */
+@keyframes ai-wash-in{
+  0%   { opacity:0; }
+  35%  { opacity:calc(var(--ai-dark) * 0.10); }
+  60%  { opacity:calc(var(--ai-dark) * 0.32); }
+  78%  { opacity:calc(var(--ai-dark) * 0.68); }
+  100% { opacity:var(--ai-dark); }
+}
+
+/* Blur: ramps up alongside the wash, on the same back-loaded curve.
+   Animating backdrop-filter is supported in Chromium and Safari; where it
+   isn't, the layer simply stays unblurred and the dark wash still carries
+   the end state on its own. */
+@keyframes ai-blur-in{
+  0%   { backdrop-filter:blur(0px);                        -webkit-backdrop-filter:blur(0px); }
+  35%  { backdrop-filter:blur(calc(var(--ai-blur) * .12)); -webkit-backdrop-filter:blur(calc(var(--ai-blur) * .12)); }
+  60%  { backdrop-filter:blur(calc(var(--ai-blur) * .34)); -webkit-backdrop-filter:blur(calc(var(--ai-blur) * .34)); }
+  78%  { backdrop-filter:blur(calc(var(--ai-blur) * .70)); -webkit-backdrop-filter:blur(calc(var(--ai-blur) * .70)); }
+  100% { backdrop-filter:blur(var(--ai-blur));             -webkit-backdrop-filter:blur(var(--ai-blur)); }
+}
+
+/* --- END FRAME, HELD -----------------------------------------------------
+   `is-settled` skips straight to the last frame: dark, blurred centre with a
+   soft teal glow, no streaks, no arcs, nothing moving. Use it when a card
+   re-renders while the request is still in flight (so the animation doesn't
+   restart from zero and look like a second request), when you want to review
+   the end state on its own, and it is what reduced motion falls back to.
+   The `animation:none !important` is what lets these plain declarations win
+   over a running animation. */
+.ai-load.is-settled *{ animation:none !important; }
+.ai-load.is-settled .ai-load__blur{
+  backdrop-filter:blur(var(--ai-blur)); -webkit-backdrop-filter:blur(var(--ai-blur));
+}
+.ai-load.is-settled .ai-load__wash{ opacity:var(--ai-dark); }
+.ai-load.is-settled .ai-load__core{ opacity:.80; transform:scale(1); }
+.ai-load.is-settled .ai-load__streak,
+.ai-load.is-settled .ai-load__ring,
+.ai-load.is-settled .ai-load__wave{ opacity:0; }
+
+/* Optional: the card's real content, revealed once the loader has settled.
+   Put `ai-reveal` on the content wrapper and `is-revealed` on it at 3 s. */
+.ai-reveal{ opacity:0; transform:translateY(6px); }
+.ai-reveal.is-revealed{
+  opacity:1; transform:none;
+  transition:opacity 520ms ease,transform 520ms cubic-bezier(.2,.7,.3,1);
+}
+
+/* --- REDUCED MOTION ------------------------------------------------------
+   Design-system gate 3: nothing moves. The loader shows its END frame
+   straight away — soft teal glow, dark centre, blur — so the state still
+   reads as "working, data lands here" without any animation at all. */
+@media (prefers-reduced-motion:reduce){
+  /* Exactly the end frame above, applied the moment the loader appears. */
+  .ai-load.is-running *{ animation:none !important; }
+  .ai-load.is-running .ai-load__blur{
+    backdrop-filter:blur(var(--ai-blur)); -webkit-backdrop-filter:blur(var(--ai-blur));
+  }
+  .ai-load.is-running .ai-load__wash{ opacity:var(--ai-dark); }
+  .ai-load.is-running .ai-load__core{ opacity:.80; transform:scale(1); }
+  .ai-load.is-running .ai-load__streak,
+  .ai-load.is-running .ai-load__ring,
+  .ai-load.is-running .ai-load__wave{ opacity:0; }
+
+  /* The reveal keeps its two states — the content still waits for the data —
+     it just snaps in instead of sliding. */
+  .ai-reveal{ opacity:0; transform:none; transition:none; }
+  .ai-reveal.is-revealed{ opacity:1; transform:none; transition:none; }
+}
+/* ===== end of the component ============================================== */
+
+
+/* ============================================================================
+   PREVIEW CHROME ONLY — everything below this line exists to show the
+   component off on this page. Do not copy it into a screen.
+   ========================================================================= */
+*{box-sizing:border-box;}
+body{
+  margin:0; padding:var(--space-24) var(--space-20) 64px;
+  background:var(--surface-app); color:var(--text-1);
+  font:400 15px/22px var(--font-text);
+  -webkit-font-smoothing:antialiased;
+}
+h1{ font:600 24px/30px var(--font-text); letter-spacing:-.01em; margin:0 0 var(--space-8); }
+.sub{ color:var(--text-3); font:400 13px/18px var(--font-text); margin:0 0 var(--space-20); max-width:62ch; }
+h2{ font:500 17px/22px var(--font-text); margin:var(--space-24) 0 var(--space-12); }
+
+/* controls */
+.bar{ display:flex; flex-wrap:wrap; gap:var(--space-8); align-items:center;
+      padding:var(--space-12); margin-bottom:var(--space-20);
+      background:var(--surface-card); border:1px solid var(--divider);
+      border-radius:var(--radius-16); }
+button{ font:500 13px/18px var(--font-text); color:var(--text-1); cursor:pointer;
+        background:var(--surface-raised); border:1px solid var(--divider);
+        border-radius:var(--radius-full); padding:7px 14px; }
+button:hover{ border-color:var(--metric-readiness); }
+button[aria-pressed="true"]{ background:color-mix(in srgb,var(--teal-400) 18%,var(--surface-raised));
+                             border-color:var(--metric-readiness); color:var(--teal-100); }
+.bar .spacer{ flex:1 1 auto; }
+.bar .note{ color:var(--text-3); font:400 11px/16px var(--font-text); }
+
+/* phone-ish column so the cards sit at real width (360px screen, 16px gutters) */
+.stage{ width:328px; display:flex; flex-direction:column; gap:var(--space-16); }
+.stages{ display:flex; gap:var(--space-24); flex-wrap:wrap; align-items:flex-start; }
+
+/* a sample AI card — same recipe as the rest of the system */
+.card{ position:relative; overflow:hidden;
+       background:var(--surface-card); border-radius:var(--radius-20);
+       padding:var(--space-16); }
+.card--photo{
+  /* stands in for a screen with imagery behind the card, to prove the
+     overlay's transparent background and that the blur bites on real pixels */
+  background:
+    radial-gradient(120% 90% at 15% 10%,color-mix(in srgb,var(--violet-400) 42%,transparent) 0%,transparent 60%),
+    radial-gradient(100% 80% at 85% 85%,color-mix(in srgb,var(--teal-600) 55%,transparent) 0%,transparent 62%),
+    linear-gradient(160deg,var(--neutral-700),var(--neutral-800));
+}
+.eyebrow{ font:500 11px/16px var(--font-text); letter-spacing:.08em; text-transform:uppercase;
+          color:var(--text-3); margin:0 0 var(--space-8); display:flex; align-items:center; gap:6px; }
+.eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--metric-readiness); }
+.card h3{ font:500 17px/22px var(--font-text); margin:0 0 var(--space-4); }
+.card p{ font:400 13px/18px var(--font-text); color:var(--text-2); margin:0; }
+.score{ font:700 42px/46px var(--font-number); font-feature-settings:var(--font-feature-numeric);
+        letter-spacing:-.01em; color:var(--metric-readiness); }
+.score small{ font:500 13px/16px var(--font-number); color:var(--text-3); margin-left:4px; }
+.row{ display:flex; align-items:flex-end; justify-content:space-between; gap:var(--space-12); }
+.chips{ display:flex; gap:6px; margin-top:var(--space-12); flex-wrap:wrap; }
+.chip{ font:500 11px/16px var(--font-text); color:var(--teal-100); padding:3px 9px;
+       border-radius:var(--radius-full);
+       background:color-mix(in srgb,var(--teal-400) 14%,transparent);
+       border:1px solid color-mix(in srgb,var(--teal-400) 28%,transparent); }
+.tall{ min-height:184px; display:flex; flex-direction:column; justify-content:space-between; }
+.caption{ color:var(--text-3); font:400 11px/16px var(--font-text); margin:var(--space-8) 0 0; }
+
+/* the spec table */
+table{ border-collapse:collapse; width:100%; max-width:720px; margin-top:var(--space-8); }
+th,td{ text-align:left; padding:8px 12px; border-bottom:1px solid var(--divider);
+       font:400 13px/18px var(--font-text); color:var(--text-2); vertical-align:top; }
+th{ color:var(--text-3); font-weight:500; white-space:nowrap; }
+td code,p code{ font:500 12px/18px ui-monospace,monospace; color:var(--teal-200); }
+</style>
+</head>
+<body>
+
+<h1>AI card loading</h1>
+<p class="sub">A 3-second overlay for AI insight cards. Teal streaks fly inward, gather
+into a glowing core at the centre, flash once, and settle — leaving the middle of the card
+dark and blurred so the generated text can fade in on top and stay readable. The overlay's
+own background is transparent, so it can be dropped onto any screen.</p>
+
+<div class="bar">
+  <button id="replay" type="button">Replay</button>
+  <button id="loop" type="button" aria-pressed="false">Loop</button>
+  <button id="slow" type="button" aria-pressed="false">Slow (0.4×)</button>
+  <button id="hold" type="button" aria-pressed="false">Hold end frame</button>
+  <span class="spacer"></span>
+  <span class="note">Duration <code>--ai-dur</code> · 3000 ms</span>
+</div>
+
+<div class="stages">
+
+  <!-- ================= column 1 — the three states side by side ========= -->
+  <div class="stage">
+
+    <h2 style="margin-top:0">On a flat card</h2>
+
+    <!-- COPY ME · markup — this is the whole drop-in.
+         `aria-hidden` because it is decoration; the card should also carry
+         aria-busy="true" while loading so screen readers announce the wait. -->
+    <div class="card tall" aria-busy="true">
+      <div class="ai-card__content">
+        <p class="eyebrow"><span class="dot"></span>Readiness · AI insight</p>
+        <div class="ai-reveal">
+          <div class="row">
+            <h3>You're primed for a hard session</h3>
+            <span class="score">86<small>/100</small></span>
+          </div>
+          <p>HRV is 12 ms above your 30-day baseline and you slept 7 h 41 m. Push
+             today, then keep tomorrow easy.</p>
+          <div class="chips"><span class="chip">HRV +12 ms</span><span class="chip">Sleep 7h41</span><span class="chip">RHR 54</span></div>
+        </div>
+      </div>
+
+      <div class="ai-load is-running" aria-hidden="true">
+        <div class="ai-load__blur"></div>
+        <div class="ai-load__wash"></div>
+        <div class="ai-load__field">
+          <span class="ai-load__streak" style="--a:-4deg;--d:0.455;--l:0.195;--sd:700ms;--t:500ms"></span>
+          <span class="ai-load__streak" style="--a:31deg;--d:0.49;--l:0.205;--sd:720ms;--t:60ms"></span>
+          <span class="ai-load__streak is-hot" style="--a:36deg;--d:0.525;--l:0.202;--sd:960ms;--t:400ms"></span>
+          <span class="ai-load__streak is-hot" style="--a:66deg;--d:0.505;--l:0.192;--sd:860ms;--t:620ms"></span>
+          <span class="ai-load__streak" style="--a:81deg;--d:0.455;--l:0.185;--sd:840ms;--t:520ms"></span>
+          <span class="ai-load__streak" style="--a:122deg;--d:0.455;--l:0.215;--sd:880ms;--t:280ms"></span>
+          <span class="ai-load__streak" style="--a:135deg;--d:0.427;--l:0.138;--sd:740ms;--t:500ms"></span>
+          <span class="ai-load__streak is-hot" style="--a:150deg;--d:0.546;--l:0.176;--sd:680ms;--t:0ms"></span>
+          <span class="ai-load__streak is-hot" style="--a:175deg;--d:0.441;--l:0.186;--sd:920ms;--t:520ms"></span>
+          <span class="ai-load__streak" style="--a:194deg;--d:0.505;--l:0.223;--sd:840ms;--t:420ms"></span>
+          <span class="ai-load__streak" style="--a:217deg;--d:0.568;--l:0.132;--sd:940ms;--t:140ms"></span>
+          <span class="ai-load__streak" style="--a:241deg;--d:0.463;--l:0.131;--sd:960ms;--t:620ms"></span>
+          <span class="ai-load__streak" style="--a:264deg;--d:0.666;--l:0.153;--sd:800ms;--t:160ms"></span>
+          <span class="ai-load__streak" style="--a:291deg;--d:0.588;--l:0.144;--sd:940ms;--t:260ms"></span>
+          <span class="ai-load__streak" style="--a:306deg;--d:0.68;--l:0.166;--sd:680ms;--t:260ms"></span>
+          <span class="ai-load__streak" style="--a:332deg;--d:0.673;--l:0.142;--sd:760ms;--t:260ms"></span>
+        </div>
+        <div class="ai-load__ring"></div>
+        <div class="ai-load__ring ai-load__ring--b"></div>
+        <div class="ai-load__wave"></div>
+        <div class="ai-load__core"></div>
+      </div>
+    </div>
+    <!-- end COPY ME · markup -->
+
+    <p class="caption">The card's content sits <em>above</em> the overlay (in
+       <code>.ai-card__content</code>), so the dark blurred centre is a backdrop for the text
+       rather than a smear over it. The text itself waits in a <code>.ai-reveal</code> wrapper.</p>
+  </div>
+
+  <!-- ================= column 2 — over imagery, and a small card ======== -->
+  <div class="stage">
+    <h2 style="margin-top:0">Over a background</h2>
+
+    <div class="card card--photo tall" aria-busy="true">
+      <div class="ai-card__content">
+        <p class="eyebrow"><span class="dot"></span>Coach · AI summary</p>
+        <div class="ai-reveal">
+          <h3>Three easy days, then test</h3>
+          <p>Your load is trending up faster than your recovery. Hold effort at zone 2
+             through Thursday.</p>
+          <div class="chips"><span class="chip">Load 412</span><span class="chip">Strain high</span></div>
+        </div>
+      </div>
+      <div class="ai-load is-running" aria-hidden="true">
+        <div class="ai-load__blur"></div>
+        <div class="ai-load__wash"></div>
+        <div class="ai-load__field">
+          <span class="ai-load__streak is-hot" style="--a:1deg;--d:0.483;--l:0.247;--sd:900ms;--t:200ms"></span>
+          <span class="ai-load__streak" style="--a:19deg;--d:0.511;--l:0.137;--sd:800ms;--t:80ms"></span>
+          <span class="ai-load__streak" style="--a:45deg;--d:0.568;--l:0.212;--sd:720ms;--t:20ms"></span>
+          <span class="ai-load__streak" style="--a:75deg;--d:0.645;--l:0.157;--sd:940ms;--t:560ms"></span>
+          <span class="ai-load__streak" style="--a:83deg;--d:0.61;--l:0.247;--sd:880ms;--t:700ms"></span>
+          <span class="ai-load__streak is-hot" style="--a:106deg;--d:0.441;--l:0.197;--sd:720ms;--t:500ms"></span>
+          <span class="ai-load__streak" style="--a:137deg;--d:0.63;--l:0.187;--sd:920ms;--t:680ms"></span>
+          <span class="ai-load__streak is-hot" style="--a:149deg;--d:0.455;--l:0.246;--sd:840ms;--t:440ms"></span>
+          <span class="ai-load__streak" style="--a:188deg;--d:0.588;--l:0.211;--sd:740ms;--t:320ms"></span>
+          <span class="ai-load__streak is-hot" style="--a:197deg;--d:0.582;--l:0.175;--sd:780ms;--t:20ms"></span>
+          <span class="ai-load__streak" style="--a:223deg;--d:0.61;--l:0.134;--sd:680ms;--t:280ms"></span>
+          <span class="ai-load__streak" style="--a:251deg;--d:0.434;--l:0.177;--sd:740ms;--t:700ms"></span>
+          <span class="ai-load__streak" style="--a:265deg;--d:0.448;--l:0.214;--sd:700ms;--t:540ms"></span>
+          <span class="ai-load__streak" style="--a:288deg;--d:0.575;--l:0.202;--sd:700ms;--t:640ms"></span>
+          <span class="ai-load__streak" style="--a:314deg;--d:0.511;--l:0.171;--sd:960ms;--t:600ms"></span>
+          <span class="ai-load__streak" style="--a:341deg;--d:0.63;--l:0.159;--sd:780ms;--t:580ms"></span>
+        </div>
+        <div class="ai-load__ring"></div>
+        <div class="ai-load__ring ai-load__ring--b"></div>
+        <div class="ai-load__wave"></div>
+        <div class="ai-load__core"></div>
+      </div>
+    </div>
+
+    <h2>Small card (compact size)</h2>
+    <!-- Same component, two knobs turned down: smaller gathering area and a
+         lighter blur so it doesn't swamp a short card. -->
+    <div class="card" aria-busy="true" style="min-height:104px">
+      <div class="ai-card__content">
+        <p class="eyebrow"><span class="dot"></span>Today's tip</p>
+        <div class="ai-reveal"><p>Drink 500 ml before your 6 pm walk — you're 1.2 L short of yesterday.</p></div>
+      </div>
+      <div class="ai-load is-running" aria-hidden="true" style="--ai-size:120px;--ai-blur:7px;--ai-dark:.78">
+        <div class="ai-load__blur"></div>
+        <div class="ai-load__wash"></div>
+        <div class="ai-load__field">
+          <span class="ai-load__streak" style="--a:12deg;--d:0.498;--l:0.146;--sd:800ms;--t:360ms"></span>
+          <span class="ai-load__streak is-hot" style="--a:24deg;--d:0.476;--l:0.231;--sd:680ms;--t:340ms"></span>
+          <span class="ai-load__streak" style="--a:91deg;--d:0.455;--l:0.235;--sd:840ms;--t:560ms"></span>
+          <span class="ai-load__streak" style="--a:128deg;--d:0.476;--l:0.225;--sd:840ms;--t:440ms"></span>
+          <span class="ai-load__streak is-hot" style="--a:172deg;--d:0.638;--l:0.238;--sd:940ms;--t:460ms"></span>
+          <span class="ai-load__streak" style="--a:213deg;--d:0.56;--l:0.209;--sd:900ms;--t:320ms"></span>
+          <span class="ai-load__streak" style="--a:246deg;--d:0.666;--l:0.203;--sd:760ms;--t:560ms"></span>
+          <span class="ai-load__streak" style="--a:286deg;--d:0.617;--l:0.194;--sd:860ms;--t:240ms"></span>
+          <span class="ai-load__streak" style="--a:309deg;--d:0.575;--l:0.16;--sd:960ms;--t:320ms"></span>
+        </div>
+        <div class="ai-load__ring"></div>
+        <div class="ai-load__ring ai-load__ring--b"></div>
+        <div class="ai-load__wave"></div>
+        <div class="ai-load__core"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<h2>Timeline</h2>
+<table>
+  <tr><th>0 – 0.6 s</th><td>Streaks start arriving from the rim, staggered. Arcs fade up and begin their sweep. Core is a faint breath at 40% scale.</td></tr>
+  <tr><th>0.6 – 1.8 s</th><td>Second pass of streaks keeps the flow going. Arcs contract inward. Dark wash reaches about a third of full; blur about a third.</td></tr>
+  <tr><th>1.95 s</th><td>Impact — the core flashes to 110% and one ring pops outward.</td></tr>
+  <tr><th>2.2 – 3.0 s</th><td>Arcs and streaks are gone. Core settles to a soft glow at 80% opacity. Wash and blur reach full.</td></tr>
+  <tr><th>3.0 s onward</th><td>Held end frame: dark, blurred centre with a teal glow. Content fades in over it (<code>.ai-reveal.is-revealed</code>).</td></tr>
+</table>
+
+<h2>Classes</h2>
+<table>
+  <tr><th><code>.ai-load</code></th><td>The overlay. Transparent, absolutely positioned, inherits the card's radius, ignores pointer events.</td></tr>
+  <tr><th><code>.is-running</code></th><td>On <code>.ai-load</code> — starts the 3 s clock. Every layer holds its last frame when it finishes.</td></tr>
+  <tr><th><code>.is-settled</code></th><td>On <code>.ai-load</code> — jumps straight to the held end frame with no motion. Use it if the card re-renders mid-request, and it is what reduced motion falls back to.</td></tr>
+  <tr><th><code>.ai-card__content</code></th><td>On the card's own content. Puts it above the overlay so the dark blurred centre acts as a backdrop instead of smearing the text. Leave it off if you want the loader to frost stale data while it refreshes.</td></tr>
+  <tr><th><code>.ai-reveal</code> / <code>.is-revealed</code></th><td>On the text that waits for the data, and the class you add when it arrives.</td></tr>
+</table>
+
+<h2>Knobs</h2>
+<table>
+  <tr><th><code>--ai-dur</code></th><td>Total run time. Default <code>3000ms</code>. Everything is expressed as a share of this, so changing it retimes the whole animation.</td></tr>
+  <tr><th><code>--ai-size</code></th><td>Diameter of the gathering area. <code>200px</code> for a full-width card, <code>120px</code> for a compact one.</td></tr>
+  <tr><th><code>--ai-blur</code></th><td>End-frame blur radius. Default <code>9px</code>.</td></tr>
+  <tr><th><code>--ai-dark</code></th><td>End-frame darkness, 0–1. Default <code>0.84</code>.</td></tr>
+</table>
+
+<h2>Colours used</h2>
+<table>
+  <tr><th>Streaks</th><td>teal-500 → teal-400 (the "hot" ones teal-400 → teal-300)</td></tr>
+  <tr><th>Sweep arcs</th><td>teal-500 / teal-400, plus teal-300 at the arc head</td></tr>
+  <tr><th>Core</th><td>teal-200 → teal-400 → teal-500, with a teal-0 pip</td></tr>
+  <tr><th>End wash</th><td>neutral-900, radial, fading to transparent at the card edge</td></tr>
+</table>
+<p class="caption">teal-400 is <code>--metric-readiness</code> — the readiness hue — so the loader
+reads as the same family as the readiness ring.</p>
+
+<script>
+/* ---------------------------------------------------------------------------
+   PREVIEW CONTROLS ONLY. The component itself needs no JavaScript — on a real
+   screen you add `is-running` when the request starts and take it off (or
+   remove the overlay) when the data lands.
+   ------------------------------------------------------------------------ */
+const loaders = [...document.querySelectorAll('.ai-load')];
+const reveals = [...document.querySelectorAll('.ai-reveal')];
+const cards   = [...document.querySelectorAll('[aria-busy]')];
+
+const btnReplay = document.getElementById('replay');
+const btnLoop   = document.getElementById('loop');
+const btnSlow   = document.getElementById('slow');
+const btnHold   = document.getElementById('hold');
+
+let looping = false, slow = false, holding = false, timer = null;
+
+/* How long the current run lasts, in ms — used to time the content reveal. */
+function runLength(){ return slow ? 3000 / 0.4 : 3000; }
+
+/* Restart every loader from frame zero. Removing the class, forcing the
+   browser to recalculate, then adding it back is the standard way to replay a
+   CSS animation. */
+function play(){
+  clearTimeout(timer);
+  loaders.forEach(el => {
+    el.classList.remove('is-running','is-settled');
+    el.style.setProperty('--ai-dur', runLength() + 'ms');
+  });
+  reveals.forEach(el => el.classList.remove('is-revealed'));
+  cards.forEach(el => el.setAttribute('aria-busy','true'));
+  void document.body.offsetWidth;                 /* force a reflow */
+  loaders.forEach(el => el.classList.add('is-running'));
+
+  /* The data "arrives" as the loader settles. */
+  timer = setTimeout(() => {
+    reveals.forEach(el => el.classList.add('is-revealed'));
+    cards.forEach(el => el.setAttribute('aria-busy','false'));
+    if (looping) timer = setTimeout(play, 1400);  /* pause on the end frame, then go again */
+  }, runLength() - 200);
+}
+
+/* "Hold end frame" jumps straight to the settled state so the dark + blurred
+   centre can be judged on its own — that's what `is-settled` is for. */
+function hold(){
+  clearTimeout(timer);
+  loaders.forEach(el => el.classList.add('is-running','is-settled'));
+  reveals.forEach(el => el.classList.add('is-revealed'));
+  cards.forEach(el => el.setAttribute('aria-busy','false'));
+}
+
+btnReplay.addEventListener('click', () => { holding = false; btnHold.setAttribute('aria-pressed','false'); play(); });
+
+btnLoop.addEventListener('click', () => {
+  looping = !looping;
+  btnLoop.setAttribute('aria-pressed', String(looping));
+  if (looping){ holding = false; btnHold.setAttribute('aria-pressed','false'); play(); }
+  else clearTimeout(timer);
+});
+
+btnSlow.addEventListener('click', () => {
+  slow = !slow;
+  btnSlow.setAttribute('aria-pressed', String(slow));
+  if (!holding) play();
+});
+
+btnHold.addEventListener('click', () => {
+  holding = !holding;
+  btnHold.setAttribute('aria-pressed', String(holding));
+  if (holding){ looping = false; btnLoop.setAttribute('aria-pressed','false'); hold(); }
+  else play();
+});
+
+play();
+</script>
+</body></html>

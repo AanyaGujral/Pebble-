@@ -5,6 +5,23 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-26 — Built the AI card loading animation as a new component,
+  `components/ai-card-loading.html`. A 3-second overlay for AI insight cards:
+  teal streaks fly in from beyond the card edges and gather at the centre, the
+  centre swells and flashes once as they land (~1.95 s), then everything
+  settles into a darkened, slightly blurred patch with a soft teal glow — the
+  backdrop the generated copy fades in on top of. Teal only (400/500 streaks
+  and arcs, 200/300 hot centre, teal-0 pip; teal-400 is --metric-readiness).
+  The overlay's own background is transparent so it drops onto any screen, and
+  it scales down for compact cards via --ai-size. CSS only — no JS needed on a
+  real screen; the preview page's replay / loop / slow / hold-end-frame buttons
+  are review chrome. Reduced motion falls back to the static end frame.
+  Flagged: the owner's Pinterest reference could not be opened from the build
+  environment (pinterest.com is blocked by the network proxy), so the motion is
+  built from the written brief — noted at the top of the file and in
+  docs/feature-ai-card-loading.md. Not wired into index.html yet: the AI
+  insight cards it belongs to don't exist there.
+
 - 2026-08-10 — Moved the named snapshot into `Activity Tab/Workout Tab.html`
   (folder layout mirrors `Sleep Tab/`). `index.html` stays the live working
   copy at the repo root. Pushed as is at the owner's request.

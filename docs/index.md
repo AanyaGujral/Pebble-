@@ -8,6 +8,7 @@ A table of every screen/feature and its state. Keeps work unambiguous.
 | Activity | — | Not started | |
 | Stress  | — | Not started | |
 | Health / Peak score | — | Not started | |
+| AI card loading animation | `components/ai-card-loading.html` | Component built | 3 s teal loader for AI insight cards; transparent bg, dark + blurred end frame. Not yet wired into `index.html`. See `docs/feature-ai-card-loading.md` |
 
 When you start a feature, create `docs/feature-<name>.md` with: what it does,
 acceptance criteria (checkboxes), implementation approach, and dependencies.

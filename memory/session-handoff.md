@@ -1,5 +1,18 @@
 # Session Handoff
 
+> **2026-08-26 — newest work.** `components/ai-card-loading.html` is a new
+> standalone component: the 3-second AI card loading animation (teal streaks
+> gather at the centre, flash, then settle into a dark + blurred patch the
+> generated copy lands on). It is a component only — deliberately NOT wired
+> into `index.html`, because the AI insight cards it belongs to don't exist
+> there yet. Spec: `docs/feature-ai-card-loading.md`. Open the file directly to
+> review; the Replay / Loop / Slow / Hold-end-frame buttons are preview chrome.
+> FLAGGED: the owner's Pinterest reference could not be opened from the build
+> environment (pinterest.com is blocked by the network proxy), so the motion
+> came from the written brief — re-cut if the reference showed something else.
+> Next step for this piece: owner review, then decide which cards get it and
+> wire it in.
+
 > **2026-08-10 — read this first.** `index.html` is now the MERGED source of
 > truth: it adopts the parallel session's build (metric details pages with a
 > D/W/M/Y period switcher; control panel reduced to Default + No data and
