@@ -5,6 +5,22 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-14 (round 7) — (1) Date pill ("Today, Aug 6" + chevron) matched to
+  the owner's Sleep Tab file (Sleep Tab/Sleep Tab.html): 6px gap, 6px/10px
+  padding, 14px radius, -10px left pull, hover wash neutral-0 @ 8% written
+  with color-mix. Type and caret already matched. Applies to all three tabs
+  since they share .date-btn. (2) Measuring fill is now one continuous linear
+  sweep across the whole 3.5s measurement instead of jumping a fifth per
+  metric — the run is a single timeout plus a CSS width transition, and under
+  reduced motion it jumps straight to full. (3) Sheet entry replaced: the old
+  slide-up + 1.6s wash (owner: "fills like a PPT transition") is gone. The
+  sheet now blooms from the centre outward — a clip-path circle clearing the
+  corners in 460ms over a fluid gradient field of two blurred blob layers
+  drifting on 15s/21s offset loops (owner reference: Dribbble "Fluid Gradient
+  Loops"). Reduced motion freezes the field and skips the bloom.
+  FLAGGED in code: the readings still land at 3s per the component's spec,
+  which now sits behind a 460ms entry — offered to pull it in to ~600ms.
+
 - 2026-08-14 (round 6) — Three alignment/type fixes from the owner.
   (1) Ring scores now optically centred. The cause was font metrics, not
   layout: League Spartan reserves 0.219em of descender space that digits

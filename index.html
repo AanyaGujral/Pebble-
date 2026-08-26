@@ -252,12 +252,19 @@ body{
 /* home greeting is one step smaller — h2 medium from the type tokens
    (20/26, weight 500), owner request 2026-08-14 */
 .screen-title.greet{font-size:20px;line-height:26px;letter-spacing:-0.005em;font-weight:500}
+/* Date pill ("Today, Aug 6" + chevron) — sizes and spacing taken from the
+   owner's Sleep Tab file (Sleep Tab/Sleep Tab.html, 2026-08-14) so all three
+   tabs match it: 6px gap, 6px/10px padding, 14px radius, pulled 10px left so
+   the label optically lines up with the title above it. Type was already the
+   same (13/18 medium at text-2), as is the caret below.
+   The hover wash there is neutral-0 at 8%, written with color-mix so it stays
+   on tokens rather than the flat surface-raised this used before. */
 .date-btn{
-  margin:4px 0 0 -8px;display:flex;align-items:center;gap:4px;
-  background:none;border:0;padding:4px 8px;border-radius:12px;cursor:pointer;font-family:inherit;
+  margin:4px 0 0 -10px;display:flex;align-items:center;gap:6px;
+  background:none;border:0;padding:6px 10px;border-radius:14px;cursor:pointer;font-family:inherit;
   font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);
 }
-.date-btn:hover{background:var(--surface-raised)}
+.date-btn:hover{background:color-mix(in srgb, var(--neutral-0) 8%, transparent)}
 .caret{width:6px;height:6px;border-right:1.2px solid var(--text-3);border-bottom:1.2px solid var(--text-3);transform:rotate(45deg);margin-bottom:3px;display:inline-block}
 .dots-btn{
   width:44px;height:44px;margin:-8px -12px 0 0;
@@ -713,37 +720,56 @@ body{
 .hm .cta.is-disabled{background:var(--surface-card);color:var(--text-3);cursor:default}
 
 /* ---- readings sheet — opens when a measurement completes ---- */
-.hm-scrim{position:absolute;inset:0;z-index:69;background:color-mix(in srgb, var(--neutral-900) 72%, transparent);display:flex;align-items:flex-end;justify-content:center}
+.hm-scrim{
+  position:absolute;inset:0;z-index:69;
+  background:color-mix(in srgb, var(--neutral-900) 72%, transparent);
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:hmScrimIn 220ms var(--ease-standard) both;
+}
 .hm-scrim[hidden]{display:none}
+/* Entry (owner, 2026-08-14 — the old version "filled like a PPT transition"):
+   the sheet opens from the middle of the screen outward, as a circular reveal
+   that races past the corners in 460ms. Nothing wipes or slides. */
 .hm-sheet{
   position:relative;width:100%;overflow:hidden;
   background:var(--neutral-900);
   border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;
   padding:32px 16px 24px;
-  animation:hmSheetIn var(--duration-slow) var(--ease-emphasis) both;
+  animation:hmSheetBloom 460ms var(--ease-emphasis) both;
 }
-/* deep teal field — glow high-centre, falling to neutral-900 at the base.
-   Flag (carried from the component): the wash uses color-mix() so the teal
-   steps stay as tokens instead of hard-coded rgba. */
+/* Fluid gradient field (owner reference: Dribbble "Fluid Gradient Loops").
+   Two blurred blob layers drifting on long, offset loops — because they run
+   at different speeds and never land on the same frame twice, the field keeps
+   moving instead of settling into a static wash. Both layers are inset past
+   the sheet edges so a blob's soft edge never shows.
+   Flag (carried from the component): color-mix() keeps the teal steps as
+   tokens instead of hard-coded rgba. */
+.hm-sheet::before,.hm-sheet::after{content:'';position:absolute;inset:-35%;pointer-events:none;z-index:0}
 .hm-sheet::before{
-  content:'';position:absolute;inset:0;pointer-events:none;
   background:
-    radial-gradient(85% 48% at 60% -4%, color-mix(in srgb, var(--teal-700) 46%, transparent) 0%, transparent 72%),
-    radial-gradient(70% 40% at 18% 4%, color-mix(in srgb, var(--teal-800) 40%, transparent) 0%, transparent 74%),
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--teal-900) 72%, transparent) 0%,
-      color-mix(in srgb, var(--teal-900) 30%, transparent) 42%,
-      transparent 78%);
-  transform-origin:60% 0%;
-  animation:hmWashIn 1600ms var(--ease-emphasis) both;
+    radial-gradient(36% 30% at 32% 30%, color-mix(in srgb, var(--teal-700) 68%, transparent) 0%, transparent 70%),
+    radial-gradient(32% 26% at 72% 20%, color-mix(in srgb, var(--teal-600) 40%, transparent) 0%, transparent 72%);
+  filter:blur(8px);
+  animation:hmDriftA 15s var(--ease-standard) infinite alternate;
+}
+.hm-sheet::after{
+  background:
+    radial-gradient(30% 24% at 64% 44%, color-mix(in srgb, var(--emerald-400) 18%, transparent) 0%, transparent 68%),
+    radial-gradient(42% 34% at 20% 66%, color-mix(in srgb, var(--teal-900) 90%, transparent) 0%, transparent 74%);
+  filter:blur(14px);
+  animation:hmDriftB 21s var(--ease-standard) infinite alternate;
 }
 .hm-sheet>*{position:relative;z-index:1}
 .hm-sheet h3{margin:0;font:700 20px/26px var(--font-text);letter-spacing:-0.005em;color:var(--text-1);text-align:center}
 .hm-sheet .when{margin:4px auto 20px;max-width:30ch;font:400 15px/22px var(--font-text);color:var(--text-2);text-align:center}
-/* the wash blooms in first, the header rises, then the readings land at 3s
-   and cascade 90ms apart, secondary CTA last */
-.hm-sheet h3,.hm-sheet .when{animation:hmRiseIn 520ms var(--ease-emphasis) both;animation-delay:260ms}
-.hm-sheet .when{animation-delay:380ms}
+/* the header rises as the bloom lands, then the readings arrive at 3s and
+   cascade 90ms apart, secondary CTA last.
+   FLAG: that 3s hold is the component's own timing ("metrics land at 3s"),
+   kept as specified — but it now sits behind a 460ms entry, so the sheet
+   waits with just a heading for most of it. Say the word and I'll pull the
+   cascade in to ~600ms. */
+.hm-sheet h3,.hm-sheet .when{animation:hmRiseIn 420ms var(--ease-emphasis) both;animation-delay:160ms}
+.hm-sheet .when{animation-delay:240ms}
 .hm-sheet .rd{animation:hmRiseIn 460ms var(--ease-emphasis) both}
 .hm-sheet .rd:nth-child(1){animation-delay:3000ms}
 .hm-sheet .rd:nth-child(2){animation-delay:3090ms}
@@ -771,22 +797,37 @@ body{
   color:var(--metric-readiness);
 }
 .hm-sheet .done:active{background:var(--neutral-800)}
-@keyframes hmSheetIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes hmScrimIn{from{opacity:0}to{opacity:1}}
 @keyframes hmRiseIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-/* the wash blooms from a tight point low-centre, then travels up and spreads */
-@keyframes hmWashIn{
-  0%{opacity:0;transform:translate(6%,42%) scale(.28)}
-  35%{opacity:.85}
-  100%{opacity:1;transform:translate(0,0) scale(1)}
+/* Centre-out bloom: a circle grows from the middle of the sheet until it
+   clears the corners (75% already covers the box, so 150% finishes well past
+   them). The slight scale-up underneath stops it reading as a flat iris wipe. */
+@keyframes hmSheetBloom{
+  from{clip-path:circle(0% at 50% 50%);transform:scale(.94);opacity:.5}
+  to  {clip-path:circle(150% at 50% 50%);transform:scale(1);opacity:1}
+}
+/* the two gradient loops — different distances, speeds and directions, so the
+   field never repeats the same frame */
+@keyframes hmDriftA{
+  0%  {transform:translate3d(-5%,-3%,0) scale(1)}
+  50% {transform:translate3d(7%,5%,0)   scale(1.14)}
+  100%{transform:translate3d(-2%,8%,0)  scale(1.05)}
+}
+@keyframes hmDriftB{
+  0%  {transform:translate3d(6%,4%,0)   scale(1.08) rotate(0deg)}
+  50% {transform:translate3d(-6%,-2%,0) scale(1)    rotate(8deg)}
+  100%{transform:translate3d(3%,-6%,0)  scale(1.12) rotate(-5deg)}
 }
 /* Design gate: every animation above is off under reduced motion — the sheet
-   and its contents simply appear at rest. */
+   and its contents simply appear at rest, and the gradient field holds still
+   instead of looping. */
 @media (prefers-reduced-motion:reduce){
   .hm .cta{transition:none}
   .hm .cta.is-measuring .ico{animation:none}
-  .hm .cta .fill{transition:none}
-  .hm-sheet,.hm-sheet::before,.hm-sheet h3,.hm-sheet .when,.hm-sheet .rd,.hm-sheet .done{
-    animation:none;opacity:1;transform:none;
+  .hm .cta .fill{transition:none !important}
+  .hm-scrim,.hm-sheet,.hm-sheet::before,.hm-sheet::after,
+  .hm-sheet h3,.hm-sheet .when,.hm-sheet .rd,.hm-sheet .done{
+    animation:none;opacity:1;transform:none;clip-path:none;
   }
 }
 
@@ -3021,9 +3062,15 @@ function hmCtaHTML(key, label){
     + `${HM_PULSE}<span class="txt">${txt}</span></button>`;
 }
 
-let hmState = 'idle', hmRemaining = HM_COOLDOWN, hmRunTimer = null, hmCdTimer = null, hmStep = 0;
-function hmClearTimers(){ clearInterval(hmRunTimer); clearInterval(hmCdTimer); hmRunTimer = hmCdTimer = null; }
-function hmSetFill(pct){ const f = $('#hmCtaFill'); if (f) f.style.width = pct + '%'; }
+const HM_STEP_MS = 700;                                  // per metric
+const HM_RUN_MS  = HM_METRICS.length * HM_STEP_MS;       // whole measurement
+const hmReduced  = matchMedia('(prefers-reduced-motion: reduce)');
+
+let hmState = 'idle', hmRemaining = HM_COOLDOWN, hmRunTimer = null, hmCdTimer = null;
+function hmClearTimers(){
+  clearTimeout(hmRunTimer); clearInterval(hmCdTimer);
+  hmRunTimer = hmCdTimer = null;
+}
 
 function renderHM(){
   const firstRun = document.getElementById('app').dataset.state === 'empty';
@@ -3031,25 +3078,34 @@ function renderHM(){
   if (firstRun && hmState !== 'idle'){ hmClearTimers(); hmState = 'idle'; hmCloseSheet(); }
   $('#hmGrid').innerHTML = (firstRun ? HM_EMPTY : HM_METRICS).map(hmMetricCard).join('');
   $('#hmCtaSlot').innerHTML = hmCtaHTML(hmState, firstRun ? 'Take your first reading' : null);
-  if (hmState === 'measuring') hmSetFill(hmStep / HM_METRICS.length * 100);
   $('#hmUpd').textContent = firstRun ? '' : 'Updated 14:20';
 }
 function hmSetState(k){
   hmClearTimers();
   hmState = k;
   if (k === 'disabled') hmRemaining = HM_COOLDOWN;
-  if (k === 'measuring') hmStep = 0;
   renderHM();
   if (k === 'measuring') hmStartRun();
   if (k === 'disabled')  hmStartCountdown();
 }
-// one step per metric; the fill tracks progress, then the sheet opens
+/* The fill is ONE continuous sweep across the whole measurement (owner,
+   2026-08-14 — it used to jump a fifth of the way per metric, which read as
+   five steps with pauses between them). Linear timing, so the edge glides at
+   a constant pace from empty to full, then the sheet opens. */
 function hmStartRun(){
-  hmRunTimer = setInterval(() => {
-    hmStep++;
-    hmSetFill(hmStep / HM_METRICS.length * 100);
-    if (hmStep >= HM_METRICS.length){ hmClearTimers(); hmOpenSheet(); }
-  }, 700);
+  const f = $('#hmCtaFill');
+  if (f){
+    if (hmReduced.matches){
+      f.style.width = '100%';                  // no sweep under reduced motion
+    } else {
+      // let the browser paint width:0 first, or there's nothing to animate from
+      requestAnimationFrame(() => {
+        f.style.transition = `width ${HM_RUN_MS}ms linear`;
+        f.style.width = '100%';
+      });
+    }
+  }
+  hmRunTimer = setTimeout(() => { hmClearTimers(); hmOpenSheet(); }, HM_RUN_MS);
 }
 function hmStartCountdown(){
   hmCdTimer = setInterval(() => {
@@ -3161,7 +3217,10 @@ function setState(state){
     }
   }
   bandStatus.textContent = BAND_COPY[state];
-  renderHM(); // Health Monitor renders per app state (first-run when empty)
+  // Health monitor renders per app state (first-run copy when empty). Switching
+  // state cancels any measurement in flight, so no timer outlives the switch.
+  hmCloseSheet();
+  hmSetState('idle');
   // highlight the picked option in the panel
   $$('#stateOpts label').forEach(l => l.classList.toggle('on', $('input', l).value === state));
 }
