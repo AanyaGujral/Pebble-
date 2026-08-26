@@ -163,7 +163,13 @@ export const metric = {
   readiness: '#45C7B3',
   spo2: '#58A8DF',
   sleep: '#8A7CEC',
-  skinTemp: '#C873DE'
+  skinTemp: '#C873DE',
+  /* Added 2026-08-14 for the Measure All component's Stress card.
+     FLAG: this is the Figma-generated aqua-400 placeholder the component
+     shipped with — there is still no aqua ramp (0–900) in tokens-final.json,
+     so Stress has a hue but no light/dark steps. Replace with the real ramp
+     value when it lands; the alias name can stay. */
+  stress: '#3DD2F3'
 };
 
 /** Semantic states — glyphs and badges only, never chart lines or fills. */
@@ -444,10 +450,64 @@ export const borderWidth = {
   thin: 1.0
 };
 
+/* ---------------------------------------------------------------------------
+   Added by hand 2026-08-14 — everything below this line.
+
+   FLAG: the header says this file is generated from tokens-final.json and
+   shouldn't be hand-edited, but CLAUDE.md says a missing token gets added
+   here first. These are the gaps the Measure All component (v4) hit: it had
+   to define them locally because the design system doesn't carry them yet.
+   They're grouped separately so they're easy to fold into the source file
+   (or delete) when tokens-final.json catches up.
+   --------------------------------------------------------------------------- */
+
+/** Named roles for the radius scale above. Values are existing scale steps —
+ *  this only gives the common surfaces a name so components stop picking a
+ *  raw number. */
+export const radiusRole = {
+  card: 20,   // metric cards, settings groups
+  sheet: 28,  // bottom sheets
+  row: 16,    // rows inside a sheet
+  pill: 999   // full-width CTAs, progress rails, chips
+};
+
+/** Component sizing. */
+export const size = {
+  ctaHeight: 48  // full-width primary button (Measure All, Start Workout)
+};
+
+/** Backdrop blur, in px. Used by translucent surfaces over content. */
+export const blur = {
+  card: 32
+};
+
+/** Motion. Durations in ms; easings are CSS-ready strings. */
+export const motion = {
+  durationFast: 120,   // hovers, colour swaps
+  durationBase: 140,
+  durationSlow: 240,   // progress fills, sheet entry
+  easeStandard: 'ease',
+  easeEmphasis: 'cubic-bezier(0.32, 0.72, 0, 1)'
+};
+
+/** Screen-level layout constants (the phone frame the prototypes target). */
+export const layout = {
+  screenWidth: 360,
+  screenGutter: 16,
+  cardPad: 16,
+  cardGap: 12
+};
+
+/** Opacity roles. */
+export const opacity = {
+  stateInactive: 0.45  // dimmed/disabled content
+};
+
 const tokens = {
   color, neutral, surface, textColor, metric, semantic,
   fontFamily, fontWeight, typeText, typeNumeric,
   radius, spacing, borderWidth,
+  radiusRole, size, blur, motion, layout, opacity,
 };
 
 export default tokens;

@@ -5,6 +5,27 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-14 (round 5) — Health monitor replaced with the owner's v4
+  component (components/measure-all-cell.html). The in-grid "Measure All"
+  cell and its 11-state machine are gone; v4 ships five metric cards, then
+  Measure All as a full-width 48px teal pill below the grid (the Start
+  Workout pattern) with three states — idle → measuring (the button is its
+  own progress surface, 700ms per metric) → 49s cooldown countdown — plus
+  the readings sheet that opens on completion (teal wash, blurred reading
+  rows, cascade at 3s, outlined Done). Sheet is scoped .hm-sheet/.hm-scrim
+  because the app already has .sheet/.scrim for the goal editor, and it sits
+  inside .screen so it stays in the phone mockup. Both section headings are
+  now 17/22 at medium (headingH3Medium) — flagged: the owner called it a
+  paragraph token, but no paragraph style is 17px.
+  Token audit against js/tokens.js, missing entries added there and mirrored
+  into index.html's :root: metric.stress (the Stress card now reads
+  --metric-stress instead of the raw aqua hue — value is still the Figma
+  placeholder, no aqua ramp exists yet), radiusRole (card/sheet/row/pill),
+  size.ctaHeight, blur.card, motion (durations + easings), layout
+  (screen/gutter/card pad + gap), opacity.stateInactive. Flagged in the file:
+  tokens.js says "generated, do not hand-edit", so the additions are grouped
+  below a marked line for folding back into tokens-final.json.
+
 - 2026-08-14 (round 4) — Home feedback round on the owner's v2 Measure All
   component (replaces v1 at components/measure-all-cell.html — fixed 132px
   cells, tighter rail spacing, idle copy "All 5 metrics · Measure now", CTA

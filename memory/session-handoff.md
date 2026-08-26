@@ -16,11 +16,15 @@
 > the Health Monitor (components/measure-all-cell.html) with its CTA
 > switched to teal (settled on teal-300 in round 3 for contrast at 11px).
 > Round 3 polish: no 3-dot menu on home, greeting at h2 medium, generic
-> hero copy, averages footer removed. Round 4: owner's v2 component adopted
-> (CTA teal-400 via --metric-readiness, 13px — supersedes teal-300/11px),
-> ring scores 32px semibold, sentence-case section headers with 24px
-> spacing, right header meta inset 16px, teal 48px Start Workout, workout
-> card merged under Activity monitor (order: progress card, workouts, CTA).
+> hero copy, averages footer removed. Round 4: ring scores 32px semibold,
+> sentence-case section headers with 24px spacing, right header meta inset
+> 16px, teal 48px Start Workout, workout card merged under Activity monitor
+> (order: progress card, workouts, CTA). Round 5: Health monitor is now the
+> owner's v4 component — cards + a full-width Measure All pill (idle /
+> measuring / 49s countdown) + the readings sheet (.hm-sheet, inside
+> .screen); both section headings 17/22 medium; js/tokens.js gained the
+> tokens the component needed (metric.stress, radiusRole, size, blur,
+> motion, layout, opacity) in a marked hand-added block.
 > Open items: add a real
 > stress token to js/tokens.js (Stress card uses the component's aqua
 > placeholder); owner to decide on the doubled "Workout"/"Workouts" title

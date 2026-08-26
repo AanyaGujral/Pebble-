@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pebble — Measure All cell</title>
+<title>Pebble — Measure All CTA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -14,7 +14,7 @@
 --neutral-800:#0F111B;--neutral-900:#07080C;
 
 --crimson-400:#E43A62;--terracotta-400:#D96F4A;--tangerine-400:#F59E3B;--gold-400:#F2C64B;
---lime-400:#A6CE4E;--emerald-400:#43B476;--teal-400:#45C7B3;--teal-300:#76D4C3;--teal-500:#31A492;
+--lime-400:#A6CE4E;--emerald-400:#43B476;--teal-100:#C1EDE4;--teal-700:#076155;--teal-800:#004239;--teal-900:#00261F;--teal-400:#45C7B3;--teal-300:#76D4C3;--teal-500:#31A492;
 --sky-400:#58A8DF;--violet-400:#8A7CEC;--orchid-400:#C873DE;
 --aqua-400:rgb(61,210,243); /* Figma-generated token; see decisions note */
 
@@ -36,41 +36,57 @@
 --font-text:'Google Sans Flex','Google Sans',sans-serif;
 --font-number:'Spartan','League Spartan',sans-serif;
 --font-feature-numeric:'tnum' 1,'lnum' 1;
---weight-regular:400;--weight-medium:500;--weight-semibold:600;
+--weight-regular:400;--weight-medium:500;--weight-semibold:600;--weight-bold:700;
 
 --p1-size:15px;--p1-line:22px;--p2-size:13px;--p2-line:18px;--p3-size:11px;--p3-line:16px;
 --overline-size:11px;--overline-line:16px;--overline-tracking:0.08em;
+--h3-size:17px;--h3-line:22px;--h3-tracking:0;
 --h2-size:20px;--h2-line:26px;--h2-tracking:-0.005em;
 --num-l-size:24px;--num-l-line:28px;--num-l-tracking:-0.005em;--num-l-weight:700;
+--num-m-size:20px;--num-m-line:24px;
 
 --type-p1:var(--weight-regular) var(--p1-size)/var(--p1-line) var(--font-text);
 --type-p2:var(--weight-regular) var(--p2-size)/var(--p2-line) var(--font-text);
 --type-p3:var(--weight-regular) var(--p3-size)/var(--p3-line) var(--font-text);
---type-h2:var(--weight-semibold) var(--h2-size)/var(--h2-line) var(--font-text);
+--type-h3:var(--weight-semibold) var(--h3-size)/var(--h3-line) var(--font-text);
 --type-overline:var(--weight-medium) var(--overline-size)/var(--overline-line) var(--font-text);
 --type-num-l:var(--num-l-weight) var(--num-l-size)/var(--num-l-line) var(--font-number);
+--type-num-m:var(--weight-bold) var(--num-m-size)/var(--num-m-line) var(--font-number);
+--type-p1-semibold:var(--weight-semibold) var(--p1-size)/var(--p1-line) var(--font-text);
+--type-h2-bold:var(--weight-bold) var(--h2-size)/var(--h2-line) var(--font-text);
 
---space-2:2px;--space-4:4px;--space-8:8px;--space-12:12px;--space-16:16px;--space-20:20px;--space-24:24px;
+--space-2:2px;--space-4:4px;--space-8:8px;--space-12:12px;--space-16:16px;--space-20:20px;--space-24:24px;--space-32:32px;
 --screen-width:360px;--screen-gutter:16px;--card-pad:16px;--card-gap:12px;
 
---radius-card:20px;--radius-pill:999px;--radius-bar-cap:4px;
+--radius-card:20px;--radius-pill:999px;--radius-sheet:28px;--radius-row:16px;--blur-card:32px;
 --border-hairline:0.5px;--border-thin:1px;
+--cta-height:48px;
 --duration-fast:120ms;--duration-slow:240ms;--ease-standard:ease;
+--ease-emphasis:cubic-bezier(0.32,0.72,0,1);
 }
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@keyframes cellPulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important}
+  .sheet::before,.sheet h3,.sheet .when,#shList .rd,.sheet .done,.sheet{
+    animation:none!important;opacity:1!important;transform:none!important}
+  .cta.is-measuring .ico{animation:none!important}}
+@keyframes ctaPulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes sheetIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+/* wash blooms from a tight point low-centre, then travels up and spreads to rest */
+@keyframes washIn{
+  0%{opacity:0;transform:translate(6%,42%) scale(.28)}
+  35%{opacity:.85}
+  100%{opacity:1;transform:translate(0,0) scale(1)}}
+@keyframes riseIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 
 /* ── page chrome ──────────────────────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--surface-app);color:var(--text-1);
   font:var(--type-p1);-webkit-font-smoothing:antialiased}
-.stage{width:var(--screen-width);margin:0 auto;padding:24px var(--screen-gutter) 64px}
-.demo-h{font:var(--type-overline);font-weight:var(--weight-semibold);
+.stage{width:var(--screen-width);margin:0 auto;padding:24px var(--screen-gutter) 64px;position:relative}
+.demo-h{font:var(--weight-semibold) 13px/18px var(--font-text);
   letter-spacing:var(--overline-tracking);
-  text-transform:uppercase;color:var(--text-3);margin:32px 0 12px;font-size:13px;line-height:18px}
-
-/* state switcher chips (pattern from Activity tab dev chips) */
+  text-transform:uppercase;color:var(--text-3);margin:32px 0 12px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chips button{font:var(--weight-medium) 11px/16px var(--font-text);border:0;
   border-radius:var(--radius-pill);padding:4px 12px;cursor:pointer;
@@ -79,7 +95,7 @@ body{margin:0;background:var(--surface-app);color:var(--text-1);
 
 /* ── section ──────────────────────────────────────────────────────────── */
 .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 var(--space-16)}
-.sec-head h2{margin:0;font:var(--type-h2);letter-spacing:var(--h2-tracking)}
+.sec-head h2{margin:0;font:var(--type-h3);letter-spacing:var(--h3-tracking)}
 .sec-head .upd{font:var(--type-p3);font-weight:var(--weight-medium);color:var(--text-3);
   font-feature-settings:var(--font-feature-numeric)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--card-gap)}
@@ -102,33 +118,83 @@ body{margin:0;background:var(--surface-app);color:var(--text-1);
 .card-foot{margin-top:auto;padding-top:var(--space-12);
   font:var(--type-p2);color:var(--text-3);font-feature-settings:var(--font-feature-numeric)}
 
-/* ── the Measure All cell ─────────────────────────────────────────────── */
-.ma{background:var(--surface-app);border:var(--border-hairline) solid var(--border-card);
-  border-radius:var(--radius-card);padding:var(--card-pad);height:132px;
-  display:flex;flex-direction:column;font-family:var(--font-text);text-align:left;color:var(--text-1);
-  transition:border-color var(--duration-fast) var(--ease-standard)}
-button.ma{cursor:pointer}
-button.ma:hover{border-color:var(--neutral-500)}
-.ma[aria-disabled="true"]{cursor:default}
-.ma .dot.pulse{animation:cellPulse 1.4s ease-in-out infinite}
-.ma .body{flex:1;display:flex;flex-direction:column}
-.ma .desc{margin-top:var(--space-4);font:var(--type-p2);color:var(--text-3)}
-.ma .rail{margin-top:var(--space-8);height:8px;border-radius:var(--radius-pill);
-  background:var(--surface-raised);box-shadow:inset 0 0 0 var(--border-hairline) var(--neutral-500);
-  overflow:hidden}
-.ma .rail i{display:block;height:100%;border-radius:var(--radius-pill);
-  background:var(--metric-readiness);
-  transition:width var(--duration-slow) cubic-bezier(0.32,0.72,0,1)}
-.ma .sub{margin-top:auto;padding-top:var(--space-12);
-  font:var(--type-p2);color:var(--text-3);font-feature-settings:var(--font-feature-numeric)}
-.ma .act{color:var(--metric-readiness);font-weight:var(--weight-medium)}
-.ma.span2{grid-column:1 / -1;height:auto;min-height:0}
-.ma.span2 .fr-title{margin-top:var(--space-8);font:var(--weight-medium) var(--p1-size)/var(--p1-line) var(--font-text)}
+/* ── Measure All — full-width CTA (Start Workout pattern) ─────────────── */
+.cta{width:100%;height:var(--cta-height);margin-top:var(--space-16);
+  border:0;border-radius:var(--radius-pill);position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;gap:var(--space-8);
+  font:var(--type-p1-semibold);
+  background:var(--metric-readiness);color:var(--neutral-900);
+  cursor:pointer;transition:background var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard)}
+.cta:active{background:var(--teal-500)}
+.cta .ico{width:20px;height:20px;flex:0 0 auto;display:block;position:relative;z-index:1}
+.cta .txt{position:relative;z-index:1;font-feature-settings:var(--font-feature-numeric)}
+
+/* measuring — the button itself becomes the progress surface */
+.cta.is-measuring{background:var(--surface-raised);color:var(--text-1);cursor:default}
+.cta.is-measuring .ico{animation:ctaPulse 1.4s ease-in-out infinite}
+.cta .fill{position:absolute;inset:0 auto 0 0;width:0;z-index:0;
+  background:var(--metric-readiness);opacity:.28;
+  transition:width var(--duration-slow) var(--ease-emphasis)}
+
+/* disabled countdown */
+.cta.is-disabled{background:var(--surface-card);color:var(--text-3);cursor:default}
+
+/* ── readings sheet ───────────────────────────────────────────────────── */
+.scrim{position:fixed;inset:0;background:rgba(7,8,12,.72);z-index:10;
+  display:flex;align-items:flex-end;justify-content:center}
+.scrim[hidden]{display:none}
+.sheet{position:relative;width:var(--screen-width);overflow:hidden;
+  background:var(--neutral-900);
+  border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;
+  padding:var(--space-32) var(--card-pad) var(--space-24);
+  animation:sheetIn var(--duration-slow) var(--ease-emphasis) both}
+/* deep teal field — glow high-centre, falling to neutral-900 at the base */
+.sheet::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(85% 48% at 60% -4%,
+      color-mix(in srgb, var(--teal-700) 46%, transparent) 0%, transparent 72%),
+    radial-gradient(70% 40% at 18% 4%,
+      color-mix(in srgb, var(--teal-800) 40%, transparent) 0%, transparent 74%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--teal-900) 72%, transparent) 0%,
+      color-mix(in srgb, var(--teal-900) 30%, transparent) 42%,
+      transparent 78%);
+  transform-origin:60% 0%;
+  animation:washIn 1600ms var(--ease-emphasis) both}
+.sheet>*{position:relative;z-index:1}
+.sheet h3,.sheet .when{animation:riseIn 520ms var(--ease-emphasis) both;animation-delay:260ms}
+.sheet .when{animation-delay:380ms}
+/* metrics land 3s after the sheet opens, then cascade */
+#shList .rd{animation:riseIn 460ms var(--ease-emphasis) both}
+#shList .rd:nth-child(1){animation-delay:3000ms}
+#shList .rd:nth-child(2){animation-delay:3090ms}
+#shList .rd:nth-child(3){animation-delay:3180ms}
+#shList .rd:nth-child(4){animation-delay:3270ms}
+#shList .rd:nth-child(5){animation-delay:3360ms}
+.sheet .done{animation:riseIn 460ms var(--ease-emphasis) both;animation-delay:3560ms}
+.sheet h3{margin:0;font:var(--type-h2-bold);letter-spacing:var(--h2-tracking);
+  text-align:center}
+.sheet .when{margin:var(--space-4) auto var(--space-20);max-width:30ch;
+  font:var(--type-p1);color:var(--text-2);text-align:center}
+.rd{display:flex;align-items:center;gap:var(--space-8);
+  background:color-mix(in srgb, var(--neutral-800) 20%, transparent);
+  -webkit-backdrop-filter:blur(var(--blur-card));backdrop-filter:blur(var(--blur-card));
+  border:var(--border-thin) solid color-mix(in srgb, var(--neutral-0) 12%, transparent);
+  border-radius:var(--radius-row);
+  padding:var(--space-16);margin-bottom:var(--space-8)}
+.rd .label{flex:1}
+.rd .figure{flex:0 0 auto}
+/* secondary CTA — inverse of primary: dark fill, green label */
+.sheet .done{width:100%;height:var(--cta-height);margin-top:var(--space-12);
+  border:var(--border-hairline) solid var(--metric-readiness);
+  border-radius:var(--radius-pill);font:var(--type-p1-semibold);cursor:pointer;
+  background:color-mix(in srgb, var(--neutral-900) 72%, transparent);
+  -webkit-backdrop-filter:blur(var(--blur-card));backdrop-filter:blur(var(--blur-card));
+  color:var(--metric-readiness)}
+.sheet .done:active{background:var(--neutral-800)}
 
 /* gallery */
-.gal{display:grid;grid-template-columns:1fr 1fr;gap:var(--card-gap)}
-.gal .lbl{grid-column:1 / -1;margin:var(--space-8) 0 0;
-  font:var(--type-p3);font-weight:var(--weight-medium);color:var(--text-3)}
 .note{margin-top:var(--space-24);border-top:var(--border-hairline) solid var(--divider);
   padding-top:var(--space-16);font:var(--type-p2);color:var(--text-3)}
 .note b{color:var(--text-2);font-weight:var(--weight-medium)}
@@ -137,7 +203,7 @@ button.ma:hover{border-color:var(--neutral-500)}
 <body>
 <div class="stage">
 
-  <div class="demo-h">Cell state</div>
+  <div class="demo-h">CTA state</div>
   <div class="chips" id="chips" role="group" aria-label="Preview state"></div>
 
   <div class="demo-h">In section — Health Monitor</div>
@@ -147,27 +213,46 @@ button.ma:hover{border-color:var(--neutral-500)}
       <span class="upd" id="secUpd">Updated 14:20</span>
     </div>
     <div class="grid" id="grid"></div>
+    <div id="ctaSlot"></div>
     <div class="sec-foot" id="secFoot">Averages from 42 readings today</div>
   </section>
 
-  <div class="demo-h">All states</div>
-  <div class="gal" id="gal"></div>
+  <div class="demo-h">All three states</div>
+  <div id="gal"></div>
 
   <div class="note">
-    <b>Decisions to confirm.</b> Label and unit are now <b>--type-overline at semibold</b> and
-    the value is <b>--type-num-l</b> via the shorthand — verbatim from StatTile_preview.html
-    (my previous medium-weight labels were off-spec). The <b>soft triangle</b> (rounded SVG,
-    14px) sits after the value and replaces the top-right status circles — it carries both trend
-    (direction) and state (colour: positive / caution / negative icon tokens), matching the
-    reference photo. Direction and tone are independent params per metric.
-    CTA colour is teal-400 via <b>--metric-readiness</b> — the alias the system already uses
-    for links, so no rule-bending. <b>Token gaps:</b> no --metric-stress alias (aqua-400
-    placeholder), no cell-surface alias.
+    <b>Decisions to confirm.</b> Header is <b>--type-h3</b> (17/22 semibold). Measure All is a
+    full-width pill below the grid, now matched to Start Workout: <b>48px</b> tall, radius-pill,
+    teal-400 fill with neutral-900 label at <b>--type-p1-semibold</b> (15/22, the
+    paragraphP1Semibold token). <b>Measuring</b> turns the button into its own progress surface —
+    surface-raised base with a teal fill sweeping left→right, no separate rail.
+    <b>Disabled</b> is surface-card + text-3 with a live tabular countdown.
+    The <b>sheet</b> sits on a deep teal field — neutral-900 base with teal-700/800/900 radials
+    glowing high-centre and falling to black at the foot. On open the wash <b>blooms from a tight
+    point low-centre and travels up into place over 1.6s</b>; header rises at ~0.3s, the metric
+    pills land at <b>3s</b> and cascade 90ms apart, secondary CTA last. Pills are neutral-800 at
+    20% with a <b>32px backdrop blur</b> plus a <b>1px neutral-0 at 12% border</b> so edges stay
+    legible against the gradient. The <b>secondary CTA</b> is translucent neutral-900, blurred,
+    with a <b>hairline metric-readiness border</b> and green label.
+    <b>Flags:</b> the wash uses <b>color-mix()</b> to keep the tokens as vars rather than
+    hardcoding rgba; if your build target needs wider support, say and I'll swap to hex8.
+    Sheet radius 28 and row radius 16 exist in the radius scale but aren't aliased as
+    sheet/row tokens. Leading glyph is Phosphor <b>pulse</b> — say if you want it label-only.
+    <b>Token gaps:</b> no --metric-stress alias (aqua-400 placeholder), no cta-height alias.
+  </div>
+</div>
+
+<div class="scrim" id="scrim" hidden role="dialog" aria-modal="true" aria-labelledby="shTitle">
+  <div class="sheet">
+    <h3 id="shTitle">Reading complete</h3>
+    <div class="when" id="shWhen">Your metrics say you’re in a state of calm and relaxation, Aanya</div>
+    <div id="shList"></div>
+    <button class="done" type="button" id="shDone">Done</button>
   </div>
 </div>
 
 <script>
-/* ── soft triangle indicator — rounded joins, up/down, semantic tone ──── */
+/* ── soft triangle indicator ──────────────────────────────────────────── */
 var TONE={pos:'var(--positive-icon)',neg:'var(--negative-icon)',caution:'var(--caution-icon)'};
 function tri(t){
   if(!t)return '';
@@ -177,8 +262,11 @@ function tri(t){
     +'<path d="'+d+'" fill="'+TONE[t.tone]+'" stroke="'+TONE[t.tone]
     +'" stroke-width="5" stroke-linejoin="round"/></svg>';
 }
+/* Phosphor pulse (fill) — 256 viewBox, currentColor */
+var PULSE='<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">'
+ +'<path d="M232,128a8,8,0,0,1-8,8H184a8,8,0,0,1-7.16-4.42L165.57,109,140.94,175.4a8,8,0,0,1-7.09,5.2h-.4a8,8,0,0,1-7.24-4.62L94.31,107.6,79.16,131.58A8,8,0,0,1,72,136H32a8,8,0,0,1,0-16H67.58l20.7-32.77a8,8,0,0,1,14-.36l31.13,66.4,24.13-65a8,8,0,0,1,7.1-5.2,7.94,7.94,0,0,1,7.5,4.42L188.94,120H224A8,8,0,0,1,232,128Z"/></svg>';
 
-/* ── metric cards — footers modeled on the stat-tile screenshot ───────── */
+/* ── metric cards ─────────────────────────────────────────────────────── */
 var METRICS=[
  {n:'HRV',       c:'var(--metric-hrv)',        v:'57',   u:'ms',  t:{d:'up',tone:'pos'},   f:'7-day avg 54 ms'},
  {n:'Heart Rate',c:'var(--metric-heart-rate)', v:'72',   u:'bpm', t:{d:'down',tone:'pos'}, f:'Resting · just now'},
@@ -186,134 +274,127 @@ var METRICS=[
  {n:'Skin Temp', c:'var(--metric-skin-temp)',  v:'36.4', u:'°C',  t:{d:'up',tone:'pos'},   f:'Same as baseline'},
  {n:'SpO₂',      c:'var(--metric-spo2)',       v:'97',   u:'%',   t:{d:'up',tone:'pos'},   f:'Overnight low 95%'}
 ];
-var METRICS_EMPTY=METRICS.map(function(m){
-  return {n:m.n,c:m.c,v:'—',u:'',t:null,f:'No readings yet'};
-});
+function figure(v,u,t){
+  return '<div class="figure"><span class="value">'+v+'</span>'
+    +(u?'<span class="unit">'+u+'</span>':'')+(t?tri(t):'')+'</div>';
+}
 function metricCard(m){
   return '<div class="card">'
     +'<div class="tile-top">'
     +'<span class="dot" style="background:'+m.c+'"></span>'
     +'<span class="label">'+m.n+'</span>'
     +'</div>'
-    +'<div class="figure"><span class="value">'+m.v+'</span>'
-    +(m.u?'<span class="unit">'+m.u+'</span>':'')
-    +tri(m.t)
-    +'</div>'
+    +figure(m.v,m.u,m.t)
     +'<div class="card-foot">'+m.f+'</div>'
     +'</div>';
 }
 
-/* ── Measure All cell states ──────────────────────────────────────────── */
-/* dot: teal = actionable · pulse = in flight · semantic = outcome/blocked · neutral = resting.
-   Tap affordance = green CTA line (.act). */
+/* ── CTA — three states ───────────────────────────────────────────────── */
+var COOLDOWN=49; /* seconds */
 var STATES={
- 'idle':{dot:'var(--metric-readiness)',tap:1,ovl:'Measure all',val:'3',unit:'min',
-   sub:'All 5 metrics · <span class="act">Measure now</span>'},
- 'cooldown':{dot:'var(--neutral-icon)',tap:0,ovl:'Measure all',val:'14:20',unit:'',
-   sub:'Just measured · next in 8 min'},
- 'connecting':{dot:'var(--metric-readiness)',pulse:1,tap:0,ovl:'Measure all',val:'\u2026',unit:'',
-   sub:'Connecting to Pebble\u2026'},
- 'measuring':{dot:'var(--metric-readiness)',pulse:1,tap:1,ovl:'Measuring',val:'2/5',unit:'',
-   rail:40,sub:'Skin Temp · <span class="act">Cancel</span>'},
- 'interrupted':{dot:'var(--caution-icon)',tap:1,ovl:'Measuring',val:'2/5',unit:'',
-   rail:40,sub:'Reading disturbed · <span class="act">Resume</span>'},
- 'complete-all':{dot:'var(--positive-icon)',tap:0,ovl:'Measure all',val:'5/5',unit:'',
-   sub:'All metrics updated · 14:23'},
- 'complete-partial':{dot:'var(--caution-icon)',tap:1,ovl:'Measure all',val:'3/5',unit:'',
-   sub:'2 didn\u2019t finish · <span class="act">Retry</span>'},
- 'complete-none':{dot:'var(--negative-icon)',tap:1,ovl:'Measure all',val:'0/5',unit:'',
-   sub:'Couldn\u2019t measure · <span class="act">Try again</span>'},
- 'cancelled':{dot:'var(--neutral-icon)',tap:1,ovl:'Measure all',val:'\u2014',unit:'',
-   sub:'Cancelled · <span class="act">Start again</span>'},
- 'blocked-not-worn':{dot:'var(--caution-icon)',tap:0,ovl:'Measure all',val:'\u2014',unit:'',
-   sub:'Not on wrist'},
- 'first-run':{dot:'var(--metric-readiness)',tap:1,span2:1,ovl:'First reading',
-   title:'Take your first reading',
-   sub:'3 min · builds your baseline · <span class="act">Start</span>'}
+ 'idle':      {cls:'',              label:'Measure All',  tap:1},
+ 'measuring': {cls:'is-measuring',  label:'Measuring…',   tap:0},
+ 'disabled':  {cls:'is-disabled',   label:'Measure All in', tap:0, countdown:1}
 };
-var NEXT={'idle':'connecting','connecting':'measuring','measuring':'cancelled',
-  'interrupted':'measuring','complete-partial':'connecting','complete-none':'connecting',
-  'cancelled':'connecting','first-run':'connecting'};
-
-function maCell(key,inGrid){
+function fmt(s){
+  var m=Math.floor(s/60),r=s%60;
+  return (m<10?'0':'')+m+':'+(r<10?'0':'')+r;
+}
+function ctaHTML(key,live){
   var s=STATES[key];
-  var tag=s.tap?'button':'div';
-  var body='';
-  if(s.title){body='<div class="fr-title">'+s.title+'</div>';}
-  else{
-    body='<div class="figure"><span class="value">'+s.val+'</span>'
-      +(s.unit?'<span class="unit">'+s.unit+'</span>':'')+'</div>';
-    if(s.desc)body+='<div class="desc">'+s.desc+'</div>';
-    if(s.rail!=null)body+='<div class="rail" role="progressbar" aria-valuenow="'+s.rail
-      +'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+s.rail+'%"></i></div>';
-  }
-  return '<'+tag+' class="ma'+(s.span2?' span2':'')+'"'
-    +(s.tap?' type="button"':' aria-disabled="true"')
-    +(inGrid?' data-live="1"':'')+' data-state="'+key+'">'
-    +'<div class="tile-top">'
-    +'<span class="dot'+(s.pulse?' pulse':'')+'" style="background:'+s.dot+'"></span>'
-    +'<span class="label">'+s.ovl+'</span>'
-    +'</div>'
-    +'<div class="body">'+body+(s.sub?'<div class="sub">'+s.sub+'</div>':'')+'</div>'
-    +'</'+tag+'>';
+  var txt=s.countdown?s.label+' '+fmt(remaining):s.label;
+  return '<button class="cta '+s.cls+'" type="button"'
+    +(s.tap?'':' aria-disabled="true"')+(live?' id="cta"':'')+' data-state="'+key+'">'
+    +'<span class="fill" id="'+(live?'ctaFill':'x')+'"></span>'
+    +PULSE+'<span class="txt">'+txt+'</span></button>';
 }
 
-/* ── render ───────────────────────────────────────────────────────────── */
-var current='idle';
-var ORDER=Object.keys(STATES);
+/* ── state machine ────────────────────────────────────────────────────── */
+var current='idle',remaining=COOLDOWN,runTimer=null,cdTimer=null,step=0;
+function clearTimers(){clearInterval(runTimer);clearInterval(cdTimer);runTimer=cdTimer=null;}
 
-function renderGrid(){
-  var firstRun=current==='first-run';
-  var cards=(firstRun?METRICS_EMPTY:METRICS).map(metricCard).join('');
-  document.getElementById('grid').innerHTML=cards+maCell(current,true);
-  document.getElementById('secUpd').textContent=firstRun?'':'Updated 14:20';
-  document.getElementById('secFoot').textContent=firstRun?'':'Averages from 42 readings today';
-}
 function renderChips(){
-  var c=document.getElementById('chips');
-  c.innerHTML=ORDER.map(function(k){
+  document.getElementById('chips').innerHTML=Object.keys(STATES).map(function(k){
     return '<button type="button" aria-pressed="'+(k===current)+'" data-k="'+k+'">'+k+'</button>';
   }).join('');
 }
+function renderCTA(){
+  document.getElementById('ctaSlot').innerHTML=ctaHTML(current,true);
+  if(current==='measuring')setFill(step/METRICS.length*100);
+}
+function setFill(pct){
+  var f=document.getElementById('ctaFill');
+  if(f)f.style.width=pct+'%';
+}
+function renderGrid(){
+  document.getElementById('grid').innerHTML=METRICS.map(metricCard).join('');
+}
+function renderGallery(){
+  var keys=['idle','measuring','disabled'];
+  document.getElementById('gal').innerHTML=keys.map(function(k){
+    return '<div style="margin-bottom:var(--space-12)">'+ctaHTML(k,false)+'</div>';
+  }).join('');
+}
 function setState(k){
-  if(!STATES[k])return;
+  clearTimers();
   current=k;
-  renderChips();
-  renderGrid();
+  if(k==='disabled')remaining=COOLDOWN;
+  if(k==='measuring')step=0;
+  renderChips();renderCTA();renderGallery();
+  if(k==='measuring')startRun();
+  if(k==='disabled')startCountdown();
+}
+function startRun(){
+  runTimer=setInterval(function(){
+    step++;
+    setFill(step/METRICS.length*100);
+    if(step>=METRICS.length){clearTimers();openSheet();}
+  },700);
+}
+function startCountdown(){
+  cdTimer=setInterval(function(){
+    remaining--;
+    if(remaining<=0){setState('idle');return;}
+    var t=document.querySelector('#cta .txt');
+    if(t)t.textContent=STATES.disabled.label+' '+fmt(remaining);
+  },1000);
 }
 
-/* event delegation — survives re-renders, one listener each */
+/* ── readings sheet ───────────────────────────────────────────────────── */
+function openSheet(){
+  document.getElementById('shList').innerHTML=METRICS.map(function(m){
+    return '<div class="rd">'
+      +'<span class="dot" style="background:'+m.c+'"></span>'
+      +'<span class="label">'+m.n+'</span>'
+      +figure(m.v,m.u,m.t)
+      +'</div>';
+  }).join('');
+  document.getElementById('scrim').hidden=false;
+}
+document.getElementById('shDone').addEventListener('click',function(){
+  document.getElementById('scrim').hidden=true;
+  setState('disabled');
+});
+document.getElementById('scrim').addEventListener('click',function(e){
+  if(e.target.id==='scrim'){
+    document.getElementById('scrim').hidden=true;setState('disabled');
+  }
+});
+
+/* ── delegation ───────────────────────────────────────────────────────── */
 document.getElementById('chips').addEventListener('click',function(e){
-  var b=e.target.closest('button[data-k]');
-  if(b)setState(b.dataset.k);
+  var b=e.target.closest('button[data-k]');if(b)setState(b.dataset.k);
 });
-document.getElementById('grid').addEventListener('click',function(e){
-  var b=e.target.closest('button.ma[data-live]');
-  if(b&&NEXT[current])setState(NEXT[current]);
+document.getElementById('ctaSlot').addEventListener('click',function(e){
+  if(e.target.closest('.cta')&&current==='idle')setState('measuring');
 });
-/* gallery cells jump the live grid to that state */
 document.getElementById('gal').addEventListener('click',function(e){
-  var b=e.target.closest('.ma[data-state]');
+  var b=e.target.closest('.cta[data-state]');
   if(b){setState(b.dataset.state);
     document.querySelector('.sec-head').scrollIntoView({behavior:'smooth',block:'start'});}
 });
 
-function renderGallery(){
-  var groups=[
-    ['Ready & resting',['idle','cooldown','cancelled']],
-    ['In flight',['connecting','measuring','interrupted']],
-    ['Outcomes',['complete-all','complete-partial','complete-none']],
-    ['Blocked',['blocked-not-worn']],
-    ['First run — spans both columns',['first-run']]
-  ];
-  document.getElementById('gal').innerHTML=groups.map(function(g){
-    return '<div class="lbl">'+g[0]+'</div>'+g[1].map(function(k){return maCell(k,false);}).join('');
-  }).join('');
-}
-
-renderChips();
-renderGrid();
-renderGallery();
+renderChips();renderGrid();renderCTA();renderGallery();
 </script>
 </body>
 </html>

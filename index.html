@@ -68,11 +68,13 @@
   --metric-spo2:var(--sky-400);
   --metric-sleep:var(--violet-400);
   --metric-skin-temp:var(--orchid-400);
-  /* Flag: --aqua-400 is a Figma-generated placeholder carried over from the
-     Measure All component (its own notes flag the gap) — there is no stress
-     ramp or metric-stress alias in js/tokens.js yet. Add the real token
-     there, then point the Stress card at it. */
-  --aqua-400:rgb(61,210,243);
+  /* Stress now has a metric alias in js/tokens.js (metric.stress), so the
+     Stress card reads --metric-stress like every other card reads its own.
+     Flag kept: the value is still the Figma-generated aqua-400 placeholder
+     the Measure All component shipped with — there's no aqua ramp (0–900)
+     in the design system yet, so this hue has no light/dark steps. */
+  --aqua-400:#3DD2F3;
+  --metric-stress:var(--aqua-400);
 
   /* semantic quads — glyphs and badges only, never chart lines or fills */
   --positive-bg:#0E2A1B;--positive-fill:#1E5B38;--positive-icon:#4ADE80;--positive-text:#8AF0B0;
@@ -90,6 +92,18 @@
   --duration-fast:120ms;
   --duration-base:140ms;
   --duration-slow:240ms;
+
+  /* Added 2026-08-14 alongside the Measure All component (v4). Its own notes
+     flagged these as design-system gaps; they now exist in js/tokens.js
+     (radiusRole / size / blur / motion / opacity) and are mirrored here. */
+  --radius-pill:999px;   /* full-width CTAs, rails, chips */
+  --radius-sheet:28px;   /* bottom sheets */
+  --radius-row:16px;     /* rows inside a sheet */
+  --cta-height:48px;     /* Measure All, Start Workout */
+  --blur-card:32px;      /* translucent surfaces over content */
+  --ease-standard:ease;
+  --ease-emphasis:cubic-bezier(0.32,0.72,0,1);
+  --state-inactive:0.45;
 }
 
 /* ==========================================================================
@@ -585,7 +599,10 @@ body{
    (owner asked for more space between sections, 2026-08-14) */
 .sechead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:24px}
 .sechead:first-child{margin-top:0}
-.sechead .t{font-size:17px;line-height:22px;font-weight:600;color:var(--text-1)}
+/* 17px medium — the same heading style as "Health monitor" (owner,
+   2026-08-14). See the note on .hm .sec-head h2: 17/22 is the H3 scale, so
+   this is headingH3Medium, not a paragraph token. */
+.sechead .t{font-size:17px;line-height:22px;font-weight:500;color:var(--text-1)}
 /* right-side meta in section heads ("64 active mins", "Updated 14:20")
    pulls in 16px from the card edge — owner flagged it reading as if it
    escaped the page padding when flush with the cards (2026-08-14) */
@@ -603,51 +620,146 @@ body{
 .startbtn .phi{color:var(--neutral-900)}
 .startbtn:active{transform:scale(.99)}
 
-/* ---- Health Monitor — owner-supplied component (components/
-   measure-all-cell.html, 2026-08-14): 2-col grid of five metric cards plus
-   the "Measure All" cell with its full state machine. Structure and type
-   scale verbatim from the component; colors read this file's global tokens.
-   ONE owner-requested change: the CTA line (.act) is teal-400, not the
-   component's green. Everything is scoped under .hm so the component's
-   generic class names (.card, .label, .grid…) can't collide with the rest
-   of this file. ---- */
-/* center-aligned (not baseline) so the small timestamp doesn't read as
-   dropped next to the larger heading — owner flagged the alignment */
+/* ---- Health monitor — owner-supplied component v4 (components/
+   measure-all-cell.html, 2026-08-14): five metric cards, then "Measure All"
+   as a full-width pill BELOW the grid (the Start Workout pattern), then the
+   readings sheet that CTA opens when a measurement finishes.
+
+   v4 replaces the in-grid Measure All CELL and its 11-state machine — the
+   component now ships three CTA states: idle → measuring (the button is its
+   own progress surface) → disabled with a live countdown.
+
+   Structure, type scale and motion are verbatim from the component; colors
+   read this file's global tokens. Everything is scoped under .hm / .hm-sheet
+   so the component's generic class names (.card, .label, .grid, .cta, .sheet)
+   can't collide with the rest of this file — the app already has its own
+   .sheet/.scrim for the goal editor, so the readings sheet is .hm-sheet and
+   .hm-scrim. ---- */
+/* Section heading: 17px at medium (owner, 2026-08-14 — same as Activity
+   monitor). Flag: the owner called this "the 17px paragraph token", but the
+   system has no 17px paragraph style — 17/22 is the H3 scale, so this is
+   headingH3Medium (17/22, weight 500), which is the size and weight asked
+   for. Center-aligned (not baseline) so the small timestamp doesn't read as
+   dropped next to the heading. */
 .hm .sec-head{display:flex;align-items:center;justify-content:space-between;margin:8px 0 16px}
-.hm .sec-head h2{margin:0;font:600 20px/26px var(--font-text);letter-spacing:-0.005em;color:var(--text-1)}
+.hm .sec-head h2{margin:0;font:500 17px/22px var(--font-text);letter-spacing:0;color:var(--text-1)}
 .hm .upd{font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
 .hm .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .hm .card{height:132px;display:flex;flex-direction:column;text-align:left}
+/* shared atoms — the same dot/label/figure appear in the cards AND in the
+   readings sheet rows, so both scopes share one definition */
 .hm .tile-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.hm .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
-.hm .label{font:600 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hm .figure{display:flex;align-items:baseline;justify-content:flex-start;gap:4px}
-.hm .value{font:700 24px/28px var(--font-number);letter-spacing:-0.005em;color:var(--text-1);font-feature-settings:var(--num-features)}
-.hm .unit{font:600 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
-.hm .tri{align-self:center;margin-left:4px;flex:0 0 auto;display:block}
+.hm .dot,.hm-sheet .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.hm .label,.hm-sheet .label{font:600 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hm .figure,.hm-sheet .figure{display:flex;align-items:baseline;justify-content:flex-start;gap:4px}
+.hm .value,.hm-sheet .value{font:700 24px/28px var(--font-number);letter-spacing:-0.005em;color:var(--text-1);font-feature-settings:var(--num-features)}
+.hm .unit,.hm-sheet .unit{font:600 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.hm .tri,.hm-sheet .tri{align-self:center;margin-left:4px;flex:0 0 auto;display:block}
 .hm .card-foot{margin-top:auto;padding-top:12px;font:400 13px/18px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
-.hm .ma{
-  background:var(--surface-app);border:0.5px solid var(--divider);border-radius:20px;
-  padding:16px;height:132px;display:flex;flex-direction:column;
-  font-family:var(--font-text);text-align:left;color:var(--text-1);
-  transition:border-color var(--duration-fast) ease;
+
+/* Measure All — full-width CTA, matched to Start Workout: 48px, pill,
+   teal-400 fill with a neutral-900 label at 15/22 semibold
+   (paragraphP1Semibold). Contrast 9.6:1. */
+.hm .cta{
+  width:100%;height:var(--cta-height);margin-top:16px;
+  border:0;border-radius:var(--radius-pill);position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  font:600 15px/22px var(--font-text);
+  background:var(--metric-readiness);color:var(--neutral-900);cursor:pointer;
+  transition:background var(--duration-fast) var(--ease-standard),
+             color var(--duration-fast) var(--ease-standard);
 }
-.hm button.ma{cursor:pointer}
-.hm button.ma:hover{border-color:var(--neutral-500)}
-.hm .ma[aria-disabled="true"]{cursor:default}
-.hm .ma .dot.pulse{animation:pulse 1.4s ease-in-out infinite}
-.hm .ma .body{flex:1;display:flex;flex-direction:column}
-.hm .ma .desc{margin-top:4px;font:400 13px/18px var(--font-text);color:var(--text-3)}
-.hm .ma .rail{margin-top:8px;height:8px;border-radius:999px;background:var(--surface-raised);box-shadow:inset 0 0 0 0.5px var(--neutral-500);overflow:hidden}
-.hm .ma .rail i{display:block;height:100%;border-radius:999px;background:var(--metric-readiness);transition:width var(--duration-slow) cubic-bezier(0.32,0.72,0,1)}
-.hm .ma .sub{margin-top:auto;padding-top:12px;font:400 13px/18px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
-/* CTA accent — v2 of the component settles this: teal-400 via the
-   --metric-readiness alias (the system's link accent), medium weight, at
-   the sub line's 13px. Supersedes the earlier teal-300/11px pass.
-   Contrast on the cell's surface-app: 9.6:1 — passes AA comfortably. */
-.hm .ma .act{color:var(--metric-readiness);font-weight:500}
-.hm .ma.span2{grid-column:1/-1;height:auto;min-height:0}
-.hm .ma.span2 .fr-title{margin-top:8px;font:500 15px/22px var(--font-text)}
+.hm .cta:active{background:var(--teal-500)}
+.hm .cta .ico{width:20px;height:20px;flex:0 0 auto;display:block;position:relative;z-index:1}
+.hm .cta .txt{position:relative;z-index:1;font-feature-settings:var(--num-features)}
+/* measuring — the button itself becomes the progress surface, no separate rail */
+.hm .cta.is-measuring{background:var(--surface-raised);color:var(--text-1);cursor:default}
+.hm .cta.is-measuring .ico{animation:pulse 1.4s ease-in-out infinite}
+.hm .cta .fill{
+  position:absolute;inset:0 auto 0 0;width:0;z-index:0;
+  background:var(--metric-readiness);opacity:.28;
+  transition:width var(--duration-slow) var(--ease-emphasis);
+}
+/* disabled — cooling down, with a live tabular countdown */
+.hm .cta.is-disabled{background:var(--surface-card);color:var(--text-3);cursor:default}
+
+/* ---- readings sheet — opens when a measurement completes ---- */
+.hm-scrim{position:absolute;inset:0;z-index:69;background:color-mix(in srgb, var(--neutral-900) 72%, transparent);display:flex;align-items:flex-end;justify-content:center}
+.hm-scrim[hidden]{display:none}
+.hm-sheet{
+  position:relative;width:100%;overflow:hidden;
+  background:var(--neutral-900);
+  border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;
+  padding:32px 16px 24px;
+  animation:hmSheetIn var(--duration-slow) var(--ease-emphasis) both;
+}
+/* deep teal field — glow high-centre, falling to neutral-900 at the base.
+   Flag (carried from the component): the wash uses color-mix() so the teal
+   steps stay as tokens instead of hard-coded rgba. */
+.hm-sheet::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(85% 48% at 60% -4%, color-mix(in srgb, var(--teal-700) 46%, transparent) 0%, transparent 72%),
+    radial-gradient(70% 40% at 18% 4%, color-mix(in srgb, var(--teal-800) 40%, transparent) 0%, transparent 74%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--teal-900) 72%, transparent) 0%,
+      color-mix(in srgb, var(--teal-900) 30%, transparent) 42%,
+      transparent 78%);
+  transform-origin:60% 0%;
+  animation:hmWashIn 1600ms var(--ease-emphasis) both;
+}
+.hm-sheet>*{position:relative;z-index:1}
+.hm-sheet h3{margin:0;font:700 20px/26px var(--font-text);letter-spacing:-0.005em;color:var(--text-1);text-align:center}
+.hm-sheet .when{margin:4px auto 20px;max-width:30ch;font:400 15px/22px var(--font-text);color:var(--text-2);text-align:center}
+/* the wash blooms in first, the header rises, then the readings land at 3s
+   and cascade 90ms apart, secondary CTA last */
+.hm-sheet h3,.hm-sheet .when{animation:hmRiseIn 520ms var(--ease-emphasis) both;animation-delay:260ms}
+.hm-sheet .when{animation-delay:380ms}
+.hm-sheet .rd{animation:hmRiseIn 460ms var(--ease-emphasis) both}
+.hm-sheet .rd:nth-child(1){animation-delay:3000ms}
+.hm-sheet .rd:nth-child(2){animation-delay:3090ms}
+.hm-sheet .rd:nth-child(3){animation-delay:3180ms}
+.hm-sheet .rd:nth-child(4){animation-delay:3270ms}
+.hm-sheet .rd:nth-child(5){animation-delay:3360ms}
+.hm-sheet .done{animation:hmRiseIn 460ms var(--ease-emphasis) both;animation-delay:3560ms}
+/* reading rows — translucent + blurred so edges stay legible on the wash */
+.hm-sheet .rd{
+  display:flex;align-items:center;gap:8px;
+  background:color-mix(in srgb, var(--neutral-800) 20%, transparent);
+  -webkit-backdrop-filter:blur(var(--blur-card));backdrop-filter:blur(var(--blur-card));
+  border:1px solid color-mix(in srgb, var(--neutral-0) 12%, transparent);
+  border-radius:var(--radius-row);padding:16px;margin-bottom:8px;
+}
+.hm-sheet .rd .label{flex:1}
+.hm-sheet .rd .figure{flex:0 0 auto}
+/* secondary CTA — inverse of the primary: dark translucent fill, teal label */
+.hm-sheet .done{
+  width:100%;height:var(--cta-height);margin-top:12px;
+  border:0.5px solid var(--metric-readiness);border-radius:var(--radius-pill);
+  font:600 15px/22px var(--font-text);cursor:pointer;
+  background:color-mix(in srgb, var(--neutral-900) 72%, transparent);
+  -webkit-backdrop-filter:blur(var(--blur-card));backdrop-filter:blur(var(--blur-card));
+  color:var(--metric-readiness);
+}
+.hm-sheet .done:active{background:var(--neutral-800)}
+@keyframes hmSheetIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes hmRiseIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+/* the wash blooms from a tight point low-centre, then travels up and spreads */
+@keyframes hmWashIn{
+  0%{opacity:0;transform:translate(6%,42%) scale(.28)}
+  35%{opacity:.85}
+  100%{opacity:1;transform:translate(0,0) scale(1)}
+}
+/* Design gate: every animation above is off under reduced motion — the sheet
+   and its contents simply appear at rest. */
+@media (prefers-reduced-motion:reduce){
+  .hm .cta{transition:none}
+  .hm .cta.is-measuring .ico{animation:none}
+  .hm .cta .fill{transition:none}
+  .hm-sheet,.hm-sheet::before,.hm-sheet h3,.hm-sheet .when,.hm-sheet .rd,.hm-sheet .done{
+    animation:none;opacity:1;transform:none;
+  }
+}
 
 /* Me tab */
 .profile{display:flex;align-items:center;gap:14px;padding:20px 16px 8px}
@@ -859,17 +971,19 @@ body{
 
         <div class="stack" style="margin-top:20px">
 
-          <!-- Health Monitor — the owner-supplied component (saved at
-               components/measure-all-cell.html), replacing the earlier
-               placeholder tiles. Cards + Measure All cell are rendered by
-               the HEALTH MONITOR script section below. In the app's
-               no-data state it renders the component's own first-run mode
-               (em-dash cards + "Take your first reading"). -->
+          <!-- Health monitor — the owner-supplied component v4 (saved at
+               components/measure-all-cell.html). Five metric cards, then
+               Measure All as a full-width CTA below the grid; both are
+               rendered by the HEALTH MONITOR script section below, and the
+               CTA opens the readings sheet further down this file.
+               In the app's no-data state the cards show em-dashes and the
+               CTA reads "Take your first reading". -->
           <!-- "Averages from 42 readings" footer removed (owner, 2026-08-14) -->
           <div class="hm">
             <!-- sentence case per owner ("Health monitor — M not large") -->
             <div class="sec-head"><h2>Health monitor</h2><span class="upd" id="hmUpd">Updated 14:20</span></div>
             <div class="grid" id="hmGrid"></div>
+            <div id="hmCtaSlot"></div>
           </div>
 
           <!-- Activity monitor — steps / distance / calories with progress
@@ -1736,6 +1850,19 @@ body{
           <button class="iconbtn" id="sheetConfirm" aria-label="Confirm"><span class="phi" data-ph="check" style="width:18px;height:18px"></span></button>
         </div>
         <div class="sheet-rows" id="sheetRows"></div>
+      </div>
+    </div>
+
+    <!-- ============ READINGS SHEET — Measure All (component v4) ============
+         Opens when a measurement finishes. Sits inside .screen (absolute,
+         not fixed) so it stays inside the phone mockup instead of covering
+         the whole browser window; z-indexes match the app's goal sheet. -->
+    <div class="hm-scrim" id="hmScrim" hidden role="dialog" aria-modal="true" aria-labelledby="hmShTitle">
+      <div class="hm-sheet">
+        <h3 id="hmShTitle">Reading complete</h3>
+        <div class="when">Your metrics say you’re in a state of calm and relaxation, Aanya</div>
+        <div id="hmShList"></div>
+        <button class="done" type="button" id="hmShDone">Done</button>
       </div>
     </div>
 
@@ -2799,12 +2926,22 @@ $('#contToggle').addEventListener('click', () => {
 });
 
 /* ==========================================================================
-   HEALTH MONITOR — owner-supplied component (components/measure-all-cell.html,
-   v2, 2026-08-14): five metric cards + the "Measure All" cell state machine.
-   Data and states copied verbatim from the component (v2 CTA = teal-400 via
-   the --metric-readiness alias). One integration note: the app's no-data
-   state shows the component's own first-run mode (em-dash cards + "Take
-   your first reading"), and taps are inert there.
+   HEALTH MONITOR — owner-supplied component v4 (components/
+   measure-all-cell.html, 2026-08-14): five metric cards + the full-width
+   "Measure All" CTA and the readings sheet it opens.
+
+   How it runs: tap the CTA → it becomes its own progress surface and fills
+   left-to-right, one step per metric (700ms each) → the sheet slides up with
+   the five readings → Done drops it into a 49-second cooldown countdown →
+   back to idle. Data, timings and copy are verbatim from the component.
+
+   Two integration notes:
+   - the app's no-data state relabels the CTA "Take your first reading" and
+     shows em-dash cards. FLAG: v4 has no first-run state (v2 did) — this
+     keeps that affordance rather than showing "Measure All" over five
+     em-dashes. Say if the component should own this state instead.
+   - switching the app state while a measurement is running cancels it, so
+     the control panel can't leave a timer behind.
    ========================================================================== */
 const HM_TONE = { pos:'var(--positive-icon)', neg:'var(--negative-icon)', caution:'var(--caution-icon)' };
 // soft triangle indicator — rounded joins, up/down, semantic tone
@@ -2817,7 +2954,9 @@ function hmTri(t){
 const HM_METRICS = [
   { n:'HRV',        c:'var(--metric-hrv)',        v:'57',   u:'ms',  t:{d:'up',tone:'pos'},   f:'7-day avg 54 ms' },
   { n:'Heart Rate', c:'var(--metric-heart-rate)', v:'72',   u:'bpm', t:{d:'down',tone:'pos'}, f:'Resting · just now' },
-  { n:'Stress',     c:'var(--aqua-400)',          v:'38',   u:'',    t:{d:'down',tone:'pos'}, f:'Below your baseline' },
+  // reads the new --metric-stress alias (js/tokens.js metric.stress) rather
+  // than the raw aqua hue the component shipped with
+  { n:'Stress',     c:'var(--metric-stress)',     v:'38',   u:'',    t:{d:'down',tone:'pos'}, f:'Below your baseline' },
   { n:'Skin Temp',  c:'var(--metric-skin-temp)',  v:'36.4', u:'°C',  t:{d:'up',tone:'pos'},   f:'Same as baseline' },
   { n:'SpO₂',       c:'var(--metric-spo2)',       v:'97',   u:'%',   t:{d:'up',tone:'pos'},   f:'Overnight low 95%' }
 ];
@@ -2829,65 +2968,91 @@ function hmMetricCard(m){
     + `<div class="card-foot">${m.f}</div>`
     + '</div>';
 }
-/* dot: teal = actionable · pulse = in flight · semantic = outcome/blocked ·
-   neutral = resting. Tap affordance = the teal CTA line (.act). */
-const HM_STATES = {
-  'idle':             { dot:'var(--metric-readiness)', tap:1, ovl:'Measure all', val:'3', unit:'min',
-                        sub:'All 5 metrics · <span class="act">Measure now</span>' },
-  'cooldown':         { dot:'var(--neutral-icon)', tap:0, ovl:'Measure all', val:'14:20', unit:'',
-                        sub:'Just measured · next in 8 min' },
-  'connecting':       { dot:'var(--metric-readiness)', pulse:1, tap:0, ovl:'Measure all', val:'…', unit:'',
-                        sub:'Connecting to Pebble…' },
-  'measuring':        { dot:'var(--metric-readiness)', pulse:1, tap:1, ovl:'Measuring', val:'2/5', unit:'',
-                        rail:40, sub:'Skin Temp · <span class="act">Cancel</span>' },
-  'interrupted':      { dot:'var(--caution-icon)', tap:1, ovl:'Measuring', val:'2/5', unit:'',
-                        rail:40, sub:'Reading disturbed · <span class="act">Resume</span>' },
-  'complete-all':     { dot:'var(--positive-icon)', tap:0, ovl:'Measure all', val:'5/5', unit:'',
-                        sub:'All metrics updated · 14:23' },
-  'complete-partial': { dot:'var(--caution-icon)', tap:1, ovl:'Measure all', val:'3/5', unit:'',
-                        sub:'2 didn’t finish · <span class="act">Retry</span>' },
-  'complete-none':    { dot:'var(--negative-icon)', tap:1, ovl:'Measure all', val:'0/5', unit:'',
-                        sub:'Couldn’t measure · <span class="act">Try again</span>' },
-  'cancelled':        { dot:'var(--neutral-icon)', tap:1, ovl:'Measure all', val:'—', unit:'',
-                        sub:'Cancelled · <span class="act">Start again</span>' },
-  'blocked-not-worn': { dot:'var(--caution-icon)', tap:0, ovl:'Measure all', val:'—', unit:'',
-                        sub:'Not on wrist' },
-  'first-run':        { dot:'var(--metric-readiness)', tap:1, span2:1, ovl:'First reading',
-                        title:'Take your first reading',
-                        sub:'3 min · builds your baseline · <span class="act">Start</span>' }
-};
-const HM_NEXT = { 'idle':'connecting', 'connecting':'measuring', 'measuring':'cancelled',
-  'interrupted':'measuring', 'complete-partial':'connecting', 'complete-none':'connecting',
-  'cancelled':'connecting', 'first-run':'connecting' };
+// Phosphor "pulse" glyph (fill) — the CTA's leading icon
+const HM_PULSE = '<svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">'
+  + '<path d="M232,128a8,8,0,0,1-8,8H184a8,8,0,0,1-7.16-4.42L165.57,109,140.94,175.4a8,8,0,0,1-7.09,5.2h-.4a8,8,0,0,1-7.24-4.62L94.31,107.6,79.16,131.58A8,8,0,0,1,72,136H32a8,8,0,0,1,0-16H67.58l20.7-32.77a8,8,0,0,1,14-.36l31.13,66.4,24.13-65a8,8,0,0,1,7.1-5.2,7.94,7.94,0,0,1,7.5,4.42L188.94,120H224A8,8,0,0,1,232,128Z"/></svg>';
 
-function hmCell(key){
+/* Three CTA states. `tap` = the button does something when pressed. */
+const HM_COOLDOWN = 49; // seconds before Measure All is offered again
+const HM_STATES = {
+  'idle':      { cls:'',             label:'Measure All',    tap:1 },
+  'measuring': { cls:'is-measuring', label:'Measuring…',     tap:0 },
+  'disabled':  { cls:'is-disabled',  label:'Measure All in', tap:0, countdown:1 }
+};
+// mm:ss, zero-padded so the tabular figures don't jump
+function hmFmt(s){
+  const m = Math.floor(s / 60), r = s % 60;
+  return `${m < 10 ? '0' : ''}${m}:${r < 10 ? '0' : ''}${r}`;
+}
+function hmCtaHTML(key, label){
   const s = HM_STATES[key];
-  const tag = s.tap ? 'button' : 'div';
-  let body = '';
-  if (s.title){ body = `<div class="fr-title">${s.title}</div>`; }
-  else {
-    body = `<div class="figure"><span class="value">${s.val}</span>${s.unit ? `<span class="unit">${s.unit}</span>` : ''}</div>`;
-    if (s.desc) body += `<div class="desc">${s.desc}</div>`;
-    if (s.rail != null) body += `<div class="rail" role="progressbar" aria-valuenow="${s.rail}" aria-valuemin="0" aria-valuemax="100"><i style="width:${s.rail}%"></i></div>`;
-  }
-  return `<${tag} class="ma${s.span2 ? ' span2' : ''}"${s.tap ? ' type="button"' : ' aria-disabled="true"'} data-state="${key}">`
-    + `<div class="tile-top"><span class="dot${s.pulse ? ' pulse' : ''}" style="background:${s.dot}"></span><span class="label">${s.ovl}</span></div>`
-    + `<div class="body">${body}${s.sub ? `<div class="sub">${s.sub}</div>` : ''}</div>`
-    + `</${tag}>`;
+  const txt = s.countdown ? `${s.label} ${hmFmt(hmRemaining)}` : (label || s.label);
+  return `<button class="cta ${s.cls}" type="button"${s.tap ? '' : ' aria-disabled="true"'} data-state="${key}">`
+    + '<span class="fill" id="hmCtaFill"></span>'
+    + `${HM_PULSE}<span class="txt">${txt}</span></button>`;
 }
 
-let hmState = 'idle';
+let hmState = 'idle', hmRemaining = HM_COOLDOWN, hmRunTimer = null, hmCdTimer = null, hmStep = 0;
+function hmClearTimers(){ clearInterval(hmRunTimer); clearInterval(hmCdTimer); hmRunTimer = hmCdTimer = null; }
+function hmSetFill(pct){ const f = $('#hmCtaFill'); if (f) f.style.width = pct + '%'; }
+
 function renderHM(){
   const firstRun = document.getElementById('app').dataset.state === 'empty';
-  const key = firstRun ? 'first-run' : hmState;
-  $('#hmGrid').innerHTML = (firstRun ? HM_EMPTY : HM_METRICS).map(hmMetricCard).join('') + hmCell(key);
+  // a measurement can't be mid-flight in the no-data state — cancel it
+  if (firstRun && hmState !== 'idle'){ hmClearTimers(); hmState = 'idle'; hmCloseSheet(); }
+  $('#hmGrid').innerHTML = (firstRun ? HM_EMPTY : HM_METRICS).map(hmMetricCard).join('');
+  $('#hmCtaSlot').innerHTML = hmCtaHTML(hmState, firstRun ? 'Take your first reading' : null);
+  if (hmState === 'measuring') hmSetFill(hmStep / HM_METRICS.length * 100);
   $('#hmUpd').textContent = firstRun ? '' : 'Updated 14:20';
 }
-// tapping the cell advances its state machine (inert in the no-data state)
-$('#hmGrid').addEventListener('click', e => {
+function hmSetState(k){
+  hmClearTimers();
+  hmState = k;
+  if (k === 'disabled') hmRemaining = HM_COOLDOWN;
+  if (k === 'measuring') hmStep = 0;
+  renderHM();
+  if (k === 'measuring') hmStartRun();
+  if (k === 'disabled')  hmStartCountdown();
+}
+// one step per metric; the fill tracks progress, then the sheet opens
+function hmStartRun(){
+  hmRunTimer = setInterval(() => {
+    hmStep++;
+    hmSetFill(hmStep / HM_METRICS.length * 100);
+    if (hmStep >= HM_METRICS.length){ hmClearTimers(); hmOpenSheet(); }
+  }, 700);
+}
+function hmStartCountdown(){
+  hmCdTimer = setInterval(() => {
+    hmRemaining--;
+    if (hmRemaining <= 0){ hmSetState('idle'); return; }
+    const t = $('#hmCtaSlot .txt');
+    if (t) t.textContent = `${HM_STATES.disabled.label} ${hmFmt(hmRemaining)}`;
+  }, 1000);
+}
+
+/* readings sheet */
+function hmOpenSheet(){
+  $('#hmShList').innerHTML = HM_METRICS.map(m =>
+    '<div class="rd">'
+    + `<span class="dot" style="background:${m.c}"></span>`
+    + `<span class="label">${m.n}</span>`
+    + `<div class="figure"><span class="value">${m.v}</span>${m.u ? `<span class="unit">${m.u}</span>` : ''}${hmTri(m.t)}</div>`
+    + '</div>').join('');
+  $('#hmScrim').hidden = false;
+}
+function hmCloseSheet(){ $('#hmScrim').hidden = true; }
+
+// inert in the no-data state, as the first-run cell was — there are no
+// readings to produce until the band has synced
+$('#hmCtaSlot').addEventListener('click', e => {
   if (document.getElementById('app').dataset.state === 'empty') return;
-  const b = e.target.closest('button.ma');
-  if (b && HM_NEXT[b.dataset.state]){ hmState = HM_NEXT[b.dataset.state]; renderHM(); }
+  if (e.target.closest('.cta') && hmState === 'idle') hmSetState('measuring');
+});
+$('#hmShDone').addEventListener('click', () => { hmCloseSheet(); hmSetState('disabled'); });
+// tapping the dimmed area behind the sheet dismisses it, same as Done
+$('#hmScrim').addEventListener('click', e => {
+  if (e.target.id === 'hmScrim'){ hmCloseSheet(); hmSetState('disabled'); }
 });
 
 /* ==========================================================================
