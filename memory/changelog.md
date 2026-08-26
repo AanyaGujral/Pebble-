@@ -5,6 +5,17 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-14 (round 8b) — Owner settled the four questions round 8 raised, all
+  in favour of what shipped, so the code comments now record decisions rather
+  than open flags: workout-flow accent stays teal-400 (not the mint green in
+  the screenshots); the --gmap-* map palette stays a flagged exception rather
+  than moving into js/tokens.js or being recoloured; the Stress dot stays aqua
+  in the readings sheet, matching the card, rather than the teal the animation
+  ships; the reading scene keeps its authored ~9s pace.
+  Also: Discard / End & Save on the paused workout screen pulled in from 8px
+  to 24px off each edge, so they read as a pair either side of centre instead
+  of two corner controls.
+
 - 2026-08-14 (round 8) — Two owner-supplied flows replaced what was there.
   (1) MEASURE ALL: the tap-to-sheet interaction is now the owner's animated
   reading scene (Measure_All_Metrics.html). The source is a React composition

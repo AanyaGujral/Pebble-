@@ -129,9 +129,9 @@
      Accent for the flow's own controls: the spec names teal for the discard
      dialog's primary button, so teal-400 carries the whole flow — countdown
      numeral, pause button, End & Save, dialog primary.
-     FLAG (raised by the flow's author, carried here): the owner's screenshots
-     show these in a mint green (~#73C693, emerald-300). Tokens win until
-     told otherwise. */
+     The flow's author flagged that the owner's screenshots show these in a
+     mint green (~#73C693, emerald-300). SETTLED 2026-08-14: owner chose
+     teal-400, so the flow's accent matches every other CTA in the app. */
   --accent:var(--metric-readiness);
   --accent-press:var(--teal-500);
   --on-accent:var(--neutral-900);
@@ -150,7 +150,9 @@
      supplied a Google Maps screenshot (Kolkata: the Maidan, Victoria
      Memorial, the Race Course) as the map view, and a map has to look like
      that map to read as one. The design system has no map palette, so these
-     are Google's own values, kept together and used nowhere else. */
+     are Google's own values, kept together and used nowhere else.
+     SETTLED 2026-08-14: owner chose to keep this as a flagged exception
+     rather than promote it into js/tokens.js or recolour the map. */
   --gmap-land:#F8F9FA;
   --gmap-built:#F2EEE5;      /* built-up blocks, the warm beige */
   --gmap-park:#C8E6C9;
@@ -1209,7 +1211,10 @@ body{
   /* Reaches up behind the floating status bar, so the buttons sit clear of
      the clock instead of colliding with it. */
   flex:none;height:88px;margin:-32px calc(-1 * var(--gutter)) 0;
-  padding:32px var(--space-8) var(--space-8);
+  /* Owner, 2026-08-14: pulled in off the edges. The bar's own 24px plus each
+     button's 12px puts the glyphs 36px in, so they read as a pair either side
+     of the centre rather than as two corner controls. */
+  padding:32px var(--space-24) var(--space-8);
   display:none;align-items:center;justify-content:space-between;
   background:var(--surface-card);
 }
@@ -3963,8 +3968,10 @@ function hmTri(t){
 const HM_METRICS = [
   { n:'HRV',        c:'var(--metric-hrv)',        v:'57',   u:'ms',  t:{d:'up',tone:'pos'},   f:'7-day avg 54 ms' },
   { n:'Heart Rate', c:'var(--metric-heart-rate)', v:'72',   u:'bpm', t:{d:'down',tone:'pos'}, f:'Resting · just now' },
-  // reads the new --metric-stress alias (js/tokens.js metric.stress) rather
-  // than the raw aqua hue the component shipped with
+  // reads the --metric-stress alias (js/tokens.js metric.stress) rather than
+  // the raw aqua hue the component shipped with. The reading animation colours
+  // this dot teal instead; SETTLED 2026-08-14: owner chose aqua, so the sheet
+  // and the card agree and Stress stays distinct from Readiness.
   { n:'Stress',     c:'var(--metric-stress)',     v:'38',   u:'',    t:{d:'down',tone:'pos'}, f:'Below your baseline' },
   { n:'Skin Temp',  c:'var(--metric-skin-temp)',  v:'36.4', u:'°C',  t:{d:'up',tone:'pos'},   f:'Same as baseline' },
   { n:'SpO₂',       c:'var(--metric-spo2)',       v:'97',   u:'%',   t:{d:'up',tone:'pos'},   f:'Overnight low 95%' }
@@ -4057,9 +4064,9 @@ function hmStartRun(){
 const MA_CUE = { orbit:2.8, bloom:7.0, reveal:9.0, settle:11.6 };
 /* Nothing changes after the Done button settles at reveal+1.6, so the loop
    stops there rather than running out the authored 14s.
-   FLAG: that still means ~9s from tap to sheet — the reading is the long part,
-   by design. MA_SPEED is here so it can be dialled without re-timing anything:
-   1 is the authored pace, 1.8 would land the sheet in ~5s. */
+   That means ~9s from tap to sheet — the reading is the long part, by design.
+   SETTLED 2026-08-14: owner kept the authored pace. MA_SPEED dials the whole
+   timeline without re-timing anything if that changes: 1.8 lands it in ~5s. */
 const MA_SPEED = 1;
 const MA_END = MA_CUE.reveal + 1.7;
 // the CTA's fill runs for exactly as long as the reading does
