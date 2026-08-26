@@ -107,9 +107,13 @@ what decisions were made, and the exact next steps.
    not 1" note was read as the LIVE screen's three metrics, which is where
    it was applied; the details tiles follow the approved details screen's
    2-up grid. One `grid-template-columns` value if that was wrong.
-   And the map: real Google imagery can't be fetched in this environment,
-   so the basemap is drawn. `assets/maps/route-newdelhi.png` is wired as an
-   override — drop a screenshot in and it takes over.
+   The map is now drawn in Google's light style after the owner's Kolkata
+   screenshot, and tapping the place row opens a full-screen preview. The
+   screenshot itself never landed as a FILE (inline preview only, same as
+   the background PNGs) — save it to `assets/maps/route-kolkata.png` and it
+   replaces the drawn basemap in both the card and the full-screen view,
+   with the teal route still on top. Map colours are Google's own hex
+   values, the one flagged exception to tokens-only.
 1. Accent colour: the flow uses teal-400 for the countdown numeral,
    pause/play, End & Save and the dialog's primary button, because the spec
    names teal for discard. The owner's screenshots show a mint green

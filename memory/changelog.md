@@ -5,6 +5,34 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-26 (feedback round 2) — Map view and activity rows.
+  * Map redrawn in Google's LIGHT style, modelled on the owner's Google Maps
+    screenshot of the Maidan / Victoria Memorial / Race Course in Kolkata:
+    white roads over grey casings, green parks, beige built-up quarters, the
+    blue metro line, water tanks, Queens Way cutting across the Maidan, grey
+    and green place labels. The route stays teal-400, now with a white
+    casing under it (Google's own trick) so it holds over green and white
+    alike. Place row relabelled "Maidan, Kolkata" — the old "New Delhi" came
+    from the first wireframe and no longer matched the map.
+    PALETTE EXCEPTION, flagged in the file: the map uses Google's own hex
+    values, grouped in one block and used nowhere else. A map has to look
+    like that map to read as one, and the design system has no map palette.
+  * Tapping the map card's place row opens a FULL-SCREEN map preview: the
+    same route, zoomed 1.35x and centred, with a back button on a
+    low-opacity dark disc so it stays legible wherever it lands on the light
+    map. The status bar switches to dark ink while that view is up.
+  * The owner's Google Maps screenshot did NOT arrive as a file — inline
+    preview only, the same thing that happened with the background PNGs. So
+    both maps carry an <img> slot at `assets/maps/route-kolkata.png`: drop
+    the real screenshot there and it replaces the drawn basemap, with the
+    teal route still drawn on top. No code change needed.
+  * Activity rows rebuilt to the owner's measurements: 20px glyph inside an
+    unpainted 32px box, 16px in from the top and left, 8px from that box to
+    the name, name at 13/18 medium in text-1, glyph in neutral-200, chevron
+    at the Workouts-card size and colour (16px, text-3), and the row
+    hairline inset 16px each side. Row height lands at 64px.
+  * "All A–Z" section header removed; "Most recent" stays.
+
 - 2026-08-26 (feedback round) — Workout flow, first round of owner fixes.
   * Choose activity overlay: close X has no circle behind it, title is
     sentence case, the section labels lost the hairline running out to the

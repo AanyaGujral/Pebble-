@@ -82,19 +82,25 @@
   --accent-press:var(--teal-500);
   --on-accent:var(--neutral-900);
 
-  /* Map preview palette. A map is imagery, so it needs more steps than a UI
-     surface does — every one is still a token, arranged the way a dark
-     Google Maps style arranges its own: land, blocks, roads lighter than
-     land, arterials lighter still, water and park pulled from the darkest
-     step of the hue that means that thing in this system. */
-  --map-land:var(--neutral-800);
-  --map-block:var(--neutral-700);
-  --map-street:var(--neutral-700);
-  --map-road:var(--neutral-600);
-  --map-arterial:var(--neutral-500);
-  --map-water:var(--sky-700);
-  --map-park:var(--emerald-700);
-  --map-label:var(--neutral-400);
+  /* MAP PREVIEW PALETTE — the one deliberate exception to "tokens only".
+     The owner supplied a Google Maps screenshot (Kolkata: the Maidan,
+     Victoria Memorial, the Race Course) as the map view, and a map has to
+     look like that map to read as one — Google's light style, not a
+     recolour of it. The design system has no map palette to draw from, so
+     these are Google's own values, kept together here and used nowhere
+     else in the app. Everything outside the map still comes from tokens.
+     Flagged rather than silently mixed in. */
+  --gmap-land:#F8F9FA;
+  --gmap-built:#F2EEE5;      /* built-up blocks, the warm beige */
+  --gmap-park:#C8E6C9;
+  --gmap-park-deep:#AEDCAF;  /* the Maidan's darker green */
+  --gmap-water:#A9D9F2;
+  --gmap-road:#FFFFFF;
+  --gmap-casing:#DADCE0;
+  --gmap-metro:#1A3FAF;      /* the metro line */
+  --gmap-label:#5F6368;
+  --gmap-label-park:#3C8B3C;
+  --gmap-label-poi:#C5221F;
 
   /* Heart-rate training zones. No zone tokens exist in js/tokens.js yet, so
      this heat scale is built from primitive 400s, hottest = the HR hue.
@@ -214,6 +220,8 @@ body{
   padding:1px;display:inline-flex;
 }
 .statusbar .batt i{flex:0 0 70%;background:currentColor;border-radius:1px}
+/* Over the light map the near-white clock would disappear. */
+.screen.on-light .statusbar{color:#3C4043}
 
 /* One screen at a time. Each .page fills the glass; long pages scroll. */
 .pages{position:relative;flex:1;min-height:0}
@@ -345,27 +353,35 @@ body{
   letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
 }
 
-/* The activity list, built to the workout-card format the owner attached:
-   icon on the left with NO chip behind it, one line of text, chevron right.
-   Flag: "single center aligned text" reads as vertically centred on one
-   line — the name stays left-aligned next to its icon, as in the reference. */
+/* Activity rows, built to the owner's measurements: a 20px glyph inside a
+   32px box (unpainted — no chip), 16px in from the top and the left, 8px
+   from that box to the name, name at 13/18 medium in text-1, glyph in
+   neutral-200, and the chevron at the Workouts-card size and colour
+   (16px, text-3). The hairline between rows is inset 16px each side. */
 .act-list{
   margin:0 var(--gutter) var(--space-24);
   background:var(--surface-card);border-radius:var(--radius-card);overflow:hidden;
 }
 .act-row{
-  width:100%;display:flex;align-items:center;gap:var(--space-16);
+  position:relative;width:100%;
+  display:flex;align-items:center;gap:var(--space-8);
   padding:var(--space-16);border:none;background:none;cursor:pointer;
   font-family:inherit;text-align:left;
   transition:background var(--duration-fast) var(--ease-standard);
 }
-.act-row + .act-row{border-top:var(--border-hairline) solid var(--divider)}
+.act-row + .act-row::after{
+  content:"";position:absolute;top:0;left:var(--space-16);right:var(--space-16);
+  height:var(--border-hairline);background:var(--divider);
+}
 .act-row:hover{background:var(--surface-raised)}
-.act-row .glyph{width:28px;height:28px;color:var(--text-1);flex:none}
-.act-row .glyph svg{width:100%;height:100%;display:block}
-/* paragraph p1 regular — 15/22 at the regular weight (owner) */
-.act-row .name{flex:1;font-size:15px;line-height:22px;font-weight:var(--weight-regular);color:var(--text-1)}
-.act-row .caret{width:18px;height:18px;color:var(--text-3);flex:none}
+.act-row .glyph{
+  flex:none;width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--neutral-200);
+}
+.act-row .glyph svg{width:20px;height:20px;display:block}
+.act-row .name{flex:1;font-size:13px;line-height:18px;font-weight:var(--weight-medium);color:var(--text-1)}
+.act-row .caret{flex:none;width:16px;height:16px;color:var(--text-3)}
 .act-row .caret svg{width:100%;height:100%;display:block}
 
 .no-results{
@@ -497,7 +513,7 @@ body{
 .map-card{
   flex:none;position:relative;margin-top:var(--space-20);
   border-radius:var(--radius-16);overflow:hidden;
-  background:var(--map-land);
+  background:var(--gmap-land);
   border:var(--border-hairline) solid var(--neutral-700);   /* hairline, neutral dark */
 }
 .map-card svg{display:block;width:100%;height:auto;position:relative;z-index:1}
@@ -505,25 +521,57 @@ body{
   position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;
 }
 .map-card.has-photo .basemap{display:none}
-.map-card .land{fill:var(--map-land)}
-.map-card .park{fill:var(--map-park)}
-.map-card .water{fill:var(--map-water)}
-.map-card .block{fill:var(--map-block);opacity:.45}
-.map-card .street{stroke:var(--map-street)}
-.map-card .road{stroke:var(--map-road)}
-.map-card .arterial{stroke:var(--map-arterial);opacity:.9}
-.map-card .river{stroke:var(--map-water);stroke-linecap:round}
+
+/* map paint — shared by the card and the full-screen view */
+.map-card .land{fill:var(--gmap-land)}
+.map-card .built{fill:var(--gmap-built)}
+.map-card .park{fill:var(--gmap-park)}
+.map-card .park.deep{fill:var(--gmap-park-deep)}
+.map-card .water{fill:var(--gmap-water)}
+.map-card .casing{stroke:var(--gmap-casing)}
+.map-card .road{stroke:var(--gmap-road)}
+.map-card .metro{stroke:var(--gmap-metro);stroke-linecap:round}
 .map-card .maplabel{
-  font-family:var(--font-text);font-size:6px;font-weight:var(--weight-medium);
-  fill:var(--map-label);letter-spacing:0.02em;
+  font-family:var(--font-text);font-weight:var(--weight-medium);
+  fill:var(--gmap-label);letter-spacing:0.02em;
 }
-/* the route is the only saturated thing on the map */
+.map-card .maplabel.park-name{fill:var(--gmap-label-park)}
+.map-card .maplabel.poi{fill:var(--gmap-label-poi)}
+/* The route is the only saturated line on the map. A white casing under the
+   teal keeps it legible over park green and road white alike — the same
+   trick Google's own route line uses. */
+.map-card .route-casing{
+  fill:none;stroke:#FFFFFF;stroke-width:7;
+  stroke-linecap:round;stroke-linejoin:round;
+}
 .map-card .route{
   fill:none;stroke:var(--accent);stroke-width:4;
   stroke-linecap:round;stroke-linejoin:round;
 }
-.map-card .dot{fill:var(--neutral-0);stroke:var(--accent);stroke-width:3}
-.map-card .dot.head{fill:var(--accent);stroke:var(--neutral-0);stroke-width:2}
+.map-card .dot{fill:#FFFFFF;stroke:var(--accent);stroke-width:3}
+.map-card .dot.head{fill:var(--accent);stroke:#FFFFFF;stroke-width:2}
+
+/* ---- full-screen map preview (opens from the card's place row) ---- */
+.map-full{
+  position:absolute;inset:0;overflow:hidden;background:var(--gmap-land);
+  border-radius:0;margin:0;border:0;
+}
+.map-full svg{width:100%;height:100%}
+/* Back control: a low-opacity dark disc so it stays readable wherever it
+   lands on a light map. */
+.map-back{
+  position:absolute;top:44px;left:var(--gutter);z-index:70;
+  width:40px;height:40px;border:0;border-radius:var(--radius-full);cursor:pointer;
+  background:color-mix(in srgb, var(--neutral-900) 55%, transparent);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  color:var(--neutral-0);
+  display:flex;align-items:center;justify-content:center;
+}
+.map-back:hover{background:color-mix(in srgb, var(--neutral-900) 72%, transparent)}
+.map-back [data-icon]{width:20px;height:20px}
+
+/* the place row is the affordance that opens the full map */
+.map-head{cursor:pointer}
 .map-head{
   display:flex;align-items:center;gap:var(--space-8);
   padding:var(--space-12) var(--space-16) var(--space-8);
@@ -785,7 +833,6 @@ body{
           <div class="sec-label" data-recent-label><span>Most recent</span></div>
           <div class="act-list" id="list-recent"></div>
 
-          <div class="sec-label" data-all-label><span>All A–Z</span></div>
           <div class="act-list" id="list-all"></div>
 
           <p class="no-results">No results found</p>
@@ -869,9 +916,12 @@ body{
 
             <!-- Route map — GPS activities only. -->
             <section class="mapcard" id="wd-map-card" hidden>
-              <div class="map-head">
+              <!-- Tapping the row opens the full-screen map. Flag: the place
+                   name follows the owner's screenshot, which is Kolkata — the
+                   earlier "New Delhi" label came from the first wireframe. -->
+              <div class="map-head" id="btn-map-open" role="button" tabindex="0">
                 <span data-icon="navigation-arrow" data-weight="fill"></span>
-                <span class="place">New Delhi, Delhi</span>
+                <span class="place">Maidan, Kolkata</span>
                 <span class="caret" data-icon="caret-right"></span>
               </div>
               <div class="map-card" id="wd-map"></div>
@@ -902,6 +952,14 @@ body{
           </div>
         </div>
         <div class="nav-float"><nav class="pebble-nav" aria-label="Primary" data-nav></nav></div>
+      </section>
+
+      <!-- ── Full-screen map preview — opens from the details map card ── -->
+      <section class="page" id="p-map">
+        <div class="map-card map-full" id="map-full"></div>
+        <button class="map-back" type="button" id="btn-map-back" aria-label="Back to workout">
+          <span data-icon="caret-left"></span>
+        </button>
       </section>
 
     </div><!-- /.pages -->
@@ -947,8 +1005,9 @@ body{
 .map-head [data-icon]{width:16px;height:16px}
 .summary .head [data-icon]{width:20px;height:20px}
 .hr-head [data-icon]{width:18px;height:18px}
-.act-row .glyph[data-icon]{width:28px;height:28px}
-.act-row .caret[data-icon]{width:18px;height:18px}
+.act-row .glyph[data-icon]{width:32px;height:32px}
+.act-row .glyph[data-icon] svg{width:20px;height:20px}
+.act-row .caret[data-icon]{width:16px;height:16px}
 </style>
 
 <script>
@@ -1030,6 +1089,7 @@ const $$ = function(sel,root){ return Array.prototype.slice.call((root||document
 
 function show(id){
   $$('.page').forEach(function(p){ p.classList.toggle('on', p.id === id); });
+  $('.screen').classList.toggle('on-light', id === 'p-map');   /* light map = dark status bar */
   var sc = $('#'+id+' .scroll');
   if (sc) sc.scrollTop = 0;
 }
@@ -1094,75 +1154,121 @@ function renderPicker(query){
    offline and inside the artifact sandbox. The route is revealed in step
    with elapsed time, which is what makes the live card feel live.
    ══════════════════════════════════════════════════════════════════════════ */
-/* The route follows streets, as a GPS trace does. Coordinates match the road
-   grid drawn below, so the trace sits on roads rather than across blocks. */
-const ROUTE_D = 'M64,132 H104 V86 H168 V42 H232 V86 H288';
+/* ══════════════════════════════════════════════════════════════════════════
+   5. THE MAP
+   Modelled on the owner's Google Maps screenshot — Kolkata: the Maidan, the
+   Race Course, Victoria Memorial, Queens Way, the metro line — in Google's
+   light style, so the card reads as a map preview rather than as a diagram.
+   Everything is drawn in one "design space" and then transformed, which is
+   what lets the same route appear at card scale and again zoomed in the
+   full-screen view without redrawing it.
+
+   Why drawn and not the real screenshot: an artifact page can reach Google
+   Fonts and nothing else (CSP), the Static Maps API needs a key, and every
+   tile host is blocked here — and the owner's screenshot arrived as an
+   inline preview, not a file. So each map carries an <img> slot pointed at
+   `assets/maps/route-kolkata.png`; drop the real screenshot there and it
+   takes over the basemap, with the teal route still drawn on top.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Design space is 328 x 160 — the card. The route sits on the road grid. */
+const ROUTE_PTS = [[64,132],[104,132],[104,86],[152,86],[152,42],[196,42],[196,86],[252,86],[252,120],[288,120]];
+const ROUTE_D = 'M' + ROUTE_PTS.map(function(p){ return p[0] + ',' + p[1]; }).join(' L');
 const ROUTE_FULL_SECONDS = 30 * 60;     /* a 30-minute session draws it all */
 
-/* Street grid: verticals, horizontals, one diagonal arterial. Roads are drawn
-   casing-first (a darker, wider stroke) then the road on top — the trick that
-   makes a vector map read as a map rather than as a set of lines. */
-const MAP_V = [44,104,168,232,296];
-const MAP_H = [42,86,132];
+/* Roads the route runs on, plus the ones around them. Drawn well past the
+   card so the same content still fills the frame when it is zoomed. */
+const MAP_V = [-84,-40,4,20,64,104,152,196,252,288,340,384,428];
+const MAP_H = [-246,-202,-158,-114,-70,-26,10,42,86,120,132,176,220,264,308,352,396];
+const MAP_EXTENT = { x:-500, y:-500, w:1400, h:1200 };
 
-function mapSVG(idPrefix){
-  var grid = function(cls, w){
+function mapSVG(idPrefix, w, h, zoom){
+  var k  = zoom || 1;
+  /* keep the route centred: design-space centre (176,86) lands on the
+     canvas centre, so zooming reads as zooming rather than panning away */
+  var tx = w / 2 - k * 176, ty = h / 2 - k * 86;
+  var E  = MAP_EXTENT;
+  var line = function(cls, x1, y1, x2, y2, sw){
+    return '<line class="' + cls + '" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke-width="' + sw + '"/>';
+  };
+  var roads = function(cls, sw){
     var out = [];
-    MAP_V.forEach(function(x){ out.push('<line class="'+cls+'" stroke-width="'+w+'" x1="'+x+'" y1="-2" x2="'+x+'" y2="162"/>'); });
-    MAP_H.forEach(function(y){ out.push('<line class="'+cls+'" stroke-width="'+w+'" x1="-2" y1="'+y+'" x2="330" y2="'+y+'"/>'); });
+    MAP_V.forEach(function(x){ out.push(line(cls, x, E.y, x, E.y + E.h, sw)); });
+    MAP_H.forEach(function(y){ out.push(line(cls, E.x, y, E.x + E.w, y, sw)); });
     return out.join('');
   };
   /* side streets, halfway between the through roads */
-  var streets = function(){
+  var streets = function(cls, sw){
     var out = [];
-    [76,136,200,264].forEach(function(x){ out.push('<line class="street" stroke-width="2.5" x1="'+x+'" y1="-2" x2="'+x+'" y2="162"/>'); });
-    [64,109].forEach(function(y){ out.push('<line class="street" stroke-width="2.5" x1="-2" y1="'+y+'" x2="330" y2="'+y+'"/>'); });
+    [-62,-18,42,84,128,174,224,270,314,362,406].forEach(function(x){ out.push(line(cls, x, E.y, x, E.y + E.h, sw)); });
+    [-224,-180,-136,-92,-48,26,64,103,150,198,242,286,330,374].forEach(function(y){ out.push(line(cls, E.x, y, E.x + E.w, y, sw)); });
     return out.join('');
   };
-  return '<img class="photo" src="assets/maps/route-newdelhi.png" alt=""'
-       + ' onload="this.closest(\'.map-card\').classList.add(\'has-photo\')"'
+  var label = function(x, y, size, cls, text){
+    return '<text class="maplabel' + (cls ? ' ' + cls : '') + '" x="' + x + '" y="' + y
+         + '" font-size="' + size + '" text-anchor="middle">' + text + '</text>';
+  };
+
+  return '<img class="photo" src="assets/maps/route-kolkata.png" alt=""'
+       + ' onload="this.closest(\'.map-card,.map-full\').classList.add(\'has-photo\')"'
        + ' onerror="this.remove()">'
-       + '<svg viewBox="0 0 328 160" role="img" aria-label="Map of the route taken on this workout">'
+       + '<svg viewBox="0 0 ' + w + ' ' + h + '" role="img"'
+       + ' aria-label="Map of the route taken on this workout">'
+       + '<g transform="translate(' + tx.toFixed(1) + ',' + ty.toFixed(1) + ') scale(' + k + ')">'
        + '<g class="basemap">'
-       +   '<rect class="land" x="0" y="0" width="328" height="160"/>'
-       /* land features first: a park, then the river the roads bridge over */
-       +   '<rect class="park" x="20" y="112" width="70" height="52" rx="6" opacity="0.7"/>'
-       +   '<path class="river" stroke-width="20" fill="none" opacity="1"'
-       +        ' d="M300,-6 C286,34 306,62 292,96 C280,126 296,146 288,166"/>'
-       /* blocks — slightly lighter than the land, the way built-up areas read */
-       +   '<g class="block">'
-       +     '<rect x="52" y="48" width="18" height="12" rx="1"/><rect x="82" y="48" width="16" height="12" rx="1"/>'
-       +     '<rect x="112" y="48" width="20" height="12" rx="1"/><rect x="142" y="48" width="20" height="12" rx="1"/>'
-       +     '<rect x="176" y="48" width="18" height="12" rx="1"/><rect x="206" y="48" width="20" height="12" rx="1"/>'
-       +     '<rect x="240" y="48" width="18" height="12" rx="1"/><rect x="112" y="92" width="20" height="12" rx="1"/>'
-       +     '<rect x="142" y="92" width="20" height="12" rx="1"/><rect x="176" y="92" width="18" height="12" rx="1"/>'
-       +     '<rect x="206" y="92" width="20" height="12" rx="1"/><rect x="112" y="116" width="18" height="10" rx="1"/>'
-       +     '<rect x="176" y="116" width="20" height="10" rx="1"/><rect x="240" y="116" width="16" height="10" rx="1"/>'
+       +   '<rect class="land" x="' + E.x + '" y="' + E.y + '" width="' + E.w + '" height="' + E.h + '"/>'
+       /* built-up quarter to the east, the beige side of the screenshot */
+       +   '<rect class="built" x="266" y="' + E.y + '" width="' + (E.x + E.w - 266) + '" height="' + E.h + '"/>'
+       +   '<rect class="built" x="' + E.x + '" y="' + E.y + '" width="' + (266 - E.x) + '" height="' + (-60 - E.y) + '"/>'
+       +   '<rect class="built" x="' + E.x + '" y="230" width="' + (266 - E.x) + '" height="' + (E.y + E.h - 230) + '"/>'
+       /* the Maidan — one big park the route runs through */
+       +   '<path class="park deep" d="M96,-10 L262,-10 L258,104 L206,132 L120,124 L92,60 Z"/>'
+       /* the Race Course oval, and a smaller garden east of the park */
+       +   '<ellipse class="park" cx="46" cy="112" rx="46" ry="40"/>'
+       +   '<rect class="park" x="216" y="52" width="34" height="26" rx="6"/>'
+       +   '<rect class="park" x="86" y="192" width="118" height="46" rx="8"/>'
+       +   '<rect class="park" x="150" y="-118" width="96" height="52" rx="8"/>'
+       /* water: two tanks by the memorial, and the river off to the west */
+       +   '<rect class="water" x="150" y="96" width="18" height="10" rx="2"/>'
+       +   '<rect class="water" x="176" y="96" width="18" height="10" rx="2"/>'
+       +   '<path class="water" d="M' + E.x + ',150 L-30,150 C-40,120 -46,60 -34,' + E.y + ' L' + E.x + ',' + E.y + ' Z"/>'
+       /* roads: casing under white fill, the way Google draws them */
+       +   '<g fill="none" stroke-linecap="square">'
+       +     streets('casing', 4) + roads('casing', 8)
+       +     streets('road', 2.5) + roads('road', 6)
+       /* Queens Way, cutting across the Maidan */
+       +     line('casing', 96, 138, 268, 78, 9) + line('road', 96, 138, 268, 78, 7)
+       /* the metro line */
+       +     line('metro', 268, E.y, 258, E.y + E.h, 2.5)
        +   '</g>'
-       +   '<g fill="none" stroke-linecap="round">'
-       +     streets() + grid('road', 5)
-       /* one arterial across the frame, wider and lighter, as a highway reads */
-       +     '<line class="arterial" stroke-width="7" x1="-4" y1="150" x2="332" y2="26"/>'
-       +   '</g>'
-       +   '<text class="maplabel" x="108" y="38" text-anchor="start">Ring Rd</text>'
-       +   '<text class="maplabel" x="26" y="128" text-anchor="start">Lodhi Gardens</text>'
-       +   '<text class="maplabel" x="262" y="146" text-anchor="start">Yamuna</text>'
+       +   label(176, 30, 7, 'park-name', 'Maidan')
+       +   label(46, 116, 6.5, 'park-name', 'Race Course')
+       +   label(172, 116, 6, '', 'Victoria Memorial')
+       +   label(233, 48, 5.5, 'park-name', 'Elliot Park')
+       +   label(196, 132, 5.5, '', 'Queens Way')
+       +   label(145, 218, 6, 'park-name', 'Alipore')
+       +   label(198, -88, 6, 'park-name', 'Eden Gardens')
        + '</g>'
-       + '<path class="route" id="' + idPrefix + '-route" d="' + ROUTE_D + '"/>'
-       + '<circle class="dot" id="' + idPrefix + '-start" cx="64" cy="132" r="5"/>'
-       + '<circle class="dot head" id="' + idPrefix + '-head" cx="64" cy="132" r="5"/>'
-       + '</svg>';
+       + '<path class="route-casing" d="' + ROUTE_D + '" id="' + idPrefix + '-casing"/>'
+       + '<path class="route" d="' + ROUTE_D + '" id="' + idPrefix + '-route"/>'
+       + '<circle class="dot" cx="' + ROUTE_PTS[0][0] + '" cy="' + ROUTE_PTS[0][1] + '" r="5"/>'
+       + '<circle class="dot head" id="' + idPrefix + '-head" cx="' + ROUTE_PTS[0][0] + '" cy="' + ROUTE_PTS[0][1] + '" r="5"/>'
+       + '</g></svg>';
 }
 
 /* fraction 0..1 of the route to show; the head dot rides the drawn end. */
 function drawRoute(idPrefix, fraction){
   var path = document.getElementById(idPrefix + '-route');
-  var head = document.getElementById(idPrefix + '-head');
   if (!path) return;
+  var casing = document.getElementById(idPrefix + '-casing');
+  var head   = document.getElementById(idPrefix + '-head');
   var len = path.getTotalLength();
   var f   = Math.max(0, Math.min(1, fraction));
-  path.style.strokeDasharray  = len;
-  path.style.strokeDashoffset = len * (1 - f);
+  [path, casing].forEach(function(el){
+    if (!el) return;
+    el.style.strokeDasharray  = len;
+    el.style.strokeDashoffset = len * (1 - f);
+  });
   if (head){
     var pt = path.getPointAtLength(len * f);
     head.setAttribute('cx', pt.x);
@@ -1251,7 +1357,7 @@ function startWorkout(act){
 
   var map = $('#aw-map');
   map.hidden = !act.gps;
-  map.innerHTML = act.gps ? mapSVG('aw') : '';
+  map.innerHTML = act.gps ? mapSVG('aw', 328, 160, 1) : '';
 
   show('p-active');
   paintActive();
@@ -1459,7 +1565,7 @@ function renderDetails(){
   /* Route map — GPS activities only. */
   var mapCard = $('#wd-map-card');
   mapCard.hidden = !a.gps;
-  if (a.gps) $('#wd-map').innerHTML = mapSVG('wd');
+  if (a.gps) $('#wd-map').innerHTML = mapSVG('wd', 328, 160, 1);
 
   /* Tiles. Duration / Calories / Max HR / Effort are the approved four; the
      activity's own metric (distance, reps, laps…) and one more heart-rate
@@ -1617,6 +1723,20 @@ $('#btn-wd-back').addEventListener('click', function(){
   session = null;
   show('p-home');
 });
+
+/* The map card's place row opens the full-screen preview, zoomed in on the
+   same route. Back returns to the saved session. */
+function openFullMap(){
+  if (!session) return;
+  $('#map-full').innerHTML = mapSVG('full', 360, 780, 1.35);
+  show('p-map');
+  drawRoute('full', Math.min(1, session.elapsed / ROUTE_FULL_SECONDS) || 0.02);
+}
+$('#btn-map-open').addEventListener('click', openFullMap);
+$('#btn-map-open').addEventListener('keydown', function(e){
+  if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openFullMap(); }
+});
+$('#btn-map-back').addEventListener('click', function(){ show('p-details'); });
 
 /* Press and drag the chart to read a single moment. */
 (function(){
