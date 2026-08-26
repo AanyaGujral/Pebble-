@@ -5,6 +5,46 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-26 — Built the workout flow as a new standalone prototype,
+  `Workout Tab/Workout Flow.html` (owner's call: the Pebble Home artifact
+  stays untouched, so this ships as its own link). Screens: Home stub with
+  the Start Workout CTA -> Choose Activity (search filters by name, empty
+  state reads "No results found") -> 3-2-1 countdown (each number lands large
+  and settles smaller) -> live workout -> pause (Discard / End & Save appear
+  at the top) -> discard confirmation -> workout details.
+  Decisions and deviations, all flagged in the file too:
+  * Heart rate is the live screen's hero, in neutral text-1 on the app
+    background (owner's call) — NOT the crimson HR hue, and not the timer the
+    screenshot made the hero. Duration, calories and the per-activity third
+    metric sit in a card below it.
+  * 26 activities, A–Z, each with its own third metric: km for the distance
+    ones, reps/poses for strength and mat work, rounds for HIIT and boxing,
+    laps, floors, steps, breaths, routes. Most recent seeds with the five from
+    the owner's screenshot and re-orders as sessions are saved.
+  * Teal-400 carries the flow's controls (countdown numeral, pause/play,
+    End & Save, dialog primary) because the spec names teal for the discard
+    dialog. The owner's screenshots show a mint green — tokens won.
+  * Walking, running, cycling, hiking, skiing and snowboarding get a
+    code-drawn GPS map on both the live screen and the saved session; the
+    route reveals in step with elapsed time. Nothing is fetched, so it works
+    offline.
+  * The details page reuses the approved Workout Details structure (identity,
+    gold Session Summary, calories + stat grid, HR chart, five zones) but
+    every number is read back from the session that just ran: averages, max,
+    zone split, chart trace, pace. Zone times switch to seconds under five
+    minutes so a short session doesn't read "0 min". Summary copy is
+    templated from those numbers, not a model call.
+  * Zone bpm ranges were dropped from the zone rows — at 360px the longest
+    zone name plus a range can't hold one line.
+  * Nav bar keeps the supplied component's Health / Activity / Sleep / Me
+    labels, not the Today / Sleep / Activity / Me in the details screenshot.
+  * Discard returns to the home screen (the spec doesn't say where it lands).
+  * A preview-only panel beside the phone switches the workout clock between
+    real time and 1 second = 1 minute, so the details page can be reviewed
+    with a full-length session.
+  Icons are Phosphor (regular + fill path data embedded). Published as an
+  artifact: https://claude.ai/code/artifact/7009c1af-96d6-4a17-bfd1-16f3b3620bc3
+
 - 2026-08-10 — Moved the named snapshot into `Activity Tab/Workout Tab.html`
   (folder layout mirrors `Sleep Tab/`). `index.html` stays the live working
   copy at the repo root. Pushed as is at the owner's request.

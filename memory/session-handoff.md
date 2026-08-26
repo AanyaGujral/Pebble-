@@ -1,5 +1,25 @@
 # Session Handoff
 
+> **2026-08-26 — read this first.** The workout flow now exists as its own
+> prototype: `Workout Tab/Workout Flow.html`, published at
+> https://claude.ai/code/artifact/7009c1af-96d6-4a17-bfd1-16f3b3620bc3
+> It is deliberately SEPARATE from the home prototype — the owner asked for a
+> standalone flow artifact, so the Pebble Home link
+> (claude.ai/code/artifact/808df696-db16-4695-9052-38e4fc40abff) is untouched
+> and its Start Workout CTA is still visual-only. Two things follow from that:
+> (1) the flow file carries its own Home *stub* purely to hold the CTA, and
+> (2) if the owner later wants one prototype, the flow's screens and script
+> drop into `index.html` — everything reads the same mirrored tokens.
+>
+> Note also that `index.html` in this repo is BEHIND the published Pebble Home
+> artifact: that artifact contains a later home rebuild (greeting + three
+> rings, Health monitor v4 / Measure All, Activity monitor, Start Workout CTA)
+> that never landed as a commit. Pull it back into the repo before editing
+> `index.html`, or the rebuild gets overwritten. `action: "read"` on the
+> artifact URL returns the full file.
+>
+> The flow's own next steps and open questions are at the end of this file.
+
 > **2026-08-10 — read this first.** `index.html` is now the MERGED source of
 > truth: it adopts the parallel session's build (metric details pages with a
 > D/W/M/Y period switcher; control panel reduced to Default + No data and
@@ -78,3 +98,25 @@ what decisions were made, and the exact next steps.
   the prototype falls back to system sans (layout still holds).
 - Chart data is invented sample data shaped to match the numbers shown in
   the approved prototypes.
+
+## Workout flow — open questions / next steps (2026-08-26)
+
+1. Accent colour: the flow uses teal-400 for the countdown numeral,
+   pause/play, End & Save and the dialog's primary button, because the spec
+   names teal for discard. The owner's screenshots show a mint green
+   (closest tokens: emerald-300 `#73C693`, or semantic positive-icon
+   `#4ADE80`). One line change if teal is wrong — `--accent` in the file.
+2. Third metric per activity is a first pass (steps for court sports,
+   breaths for meditation, routes for climbing). Worth a read-through.
+3. Walking and hiking are treated as distance activities (km + GPS map), per
+   the spec's "km for all distance related stuff". Say if walking should show
+   steps instead.
+4. Discard currently returns to the home screen. Confirm, or send it back to
+   the activity list.
+5. Not built: editing a saved session, a workout-in-progress notification
+   when you leave the screen, lap/split controls, and the real Most-recent
+   list (it seeds with the five in the screenshot and re-orders in-session
+   only — nothing persists).
+6. The activity list keeps the name left-aligned beside its icon, as in the
+   reference card. If "single center aligned text" meant the name centred in
+   the row, that's a small CSS change.
