@@ -82,6 +82,20 @@
   --accent-press:var(--teal-500);
   --on-accent:var(--neutral-900);
 
+  /* Map preview palette. A map is imagery, so it needs more steps than a UI
+     surface does — every one is still a token, arranged the way a dark
+     Google Maps style arranges its own: land, blocks, roads lighter than
+     land, arterials lighter still, water and park pulled from the darkest
+     step of the hue that means that thing in this system. */
+  --map-land:var(--neutral-800);
+  --map-block:var(--neutral-700);
+  --map-street:var(--neutral-700);
+  --map-road:var(--neutral-600);
+  --map-arterial:var(--neutral-500);
+  --map-water:var(--sky-700);
+  --map-park:var(--emerald-700);
+  --map-label:var(--neutral-400);
+
   /* Heart-rate training zones. No zone tokens exist in js/tokens.js yet, so
      this heat scale is built from primitive 400s, hottest = the HR hue.
      Same five values the Workout Details page already ships with. */
@@ -251,6 +265,10 @@ body{
 }
 .icon-btn:hover{background:var(--surface-raised)}
 .icon-btn svg{display:block;width:20px;height:20px}
+/* Glyph only, no circle behind it (owner) — the 44px box stays for the tap
+   target, it just isn't painted. */
+.icon-btn.plain{background:none}
+.icon-btn.plain:hover{background:none;color:var(--text-2)}
 .overline{
   font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
   letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
@@ -319,14 +337,13 @@ body{
 .search.has-text .clear{display:flex}
 
 .sec-label{
-  display:flex;align-items:center;gap:var(--space-12);
+  /* No hairline running out to the edge (owner) — the label stands alone. */
   margin:0 var(--gutter) var(--space-8);
 }
 .sec-label span{
   font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
   letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
 }
-.sec-label i{flex:1;height:var(--border-hairline);background:var(--divider)}
 
 /* The activity list, built to the workout-card format the owner attached:
    icon on the left with NO chip behind it, one line of text, chevron right.
@@ -346,7 +363,8 @@ body{
 .act-row:hover{background:var(--surface-raised)}
 .act-row .glyph{width:28px;height:28px;color:var(--text-1);flex:none}
 .act-row .glyph svg{width:100%;height:100%;display:block}
-.act-row .name{flex:1;font-size:17px;line-height:22px;font-weight:var(--weight-semibold);color:var(--text-1)}
+/* paragraph p1 regular — 15/22 at the regular weight (owner) */
+.act-row .name{flex:1;font-size:15px;line-height:22px;font-weight:var(--weight-regular);color:var(--text-1)}
 .act-row .caret{width:18px;height:18px;color:var(--text-3);flex:none}
 .act-row .caret svg{width:100%;height:100%;display:block}
 
@@ -435,20 +453,25 @@ body{
 .aw:not(.paused) .hero .unit svg{animation:hr-beat 1.4s var(--ease-standard) infinite}
 
 /* Duration · calories · the per-activity third metric. */
+/* Three separate boxes, uppercase label on top and the figure under it,
+   following the owner's stat-box screenshot — not one card split by rules. */
 .aw-stats{
-  flex:none;display:flex;margin-top:var(--space-32);
-  background:var(--surface-card);border-radius:var(--radius-card);
-  padding:var(--space-16) 0;
+  flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:var(--space-8);margin-top:var(--space-32);
 }
-.aw-stats .cell{flex:1;text-align:center;padding:0 var(--space-8)}
-.aw-stats .cell + .cell{border-left:var(--border-hairline) solid var(--divider)}
-.aw-stats .v{
-  display:block;font-family:var(--font-number);font-feature-settings:var(--num-features);
-  font-weight:var(--weight-bold);font-size:20px;line-height:24px;color:var(--text-1);
+.aw-stats .cell{
+  background:var(--surface-card);border-radius:var(--radius-24);
+  padding:var(--space-12) var(--space-8);text-align:center;
 }
 .aw-stats .k{
+  display:block;
+  font-size:11px;line-height:16px;font-weight:var(--weight-medium);
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);
+}
+.aw-stats .v{
   display:block;margin-top:var(--space-4);
-  font-size:11px;line-height:16px;color:var(--text-3);
+  font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-weight:var(--weight-bold);font-size:20px;line-height:24px;color:var(--text-1);
 }
 
 .aw-foot{flex:none;display:flex;justify-content:center;padding-top:var(--space-32)}
@@ -461,23 +484,46 @@ body{
 .pausebtn:hover{background:var(--accent-press)}
 .pausebtn svg{width:28px;height:28px}
 
-/* ── GPS map — walking, running, cycling, hiking, skiing, snowboarding ─── */
-/* Code-drawn: a street grid plus the route. No tiles are fetched, so the
-   card works offline and inside the artifact sandbox. */
+/* ── GPS map — walking, running, cycling, hiking, skiing, snowboarding ───
+   A map preview in the Google Maps idiom — land, blocks, a park, water, road
+   casings, arterials, street labels — drawn in SVG from the neutral tokens,
+   with the route in Pebble teal.
+   Why drawn and not a real Google tile: an artifact page can't reach any
+   external host (the CSP allows Google Fonts and nothing else), and the
+   Static Maps API needs a key. The card therefore carries an <img> slot
+   pointed at `assets/maps/route-newdelhi.png` — drop a real Google Maps
+   screenshot there and it takes over the basemap automatically, with the
+   teal route still drawn on top (same pattern as the hero backgrounds). */
 .map-card{
   flex:none;position:relative;margin-top:var(--space-20);
-  border-radius:var(--radius-16);overflow:hidden;background:var(--neutral-800);
+  border-radius:var(--radius-16);overflow:hidden;
+  background:var(--map-land);
+  border:var(--border-hairline) solid var(--neutral-700);   /* hairline, neutral dark */
 }
-.map-card svg{display:block;width:100%;height:auto}
-.map-card .street{stroke:var(--neutral-600);stroke-width:7;opacity:.55}
-.map-card .street.minor{stroke-width:3;opacity:.35}
-.map-card .block{fill:var(--neutral-700);opacity:.25}
+.map-card svg{display:block;width:100%;height:auto;position:relative;z-index:1}
+.map-card .photo{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;
+}
+.map-card.has-photo .basemap{display:none}
+.map-card .land{fill:var(--map-land)}
+.map-card .park{fill:var(--map-park)}
+.map-card .water{fill:var(--map-water)}
+.map-card .block{fill:var(--map-block);opacity:.45}
+.map-card .street{stroke:var(--map-street)}
+.map-card .road{stroke:var(--map-road)}
+.map-card .arterial{stroke:var(--map-arterial);opacity:.9}
+.map-card .river{stroke:var(--map-water);stroke-linecap:round}
+.map-card .maplabel{
+  font-family:var(--font-text);font-size:6px;font-weight:var(--weight-medium);
+  fill:var(--map-label);letter-spacing:0.02em;
+}
+/* the route is the only saturated thing on the map */
 .map-card .route{
-  fill:none;stroke:var(--text-1);stroke-width:4;
+  fill:none;stroke:var(--accent);stroke-width:4;
   stroke-linecap:round;stroke-linejoin:round;
 }
-.map-card .dot{fill:var(--surface-app);stroke:var(--text-1);stroke-width:3}
-.map-card .dot.head{fill:var(--text-1)}
+.map-card .dot{fill:var(--neutral-0);stroke:var(--accent);stroke-width:3}
+.map-card .dot.head{fill:var(--accent);stroke:var(--neutral-0);stroke-width:2}
 .map-head{
   display:flex;align-items:center;gap:var(--space-8);
   padding:var(--space-12) var(--space-16) var(--space-8);
@@ -485,24 +531,6 @@ body{
 .map-head svg{width:16px;height:16px;color:var(--text-2)}
 .map-head .place{flex:1;font-size:15px;line-height:22px;font-weight:var(--weight-semibold)}
 .map-head .caret{width:16px;height:16px;color:var(--text-3)}
-
-/* The KM / TIME / KCAL pill that floats over the map on the details page. */
-.map-pill{
-  position:absolute;left:var(--space-12);right:var(--space-12);top:var(--space-12);
-  display:flex;background:rgba(15,17,27,.86);
-  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
-  border-radius:var(--radius-full);padding:var(--space-8) 0;
-}
-.map-pill .cell{flex:1;text-align:center}
-.map-pill .cell + .cell{border-left:var(--border-hairline) solid var(--neutral-600)}
-.map-pill .v{
-  display:block;font-family:var(--font-number);font-feature-settings:var(--num-features);
-  font-weight:var(--weight-bold);font-size:20px;line-height:24px;color:var(--text-1);
-}
-.map-pill .k{
-  display:block;font-size:10px;line-height:14px;letter-spacing:0.08em;
-  text-transform:uppercase;color:var(--text-3);
-}
 
 /* ── Discard confirmation ──────────────────────────────────────────────── */
 .scrim{
@@ -526,138 +554,167 @@ body{
 .dialog .btns{display:flex;gap:var(--space-12)}
 .dialog .btns .btn{flex:1}
 
-/* ── 8. SCREEN 5 — WORKOUT DETAILS ─────────────────────────────────────── */
-/* Structure carried over from the approved Workout Details page: top bar,
-   identity, Session Summary, calories + stat grid, heart rate + zones.
-   New here: the GPS map card for distance activities, and every number is
-   read from the session that just finished instead of being hard-coded. */
-.wd{padding:40px var(--gutter) var(--space-24);display:flex;flex-direction:column;gap:var(--space-12)}
-.wd .topbar{display:flex;align-items:center;justify-content:space-between}
-.wd .topbar .title{font-size:17px;line-height:22px;font-weight:var(--weight-semibold)}
-
-.workout-id{display:flex;align-items:center;gap:var(--space-16);padding:var(--space-8) 0 var(--space-4)}
-.workout-id .badge{
-  width:60px;height:60px;border-radius:var(--radius-16);background:var(--surface-card);
-  display:flex;align-items:center;justify-content:center;color:var(--text-1);flex:none;
+/* ── 8. SCREEN 5 — WORKOUT DETAILS ─────────────────────────────────────────
+   The approved Workout details screen (artifact 1a19949a), reproduced here
+   and wired to the session that just finished: sticky header, stat tiles,
+   then one heart-rate card holding the scrubbable chart and the five zone
+   rows. The only addition is the map card for GPS activities. */
+#p-details.on{display:flex;flex-direction:column}
+.wd-scroll{padding-bottom:96px}   /* clears the floating nav pill */
+.nav-float{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:20px;z-index:55;
 }
-.workout-id .badge svg{width:30px;height:30px}
-.workout-id .name{
-  margin:0;font-size:20px;line-height:26px;font-weight:var(--weight-bold);letter-spacing:-0.005em;
-}
-.workout-id .time{margin:var(--space-2) 0 0;font-size:13px;line-height:18px;color:var(--text-3)}
 
-/* Session Summary — gold outline + faint gold wash, per the wireframe. */
-.card.summary{
-  border:var(--border-thin) solid var(--gold-600);
-  background:linear-gradient(180deg,color-mix(in oklab,var(--gold-900) 35%,var(--surface-card)),var(--surface-card) 70%);
-  padding:var(--space-20) var(--space-16);
+/* Sticky header. 96px total: the top 32px is the strip the status bar floats
+   over, the 64px below is the header proper. It paints app background at 80%
+   with a blur, so cards read through as they scroll under it. */
+.head{
+  position:sticky;top:0;z-index:20;
+  height:calc(var(--space-32) + 64px);
+  padding:var(--space-32) var(--gutter) 0;
+  background:color-mix(in srgb, var(--surface-app) 80%, transparent);
+  -webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px);
+  display:flex;align-items:center;gap:var(--space-8);
 }
-.summary .head{display:flex;align-items:center;gap:var(--space-8);margin-bottom:var(--space-8)}
-.summary .head svg{width:20px;height:20px;color:var(--gold-400)}
-.summary .head h2{margin:0;font-size:17px;line-height:22px;font-weight:var(--weight-semibold)}
-.summary p{margin:0;font-size:15px;line-height:22px;color:var(--text-2)}
+.hdrbtn{
+  flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  background:none;border:0;cursor:pointer;border-radius:var(--radius-full);
+  color:var(--neutral-100);
+}
+.hdrbtn.back{margin-left:-12px}    /* pulls the optically narrow caret onto the content edge */
+.hdrbtn.share{margin-right:-4px}
+.hdrbtn:hover{background:var(--surface-raised)}
+.hdrbtn [data-icon]{width:20px;height:20px}
 
-.kcal .figure{display:flex;align-items:baseline;gap:var(--space-4)}
-.kcal .value{
+/* the icon chip from the Workouts card rows, unchanged */
+.chip{
+  flex:none;display:grid;place-items:center;width:40px;height:40px;
+  border-radius:var(--radius-12);background:var(--neutral-700);
+  color:var(--neutral-100);
+}
+.chip [data-icon]{width:20px;height:20px}
+
+.wd-title{flex:1;min-width:0;display:flex;flex-direction:column}
+.wd-title .name{
+  font-size:15px;line-height:22px;font-weight:var(--weight-medium);color:var(--text-1);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.wd-title .when{font-size:11px;line-height:16px;color:var(--text-3)}
+
+.body{padding:var(--space-16) var(--gutter) var(--space-40);display:flex;flex-direction:column;gap:var(--space-12)}
+
+/* ---- stat tiles: label on top, figure under it, one box each ---- */
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-8)}
+.tile{background:var(--surface-card);border-radius:var(--radius-24);padding:var(--space-16)}
+.tile .label{
+  font-size:11px;line-height:16px;font-weight:var(--weight-medium);
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);
+  margin-bottom:var(--space-8);
+}
+.tile .figure{display:flex;align-items:baseline;gap:var(--space-4)}
+.tile .value{
   font-family:var(--font-number);font-feature-settings:var(--num-features);
-  font-weight:var(--weight-bold);font-size:42px;line-height:46px;letter-spacing:-0.01em;
-}
-.kcal .unit{
-  font-size:13px;line-height:16px;font-weight:var(--weight-semibold);
-  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
-}
-.kcal .context{margin:var(--space-4) 0 0;font-size:15px;line-height:22px;color:var(--text-3)}
-
-/* Two across, as many rows as the activity needs. Hairlines are drawn by
-   row/column position so the grid can be 4 or 6 tiles without new CSS. */
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;margin-top:var(--space-16)}
-.stat-tile{padding:var(--space-16) 0 var(--space-8);border-top:var(--border-hairline) solid var(--divider)}
-.stat-tile:nth-child(odd){border-right:var(--border-hairline) solid var(--divider);padding-right:var(--space-16)}
-.stat-tile:nth-child(even){padding-left:var(--space-16)}
-.stat-tile .label{
-  display:flex;align-items:center;gap:var(--space-8);margin-bottom:var(--space-8);
-  font-size:13px;line-height:18px;font-weight:var(--weight-medium);color:var(--text-3);
-}
-.stat-tile .label svg{width:14px;height:14px;flex:none}
-.stat-tile .figure{display:flex;align-items:baseline;gap:var(--space-4)}
-.stat-tile .value{
-  font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-variant-numeric:tabular-nums lining-nums;
   font-weight:var(--weight-bold);font-size:24px;line-height:28px;letter-spacing:-0.005em;
+  color:var(--text-1);
 }
-/* Effort and Peak zone are words, not numerals — Spartan is numerals-only,
-   so they use the text family at a matching size. */
-.stat-tile .value.word{font-family:var(--font-text);font-size:20px;line-height:28px;letter-spacing:-0.005em}
-.stat-tile .unit{
-  font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
+/* A value that is a word, not a figure — Spartan is numerals-only, so Effort
+   steps to the text face at heading h2 semibold: same tracking, one size down. */
+.tile .value.word{
+  font-family:var(--font-text);font-size:20px;line-height:28px;font-weight:var(--weight-semibold);
+  font-variant-numeric:normal;font-feature-settings:normal;
+}
+.tile .unit{
+  font-size:11px;line-height:16px;font-weight:var(--weight-medium);
   letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
 }
 
-.hr-head{display:flex;align-items:center;gap:var(--space-8);margin-bottom:var(--space-16)}
-.hr-head svg{width:18px;height:18px;color:var(--metric-heart-rate)}
-.hr-head h2{margin:0;font-size:17px;line-height:22px;font-weight:var(--weight-semibold)}
-.hr-stats{display:flex;margin-bottom:var(--space-20)}
-.hr-stats .cell{flex:1}
-.hr-stats .cell + .cell{border-left:var(--border-hairline) solid var(--divider);padding-left:var(--space-16)}
-.hr-stats .figure{display:flex;align-items:baseline;gap:var(--space-4)}
-.hr-stats .value{
-  font-family:var(--font-number);font-feature-settings:var(--num-features);
-  font-weight:var(--weight-bold);font-size:24px;line-height:28px;
+/* ---- the map card (GPS activities only) ---- */
+.mapcard{background:var(--surface-card);border-radius:var(--radius-card);padding:var(--space-12)}
+.mapcard .map-card{margin-top:0}
+
+/* ---- heart-rate card: chart + zones in one surface ---- */
+.hr-card{background:var(--surface-card);border-radius:var(--radius-20);width:100%}
+.hr-rule{height:0;margin:0 var(--space-16);border-top:var(--border-hairline) solid var(--divider)}
+.lc{
+  --chart-accent:var(--metric-heart-rate);
+  padding:var(--space-16);height:216px;display:flex;flex-direction:column;
 }
-.hr-stats .unit{
-  font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
+.lc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-8);flex:none}
+.lc-title{margin:0;font-size:15px;line-height:22px;font-weight:var(--weight-medium);color:var(--text-1);white-space:nowrap}
+.lc-block{text-align:right}
+.lc-row{display:flex;align-items:baseline;gap:var(--space-4);justify-content:flex-end}
+.lc-value{
+  font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-variant-numeric:tabular-nums lining-nums;
+  font-weight:var(--weight-bold);font-size:24px;line-height:28px;letter-spacing:-0.005em;color:var(--text-1);
+}
+.lc-unit{
+  font-size:11px;line-height:16px;font-weight:var(--weight-medium);
   letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
 }
-.hr-stats .caption{margin-top:var(--space-2);font-size:13px;line-height:18px;color:var(--text-3)}
+/* resting and scrubbing labels share a 16px line box, so pressing the chart
+   never shifts the header */
+.lc-sub{
+  margin-top:var(--space-4);display:flex;align-items:center;justify-content:flex-end;gap:var(--space-4);
+  font-size:11px;line-height:16px;font-weight:var(--weight-medium);color:var(--text-2);
+}
+.lc-sub.scrubbing{
+  font-family:var(--font-number);font-size:13px;line-height:16px;
+  font-feature-settings:var(--num-features);
+}
+.lc-wrap{position:relative;flex:1;min-height:0;margin-top:var(--space-16)}
+.lc-wrap svg{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.lc-gridline{stroke:var(--gridline);stroke-width:0.5}
+.lc-y-label,.lc-x-label{
+  font-family:var(--font-number);font-size:10px;font-feature-settings:var(--num-features);
+  letter-spacing:0.01em;fill:var(--text-3);
+}
+.lc-pill-bg{fill:var(--neutral-700)}
+.lc-pill-label{
+  font-family:var(--font-number);font-size:10px;font-feature-settings:var(--num-features);
+  letter-spacing:0.01em;fill:var(--text-2);
+}
+.lc-line{fill:none;stroke:var(--chart-accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.lc-plot{transition:opacity var(--duration-base) var(--ease-standard)}
+.lc-plot.dim{opacity:0.28}
+.lc-hover-line{stroke:var(--text-3);stroke-width:1;stroke-dasharray:3 3;opacity:0}
+.lc-hover-dot{fill:var(--chart-accent);stroke:var(--text-1);stroke-width:1.5;opacity:0}
+@media (prefers-reduced-motion:reduce){ .lc-plot{transition:none} }
 
-.hr-chart svg{width:100%;height:auto;display:block}
-.hr-chart .grid-line{stroke:var(--gridline);stroke-width:var(--border-thin);stroke-dasharray:3 4}
-.hr-chart .axis-num{
-  font-family:var(--font-number);font-feature-settings:var(--num-features);
-  font-size:10px;fill:var(--text-3);
+/* ---- zones: five rows, no container per zone ---- */
+.hrz{padding:var(--space-16);display:flex;flex-direction:column;gap:var(--space-16)}
+.hrz-row{display:grid;grid-template-columns:1fr auto;align-items:baseline;column-gap:var(--space-8);row-gap:var(--space-8)}
+.hrz-label{display:flex;align-items:baseline;gap:6px;min-width:0}
+.hrz-name{
+  font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-1);white-space:nowrap;
 }
-.hr-chart .trace{fill:none;stroke:var(--text-1);stroke-width:var(--stroke-chart-line);stroke-linejoin:round;stroke-linecap:round}
-.hr-chart .trace-fill{fill:var(--surface-raised);opacity:.55}
-.hr-xlabels{display:flex;justify-content:space-between;padding-right:var(--space-32);margin-top:var(--space-4)}
-.hr-xlabels span{
-  font-family:var(--font-number);font-feature-settings:var(--num-features);
-  font-size:13px;line-height:16px;color:var(--text-3);
+.hrz-range,.hrz-pct{
+  font-family:var(--font-number);font-size:10px;line-height:12px;letter-spacing:0.01em;
+  font-feature-settings:var(--num-features);white-space:nowrap;
 }
+.hrz-range{color:var(--text-3);overflow:hidden;text-overflow:ellipsis}
+.hrz-pct{color:var(--zone)}          /* the zone hue is the only colour in the row */
+.hrz-dur{
+  justify-self:end;font-family:var(--font-number);font-size:13px;line-height:16px;
+  font-weight:var(--weight-medium);font-variant-numeric:tabular-nums lining-nums;
+  font-feature-settings:var(--num-features);color:var(--text-1);white-space:nowrap;
+}
+.hrz-bar{
+  grid-column:1/-1;display:block;height:var(--space-8);border-radius:var(--radius-full);
+  background:var(--surface-raised);
+  box-shadow:inset 0 0 0 var(--border-hairline) var(--neutral-500);
+  overflow:hidden;
+}
+.hrz-bar i{display:block;height:100%;border-radius:var(--radius-full);background:var(--zone)}
 
-.zones{
-  margin-top:var(--space-16);padding-top:var(--space-16);
-  border-top:var(--border-hairline) solid var(--divider);
-  display:flex;flex-direction:column;gap:var(--space-8);
+/* Android gesture bar — phone chrome, sits over everything. */
+.gesture{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:112px;height:4px;border-radius:var(--radius-full);
+  background:var(--neutral-600);z-index:60;pointer-events:none;
 }
-.zone{background:var(--surface-raised);border-radius:var(--radius-16);padding:var(--space-12)}
-.zone .head{display:flex;align-items:baseline;gap:var(--space-8);margin-bottom:var(--space-8);white-space:nowrap}
-.zone .name{
-  font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
-  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-1);
-}
-/* Flag: the source details page also showed each zone's bpm range here. At
-   360px the longest zone name plus a range can't hold one line, so the
-   range is dropped on this screen. */
-.zone .pct{font-family:var(--font-number);font-feature-settings:var(--num-features);font-size:13px;font-weight:var(--weight-medium)}
-.zone .time{margin-left:auto;display:flex;align-items:baseline;gap:var(--space-4)}
-.zone .time .value{
-  font-family:var(--font-number);font-feature-settings:var(--num-features);
-  font-weight:var(--weight-bold);font-size:20px;line-height:24px;
-}
-.zone .time .unit{
-  font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
-  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
-}
-/* Hatched track = the part of the session spent outside this zone. */
-.zone .track{
-  height:14px;border-radius:var(--radius-8);overflow:hidden;
-  background:repeating-linear-gradient(135deg,var(--surface-fill) 0 2px,transparent 2px 7px);
-}
-.zone .fill{height:100%;border-radius:var(--radius-8);transition:width var(--duration-slow) var(--ease-standard)}
-.zone.z-limit .fill{background:var(--zone-limit)}     .zone.z-limit .pct{color:var(--zone-limit)}
-.zone.z-anaerobic .fill{background:var(--zone-anaerobic)} .zone.z-anaerobic .pct{color:var(--zone-anaerobic)}
-.zone.z-aerobic .fill{background:var(--zone-aerobic)} .zone.z-aerobic .pct{color:var(--zone-aerobic)}
-.zone.z-fatburn .fill{background:var(--zone-fatburn)} .zone.z-fatburn .pct{color:var(--zone-fatburn)}
-.zone.z-warmup .fill{background:var(--zone-warmup)}   .zone.z-warmup .pct{color:var(--zone-warmup)}
 
 /* Narrow viewports: drop the desk, let the phone fill the glass. */
 @media (max-width:820px){
@@ -706,10 +763,10 @@ body{
       <!-- ── SCREEN 2 · Choose Activity ────────────────────────────────── -->
       <section class="page picker" id="p-picker">
         <div class="pk-head">
-          <button class="icon-btn" type="button" id="btn-picker-close" aria-label="Close">
+          <button class="icon-btn plain" type="button" id="btn-picker-close" aria-label="Close">
             <span data-icon="x"></span>
           </button>
-          <span class="t">Choose Activity</span>
+          <span class="t">Choose activity</span>
         </div>
 
         <!-- Search filters by activity name, across both sections. -->
@@ -725,10 +782,10 @@ body{
         <div class="scroll">
           <!-- Most recent: the five the owner's screenshot shows, re-ordered
                as sessions are saved in this prototype. -->
-          <div class="sec-label" data-recent-label><span>Most recent</span><i></i></div>
+          <div class="sec-label" data-recent-label><span>Most recent</span></div>
           <div class="act-list" id="list-recent"></div>
 
-          <div class="sec-label" data-all-label><span>All A–Z</span><i></i></div>
+          <div class="sec-label" data-all-label><span>All A–Z</span></div>
           <div class="act-list" id="list-all"></div>
 
           <p class="no-results">No results found</p>
@@ -773,9 +830,9 @@ body{
           </div>
 
           <div class="aw-stats">
-            <div class="cell"><span class="v" id="aw-dur">00:00</span><span class="k">Duration</span></div>
-            <div class="cell"><span class="v" id="aw-kcal">0</span><span class="k">Kcal</span></div>
-            <div class="cell"><span class="v" id="aw-third">0</span><span class="k" id="aw-third-label">Reps</span></div>
+            <div class="cell"><span class="k">Duration</span><span class="v" id="aw-dur">00:00</span></div>
+            <div class="cell"><span class="k">Kcal</span><span class="v" id="aw-kcal">0</span></div>
+            <div class="cell"><span class="k" id="aw-third-label">Reps</span><span class="v" id="aw-third">0</span></div>
           </div>
 
           <div class="spacer"></div>
@@ -789,80 +846,67 @@ body{
       </section>
 
       <!-- ── SCREEN 5 · Workout details (the saved session) ────────────── -->
+      <!-- Structure and styling are the approved Workout details screen; the
+           numbers are read back from the session that just ran. -->
       <section class="page" id="p-details">
-        <div class="scroll">
-          <div class="wd">
-            <header class="topbar">
-              <button class="icon-btn" type="button" id="btn-wd-back" aria-label="Back">
-                <span data-icon="caret-left"></span>
-              </button>
-              <span class="title" id="wd-date">Today, 26 Aug</span>
-              <button class="icon-btn" type="button" aria-label="Share workout">
-                <span data-icon="export"></span>
-              </button>
-            </header>
+        <div class="scroll wd-scroll">
 
-            <section class="workout-id">
-              <div class="badge" id="wd-badge" aria-hidden="true"></div>
-              <div>
-                <h1 class="name" id="wd-name">Strength Training</h1>
-                <p class="time" id="wd-time">7:10 AM – 7:55 AM</p>
-              </div>
-            </section>
+          <header class="head">
+            <button class="hdrbtn back" type="button" id="btn-wd-back" aria-label="Back">
+              <span data-icon="caret-left"></span>
+            </button>
+            <span class="chip" id="wd-chip" aria-hidden="true"></span>
+            <span class="wd-title">
+              <span class="name" id="wd-name">Strength training</span>
+              <span class="when" id="wd-when">10:15 – 11:00 AM</span>
+            </span>
+            <button class="hdrbtn share" type="button" aria-label="Share workout">
+              <span data-icon="share-network"></span>
+            </button>
+          </header>
 
-            <section class="card summary">
-              <div class="head">
-                <span data-icon="sparkle" data-weight="fill"></span>
-                <h2>Session Summary</h2>
-              </div>
-              <p id="wd-summary"></p>
-            </section>
+          <div class="body">
 
-            <!-- GPS map + KM / TIME / KCAL pill — distance activities only. -->
-            <section class="card" id="wd-map-card" hidden style="padding:0">
+            <!-- Route map — GPS activities only. -->
+            <section class="mapcard" id="wd-map-card" hidden>
               <div class="map-head">
                 <span data-icon="navigation-arrow" data-weight="fill"></span>
                 <span class="place">New Delhi, Delhi</span>
                 <span class="caret" data-icon="caret-right"></span>
               </div>
-              <div class="map-card" id="wd-map" style="margin:0 var(--space-12) var(--space-12)"></div>
+              <div class="map-card" id="wd-map"></div>
             </section>
 
-            <section class="card">
-              <div class="kcal">
-                <div class="figure">
-                  <span class="value num" id="wd-kcal">0</span>
-                  <span class="unit">kcal</span>
-                </div>
-                <p class="context" id="wd-context"></p>
-              </div>
-              <div class="stats-grid" id="wd-tiles"></div>
-            </section>
+            <div class="tiles" id="wd-tiles"></div>
 
-            <section class="card">
-              <div class="hr-head">
-                <span data-icon="heart" data-weight="fill"></span>
-                <h2>Heart Rate</h2>
-              </div>
-              <div class="hr-stats">
-                <div class="cell">
-                  <div class="figure"><span class="value" id="wd-avghr">0</span><span class="unit">bpm</span></div>
-                  <div class="caption">Avg heart rate</div>
+            <div class="hr-card">
+              <div class="lc">
+                <div class="lc-header">
+                  <h3 class="lc-title">Heart rate</h3>
+                  <div class="lc-block">
+                    <div class="lc-row">
+                      <span class="lc-value" id="hrValue">0</span>
+                      <span class="lc-unit">bpm</span>
+                    </div>
+                    <div class="lc-sub" id="hrSub"><span id="hrSubText">Average</span></div>
+                  </div>
                 </div>
-                <div class="cell">
-                  <div class="figure"><span class="value" id="wd-maxhr">0</span><span class="unit">bpm</span></div>
-                  <div class="caption">Max heart rate</div>
+                <div class="lc-wrap" id="chartWrap">
+                  <svg id="chart" role="img" aria-label="Heart rate through the workout"></svg>
                 </div>
               </div>
-              <div class="hr-chart" id="wd-chart"></div>
-              <div class="zones" id="wd-zones"></div>
-            </section>
+              <div class="hr-rule"></div>
+              <div class="hrz" id="wd-zones"></div>
+            </div>
+
           </div>
         </div>
-        <div class="nav-slot"><nav class="pebble-nav" aria-label="Primary" data-nav></nav></div>
+        <div class="nav-float"><nav class="pebble-nav" aria-label="Primary" data-nav></nav></div>
       </section>
 
     </div><!-- /.pages -->
+
+    <div class="gesture"></div>
 
     <!-- Discard confirmation — owner copy, Cancel on the left. -->
     <div class="scrim" id="scrim" role="dialog" aria-modal="true" aria-labelledby="dlg-copy">
@@ -903,8 +947,6 @@ body{
 .map-head [data-icon]{width:16px;height:16px}
 .summary .head [data-icon]{width:20px;height:20px}
 .hr-head [data-icon]{width:18px;height:18px}
-.stat-tile .label [data-icon]{width:14px;height:14px}
-.workout-id .badge [data-icon]{width:30px;height:30px}
 .act-row .glyph[data-icon]{width:28px;height:28px}
 .act-row .caret[data-icon]{width:18px;height:18px}
 </style>
@@ -915,7 +957,7 @@ body{
    file works offline. Rendered into any <span data-icon="name"
    data-weight="fill"> found in the DOM.
    ══════════════════════════════════════════════════════════════════════════ */
-const ICONS = {"regular":{"x":"<path d=\"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z\"/>","magnifying-glass":"<path d=\"M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z\"/>","caret-right":"<path d=\"M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z\"/>","caret-left":"<path d=\"M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z\"/>","play":"<path d=\"M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z\"/>","pause":"<path d=\"M200,32H160a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16h40a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm0,176H160V48h40ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Zm0,176H56V48H96Z\"/>","trash":"<path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z\"/>","floppy-disk":"<path d=\"M219.31,72,184,36.69A15.86,15.86,0,0,0,172.69,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V83.31A15.86,15.86,0,0,0,219.31,72ZM168,208H88V152h80Zm40,0H184V152a16,16,0,0,0-16-16H88a16,16,0,0,0-16,16v56H48V48H172.69L208,83.31ZM160,72a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h56A8,8,0,0,1,160,72Z\"/>","export":"<path d=\"M216,112v96a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V112A16,16,0,0,1,56,96H80a8,8,0,0,1,0,16H56v96H200V112H176a8,8,0,0,1,0-16h24A16,16,0,0,1,216,112ZM93.66,69.66,120,43.31V136a8,8,0,0,0,16,0V43.31l26.34,26.35a8,8,0,0,0,11.32-11.32l-40-40a8,8,0,0,0-11.32,0l-40,40A8,8,0,0,0,93.66,69.66Z\"/>","sparkle":"<path d=\"M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z\"/>","navigation-arrow":"<path d=\"M237.33,106.21,61.41,41l-.16-.05A16,16,0,0,0,40.9,61.25a1,1,0,0,0,.05.16l65.26,175.92A15.77,15.77,0,0,0,121.28,248h.3a15.77,15.77,0,0,0,15-11.29l.06-.2,21.84-78,78-21.84.2-.06a16,16,0,0,0,.62-30.38ZM149.84,144.3a8,8,0,0,0-5.54,5.54L121.3,232l-.06-.17L56,56l175.82,65.22.16.06Z\"/>","clock":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z\"/>","heart":"<path d=\"M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,228.66,240,172,240,102A62.07,62.07,0,0,0,178,40ZM128,214.8C109.74,204.16,32,155.69,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,155.61,146.24,204.15,128,214.8Z\"/>","fire":"<path d=\"M183.89,153.34a57.6,57.6,0,0,1-46.56,46.55A8.75,8.75,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68ZM216,144a88,88,0,0,1-176,0c0-27.92,11-56.47,32.66-84.85a8,8,0,0,1,11.93-.89l24.12,23.41,22-60.41a8,8,0,0,1,12.63-3.41C165.21,36,216,84.55,216,144Zm-16,0c0-46.09-35.79-85.92-58.21-106.33L119.52,98.74a8,8,0,0,1-13.09,3L80.06,76.16C64.09,99.21,56,122,56,144a72,72,0,0,0,144,0Z\"/>","gauge":"<path d=\"M207.06,72.67A111.24,111.24,0,0,0,128,40h-.4C66.07,40.21,16,91,16,153.13V176a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V152A111.25,111.25,0,0,0,207.06,72.67ZM224,176H119.71l54.76-75.3a8,8,0,0,0-12.94-9.42L99.92,176H32V153.13c0-3.08.15-6.12.43-9.13H56a8,8,0,0,0,0-16H35.27c10.32-38.86,44-68.24,84.73-71.66V80a8,8,0,0,0,16,0V56.33A96.14,96.14,0,0,1,221,128H200a8,8,0,0,0,0,16h23.67c.21,2.65.33,5.31.33,8Z\"/>","speedometer":"<path d=\"M114.34,154.34l96-96a8,8,0,0,1,11.32,11.32l-96,96a8,8,0,0,1-11.32-11.32ZM128,88a63.9,63.9,0,0,1,20.44,3.33,8,8,0,1,0,5.11-15.16A80,80,0,0,0,48.49,160.88,8,8,0,0,0,56.43,168c.29,0,.59,0,.89-.05a8,8,0,0,0,7.07-8.83A64.92,64.92,0,0,1,64,152,64.07,64.07,0,0,1,128,88Zm99.74,13a8,8,0,0,0-14.24,7.3,96.27,96.27,0,0,1,5,75.71l-181.1-.07A96.24,96.24,0,0,1,128,56h.88a95,95,0,0,1,42.82,10.5A8,8,0,1,0,179,52.27a112,112,0,0,0-156.66,137A16.07,16.07,0,0,0,37.46,200H218.53a16,16,0,0,0,15.11-10.71,112.35,112.35,0,0,0-5.9-88.3Z\"/>","ruler":"<path d=\"M235.32,73.37,182.63,20.69a16,16,0,0,0-22.63,0L20.68,160a16,16,0,0,0,0,22.63l52.69,52.68a16,16,0,0,0,22.63,0L235.32,96A16,16,0,0,0,235.32,73.37ZM84.68,224,32,171.31l32-32,26.34,26.35a8,8,0,0,0,11.32-11.32L75.31,128,96,107.31l26.34,26.35a8,8,0,0,0,11.32-11.32L107.31,96,128,75.31l26.34,26.35a8,8,0,0,0,11.32-11.32L139.31,64l32-32L224,84.69Z\"/>","map-pin":"<path d=\"M128,64a40,40,0,1,0,40,40A40,40,0,0,0,128,64Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,128Zm0-112a88.1,88.1,0,0,0-88,88c0,31.4,14.51,64.68,42,96.25a254.19,254.19,0,0,0,41.45,38.3,8,8,0,0,0,9.18,0A254.19,254.19,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25A88.1,88.1,0,0,0,128,16Zm0,206c-16.53-13-72-60.75-72-118a72,72,0,0,1,144,0C200,161.23,144.53,209,128,222Z\"/>","timer":"<path d=\"M128,40a96,96,0,1,0,96,96A96.11,96.11,0,0,0,128,40Zm0,176a80,80,0,1,1,80-80A80.09,80.09,0,0,1,128,216ZM173.66,90.34a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32l40-40A8,8,0,0,1,173.66,90.34ZM96,16a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,16Z\"/>","house":"<path d=\"M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z\"/>","sneaker-move":"<path d=\"M231.16,166.63l-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-8-8,48.05,48.05,0,0,1-48-48,8,8,0,0,0-12.83-6.37L30.13,76l-.2.16a16,16,0,0,0-1.24,23.75L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63ZM224,200H151.37L40,88.63l12.87-9.76,38.79,38.79A8,8,0,0,0,103,106.34L65.74,69.11l40-30.31A64.15,64.15,0,0,0,160,87.5v21.89a63.65,63.65,0,0,0,35.38,57.24L224,180.94ZM70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm40,24a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16h54.8A8,8,0,0,1,110.8,208Z\"/>","moon":"<path d=\"M233.54,142.23a8,8,0,0,0-8-2,88.08,88.08,0,0,1-109.8-109.8,8,8,0,0,0-10-10,104.84,104.84,0,0,0-52.91,37A104,104,0,0,0,136,224a103.09,103.09,0,0,0,62.52-20.88,104.84,104.84,0,0,0,37-52.91A8,8,0,0,0,233.54,142.23ZM188.9,190.34A88,88,0,0,1,65.66,67.11a89,89,0,0,1,31.4-26A106,106,0,0,0,96,56,104.11,104.11,0,0,0,200,160a106,106,0,0,0,14.92-1.06A89,89,0,0,1,188.9,190.34Z\"/>","user":"<path d=\"M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z\"/>","barbell":"<path d=\"M248,120h-8V88a16,16,0,0,0-16-16H208V64a16,16,0,0,0-16-16H168a16,16,0,0,0-16,16v56H104V64A16,16,0,0,0,88,48H64A16,16,0,0,0,48,64v8H32A16,16,0,0,0,16,88v32H8a8,8,0,0,0,0,16h8v32a16,16,0,0,0,16,16H48v8a16,16,0,0,0,16,16H88a16,16,0,0,0,16-16V136h48v56a16,16,0,0,0,16,16h24a16,16,0,0,0,16-16v-8h16a16,16,0,0,0,16-16V136h8a8,8,0,0,0,0-16ZM32,168V88H48v80Zm56,24H64V64H88V192Zm104,0H168V64h24V175.82c0,.06,0,.12,0,.18s0,.12,0,.18V192Zm32-24H208V88h16Z\"/>","person-arms-spread":"<path d=\"M160,40a32,32,0,1,0-32,32A32,32,0,0,0,160,40ZM128,56a16,16,0,1,1,16-16A16,16,0,0,1,128,56ZM231.5,87.71A19.62,19.62,0,0,0,212,72H44a20,20,0,0,0-8.38,38.16l.13,0,50.75,22.35-21,79.72A20,20,0,0,0,102,228.8l26-44.87,26,44.87a20,20,0,0,0,36.4-16.52l-21-79.72,50.75-22.35.13,0A19.64,19.64,0,0,0,231.5,87.71Zm-17.8,7.9-56.93,25.06a8,8,0,0,0-4.51,9.36L175.13,217a7,7,0,0,0,.49,1.35,4,4,0,0,1-5,5.45,4,4,0,0,1-2.25-2.07,6.31,6.31,0,0,0-.34-.63L134.92,164a8,8,0,0,0-13.84,0L88,221.05a6.31,6.31,0,0,0-.34.63,4,4,0,0,1-2.25,2.07,4,4,0,0,1-5-5.45,7,7,0,0,0,.49-1.35L103.74,130a8,8,0,0,0-4.51-9.36L42.3,95.61A4,4,0,0,1,44,88H212a4,4,0,0,1,1.73,7.61Z\"/>","person-simple-walk":"<path d=\"M152,80a32,32,0,1,0-32-32A32,32,0,0,0,152,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,152,32Zm64,112a8,8,0,0,1-8,8c-35.31,0-52.95-17.81-67.12-32.12-2.74-2.77-5.36-5.4-8-7.84l-13.43,30.88,37.2,26.57A8,8,0,0,1,160,176v56a8,8,0,0,1-16,0V180.12l-31.07-22.2L79.34,235.19A8,8,0,0,1,72,240a7.84,7.84,0,0,1-3.19-.67,8,8,0,0,1-4.15-10.52l54.08-124.37c-9.31-1.65-20.92,1.2-34.7,8.58a163.88,163.88,0,0,0-30.57,21.77,8,8,0,0,1-10.95-11.66c2.5-2.35,61.69-57.23,98.72-25.08,3.83,3.32,7.48,7,11,10.57C166.19,122.7,179.36,136,208,136A8,8,0,0,1,216,144Z\"/>","person-simple-run":"<path d=\"M152,88a32,32,0,1,0-32-32A32,32,0,0,0,152,88Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,152,40Zm67.31,100.68c-.61.28-7.49,3.28-19.67,3.28-13.85,0-34.55-3.88-60.69-20a169.31,169.31,0,0,1-15.41,32.34,104.29,104.29,0,0,1,31.31,15.81C173.92,186.65,184,207.35,184,232a8,8,0,0,1-16,0c0-41.7-34.69-56.71-54.14-61.85-.55.7-1.12,1.41-1.69,2.1-19.64,23.8-44.25,36.18-71.63,36.18A92.29,92.29,0,0,1,31.2,208,8,8,0,0,1,32.8,192c25.92,2.58,48.47-7.49,67-30,12.49-15.14,21-33.61,25.25-47C86.13,92.35,61.27,111.63,61,111.84A8,8,0,1,1,51,99.36c1.5-1.2,37.22-29,89.51,6.57,45.47,30.91,71.93,20.31,72.18,20.19a8,8,0,1,1,6.63,14.56Z\"/>","person-simple-bike":"<path d=\"M164,80a28,28,0,1,0-28-28A28,28,0,0,0,164,80Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,164,40Zm36,96a40,40,0,1,0,40,40A40,40,0,0,0,200,136Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,200,200ZM56,136a40,40,0,1,0,40,40A40,40,0,0,0,56,136Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,56,200Zm136-80H152a8,8,0,0,1-5.66-2.34L120,91.31,99.31,112l34.35,34.34A8,8,0,0,1,136,152v48a8,8,0,0,1-16,0V155.31L82.34,117.66a8,8,0,0,1,0-11.32l32-32a8,8,0,0,1,11.32,0L155.31,104H192a8,8,0,0,1,0,16Z\"/>","person-simple-hike":"<path d=\"M152,80a32,32,0,1,0-32-32A32,32,0,0,0,152,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,152,32Zm48,112v88a8,8,0,0,1-16,0V151.66c-25.75-2.25-34.35-15.52-42-27.36-2.85-4.39-5.56-8.57-9.13-12.19l-13.4,30.81,37.2,26.57A8,8,0,0,1,160,176v56a8,8,0,0,1-16,0V180.12l-31.07-22.2L79.34,235.19A8,8,0,0,1,72,240a7.84,7.84,0,0,1-3.19-.67,8,8,0,0,1-4.14-10.52L122.19,96.5a8,8,0,0,1,11-3.92,40.92,40.92,0,0,1,8,5.47c6.37,5.52,10.51,11.91,14.16,17.55,7.68,11.84,13.22,20.4,36.6,20.4A8,8,0,0,1,200,144ZM72,152a8,8,0,0,0,7.35-4.85l24-56a8,8,0,0,0-4.2-10.5l-28-12a8,8,0,0,0-10.5,4.2l-24,56a8,8,0,0,0,4.2,10.5l28,12A8,8,0,0,0,72,152ZM54.51,127.8,72.2,86.5l13.3,5.7L67.8,133.49Z\"/>","lightning":"<path d=\"M215.79,118.17a8,8,0,0,0-5-5.66L153.18,90.9l14.66-73.33a8,8,0,0,0-13.69-7l-112,120a8,8,0,0,0,3,13l57.63,21.61L88.16,238.43a8,8,0,0,0,13.69,7l112-120A8,8,0,0,0,215.79,118.17ZM109.37,214l10.47-52.38a8,8,0,0,0-5-9.06L62,132.71l84.62-90.66L136.16,94.43a8,8,0,0,0,5,9.06l52.8,19.8Z\"/>","person-simple-tai-chi":"<path d=\"M128,80A32,32,0,1,0,96,48,32,32,0,0,0,128,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,128,32Zm96,72a8,8,0,0,1-8,8H136v26.72l51.15,21.93A8,8,0,0,1,192,168v48a8,8,0,0,1-16,0V173.28l-46.45-19.91L53.35,222a8,8,0,1,1-10.7-11.9L120,140.44V112H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,104Z\"/>","person-simple":"<path d=\"M128,80A32,32,0,1,0,96,48,32,32,0,0,0,128,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,128,32ZM230.86,132.12a8,8,0,0,1-11,2.74c-.35-.21-35.11-20.59-83.88-22.67V149l62,69.73a8,8,0,1,1-12,10.62L128,164,70,229.31a8,8,0,1,1-12-10.62L120,149V112.18c-49,2.08-83.52,22.46-83.88,22.68a8,8,0,1,1-8.23-13.72C29.6,120.11,70.45,96,128,96s98.4,24.11,100.12,25.14A8,8,0,0,1,230.86,132.12Z\"/>","boat":"<path d=\"M221.06,110.59,208,106.23V56a16,16,0,0,0-16-16H136V24a8,8,0,0,0-16,0V40H64A16,16,0,0,0,48,56v50.23l-13.06,4.36A16,16,0,0,0,24,125.77V152c0,61.54,97.89,86.72,102.06,87.76a8,8,0,0,0,3.88,0C134.11,238.72,232,213.54,232,152V125.77A16,16,0,0,0,221.06,110.59ZM64,56H192v44.9L130.53,80.41a8,8,0,0,0-5.06,0L64,100.9Zm152,96c0,24.91-23.68,43-43.55,53.83A228.13,228.13,0,0,1,128,223.72,226.85,226.85,0,0,1,83.81,206C47.6,186.35,40,165.79,40,152V125.77L120,99.1V168a8,8,0,0,0,16,0V99.1l80,26.67Z\"/>","person-simple-swim":"<path d=\"M176,104a32,32,0,1,0-32-32A32,32,0,0,0,176,104Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,176,56Zm46.16,129.24a8,8,0,0,1-1,11.26c-17.36,14.39-32.86,19.5-47,19.5-18.58,0-34.82-8.82-49.93-17-25.35-13.76-47.24-25.65-79.07.74a8,8,0,1,1-10.22-12.31c40.17-33.29,70.32-16.93,96.93-2.49,25.35,13.77,47.24,25.65,79.07-.74A8,8,0,0,1,222.16,185.24ZM34.89,147.42a8,8,0,1,0,10.22,12.31c31.83-26.38,53.72-14.5,79.07-.74,15.11,8.2,31.35,17,49.93,17,14.14,0,29.64-5.11,47-19.5a8,8,0,1,0-10.22-12.31,75.79,75.79,0,0,1-19.28,12.06l-53.84-53.82A103.34,103.34,0,0,0,64.24,72H40a8,8,0,0,0,0,16H64.24a87.66,87.66,0,0,1,41.88,10.56L76.49,128.17C63.82,129.35,50.07,134.84,34.89,147.42Zm91.57-33.67,46.13,46.12c-14-.43-26.88-7.39-40.77-14.93-10.75-5.84-22.09-12-34.42-15.05l22.26-22.26A87.14,87.14,0,0,1,126.46,113.75Z\"/>","stairs":"<path d=\"M200,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V40A16,16,0,0,0,200,24ZM152,144h48v24H112V144Zm8-16V104h40v24Zm40-88V88H152a8,8,0,0,0-8,8v32H104a8,8,0,0,0-8,8v32H56V40Zm0,176H56V184H200v32Z\"/>","person-simple-circle":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM112,80a16,16,0,1,1,16,16A16,16,0,0,1,112,80Zm72,32a8,8,0,0,1-8,8H136v13.58l30.66,46a8,8,0,0,1-13.32,8.88l-25.34-38-25.34,38a8,8,0,1,1-13.32-8.88l30.66-46V120H80a8,8,0,0,1,0-16h96A8,8,0,0,1,184,112Z\"/>","mountains":"<path d=\"M164,80a28,28,0,1,0-28-28A28,28,0,0,0,164,80Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,164,40Zm90.88,155.92-54.56-92.08A15.87,15.87,0,0,0,186.55,96h0a15.85,15.85,0,0,0-13.76,7.84L146.63,148l-44.84-76.1a16,16,0,0,0-27.58,0L1.11,195.94A8,8,0,0,0,8,208H248a8,8,0,0,0,6.88-12.08ZM88,80l23.57,40H64.43ZM22,192l33-56h66l18.74,31.8,0,0L154,192Zm150.57,0-16.66-28.28L186.55,112,234,192Z\"/>","boxing-glove":"<path d=\"M168,16H120A56.06,56.06,0,0,0,64,72H56a32,32,0,0,0-32,32v29.19a16.09,16.09,0,0,0,3.51,10,8,8,0,0,0,.62.69L64,179.34V216a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V177.12l15.38-53.85a15.89,15.89,0,0,0,.62-4.39V72A56.06,56.06,0,0,0,168,16Zm40,102.88L192.31,173.8A7.85,7.85,0,0,0,192,176v40H80V176a8,8,0,0,0-2.38-5.69L40,133.12V104A16,16,0,0,1,56,88h8v16a8,8,0,0,0,16,0V72a40,40,0,0,1,40-40h48a40,40,0,0,1,40,40Zm-36.42,48.28L153.89,176l17.69,8.84a8,8,0,0,1-7.16,14.32L136,184.94l-28.42,14.22a8,8,0,1,1-7.16-14.32L118.11,176l-17.69-8.84a8,8,0,1,1,7.16-14.32L136,167.06l28.42-14.22a8,8,0,1,1,7.16,14.32Z\"/>","basketball":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM60,72.17A87.2,87.2,0,0,1,79.63,120H40.37A87.54,87.54,0,0,1,60,72.17ZM136,120V40.37a87.59,87.59,0,0,1,48.68,20.37A103.06,103.06,0,0,0,160.3,120Zm-16,0H95.7A103.06,103.06,0,0,0,71.32,60.74,87.59,87.59,0,0,1,120,40.37ZM79.63,136A87.2,87.2,0,0,1,60,183.83,87.54,87.54,0,0,1,40.37,136Zm16.07,0H120v79.63a87.59,87.59,0,0,1-48.68-20.37A103.09,103.09,0,0,0,95.7,136Zm40.3,0h24.3a103.09,103.09,0,0,0,24.38,59.26A87.59,87.59,0,0,1,136,215.63Zm40.37,0h39.26A87.54,87.54,0,0,1,196,183.83,87.2,87.2,0,0,1,176.37,136Zm0-16A87.2,87.2,0,0,1,196,72.17,87.54,87.54,0,0,1,215.63,120Z\"/>","soccer-ball":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm76.52,147.42H170.9l-9.26-12.76,12.63-36.78,15-4.89,26.24,20.13A87.38,87.38,0,0,1,204.52,171.42Zm-164-34.3L66.71,117l15,4.89,12.63,36.78L85.1,171.42H51.48A87.38,87.38,0,0,1,40.47,137.12Zm10-50.64,5.51,18.6L40.71,116.77A87.33,87.33,0,0,1,50.43,86.48ZM109,152,97.54,118.65,128,97.71l30.46,20.94L147,152Zm91.07-46.92,5.51-18.6a87.33,87.33,0,0,1,9.72,30.29Zm-6.2-35.38-9.51,32.08-15.07,4.89L136,83.79V68.21l29.09-20A88.58,88.58,0,0,1,193.86,69.7ZM146.07,41.87,128,54.29,109.93,41.87a88.24,88.24,0,0,1,36.14,0ZM90.91,48.21l29.09,20V83.79L86.72,106.67l-15.07-4.89L62.14,69.7A88.58,88.58,0,0,1,90.91,48.21ZM63.15,187.42H83.52l7.17,20.27A88.4,88.4,0,0,1,63.15,187.42ZM110,214.13,98.12,180.71,107.35,168h41.3l9.23,12.71-11.83,33.42a88,88,0,0,1-36.1,0Zm55.36-6.44,7.17-20.27h20.37A88.4,88.4,0,0,1,165.31,207.69Z\"/>","tennis-ball":"<path d=\"M201.57,54.46a104,104,0,1,0,0,147.08A103.4,103.4,0,0,0,201.57,54.46ZM65.75,65.77a87.63,87.63,0,0,1,53.66-25.31A87.31,87.31,0,0,1,94,94.06a87.42,87.42,0,0,1-53.62,25.35A87.58,87.58,0,0,1,65.75,65.77ZM40.33,135.48a103.29,103.29,0,0,0,65-30.11,103.24,103.24,0,0,0,30.13-65,87.78,87.78,0,0,1,80.18,80.14,104,104,0,0,0-95.16,95.1,87.78,87.78,0,0,1-80.18-80.14Zm149.92,54.75a87.69,87.69,0,0,1-53.66,25.31,88,88,0,0,1,79-78.95A87.58,87.58,0,0,1,190.25,190.23Z\"/>","ping-pong":"<path d=\"M240,196a16,16,0,0,0-6.65-11.7l-38-27.15,17-16.95a39.67,39.67,0,0,0,11-35.79,99.52,99.52,0,0,0-35.4-57.89A101.93,101.93,0,0,0,122.58,24,100.29,100.29,0,0,0,24,122.58a102.12,102.12,0,0,0,22.55,65.28,99.52,99.52,0,0,0,57.89,35.4,39.68,39.68,0,0,0,35.79-11l16.95-17,27.15,38A16,16,0,0,0,196,240c.44,0,.88.05,1.32.05a16,16,0,0,0,11.31-4.69l26.64-26.64A16,16,0,0,0,240,196ZM59,177.83a86.09,86.09,0,0,1-19-55A84.27,84.27,0,0,1,122.8,40a86.28,86.28,0,0,1,55,19A85.08,85.08,0,0,1,196.58,80.1L80.1,196.58A85.08,85.08,0,0,1,59,177.83ZM197.35,224l-32.63-45.69a8,8,0,0,0-5.85-3.32q-.33,0-.66,0a8,8,0,0,0-5.66,2.34l-23.63,23.63a23.68,23.68,0,0,1-21.36,6.63,80.3,80.3,0,0,1-12.3-3.5l108.8-108.8a80.63,80.63,0,0,1,3.5,12.3,23.67,23.67,0,0,1-6.63,21.36L177.3,152.55a8,8,0,0,0,1,12.17L224,197.35Z\"/>","racquet":"<path d=\"M230,26.05C202-1.88,151.53,3.16,117.4,37.3c-31.79,31.79-38.33,77.77-16.51,106.49L71.33,173.35l-.68-.68a16,16,0,0,0-22.64,0L20.69,200a16,16,0,0,0,0,22.64l12.69,12.69a16,16,0,0,0,22.63,0h0L83.34,208a16,16,0,0,0,0-22.63l-.69-.69,29.56-29.56c11.29,8.58,25.24,12.79,40,12.79,22.72,0,47.25-10,66.54-29.3C252.83,104.47,257.88,54,230,26.05ZM44.7,224,32,211.31,59.33,184l6.33,6.34h0L72,196.67ZM224.23,104H200.06v-32h32A72.45,72.45,0,0,1,224.23,104ZM136,149.61A44.15,44.15,0,0,1,106.39,120H136ZM104,104a72.24,72.24,0,0,1,7.86-32H136v32Zm48-32h32v32h-32Zm77.67-16H200.06V26.28a44.23,44.23,0,0,1,29.66,29.66Zm-45.82-32h.16v32h-32V31.76A72.47,72.47,0,0,1,183.9,23.9ZM136,42.06V55.94H122.16a89.72,89.72,0,0,1,6.56-7.32A93.17,93.17,0,0,1,136,42.06Zm16,109.92V120h32v24.16A72.24,72.24,0,0,1,152.05,152Zm48-18.14V120H214a91.62,91.62,0,0,1-6.56,7.32A89.64,89.64,0,0,1,200.06,133.84Z\"/>","cricket":"<path d=\"M243.31,81.37,190.63,28.69a16,16,0,0,0-22.63,0L60.69,136a16,16,0,0,0,0,22.63l20.68,20.68-47,47a8,8,0,0,0,11.32,11.32l47-47,20.68,20.68a16,16,0,0,0,22.63,0L243.31,104a16,16,0,0,0,0-22.63ZM124.69,200,104,179.31l29.66-29.65a8,8,0,0,0-11.32-11.32L92.69,168,72,147.31,107.31,112H160v52.69ZM232,92.69l-56,56V104a8,8,0,0,0-8-8H123.31l56-56L232,92.68ZM60,88A28,28,0,1,0,32,60,28,28,0,0,0,60,88Zm0-40A12,12,0,1,1,48,60,12,12,0,0,1,60,48Z\"/>","music-notes":"<path d=\"M212.92,17.69a8,8,0,0,0-6.86-1.45l-128,32A8,8,0,0,0,72,56V166.08A36,36,0,1,0,88,196V110.25l112-28v51.83A36,36,0,1,0,216,164V24A8,8,0,0,0,212.92,17.69ZM52,216a20,20,0,1,1,20-20A20,20,0,0,1,52,216ZM88,93.75V62.25l112-28v31.5ZM180,184a20,20,0,1,1,20-20A20,20,0,0,1,180,184Z\"/>","flower-lotus":"<path d=\"M245.83,121.63a15.53,15.53,0,0,0-9.52-7.33,73.51,73.51,0,0,0-22.17-2.22c4-19.85,1-35.55-2.06-44.86a16.15,16.15,0,0,0-18.79-10.88,85.53,85.53,0,0,0-28.55,12.12,94.58,94.58,0,0,0-27.11-33.25,16.05,16.05,0,0,0-19.26,0A94.48,94.48,0,0,0,91.26,68.46,85.53,85.53,0,0,0,62.71,56.34,16.15,16.15,0,0,0,43.92,67.22c-3,9.31-6,25-2.06,44.86a73.51,73.51,0,0,0-22.17,2.22,15.53,15.53,0,0,0-9.52,7.33,16,16,0,0,0-1.6,12.27c3.39,12.57,13.8,36.48,45.33,55.32S113.13,208,128.05,208s42.67,0,74-18.78c31.53-18.84,41.94-42.75,45.33-55.32A16,16,0,0,0,245.83,121.63ZM59.14,72.14a.2.2,0,0,1,.23-.15A70.43,70.43,0,0,1,85.18,83.66,118.65,118.65,0,0,0,80,119.17c0,18.74,3.77,34,9.11,46.28A123.59,123.59,0,0,1,69.57,140C51.55,108.62,55.3,84,59.14,72.14Zm3,103.35C35.47,159.57,26.82,140.05,24,129.7a59.82,59.82,0,0,1,22.5-1.17,129.08,129.08,0,0,0,9.15,19.41,142.28,142.28,0,0,0,34,39.56A114.92,114.92,0,0,1,62.1,175.49ZM128,190.4c-9.33-6.94-32-28.23-32-71.23C96,76.7,118.38,55.24,128,48c9.62,7.26,32,28.72,32,71.19C160,162.17,137.33,183.46,128,190.4ZM170.82,83.66A70.43,70.43,0,0,1,196.63,72a.2.2,0,0,1,.23.15C200.7,84,204.45,108.62,186.43,140a123.32,123.32,0,0,1-19.54,25.48c5.34-12.26,9.11-27.54,9.11-46.28A118.65,118.65,0,0,0,170.82,83.66ZM232,129.72c-2.77,10.25-11.4,29.81-38.09,45.77a114.92,114.92,0,0,1-27.55,12,142.28,142.28,0,0,0,34-39.56,129.08,129.08,0,0,0,9.15-19.41A59.69,59.69,0,0,1,232,129.71Z\"/>","person-simple-ski":"<path d=\"M172,88a28,28,0,1,0-28-28A28,28,0,0,0,172,88Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,172,48ZM32.32,77.76a8,8,0,0,1,9.92-5.44L112,92.67l10.32-10.33a8,8,0,0,1,11.32,0L163.31,112H200a8,8,0,0,1,0,16H160a8,8,0,0,1-5.66-2.34L148.73,120l-111-32.36A8,8,0,0,1,32.32,77.76ZM236.44,204.24a69.78,69.78,0,0,1-58.37,8.95L21.77,167.67a8,8,0,1,1,4.47-15.36l76,22.13L128.73,148,85.8,135.69a8,8,0,0,1,4.4-15.39l56,16a8,8,0,0,1,3.46,13.35l-29.9,29.9,62.79,18.28a53.78,53.78,0,0,0,45-6.9,8,8,0,1,1,8.88,13.31Z\"/>","person-simple-snowboard":"<path d=\"M164,80a28,28,0,1,0-28-28A28,28,0,0,0,164,80Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,164,40Zm54.25,72.32-136-40a8,8,0,1,0-4.52,15.35l40.85,12L85.07,150,40.34,137a25.18,25.18,0,1,0-14.13,48.34L183.65,231a25.88,25.88,0,0,0,7.14,1,25.17,25.17,0,0,0,7-49.36l-50.89-14.75,19.75-29.44a8,8,0,0,0-4.42-12.14l-35.33-10.23,7.78-11.67,79.07,23.26a8,8,0,0,0,4.51-15.35ZM200,206.81a9.07,9.07,0,0,1-3.67,7.3,9.27,9.27,0,0,1-8.22,1.5L30.67,170a9.24,9.24,0,0,1-6.67-8.8,9.06,9.06,0,0,1,3.66-7.3,9.26,9.26,0,0,1,8.23-1.5L193.33,198A9.23,9.23,0,0,1,200,206.81Zm-52.75-68.18-16.49,24.59-29.58-8.58,16.4-24.6Z\"/>"},"fill":{"play":"<path d=\"M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z\"/>","pause":"<path d=\"M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z\"/>","trash":"<path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM112,168a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm0-120H96V40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z\"/>","floppy-disk":"<path d=\"M219.31,72,184,36.69A15.86,15.86,0,0,0,172.69,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V83.31A15.86,15.86,0,0,0,219.31,72ZM208,208H184V152a16,16,0,0,0-16-16H88a16,16,0,0,0-16,16v56H48V48H172.69L208,83.31ZM160,72a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h56A8,8,0,0,1,160,72Z\"/>","sparkle":"<path d=\"M208,144a15.78,15.78,0,0,1-10.42,14.94L146,178l-19,51.62a15.92,15.92,0,0,1-29.88,0L78,178l-51.62-19a15.92,15.92,0,0,1,0-29.88L78,110l19-51.62a15.92,15.92,0,0,1,29.88,0L146,110l51.62,19A15.78,15.78,0,0,1,208,144ZM152,48h16V64a8,8,0,0,0,16,0V48h16a8,8,0,0,0,0-16H184V16a8,8,0,0,0-16,0V32H152a8,8,0,0,0,0,16Zm88,32h-8V72a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0V96h8a8,8,0,0,0,0-16Z\"/>","navigation-arrow":"<path d=\"M248,121.58a15.76,15.76,0,0,1-11.29,15l-.2.06-78,21.84-21.84,78-.06.2a15.77,15.77,0,0,1-15,11.29h-.3a15.77,15.77,0,0,1-15.07-10.67L41,61.41a1,1,0,0,1-.05-.16A16,16,0,0,1,61.25,40.9l.16.05,175.92,65.26A15.78,15.78,0,0,1,248,121.58Z\"/>","heart":"<path d=\"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z\"/>","fire":"<path d=\"M143.38,17.85a8,8,0,0,0-12.63,3.41l-22,60.41L84.59,58.26a8,8,0,0,0-11.93.89C51,87.53,40,116.08,40,144a88,88,0,0,0,176,0C216,84.55,165.21,36,143.38,17.85Zm40.51,135.49a57.6,57.6,0,0,1-46.56,46.55A7.65,7.65,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z\"/>","house":"<path d=\"M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z\"/>","sneaker-move":"<path d=\"M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z\"/>","moon":"<path d=\"M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z\"/>","user":"<path d=\"M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z\"/>","barbell":"<path d=\"M200,64V192a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V136H104v56a16,16,0,0,1-16,16H72a16,16,0,0,1-16-16V64A16,16,0,0,1,72,48H88a16,16,0,0,1,16,16v56h48V64a16,16,0,0,1,16-16h16A16,16,0,0,1,200,64ZM36,72H32A16,16,0,0,0,16,88v32H8.27A8.18,8.18,0,0,0,0,127.47,8,8,0,0,0,8,136h8v32a16,16,0,0,0,16,16h4a4,4,0,0,0,4-4V76A4,4,0,0,0,36,72Zm220,55.47a8.18,8.18,0,0,0-8.25-7.47H240V88a16,16,0,0,0-16-16h-4a4,4,0,0,0-4,4V180a4,4,0,0,0,4,4h4a16,16,0,0,0,16-16V136h8A8,8,0,0,0,256,127.47Z\"/>","person-simple-run":"<path d=\"M120,56a32,32,0,1,1,32,32A32,32,0,0,1,120,56Zm103.28,74.08a8,8,0,0,0-10.6-4c-.25.12-26.71,10.72-72.18-20.19-52.29-35.54-88-7.77-89.51-6.57a8,8,0,1,0,10,12.48c.26-.21,25.12-19.5,64.07,3.27-4.25,13.35-12.76,31.82-25.25,47-18.56,22.48-41.11,32.56-67,30A8,8,0,0,0,31.2,208a92.29,92.29,0,0,0,9.34.47c27.38,0,52-12.38,71.63-36.18.57-.69,1.14-1.4,1.69-2.1C133.31,175.29,168,190.3,168,232a8,8,0,0,0,16,0c0-24.65-10.08-45.35-29.15-59.86a104.29,104.29,0,0,0-31.31-15.81A169.31,169.31,0,0,0,139,124c26.14,16.09,46.84,20,60.69,20,12.18,0,19.06-3,19.67-3.28A8,8,0,0,0,223.28,130.08Z\"/>","person-simple-walk":"<path d=\"M120,48a32,32,0,1,1,32,32A32,32,0,0,1,120,48Zm88,88c-28.64,0-41.81-13.3-55.75-27.37-3.53-3.57-7.18-7.26-11-10.58-37-32.14-96.22,22.73-98.72,25.08a8,8,0,0,0,10.95,11.66A163.88,163.88,0,0,1,84,113c13.78-7.38,25.39-10.23,34.7-8.58L64.66,228.81a8,8,0,0,0,4.15,10.52A7.84,7.84,0,0,0,72,240a8,8,0,0,0,7.34-4.81l33.59-77.27L144,180.12V232a8,8,0,0,0,16,0V176a8,8,0,0,0-3.35-6.51l-37.2-26.57L132.88,112c2.64,2.44,5.26,5.07,8,7.84C155.05,134.19,172.69,152,208,152a8,8,0,0,0,0-16Z\"/>","person-simple-bike":"<path d=\"M136,52a28,28,0,1,1,28,28A28,28,0,0,1,136,52ZM240,176a40,40,0,1,1-40-40A40,40,0,0,1,240,176Zm-16,0a24,24,0,1,0-24,24A24,24,0,0,0,224,176Zm-24-64a8,8,0,0,0-8-8H155.31L125.66,74.34a8,8,0,0,0-11.32,0l-32,32a8,8,0,0,0,0,11.32L120,155.31V200a8,8,0,0,0,16,0V152a8,8,0,0,0-2.34-5.66L99.31,112,120,91.31l26.34,26.35A8,8,0,0,0,152,120h40A8,8,0,0,0,200,112ZM96,176a40,40,0,1,1-40-40A40,40,0,0,1,96,176Zm-16,0a24,24,0,1,0-24,24A24,24,0,0,0,80,176Z\"/>","clock":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm56,112H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z\"/>","map-pin":"<path d=\"M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z\"/>"}};
+const ICONS = {"regular":{"x":"<path d=\"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z\"/>","magnifying-glass":"<path d=\"M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z\"/>","caret-right":"<path d=\"M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z\"/>","caret-left":"<path d=\"M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z\"/>","play":"<path d=\"M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z\"/>","pause":"<path d=\"M200,32H160a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16h40a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm0,176H160V48h40ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Zm0,176H56V48H96Z\"/>","trash":"<path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z\"/>","floppy-disk":"<path d=\"M219.31,72,184,36.69A15.86,15.86,0,0,0,172.69,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V83.31A15.86,15.86,0,0,0,219.31,72ZM168,208H88V152h80Zm40,0H184V152a16,16,0,0,0-16-16H88a16,16,0,0,0-16,16v56H48V48H172.69L208,83.31ZM160,72a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h56A8,8,0,0,1,160,72Z\"/>","export":"<path d=\"M216,112v96a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V112A16,16,0,0,1,56,96H80a8,8,0,0,1,0,16H56v96H200V112H176a8,8,0,0,1,0-16h24A16,16,0,0,1,216,112ZM93.66,69.66,120,43.31V136a8,8,0,0,0,16,0V43.31l26.34,26.35a8,8,0,0,0,11.32-11.32l-40-40a8,8,0,0,0-11.32,0l-40,40A8,8,0,0,0,93.66,69.66Z\"/>","sparkle":"<path d=\"M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z\"/>","navigation-arrow":"<path d=\"M237.33,106.21,61.41,41l-.16-.05A16,16,0,0,0,40.9,61.25a1,1,0,0,0,.05.16l65.26,175.92A15.77,15.77,0,0,0,121.28,248h.3a15.77,15.77,0,0,0,15-11.29l.06-.2,21.84-78,78-21.84.2-.06a16,16,0,0,0,.62-30.38ZM149.84,144.3a8,8,0,0,0-5.54,5.54L121.3,232l-.06-.17L56,56l175.82,65.22.16.06Z\"/>","clock":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z\"/>","heart":"<path d=\"M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,228.66,240,172,240,102A62.07,62.07,0,0,0,178,40ZM128,214.8C109.74,204.16,32,155.69,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,155.61,146.24,204.15,128,214.8Z\"/>","fire":"<path d=\"M183.89,153.34a57.6,57.6,0,0,1-46.56,46.55A8.75,8.75,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68ZM216,144a88,88,0,0,1-176,0c0-27.92,11-56.47,32.66-84.85a8,8,0,0,1,11.93-.89l24.12,23.41,22-60.41a8,8,0,0,1,12.63-3.41C165.21,36,216,84.55,216,144Zm-16,0c0-46.09-35.79-85.92-58.21-106.33L119.52,98.74a8,8,0,0,1-13.09,3L80.06,76.16C64.09,99.21,56,122,56,144a72,72,0,0,0,144,0Z\"/>","gauge":"<path d=\"M207.06,72.67A111.24,111.24,0,0,0,128,40h-.4C66.07,40.21,16,91,16,153.13V176a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V152A111.25,111.25,0,0,0,207.06,72.67ZM224,176H119.71l54.76-75.3a8,8,0,0,0-12.94-9.42L99.92,176H32V153.13c0-3.08.15-6.12.43-9.13H56a8,8,0,0,0,0-16H35.27c10.32-38.86,44-68.24,84.73-71.66V80a8,8,0,0,0,16,0V56.33A96.14,96.14,0,0,1,221,128H200a8,8,0,0,0,0,16h23.67c.21,2.65.33,5.31.33,8Z\"/>","speedometer":"<path d=\"M114.34,154.34l96-96a8,8,0,0,1,11.32,11.32l-96,96a8,8,0,0,1-11.32-11.32ZM128,88a63.9,63.9,0,0,1,20.44,3.33,8,8,0,1,0,5.11-15.16A80,80,0,0,0,48.49,160.88,8,8,0,0,0,56.43,168c.29,0,.59,0,.89-.05a8,8,0,0,0,7.07-8.83A64.92,64.92,0,0,1,64,152,64.07,64.07,0,0,1,128,88Zm99.74,13a8,8,0,0,0-14.24,7.3,96.27,96.27,0,0,1,5,75.71l-181.1-.07A96.24,96.24,0,0,1,128,56h.88a95,95,0,0,1,42.82,10.5A8,8,0,1,0,179,52.27a112,112,0,0,0-156.66,137A16.07,16.07,0,0,0,37.46,200H218.53a16,16,0,0,0,15.11-10.71,112.35,112.35,0,0,0-5.9-88.3Z\"/>","ruler":"<path d=\"M235.32,73.37,182.63,20.69a16,16,0,0,0-22.63,0L20.68,160a16,16,0,0,0,0,22.63l52.69,52.68a16,16,0,0,0,22.63,0L235.32,96A16,16,0,0,0,235.32,73.37ZM84.68,224,32,171.31l32-32,26.34,26.35a8,8,0,0,0,11.32-11.32L75.31,128,96,107.31l26.34,26.35a8,8,0,0,0,11.32-11.32L107.31,96,128,75.31l26.34,26.35a8,8,0,0,0,11.32-11.32L139.31,64l32-32L224,84.69Z\"/>","map-pin":"<path d=\"M128,64a40,40,0,1,0,40,40A40,40,0,0,0,128,64Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,128Zm0-112a88.1,88.1,0,0,0-88,88c0,31.4,14.51,64.68,42,96.25a254.19,254.19,0,0,0,41.45,38.3,8,8,0,0,0,9.18,0A254.19,254.19,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25A88.1,88.1,0,0,0,128,16Zm0,206c-16.53-13-72-60.75-72-118a72,72,0,0,1,144,0C200,161.23,144.53,209,128,222Z\"/>","timer":"<path d=\"M128,40a96,96,0,1,0,96,96A96.11,96.11,0,0,0,128,40Zm0,176a80,80,0,1,1,80-80A80.09,80.09,0,0,1,128,216ZM173.66,90.34a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32l40-40A8,8,0,0,1,173.66,90.34ZM96,16a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,16Z\"/>","house":"<path d=\"M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z\"/>","sneaker-move":"<path d=\"M231.16,166.63l-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-8-8,48.05,48.05,0,0,1-48-48,8,8,0,0,0-12.83-6.37L30.13,76l-.2.16a16,16,0,0,0-1.24,23.75L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63ZM224,200H151.37L40,88.63l12.87-9.76,38.79,38.79A8,8,0,0,0,103,106.34L65.74,69.11l40-30.31A64.15,64.15,0,0,0,160,87.5v21.89a63.65,63.65,0,0,0,35.38,57.24L224,180.94ZM70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm40,24a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16h54.8A8,8,0,0,1,110.8,208Z\"/>","moon":"<path d=\"M233.54,142.23a8,8,0,0,0-8-2,88.08,88.08,0,0,1-109.8-109.8,8,8,0,0,0-10-10,104.84,104.84,0,0,0-52.91,37A104,104,0,0,0,136,224a103.09,103.09,0,0,0,62.52-20.88,104.84,104.84,0,0,0,37-52.91A8,8,0,0,0,233.54,142.23ZM188.9,190.34A88,88,0,0,1,65.66,67.11a89,89,0,0,1,31.4-26A106,106,0,0,0,96,56,104.11,104.11,0,0,0,200,160a106,106,0,0,0,14.92-1.06A89,89,0,0,1,188.9,190.34Z\"/>","user":"<path d=\"M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z\"/>","barbell":"<path d=\"M248,120h-8V88a16,16,0,0,0-16-16H208V64a16,16,0,0,0-16-16H168a16,16,0,0,0-16,16v56H104V64A16,16,0,0,0,88,48H64A16,16,0,0,0,48,64v8H32A16,16,0,0,0,16,88v32H8a8,8,0,0,0,0,16h8v32a16,16,0,0,0,16,16H48v8a16,16,0,0,0,16,16H88a16,16,0,0,0,16-16V136h48v56a16,16,0,0,0,16,16h24a16,16,0,0,0,16-16v-8h16a16,16,0,0,0,16-16V136h8a8,8,0,0,0,0-16ZM32,168V88H48v80Zm56,24H64V64H88V192Zm104,0H168V64h24V175.82c0,.06,0,.12,0,.18s0,.12,0,.18V192Zm32-24H208V88h16Z\"/>","person-arms-spread":"<path d=\"M160,40a32,32,0,1,0-32,32A32,32,0,0,0,160,40ZM128,56a16,16,0,1,1,16-16A16,16,0,0,1,128,56ZM231.5,87.71A19.62,19.62,0,0,0,212,72H44a20,20,0,0,0-8.38,38.16l.13,0,50.75,22.35-21,79.72A20,20,0,0,0,102,228.8l26-44.87,26,44.87a20,20,0,0,0,36.4-16.52l-21-79.72,50.75-22.35.13,0A19.64,19.64,0,0,0,231.5,87.71Zm-17.8,7.9-56.93,25.06a8,8,0,0,0-4.51,9.36L175.13,217a7,7,0,0,0,.49,1.35,4,4,0,0,1-5,5.45,4,4,0,0,1-2.25-2.07,6.31,6.31,0,0,0-.34-.63L134.92,164a8,8,0,0,0-13.84,0L88,221.05a6.31,6.31,0,0,0-.34.63,4,4,0,0,1-2.25,2.07,4,4,0,0,1-5-5.45,7,7,0,0,0,.49-1.35L103.74,130a8,8,0,0,0-4.51-9.36L42.3,95.61A4,4,0,0,1,44,88H212a4,4,0,0,1,1.73,7.61Z\"/>","person-simple-walk":"<path d=\"M152,80a32,32,0,1,0-32-32A32,32,0,0,0,152,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,152,32Zm64,112a8,8,0,0,1-8,8c-35.31,0-52.95-17.81-67.12-32.12-2.74-2.77-5.36-5.4-8-7.84l-13.43,30.88,37.2,26.57A8,8,0,0,1,160,176v56a8,8,0,0,1-16,0V180.12l-31.07-22.2L79.34,235.19A8,8,0,0,1,72,240a7.84,7.84,0,0,1-3.19-.67,8,8,0,0,1-4.15-10.52l54.08-124.37c-9.31-1.65-20.92,1.2-34.7,8.58a163.88,163.88,0,0,0-30.57,21.77,8,8,0,0,1-10.95-11.66c2.5-2.35,61.69-57.23,98.72-25.08,3.83,3.32,7.48,7,11,10.57C166.19,122.7,179.36,136,208,136A8,8,0,0,1,216,144Z\"/>","person-simple-run":"<path d=\"M152,88a32,32,0,1,0-32-32A32,32,0,0,0,152,88Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,152,40Zm67.31,100.68c-.61.28-7.49,3.28-19.67,3.28-13.85,0-34.55-3.88-60.69-20a169.31,169.31,0,0,1-15.41,32.34,104.29,104.29,0,0,1,31.31,15.81C173.92,186.65,184,207.35,184,232a8,8,0,0,1-16,0c0-41.7-34.69-56.71-54.14-61.85-.55.7-1.12,1.41-1.69,2.1-19.64,23.8-44.25,36.18-71.63,36.18A92.29,92.29,0,0,1,31.2,208,8,8,0,0,1,32.8,192c25.92,2.58,48.47-7.49,67-30,12.49-15.14,21-33.61,25.25-47C86.13,92.35,61.27,111.63,61,111.84A8,8,0,1,1,51,99.36c1.5-1.2,37.22-29,89.51,6.57,45.47,30.91,71.93,20.31,72.18,20.19a8,8,0,1,1,6.63,14.56Z\"/>","person-simple-bike":"<path d=\"M164,80a28,28,0,1,0-28-28A28,28,0,0,0,164,80Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,164,40Zm36,96a40,40,0,1,0,40,40A40,40,0,0,0,200,136Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,200,200ZM56,136a40,40,0,1,0,40,40A40,40,0,0,0,56,136Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,56,200Zm136-80H152a8,8,0,0,1-5.66-2.34L120,91.31,99.31,112l34.35,34.34A8,8,0,0,1,136,152v48a8,8,0,0,1-16,0V155.31L82.34,117.66a8,8,0,0,1,0-11.32l32-32a8,8,0,0,1,11.32,0L155.31,104H192a8,8,0,0,1,0,16Z\"/>","person-simple-hike":"<path d=\"M152,80a32,32,0,1,0-32-32A32,32,0,0,0,152,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,152,32Zm48,112v88a8,8,0,0,1-16,0V151.66c-25.75-2.25-34.35-15.52-42-27.36-2.85-4.39-5.56-8.57-9.13-12.19l-13.4,30.81,37.2,26.57A8,8,0,0,1,160,176v56a8,8,0,0,1-16,0V180.12l-31.07-22.2L79.34,235.19A8,8,0,0,1,72,240a7.84,7.84,0,0,1-3.19-.67,8,8,0,0,1-4.14-10.52L122.19,96.5a8,8,0,0,1,11-3.92,40.92,40.92,0,0,1,8,5.47c6.37,5.52,10.51,11.91,14.16,17.55,7.68,11.84,13.22,20.4,36.6,20.4A8,8,0,0,1,200,144ZM72,152a8,8,0,0,0,7.35-4.85l24-56a8,8,0,0,0-4.2-10.5l-28-12a8,8,0,0,0-10.5,4.2l-24,56a8,8,0,0,0,4.2,10.5l28,12A8,8,0,0,0,72,152ZM54.51,127.8,72.2,86.5l13.3,5.7L67.8,133.49Z\"/>","lightning":"<path d=\"M215.79,118.17a8,8,0,0,0-5-5.66L153.18,90.9l14.66-73.33a8,8,0,0,0-13.69-7l-112,120a8,8,0,0,0,3,13l57.63,21.61L88.16,238.43a8,8,0,0,0,13.69,7l112-120A8,8,0,0,0,215.79,118.17ZM109.37,214l10.47-52.38a8,8,0,0,0-5-9.06L62,132.71l84.62-90.66L136.16,94.43a8,8,0,0,0,5,9.06l52.8,19.8Z\"/>","person-simple-tai-chi":"<path d=\"M128,80A32,32,0,1,0,96,48,32,32,0,0,0,128,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,128,32Zm96,72a8,8,0,0,1-8,8H136v26.72l51.15,21.93A8,8,0,0,1,192,168v48a8,8,0,0,1-16,0V173.28l-46.45-19.91L53.35,222a8,8,0,1,1-10.7-11.9L120,140.44V112H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,104Z\"/>","person-simple":"<path d=\"M128,80A32,32,0,1,0,96,48,32,32,0,0,0,128,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,128,32ZM230.86,132.12a8,8,0,0,1-11,2.74c-.35-.21-35.11-20.59-83.88-22.67V149l62,69.73a8,8,0,1,1-12,10.62L128,164,70,229.31a8,8,0,1,1-12-10.62L120,149V112.18c-49,2.08-83.52,22.46-83.88,22.68a8,8,0,1,1-8.23-13.72C29.6,120.11,70.45,96,128,96s98.4,24.11,100.12,25.14A8,8,0,0,1,230.86,132.12Z\"/>","boat":"<path d=\"M221.06,110.59,208,106.23V56a16,16,0,0,0-16-16H136V24a8,8,0,0,0-16,0V40H64A16,16,0,0,0,48,56v50.23l-13.06,4.36A16,16,0,0,0,24,125.77V152c0,61.54,97.89,86.72,102.06,87.76a8,8,0,0,0,3.88,0C134.11,238.72,232,213.54,232,152V125.77A16,16,0,0,0,221.06,110.59ZM64,56H192v44.9L130.53,80.41a8,8,0,0,0-5.06,0L64,100.9Zm152,96c0,24.91-23.68,43-43.55,53.83A228.13,228.13,0,0,1,128,223.72,226.85,226.85,0,0,1,83.81,206C47.6,186.35,40,165.79,40,152V125.77L120,99.1V168a8,8,0,0,0,16,0V99.1l80,26.67Z\"/>","person-simple-swim":"<path d=\"M176,104a32,32,0,1,0-32-32A32,32,0,0,0,176,104Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,176,56Zm46.16,129.24a8,8,0,0,1-1,11.26c-17.36,14.39-32.86,19.5-47,19.5-18.58,0-34.82-8.82-49.93-17-25.35-13.76-47.24-25.65-79.07.74a8,8,0,1,1-10.22-12.31c40.17-33.29,70.32-16.93,96.93-2.49,25.35,13.77,47.24,25.65,79.07-.74A8,8,0,0,1,222.16,185.24ZM34.89,147.42a8,8,0,1,0,10.22,12.31c31.83-26.38,53.72-14.5,79.07-.74,15.11,8.2,31.35,17,49.93,17,14.14,0,29.64-5.11,47-19.5a8,8,0,1,0-10.22-12.31,75.79,75.79,0,0,1-19.28,12.06l-53.84-53.82A103.34,103.34,0,0,0,64.24,72H40a8,8,0,0,0,0,16H64.24a87.66,87.66,0,0,1,41.88,10.56L76.49,128.17C63.82,129.35,50.07,134.84,34.89,147.42Zm91.57-33.67,46.13,46.12c-14-.43-26.88-7.39-40.77-14.93-10.75-5.84-22.09-12-34.42-15.05l22.26-22.26A87.14,87.14,0,0,1,126.46,113.75Z\"/>","stairs":"<path d=\"M200,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V40A16,16,0,0,0,200,24ZM152,144h48v24H112V144Zm8-16V104h40v24Zm40-88V88H152a8,8,0,0,0-8,8v32H104a8,8,0,0,0-8,8v32H56V40Zm0,176H56V184H200v32Z\"/>","person-simple-circle":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM112,80a16,16,0,1,1,16,16A16,16,0,0,1,112,80Zm72,32a8,8,0,0,1-8,8H136v13.58l30.66,46a8,8,0,0,1-13.32,8.88l-25.34-38-25.34,38a8,8,0,1,1-13.32-8.88l30.66-46V120H80a8,8,0,0,1,0-16h96A8,8,0,0,1,184,112Z\"/>","mountains":"<path d=\"M164,80a28,28,0,1,0-28-28A28,28,0,0,0,164,80Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,164,40Zm90.88,155.92-54.56-92.08A15.87,15.87,0,0,0,186.55,96h0a15.85,15.85,0,0,0-13.76,7.84L146.63,148l-44.84-76.1a16,16,0,0,0-27.58,0L1.11,195.94A8,8,0,0,0,8,208H248a8,8,0,0,0,6.88-12.08ZM88,80l23.57,40H64.43ZM22,192l33-56h66l18.74,31.8,0,0L154,192Zm150.57,0-16.66-28.28L186.55,112,234,192Z\"/>","boxing-glove":"<path d=\"M168,16H120A56.06,56.06,0,0,0,64,72H56a32,32,0,0,0-32,32v29.19a16.09,16.09,0,0,0,3.51,10,8,8,0,0,0,.62.69L64,179.34V216a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V177.12l15.38-53.85a15.89,15.89,0,0,0,.62-4.39V72A56.06,56.06,0,0,0,168,16Zm40,102.88L192.31,173.8A7.85,7.85,0,0,0,192,176v40H80V176a8,8,0,0,0-2.38-5.69L40,133.12V104A16,16,0,0,1,56,88h8v16a8,8,0,0,0,16,0V72a40,40,0,0,1,40-40h48a40,40,0,0,1,40,40Zm-36.42,48.28L153.89,176l17.69,8.84a8,8,0,0,1-7.16,14.32L136,184.94l-28.42,14.22a8,8,0,1,1-7.16-14.32L118.11,176l-17.69-8.84a8,8,0,1,1,7.16-14.32L136,167.06l28.42-14.22a8,8,0,1,1,7.16,14.32Z\"/>","basketball":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM60,72.17A87.2,87.2,0,0,1,79.63,120H40.37A87.54,87.54,0,0,1,60,72.17ZM136,120V40.37a87.59,87.59,0,0,1,48.68,20.37A103.06,103.06,0,0,0,160.3,120Zm-16,0H95.7A103.06,103.06,0,0,0,71.32,60.74,87.59,87.59,0,0,1,120,40.37ZM79.63,136A87.2,87.2,0,0,1,60,183.83,87.54,87.54,0,0,1,40.37,136Zm16.07,0H120v79.63a87.59,87.59,0,0,1-48.68-20.37A103.09,103.09,0,0,0,95.7,136Zm40.3,0h24.3a103.09,103.09,0,0,0,24.38,59.26A87.59,87.59,0,0,1,136,215.63Zm40.37,0h39.26A87.54,87.54,0,0,1,196,183.83,87.2,87.2,0,0,1,176.37,136Zm0-16A87.2,87.2,0,0,1,196,72.17,87.54,87.54,0,0,1,215.63,120Z\"/>","soccer-ball":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm76.52,147.42H170.9l-9.26-12.76,12.63-36.78,15-4.89,26.24,20.13A87.38,87.38,0,0,1,204.52,171.42Zm-164-34.3L66.71,117l15,4.89,12.63,36.78L85.1,171.42H51.48A87.38,87.38,0,0,1,40.47,137.12Zm10-50.64,5.51,18.6L40.71,116.77A87.33,87.33,0,0,1,50.43,86.48ZM109,152,97.54,118.65,128,97.71l30.46,20.94L147,152Zm91.07-46.92,5.51-18.6a87.33,87.33,0,0,1,9.72,30.29Zm-6.2-35.38-9.51,32.08-15.07,4.89L136,83.79V68.21l29.09-20A88.58,88.58,0,0,1,193.86,69.7ZM146.07,41.87,128,54.29,109.93,41.87a88.24,88.24,0,0,1,36.14,0ZM90.91,48.21l29.09,20V83.79L86.72,106.67l-15.07-4.89L62.14,69.7A88.58,88.58,0,0,1,90.91,48.21ZM63.15,187.42H83.52l7.17,20.27A88.4,88.4,0,0,1,63.15,187.42ZM110,214.13,98.12,180.71,107.35,168h41.3l9.23,12.71-11.83,33.42a88,88,0,0,1-36.1,0Zm55.36-6.44,7.17-20.27h20.37A88.4,88.4,0,0,1,165.31,207.69Z\"/>","tennis-ball":"<path d=\"M201.57,54.46a104,104,0,1,0,0,147.08A103.4,103.4,0,0,0,201.57,54.46ZM65.75,65.77a87.63,87.63,0,0,1,53.66-25.31A87.31,87.31,0,0,1,94,94.06a87.42,87.42,0,0,1-53.62,25.35A87.58,87.58,0,0,1,65.75,65.77ZM40.33,135.48a103.29,103.29,0,0,0,65-30.11,103.24,103.24,0,0,0,30.13-65,87.78,87.78,0,0,1,80.18,80.14,104,104,0,0,0-95.16,95.1,87.78,87.78,0,0,1-80.18-80.14Zm149.92,54.75a87.69,87.69,0,0,1-53.66,25.31,88,88,0,0,1,79-78.95A87.58,87.58,0,0,1,190.25,190.23Z\"/>","ping-pong":"<path d=\"M240,196a16,16,0,0,0-6.65-11.7l-38-27.15,17-16.95a39.67,39.67,0,0,0,11-35.79,99.52,99.52,0,0,0-35.4-57.89A101.93,101.93,0,0,0,122.58,24,100.29,100.29,0,0,0,24,122.58a102.12,102.12,0,0,0,22.55,65.28,99.52,99.52,0,0,0,57.89,35.4,39.68,39.68,0,0,0,35.79-11l16.95-17,27.15,38A16,16,0,0,0,196,240c.44,0,.88.05,1.32.05a16,16,0,0,0,11.31-4.69l26.64-26.64A16,16,0,0,0,240,196ZM59,177.83a86.09,86.09,0,0,1-19-55A84.27,84.27,0,0,1,122.8,40a86.28,86.28,0,0,1,55,19A85.08,85.08,0,0,1,196.58,80.1L80.1,196.58A85.08,85.08,0,0,1,59,177.83ZM197.35,224l-32.63-45.69a8,8,0,0,0-5.85-3.32q-.33,0-.66,0a8,8,0,0,0-5.66,2.34l-23.63,23.63a23.68,23.68,0,0,1-21.36,6.63,80.3,80.3,0,0,1-12.3-3.5l108.8-108.8a80.63,80.63,0,0,1,3.5,12.3,23.67,23.67,0,0,1-6.63,21.36L177.3,152.55a8,8,0,0,0,1,12.17L224,197.35Z\"/>","racquet":"<path d=\"M230,26.05C202-1.88,151.53,3.16,117.4,37.3c-31.79,31.79-38.33,77.77-16.51,106.49L71.33,173.35l-.68-.68a16,16,0,0,0-22.64,0L20.69,200a16,16,0,0,0,0,22.64l12.69,12.69a16,16,0,0,0,22.63,0h0L83.34,208a16,16,0,0,0,0-22.63l-.69-.69,29.56-29.56c11.29,8.58,25.24,12.79,40,12.79,22.72,0,47.25-10,66.54-29.3C252.83,104.47,257.88,54,230,26.05ZM44.7,224,32,211.31,59.33,184l6.33,6.34h0L72,196.67ZM224.23,104H200.06v-32h32A72.45,72.45,0,0,1,224.23,104ZM136,149.61A44.15,44.15,0,0,1,106.39,120H136ZM104,104a72.24,72.24,0,0,1,7.86-32H136v32Zm48-32h32v32h-32Zm77.67-16H200.06V26.28a44.23,44.23,0,0,1,29.66,29.66Zm-45.82-32h.16v32h-32V31.76A72.47,72.47,0,0,1,183.9,23.9ZM136,42.06V55.94H122.16a89.72,89.72,0,0,1,6.56-7.32A93.17,93.17,0,0,1,136,42.06Zm16,109.92V120h32v24.16A72.24,72.24,0,0,1,152.05,152Zm48-18.14V120H214a91.62,91.62,0,0,1-6.56,7.32A89.64,89.64,0,0,1,200.06,133.84Z\"/>","cricket":"<path d=\"M243.31,81.37,190.63,28.69a16,16,0,0,0-22.63,0L60.69,136a16,16,0,0,0,0,22.63l20.68,20.68-47,47a8,8,0,0,0,11.32,11.32l47-47,20.68,20.68a16,16,0,0,0,22.63,0L243.31,104a16,16,0,0,0,0-22.63ZM124.69,200,104,179.31l29.66-29.65a8,8,0,0,0-11.32-11.32L92.69,168,72,147.31,107.31,112H160v52.69ZM232,92.69l-56,56V104a8,8,0,0,0-8-8H123.31l56-56L232,92.68ZM60,88A28,28,0,1,0,32,60,28,28,0,0,0,60,88Zm0-40A12,12,0,1,1,48,60,12,12,0,0,1,60,48Z\"/>","music-notes":"<path d=\"M212.92,17.69a8,8,0,0,0-6.86-1.45l-128,32A8,8,0,0,0,72,56V166.08A36,36,0,1,0,88,196V110.25l112-28v51.83A36,36,0,1,0,216,164V24A8,8,0,0,0,212.92,17.69ZM52,216a20,20,0,1,1,20-20A20,20,0,0,1,52,216ZM88,93.75V62.25l112-28v31.5ZM180,184a20,20,0,1,1,20-20A20,20,0,0,1,180,184Z\"/>","flower-lotus":"<path d=\"M245.83,121.63a15.53,15.53,0,0,0-9.52-7.33,73.51,73.51,0,0,0-22.17-2.22c4-19.85,1-35.55-2.06-44.86a16.15,16.15,0,0,0-18.79-10.88,85.53,85.53,0,0,0-28.55,12.12,94.58,94.58,0,0,0-27.11-33.25,16.05,16.05,0,0,0-19.26,0A94.48,94.48,0,0,0,91.26,68.46,85.53,85.53,0,0,0,62.71,56.34,16.15,16.15,0,0,0,43.92,67.22c-3,9.31-6,25-2.06,44.86a73.51,73.51,0,0,0-22.17,2.22,15.53,15.53,0,0,0-9.52,7.33,16,16,0,0,0-1.6,12.27c3.39,12.57,13.8,36.48,45.33,55.32S113.13,208,128.05,208s42.67,0,74-18.78c31.53-18.84,41.94-42.75,45.33-55.32A16,16,0,0,0,245.83,121.63ZM59.14,72.14a.2.2,0,0,1,.23-.15A70.43,70.43,0,0,1,85.18,83.66,118.65,118.65,0,0,0,80,119.17c0,18.74,3.77,34,9.11,46.28A123.59,123.59,0,0,1,69.57,140C51.55,108.62,55.3,84,59.14,72.14Zm3,103.35C35.47,159.57,26.82,140.05,24,129.7a59.82,59.82,0,0,1,22.5-1.17,129.08,129.08,0,0,0,9.15,19.41,142.28,142.28,0,0,0,34,39.56A114.92,114.92,0,0,1,62.1,175.49ZM128,190.4c-9.33-6.94-32-28.23-32-71.23C96,76.7,118.38,55.24,128,48c9.62,7.26,32,28.72,32,71.19C160,162.17,137.33,183.46,128,190.4ZM170.82,83.66A70.43,70.43,0,0,1,196.63,72a.2.2,0,0,1,.23.15C200.7,84,204.45,108.62,186.43,140a123.32,123.32,0,0,1-19.54,25.48c5.34-12.26,9.11-27.54,9.11-46.28A118.65,118.65,0,0,0,170.82,83.66ZM232,129.72c-2.77,10.25-11.4,29.81-38.09,45.77a114.92,114.92,0,0,1-27.55,12,142.28,142.28,0,0,0,34-39.56,129.08,129.08,0,0,0,9.15-19.41A59.69,59.69,0,0,1,232,129.71Z\"/>","person-simple-ski":"<path d=\"M172,88a28,28,0,1,0-28-28A28,28,0,0,0,172,88Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,172,48ZM32.32,77.76a8,8,0,0,1,9.92-5.44L112,92.67l10.32-10.33a8,8,0,0,1,11.32,0L163.31,112H200a8,8,0,0,1,0,16H160a8,8,0,0,1-5.66-2.34L148.73,120l-111-32.36A8,8,0,0,1,32.32,77.76ZM236.44,204.24a69.78,69.78,0,0,1-58.37,8.95L21.77,167.67a8,8,0,1,1,4.47-15.36l76,22.13L128.73,148,85.8,135.69a8,8,0,0,1,4.4-15.39l56,16a8,8,0,0,1,3.46,13.35l-29.9,29.9,62.79,18.28a53.78,53.78,0,0,0,45-6.9,8,8,0,1,1,8.88,13.31Z\"/>","person-simple-snowboard":"<path d=\"M164,80a28,28,0,1,0-28-28A28,28,0,0,0,164,80Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,164,40Zm54.25,72.32-136-40a8,8,0,1,0-4.52,15.35l40.85,12L85.07,150,40.34,137a25.18,25.18,0,1,0-14.13,48.34L183.65,231a25.88,25.88,0,0,0,7.14,1,25.17,25.17,0,0,0,7-49.36l-50.89-14.75,19.75-29.44a8,8,0,0,0-4.42-12.14l-35.33-10.23,7.78-11.67,79.07,23.26a8,8,0,0,0,4.51-15.35ZM200,206.81a9.07,9.07,0,0,1-3.67,7.3,9.27,9.27,0,0,1-8.22,1.5L30.67,170a9.24,9.24,0,0,1-6.67-8.8,9.06,9.06,0,0,1,3.66-7.3,9.26,9.26,0,0,1,8.23-1.5L193.33,198A9.23,9.23,0,0,1,200,206.81Zm-52.75-68.18-16.49,24.59-29.58-8.58,16.4-24.6Z\"/>","share-network":"<path d=\"M176,160a39.89,39.89,0,0,0-28.62,12.09l-46.1-29.63a39.8,39.8,0,0,0,0-28.92l46.1-29.63a40,40,0,1,0-8.66-13.45l-46.1,29.63a40,40,0,1,0,0,55.82l46.1,29.63A40,40,0,1,0,176,160Zm0-128a24,24,0,1,1-24,24A24,24,0,0,1,176,32ZM64,152a24,24,0,1,1,24-24A24,24,0,0,1,64,152Zm112,72a24,24,0,1,1,24-24A24,24,0,0,1,176,224Z\"/>"},"fill":{"play":"<path d=\"M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z\"/>","pause":"<path d=\"M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z\"/>","trash":"<path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM112,168a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm0-120H96V40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z\"/>","floppy-disk":"<path d=\"M219.31,72,184,36.69A15.86,15.86,0,0,0,172.69,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V83.31A15.86,15.86,0,0,0,219.31,72ZM208,208H184V152a16,16,0,0,0-16-16H88a16,16,0,0,0-16,16v56H48V48H172.69L208,83.31ZM160,72a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h56A8,8,0,0,1,160,72Z\"/>","sparkle":"<path d=\"M208,144a15.78,15.78,0,0,1-10.42,14.94L146,178l-19,51.62a15.92,15.92,0,0,1-29.88,0L78,178l-51.62-19a15.92,15.92,0,0,1,0-29.88L78,110l19-51.62a15.92,15.92,0,0,1,29.88,0L146,110l51.62,19A15.78,15.78,0,0,1,208,144ZM152,48h16V64a8,8,0,0,0,16,0V48h16a8,8,0,0,0,0-16H184V16a8,8,0,0,0-16,0V32H152a8,8,0,0,0,0,16Zm88,32h-8V72a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0V96h8a8,8,0,0,0,0-16Z\"/>","navigation-arrow":"<path d=\"M248,121.58a15.76,15.76,0,0,1-11.29,15l-.2.06-78,21.84-21.84,78-.06.2a15.77,15.77,0,0,1-15,11.29h-.3a15.77,15.77,0,0,1-15.07-10.67L41,61.41a1,1,0,0,1-.05-.16A16,16,0,0,1,61.25,40.9l.16.05,175.92,65.26A15.78,15.78,0,0,1,248,121.58Z\"/>","heart":"<path d=\"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z\"/>","fire":"<path d=\"M143.38,17.85a8,8,0,0,0-12.63,3.41l-22,60.41L84.59,58.26a8,8,0,0,0-11.93.89C51,87.53,40,116.08,40,144a88,88,0,0,0,176,0C216,84.55,165.21,36,143.38,17.85Zm40.51,135.49a57.6,57.6,0,0,1-46.56,46.55A7.65,7.65,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z\"/>","house":"<path d=\"M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z\"/>","sneaker-move":"<path d=\"M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z\"/>","moon":"<path d=\"M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z\"/>","user":"<path d=\"M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z\"/>","barbell":"<path d=\"M200,64V192a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V136H104v56a16,16,0,0,1-16,16H72a16,16,0,0,1-16-16V64A16,16,0,0,1,72,48H88a16,16,0,0,1,16,16v56h48V64a16,16,0,0,1,16-16h16A16,16,0,0,1,200,64ZM36,72H32A16,16,0,0,0,16,88v32H8.27A8.18,8.18,0,0,0,0,127.47,8,8,0,0,0,8,136h8v32a16,16,0,0,0,16,16h4a4,4,0,0,0,4-4V76A4,4,0,0,0,36,72Zm220,55.47a8.18,8.18,0,0,0-8.25-7.47H240V88a16,16,0,0,0-16-16h-4a4,4,0,0,0-4,4V180a4,4,0,0,0,4,4h4a16,16,0,0,0,16-16V136h8A8,8,0,0,0,256,127.47Z\"/>","person-simple-run":"<path d=\"M120,56a32,32,0,1,1,32,32A32,32,0,0,1,120,56Zm103.28,74.08a8,8,0,0,0-10.6-4c-.25.12-26.71,10.72-72.18-20.19-52.29-35.54-88-7.77-89.51-6.57a8,8,0,1,0,10,12.48c.26-.21,25.12-19.5,64.07,3.27-4.25,13.35-12.76,31.82-25.25,47-18.56,22.48-41.11,32.56-67,30A8,8,0,0,0,31.2,208a92.29,92.29,0,0,0,9.34.47c27.38,0,52-12.38,71.63-36.18.57-.69,1.14-1.4,1.69-2.1C133.31,175.29,168,190.3,168,232a8,8,0,0,0,16,0c0-24.65-10.08-45.35-29.15-59.86a104.29,104.29,0,0,0-31.31-15.81A169.31,169.31,0,0,0,139,124c26.14,16.09,46.84,20,60.69,20,12.18,0,19.06-3,19.67-3.28A8,8,0,0,0,223.28,130.08Z\"/>","person-simple-walk":"<path d=\"M120,48a32,32,0,1,1,32,32A32,32,0,0,1,120,48Zm88,88c-28.64,0-41.81-13.3-55.75-27.37-3.53-3.57-7.18-7.26-11-10.58-37-32.14-96.22,22.73-98.72,25.08a8,8,0,0,0,10.95,11.66A163.88,163.88,0,0,1,84,113c13.78-7.38,25.39-10.23,34.7-8.58L64.66,228.81a8,8,0,0,0,4.15,10.52A7.84,7.84,0,0,0,72,240a8,8,0,0,0,7.34-4.81l33.59-77.27L144,180.12V232a8,8,0,0,0,16,0V176a8,8,0,0,0-3.35-6.51l-37.2-26.57L132.88,112c2.64,2.44,5.26,5.07,8,7.84C155.05,134.19,172.69,152,208,152a8,8,0,0,0,0-16Z\"/>","person-simple-bike":"<path d=\"M136,52a28,28,0,1,1,28,28A28,28,0,0,1,136,52ZM240,176a40,40,0,1,1-40-40A40,40,0,0,1,240,176Zm-16,0a24,24,0,1,0-24,24A24,24,0,0,0,224,176Zm-24-64a8,8,0,0,0-8-8H155.31L125.66,74.34a8,8,0,0,0-11.32,0l-32,32a8,8,0,0,0,0,11.32L120,155.31V200a8,8,0,0,0,16,0V152a8,8,0,0,0-2.34-5.66L99.31,112,120,91.31l26.34,26.35A8,8,0,0,0,152,120h40A8,8,0,0,0,200,112ZM96,176a40,40,0,1,1-40-40A40,40,0,0,1,96,176Zm-16,0a24,24,0,1,0-24,24A24,24,0,0,0,80,176Z\"/>","clock":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm56,112H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z\"/>","map-pin":"<path d=\"M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z\"/>","racquet":"<path d=\"M230,26.05C202-1.88,151.53,3.16,117.4,37.3c-31.79,31.79-38.33,77.77-16.51,106.49L71.33,173.35l-.68-.68a16,16,0,0,0-22.64,0L20.69,200a16,16,0,0,0,0,22.64l12.69,12.69a16,16,0,0,0,22.63,0h0L83.34,208a16,16,0,0,0,0-22.63l-.69-.69,29.56-29.56c11.29,8.58,25.24,12.79,40,12.79,22.72,0,47.25-10,66.54-29.3C252.83,104.47,257.88,54,230,26.05ZM224.23,104H200.06v-32h32A72.45,72.45,0,0,1,224.23,104ZM136,149.61A44.15,44.15,0,0,1,106.39,120H136ZM104,104a72.24,72.24,0,0,1,7.86-32H136v32Zm48-32h32v32h-32Zm77.67-16H200.06V26.28a44.23,44.23,0,0,1,29.66,29.66Zm-45.82-32h.16v32h-32V31.76A72.47,72.47,0,0,1,183.9,23.9ZM136,42.06V55.94H122.16a89.72,89.72,0,0,1,6.56-7.32A93.17,93.17,0,0,1,136,42.06Zm16,109.92V120h32v24.16A72.24,72.24,0,0,1,152.05,152Zm48-18.14V120H214a91.62,91.62,0,0,1-6.56,7.32A89.64,89.64,0,0,1,200.06,133.84Z\"/>","basketball":"<path d=\"M63.6,46.39a103.48,103.48,0,0,1,52-21.65,4,4,0,0,1,4.45,4V120H95.7A103.77,103.77,0,0,0,63.38,52.44,4,4,0,0,1,63.6,46.39ZM46,64.07a103.51,103.51,0,0,0-21.29,51.46,4,4,0,0,0,4,4.47H79.63A87.86,87.86,0,0,0,51.89,63.59,4,4,0,0,0,46,64.07ZM192.4,46.39a103.48,103.48,0,0,0-52-21.65,4,4,0,0,0-4.45,4V120h24.3a103.77,103.77,0,0,1,32.32-67.56A4,4,0,0,0,192.4,46.39Zm38.86,69.14A103.51,103.51,0,0,0,210,64.07a4,4,0,0,0-5.86-.48A87.86,87.86,0,0,0,176.37,120h50.91A4,4,0,0,0,231.26,115.53ZM24.74,140.47A103.51,103.51,0,0,0,46,191.93a4,4,0,0,0,5.86.48A87.86,87.86,0,0,0,79.63,136H28.72A4,4,0,0,0,24.74,140.47ZM210,191.93a103.51,103.51,0,0,0,21.29-51.46,4,4,0,0,0-4-4.47H176.37a87.86,87.86,0,0,0,27.74,56.41A4,4,0,0,0,210,191.93ZM63.6,209.61a103.48,103.48,0,0,0,52,21.65,4,4,0,0,0,4.45-4V136H95.7a103.77,103.77,0,0,1-32.32,67.56A4,4,0,0,0,63.6,209.61ZM160.3,136H136v91.28a4,4,0,0,0,4.45,4,103.48,103.48,0,0,0,52-21.65,4,4,0,0,0,.22-6.05A103.77,103.77,0,0,1,160.3,136Z\"/>","boxing-glove":"<path d=\"M168,16H120A56,56,0,0,0,64,72v31.73A8.17,8.17,0,0,1,56.53,112,8,8,0,0,1,48,104V78.7a4,4,0,0,0-5.63-3.65A32,32,0,0,0,24,104v29.19a16.14,16.14,0,0,0,3.5,10q.3.36.63.69L64,179.34V216a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V177.12l15.38-53.84a16,16,0,0,0,.62-4.4V72A56,56,0,0,0,168,16Zm3.58,168.84a8,8,0,0,1-7.16,14.32L136,184.94l-28.42,14.22a8,8,0,1,1-7.16-14.32L118.11,176l-17.69-8.84a8,8,0,1,1,7.16-14.32L136,167.06l28.42-14.22a8,8,0,1,1,7.16,14.32L153.89,176Z\"/>","mountains":"<path d=\"M254.88,195.92l-54.56-92.08A15.87,15.87,0,0,0,186.55,96h0a15.85,15.85,0,0,0-13.76,7.84l-15.64,26.39a4,4,0,0,0,0,4.07l26.8,45.47a8.13,8.13,0,0,1-1.89,10.55,8,8,0,0,1-11.8-2.26L101.79,71.88a16,16,0,0,0-27.58,0L1.11,195.94a8,8,0,0,0,1,9.52A8.23,8.23,0,0,0,8.23,208H247.77a8.29,8.29,0,0,0,6.09-2.55A8,8,0,0,0,254.88,195.92ZM64.43,120,88,80l23.57,40ZM140,52a24,24,0,1,1,24,24A24,24,0,0,1,140,52Z\"/>","cricket":"<path d=\"M243.31,81.37,190.63,28.69a16,16,0,0,0-22.63,0L60.69,136a16,16,0,0,0,0,22.63l20.68,20.68-47,47a8,8,0,0,0,11.32,11.32l47-47,20.68,20.68a16,16,0,0,0,22.63,0L243.31,104a16,16,0,0,0,0-22.63ZM124.69,200,104,179.31l29.66-29.65a8,8,0,0,0-11.32-11.32L92.69,168,72,147.31,107.31,112H160v52.69ZM32,60A28,28,0,1,1,60,88,28,28,0,0,1,32,60Z\"/>","music-notes":"<path d=\"M212.92,17.71a7.89,7.89,0,0,0-6.86-1.46l-128,32A8,8,0,0,0,72,56V166.1A36,36,0,1,0,88,196V102.25l112-28V134.1A36,36,0,1,0,216,164V24A8,8,0,0,0,212.92,17.71Z\"/>","person-simple-circle":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,40a16,16,0,1,1-16,16A16,16,0,0,1,128,64Zm48,56H136v13.58l30.66,46a8,8,0,0,1-13.32,8.88l-25.34-38-25.34,38a8,8,0,1,1-13.32-8.88l30.66-46V120H80a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Z\"/>","soccer-ball":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,39.38,24.79-17.05a88.41,88.41,0,0,1,36.18,27l-8,26.94c-.2,0-.41.1-.61.17l-22.82,7.41a7.59,7.59,0,0,0-1,.4L136,88.62c0-.2,0-.41,0-.62V64C136,63.79,136,63.58,136,63.38ZM95.24,46.33,120,63.38c0,.2,0,.41,0,.62V88c0,.21,0,.42,0,.62L91.44,108.29a7.59,7.59,0,0,0-1-.4l-22.82-7.41c-.2-.07-.41-.12-.61-.17l-8-26.94A88.41,88.41,0,0,1,95.24,46.33Zm-13,129.09H53.9a87.4,87.4,0,0,1-13.79-43.07l22-16.88a5.77,5.77,0,0,0,.58.22l22.83,7.42a7.83,7.83,0,0,0,.93.22l10.79,31.42c-.15.18-.3.36-.44.55L82.7,174.71A7.8,7.8,0,0,0,82.24,175.42ZM150.69,213a88.16,88.16,0,0,1-45.38,0L95.25,184.6c.13-.16.27-.31.39-.48l14.11-19.42a7.66,7.66,0,0,0,.46-.7h35.58a7.66,7.66,0,0,0,.46.7l14.11,19.42c.12.17.26.32.39.48Zm23.07-37.61a7.8,7.8,0,0,0-.46-.71L159.19,155.3c-.14-.19-.29-.37-.44-.55l10.79-31.42a7.83,7.83,0,0,0,.93-.22l22.83-7.42a5.77,5.77,0,0,0,.58-.22l22,16.88a87.4,87.4,0,0,1-13.79,43.07Z\"/>","person-arms-spread":"<path d=\"M100,36a28,28,0,1,1,28,28A28,28,0,0,1,100,36ZM227.6,92.57A15.7,15.7,0,0,0,212,80H44a16,16,0,0,0-6.7,30.53l.06,0,53.89,23.73-21.92,83.3a16,16,0,0,0,7.9,20.91A15.83,15.83,0,0,0,84,240a16,16,0,0,0,14.44-9.06L128,180l29.58,51a16,16,0,0,0,29.07-13.35l-21.92-83.3,54-23.76A15.7,15.7,0,0,0,227.6,92.57Z\"/>","lightning":"<path d=\"M213.85,125.46l-112,120a8,8,0,0,1-13.69-7l14.66-73.33L45.19,143.49a8,8,0,0,1-3-13l112-120a8,8,0,0,1,13.69,7L153.18,90.9l57.63,21.61a8,8,0,0,1,3,12.95Z\"/>","person-simple-hike":"<path d=\"M120,48a32,32,0,1,1,32,32A32,32,0,0,1,120,48Zm72,88c-23.37,0-28.92-8.56-36.6-20.4-3.65-5.64-7.79-12-14.16-17.55a40.92,40.92,0,0,0-8-5.47,8,8,0,0,0-11,3.92L64.66,228.81a8,8,0,0,0,4.15,10.52A7.84,7.84,0,0,0,72,240a8,8,0,0,0,7.34-4.81l33.59-77.27L144,180.12V232a8,8,0,0,0,16,0V176a8,8,0,0,0-3.35-6.51l-37.2-26.57,13.4-30.81c3.57,3.62,6.28,7.8,9.13,12.19,7.67,11.84,16.27,25.11,42,27.36V232a8,8,0,0,0,16,0V144A8,8,0,0,0,192,136ZM72,152a8,8,0,0,0,7.36-4.85l24-56a8,8,0,0,0-4.2-10.5l-28-12a8,8,0,0,0-10.5,4.2l-24,56a8,8,0,0,0,4.2,10.5l28,12A8,8,0,0,0,72,152Z\"/>","flower-lotus":"<path d=\"M245.83,121.63a15.53,15.53,0,0,0-9.52-7.33,73.55,73.55,0,0,0-22.17-2.22c4-19.85,1-35.55-2-44.86a16.17,16.17,0,0,0-18.8-10.88,85.53,85.53,0,0,0-28.55,12.12,94.58,94.58,0,0,0-27.11-33.25,16.05,16.05,0,0,0-19.26,0A94.58,94.58,0,0,0,91.26,68.46,85.53,85.53,0,0,0,62.71,56.34,16.14,16.14,0,0,0,43.92,67.22c-3,9.31-6,25-2.06,44.86a73.55,73.55,0,0,0-22.17,2.22,15.53,15.53,0,0,0-9.52,7.33,16,16,0,0,0-1.6,12.26c3.39,12.58,13.8,36.49,45.33,55.33S113.13,208,128.05,208s42.67,0,74-18.78c31.53-18.84,41.94-42.75,45.33-55.33A16,16,0,0,0,245.83,121.63ZM62.1,175.49C35.47,159.57,26.82,140.05,24,129.7a59.61,59.61,0,0,1,22.5-1.17,129.08,129.08,0,0,0,9.15,19.41,142.28,142.28,0,0,0,34,39.56A114.92,114.92,0,0,1,62.1,175.49ZM128,190.4c-9.33-6.94-32-28.23-32-71.23C96,76.7,118.38,55.24,128,48c9.62,7.26,32,28.72,32,71.19C160,162.17,137.33,183.46,128,190.4Zm104-60.68c-2.77,10.24-11.4,29.81-38.09,45.77a114.92,114.92,0,0,1-27.55,12,142.28,142.28,0,0,0,34-39.56,129.08,129.08,0,0,0,9.15-19.41A59.69,59.69,0,0,1,232,129.71Z\"/>","person-simple":"<path d=\"M95.89,48a32,32,0,1,1,32,32A32,32,0,0,1,95.89,48Zm132.23,73.14C226.4,120.11,185.55,96,128,96S29.6,120.11,27.88,121.14a8,8,0,0,0,8.24,13.72c.36-.22,34.91-20.6,83.88-22.68V149L58,218.69a8,8,0,1,0,12,10.62L128,164l58,65.27a8,8,0,0,0,12-10.62L136,149V112.19c48.77,2.08,83.53,22.46,83.88,22.67a8,8,0,1,0,8.24-13.72Z\"/>","boat":"<path d=\"M221.06,110.59,208,106.23V56a16,16,0,0,0-16-16H136V24a8,8,0,0,0-16,0V40H64A16,16,0,0,0,48,56v50.23l-13.06,4.36A16,16,0,0,0,24,125.77V152c0,61.54,97.89,86.72,102.06,87.76a8,8,0,0,0,3.88,0C134.11,238.72,232,213.54,232,152V125.77A16,16,0,0,0,221.06,110.59ZM136,168a8,8,0,0,1-16,0V104.87a8,8,0,0,1,16,0Zm56-67.1L130.53,80.41a8,8,0,0,0-5.06,0L64,100.9V56H192Z\"/>","person-simple-ski":"<path d=\"M144,60a28,28,0,1,1,28,28A28,28,0,0,1,144,60ZM37.76,87.68l111,32.36,5.61,5.61A8,8,0,0,0,160,128h40a8,8,0,0,0,0-16H163.31l-4.72-4.72,0,0-24.9-24.9a8,8,0,0,0-11.32,0L112,92.67,42.24,72.32a8,8,0,0,0-4.48,15.36Zm200.9,105.47a8,8,0,0,0-11.1-2.22,53.78,53.78,0,0,1-45,6.9l-62.79-18.28,29.9-29.9a8,8,0,0,0-3.46-13.35l-56-16a8,8,0,0,0-4.4,15.39L128.73,148l-26.5,26.49-76-22.13a8,8,0,1,0-4.48,15.36l156.31,45.52a69.78,69.78,0,0,0,58.37-8.95A8,8,0,0,0,238.66,193.15Z\"/>","person-simple-snowboard":"<path d=\"M136,52a28,28,0,1,1,28,28A28,28,0,0,1,136,52Zm87.67,70.25a8,8,0,0,1-9.93,5.42l-79.07-23.26-7.78,11.67,35.33,10.23a8,8,0,0,1,4.42,12.14l-19.75,29.44,50.89,14.75A25.32,25.32,0,0,1,216,206.81,25.28,25.28,0,0,1,190.79,232a25.88,25.88,0,0,1-7.14-1L26.21,185.35A25.32,25.32,0,0,1,8,161.18,25.25,25.25,0,0,1,40.34,137l44.73,13,33.52-50.28-40.85-12a8,8,0,1,1,4.52-15.35l136,40A8,8,0,0,1,223.67,122.25ZM117.58,130l-16.4,24.6,29.58,8.58,16.49-24.59Z\"/>","stairs":"<path d=\"M200,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V40A16,16,0,0,0,200,24Zm-40,80h40v24H160Zm-48,40h88v24H112Zm88,72H56V184H200v32Z\"/>","person-simple-swim":"<path d=\"M144,72a32,32,0,1,1,32,32A32,32,0,0,1,144,72Zm66.89,112.19c-31.83,26.39-53.72,14.51-79.07.74-26.61-14.44-56.76-30.81-96.93,2.49a8,8,0,1,0,10.22,12.31c31.83-26.39,53.72-14.5,79.07-.74,15.11,8.2,31.35,17,49.93,17,14.14,0,29.64-5.11,47-19.5a8,8,0,0,0-10.22-12.32Zm-176-36.76a8,8,0,1,0,10.22,12.31c31.83-26.38,53.72-14.5,79.07-.74,15.11,8.2,31.35,17,49.93,17,14.14,0,29.64-5.11,47-19.5a8,8,0,1,0-10.22-12.31,75.79,75.79,0,0,1-19.28,12.06l-53.84-53.82A103.34,103.34,0,0,0,64.24,72H40a8,8,0,0,0,0,16H64.24a87.66,87.66,0,0,1,41.88,10.56L76.49,128.17C63.82,129.36,50.07,134.84,34.89,147.42Z\"/>","ping-pong":"<path d=\"M240,196a16,16,0,0,0-6.65-11.7l-38-27.15,17-16.95a39.67,39.67,0,0,0,11-35.79,99.52,99.52,0,0,0-35.4-57.89A101.93,101.93,0,0,0,122.58,24,100.29,100.29,0,0,0,24,122.58a102.12,102.12,0,0,0,22.55,65.28,99.52,99.52,0,0,0,57.89,35.4,39.68,39.68,0,0,0,35.79-11l16.95-17,27.15,38A16,16,0,0,0,196,240c.44,0,.88.05,1.32.05a16,16,0,0,0,11.31-4.69l26.64-26.64A16,16,0,0,0,240,196Zm-42.6,28-32.63-45.69a8,8,0,0,0-5.85-3.32q-.33,0-.66,0a8,8,0,0,0-5.66,2.34l-23.63,23.63a23.68,23.68,0,0,1-21.36,6.63,80.3,80.3,0,0,1-12.3-3.5l108.8-108.8a80.63,80.63,0,0,1,3.5,12.3,23.67,23.67,0,0,1-6.63,21.36L177.3,152.55a8,8,0,0,0,1,12.17L224,197.36Z\"/>","tennis-ball":"<path d=\"M24.81,115.41a103.9,103.9,0,0,1,90.6-90.65,4,4,0,0,1,4.47,3.79,87.82,87.82,0,0,1-91.27,91.33A4,4,0,0,1,24.81,115.41Zm202.54,20.7c-1.12,0-2.23-.07-3.35-.07a87.84,87.84,0,0,0-87.88,91.41,4,4,0,0,0,4.47,3.79,103.9,103.9,0,0,0,90.6-90.66A4,4,0,0,0,227.35,136.11Zm-76.89,14.35A103.33,103.33,0,0,1,224,120c1,0,2.06,0,3.09,0a4,4,0,0,0,4.12-4.43,103.91,103.91,0,0,0-90.88-90.89,4,4,0,0,0-4.43,4.12,103.72,103.72,0,0,1-30.36,76.7A103.33,103.33,0,0,1,32,136c-1,0-2.06,0-3.09,0a4,4,0,0,0-4.12,4.43,103.91,103.91,0,0,0,90.88,90.89,4,4,0,0,0,4.43-4.12A103.72,103.72,0,0,1,150.46,150.46Z\"/>","person-simple-tai-chi":"<path d=\"M96,48a32,32,0,1,1,32,32A32,32,0,0,1,96,48ZM216,96H40a8,8,0,0,0,0,16h80v28.44L42.65,210.05A8,8,0,0,0,53.35,222l76.2-68.58L176,173.28V216a8,8,0,0,0,16,0V168a8,8,0,0,0-4.85-7.35L136,138.72V112h80a8,8,0,0,0,0-16Z\"/>"}};
 
 function renderIcons(root){
   (root || document).querySelectorAll('[data-icon]').forEach(function(el){
@@ -1019,7 +1061,7 @@ function renderNav(){
    ══════════════════════════════════════════════════════════════════════════ */
 function rowHTML(a){
   return '<button class="act-row" type="button" data-act="' + a.name + '">'
-       + '<span class="glyph" data-icon="' + a.icon + '"></span>'
+       + '<span class="glyph" data-icon="' + a.icon + '" data-weight="fill"></span>'
        + '<span class="name">' + a.name + '</span>'
        + '<span class="caret" data-icon="caret-right"></span>'
        + '</button>';
@@ -1052,20 +1094,63 @@ function renderPicker(query){
    offline and inside the artifact sandbox. The route is revealed in step
    with elapsed time, which is what makes the live card feel live.
    ══════════════════════════════════════════════════════════════════════════ */
-const ROUTE_D = 'M56,124 H112 V80 H152 V44 H196 V72 H252 V108 H298';
+/* The route follows streets, as a GPS trace does. Coordinates match the road
+   grid drawn below, so the trace sits on roads rather than across blocks. */
+const ROUTE_D = 'M64,132 H104 V86 H168 V42 H232 V86 H288';
 const ROUTE_FULL_SECONDS = 30 * 60;     /* a 30-minute session draws it all */
 
+/* Street grid: verticals, horizontals, one diagonal arterial. Roads are drawn
+   casing-first (a darker, wider stroke) then the road on top — the trick that
+   makes a vector map read as a map rather than as a set of lines. */
+const MAP_V = [44,104,168,232,296];
+const MAP_H = [42,86,132];
+
 function mapSVG(idPrefix){
-  var v = [], x, y;
-  for (x = 42; x <= 320; x += 68) v.push('<line class="street" x1="'+x+'" y1="0" x2="'+x+'" y2="150"/>');
-  for (y = 32; y <= 140; y += 44)  v.push('<line class="street" x1="0" y1="'+y+'" x2="328" y2="'+y+'"/>');
-  for (x = 76; x <= 320; x += 68) v.push('<line class="street minor" x1="'+x+'" y1="0" x2="'+x+'" y2="150"/>');
-  return '<svg viewBox="0 0 328 150" role="img" aria-label="Route map of this workout">'
-       + '<rect class="block" x="0" y="0" width="328" height="150"/>'
-       + v.join('')
+  var grid = function(cls, w){
+    var out = [];
+    MAP_V.forEach(function(x){ out.push('<line class="'+cls+'" stroke-width="'+w+'" x1="'+x+'" y1="-2" x2="'+x+'" y2="162"/>'); });
+    MAP_H.forEach(function(y){ out.push('<line class="'+cls+'" stroke-width="'+w+'" x1="-2" y1="'+y+'" x2="330" y2="'+y+'"/>'); });
+    return out.join('');
+  };
+  /* side streets, halfway between the through roads */
+  var streets = function(){
+    var out = [];
+    [76,136,200,264].forEach(function(x){ out.push('<line class="street" stroke-width="2.5" x1="'+x+'" y1="-2" x2="'+x+'" y2="162"/>'); });
+    [64,109].forEach(function(y){ out.push('<line class="street" stroke-width="2.5" x1="-2" y1="'+y+'" x2="330" y2="'+y+'"/>'); });
+    return out.join('');
+  };
+  return '<img class="photo" src="assets/maps/route-newdelhi.png" alt=""'
+       + ' onload="this.closest(\'.map-card\').classList.add(\'has-photo\')"'
+       + ' onerror="this.remove()">'
+       + '<svg viewBox="0 0 328 160" role="img" aria-label="Map of the route taken on this workout">'
+       + '<g class="basemap">'
+       +   '<rect class="land" x="0" y="0" width="328" height="160"/>'
+       /* land features first: a park, then the river the roads bridge over */
+       +   '<rect class="park" x="20" y="112" width="70" height="52" rx="6" opacity="0.7"/>'
+       +   '<path class="river" stroke-width="20" fill="none" opacity="1"'
+       +        ' d="M300,-6 C286,34 306,62 292,96 C280,126 296,146 288,166"/>'
+       /* blocks — slightly lighter than the land, the way built-up areas read */
+       +   '<g class="block">'
+       +     '<rect x="52" y="48" width="18" height="12" rx="1"/><rect x="82" y="48" width="16" height="12" rx="1"/>'
+       +     '<rect x="112" y="48" width="20" height="12" rx="1"/><rect x="142" y="48" width="20" height="12" rx="1"/>'
+       +     '<rect x="176" y="48" width="18" height="12" rx="1"/><rect x="206" y="48" width="20" height="12" rx="1"/>'
+       +     '<rect x="240" y="48" width="18" height="12" rx="1"/><rect x="112" y="92" width="20" height="12" rx="1"/>'
+       +     '<rect x="142" y="92" width="20" height="12" rx="1"/><rect x="176" y="92" width="18" height="12" rx="1"/>'
+       +     '<rect x="206" y="92" width="20" height="12" rx="1"/><rect x="112" y="116" width="18" height="10" rx="1"/>'
+       +     '<rect x="176" y="116" width="20" height="10" rx="1"/><rect x="240" y="116" width="16" height="10" rx="1"/>'
+       +   '</g>'
+       +   '<g fill="none" stroke-linecap="round">'
+       +     streets() + grid('road', 5)
+       /* one arterial across the frame, wider and lighter, as a highway reads */
+       +     '<line class="arterial" stroke-width="7" x1="-4" y1="150" x2="332" y2="26"/>'
+       +   '</g>'
+       +   '<text class="maplabel" x="108" y="38" text-anchor="start">Ring Rd</text>'
+       +   '<text class="maplabel" x="26" y="128" text-anchor="start">Lodhi Gardens</text>'
+       +   '<text class="maplabel" x="262" y="146" text-anchor="start">Yamuna</text>'
+       + '</g>'
        + '<path class="route" id="' + idPrefix + '-route" d="' + ROUTE_D + '"/>'
-       + '<circle class="dot" id="' + idPrefix + '-start" cx="56" cy="124" r="5"/>'
-       + '<circle class="dot head" id="' + idPrefix + '-head" cx="56" cy="124" r="5"/>'
+       + '<circle class="dot" id="' + idPrefix + '-start" cx="64" cy="132" r="5"/>'
+       + '<circle class="dot head" id="' + idPrefix + '-head" cx="64" cy="132" r="5"/>'
        + '</svg>';
 }
 
@@ -1079,9 +1164,9 @@ function drawRoute(idPrefix, fraction){
   path.style.strokeDasharray  = len;
   path.style.strokeDashoffset = len * (1 - f);
   if (head){
-    var p = path.getPointAtLength(len * f);
-    head.setAttribute('cx', p.x);
-    head.setAttribute('cy', p.y);
+    var pt = path.getPointAtLength(len * f);
+    head.setAttribute('cx', pt.x);
+    head.setAttribute('cy', pt.y);
   }
 }
 
@@ -1195,16 +1280,18 @@ function endSession(){
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   7. THE SAVED SESSION — heart-rate zones, chart, summary copy
+   7. THE SAVED SESSION
+   The approved Workout details screen, filled in from the readings the live
+   screen collected: stat tiles, the scrubbable heart-rate chart, and the five
+   zone rows. Ranges, colours and layout are that screen's; the numbers are
+   this session's.
    ══════════════════════════════════════════════════════════════════════════ */
-/* Five-zone model, same thresholds and colours the Workout Details page
-   already uses. Listed hottest first, which is the order it displays in. */
 const ZONES = [
-  { name:'Limit',                cls:'z-limit',     min:172 },
-  { name:'Anaerobic Endurance',  cls:'z-anaerobic', min:153 },
-  { name:'Aerobic Endurance',    cls:'z-aerobic',   min:134 },
-  { name:'Fat Burning',          cls:'z-fatburn',   min:115 },
-  { name:'Warm Up',              cls:'z-warmup',    min:0   }
+  { name:'Limit',               range:'172+ BPM',    min:172, color:'var(--zone-limit)'     },
+  { name:'Anaerobic endurance', range:'153–171 BPM', min:153, color:'var(--zone-anaerobic)' },
+  { name:'Aerobic endurance',   range:'134–152 BPM', min:134, color:'var(--zone-aerobic)'   },
+  { name:'Fat burning',         range:'115–133 BPM', min:115, color:'var(--zone-fatburn)'   },
+  { name:'Warm up',             range:'<115 BPM',    min:0,   color:'var(--zone-warmup)'    }
 ];
 
 function zoneOf(bpm){
@@ -1223,76 +1310,140 @@ function sessionStats(s){
   var avg = Math.round(sum / total);
   return {
     total:total, avg:avg, max:max, buckets:buckets,
-    top:buckets.indexOf(Math.max.apply(null, buckets)),
-    effort: avg < 100 ? 'Light' : avg < 130 ? 'Moderate' : avg < 150 ? 'Vigorous' : 'Max',
-    peakZone: ZONES[zoneOf(max)].name
+    effort: avg < 100 ? 'Light' : avg < 130 ? 'Moderate' : avg < 150 ? 'Vigorous' : 'Max'
   };
 }
 
-function fmtTime(d){
-  return d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
-}
-/* 24-hour clock for the chart's axis, matching the source details page. */
-function fmtHM(d){
-  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-}
+function fmtTime(d){ return d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }); }
+function fmtHM(d){ return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
 function fmtPace(secPerKm){
   var m = Math.floor(secPerKm / 60), sec = Math.round(secPerKm % 60);
   if (sec === 60){ m += 1; sec = 0; }
   return m + "'" + String(sec).padStart(2,'0') + '"';
 }
-
-function tileHTML(icon, label, value, unit, isWord){
-  return '<div class="stat-tile"><div class="label"><span data-icon="' + icon + '"></span>' + label + '</div>'
-       + '<div class="figure"><span class="value' + (isWord ? ' word' : '') + '">' + value + '</span>'
-       + (unit ? '<span class="unit">' + unit + '</span>' : '') + '</div></div>';
+/* "10:15 – 11:00 AM" — the first AM/PM is dropped when both ends share it. */
+function fmtSpan(start, end){
+  var same = (start.getHours() < 12) === (end.getHours() < 12);
+  var a = fmtTime(start);
+  return (same ? a.replace(/\s?[AP]M$/, '') : a) + ' – ' + fmtTime(end);
 }
 
-/* The heart-rate trace. Samples are thinned to at most 48 points so the
-   line stays readable, then mapped onto the same 50–200 bpm grid the
-   Workout Details page draws. */
-function chartHTML(s){
-  var pts = s.hrs.length ? s.hrs : [s.act.hrBase];
-  var step = Math.max(1, Math.ceil(pts.length / 48));
-  var thin = pts.filter(function(_, i){ return i % step === 0; });
-  if (thin.length === 1) thin = [thin[0], thin[0]];
+function tileHTML(label, value, unit, isWord){
+  return '<section class="tile"><div class="label">' + label + '</div>'
+       + '<div class="figure"><span class="value' + (isWord ? ' word' : '') + '">' + value + '</span>'
+       + (unit ? '<span class="unit">' + unit + '</span>' : '') + '</div></section>';
+}
 
-  var x0 = 10, x1 = 296;
-  var y = function(bpm){ return 132.4 - (Math.max(50, Math.min(200, bpm)) - 50) * (132.4 - 17.6) / 150; };
-  var coords = thin.map(function(hr, i){
-    return (x0 + (x1 - x0) * i / (thin.length - 1)).toFixed(1) + ',' + y(hr).toFixed(1);
+/* ---- the chart ----------------------------------------------------------
+   Ported from the approved details screen: a smooth Catmull-Rom line in the
+   heart-rate hue over a fading fill, gridlines at 60/100/140/180 bpm, clock
+   labels along the x axis with the session's start and end on pills. Press
+   and drag dims the plot and swaps the header to the reading under the
+   pointer. */
+const SVGNS = 'http://www.w3.org/2000/svg';
+const CFG = { yTicks:[60,100,140,180], yMin:60, yMax:180, yAxisWidth:34, xAxisHeight:26, topPad:12, frameW:50, xTicks:5 };
+let chartSession = null, geom = null;
+
+function drawChart(){
+  var wrap = $('#chartWrap'), svg = $('#chart');
+  if (!chartSession || !wrap || !svg) return;
+  var W = wrap.clientWidth, H = wrap.clientHeight;
+  if (W < 40 || H < 40) return;
+  var plotW = W - CFG.yAxisWidth, plotH = H - CFG.xAxisHeight;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+  var el = function(n, attrs, parent){
+    var e = document.createElementNS(SVGNS, n);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    (parent || svg).appendChild(e);
+    return e;
+  };
+  var span = chartSession.length || 1;                       /* minutes */
+  var x = function(v){ return (v / span) * plotW; };
+  var y = function(v){
+    var c = Math.max(CFG.yMin, Math.min(CFG.yMax, v));
+    return plotH - ((c - CFG.yMin) / (CFG.yMax - CFG.yMin)) * (plotH - CFG.topPad);
+  };
+
+  var grad = el('linearGradient', { id:'hrfill', x1:0, y1:0, x2:0, y2:1 }, el('defs', {}));
+  el('stop', { offset:'0%',   style:'stop-color:var(--chart-accent);stop-opacity:0.30' }, grad);
+  el('stop', { offset:'100%', style:'stop-color:var(--chart-accent);stop-opacity:0' }, grad);
+
+  CFG.yTicks.forEach(function(t){
+    el('line', { class:'lc-gridline', x1:0, x2:plotW, y1:y(t), y2:y(t) });
+    el('text', { class:'lc-y-label', x:W - 2, y:y(t) + 4, 'text-anchor':'end' }).textContent = t;
   });
 
-  var grid = [['200',17.6],['150',55.9],['100',94.1],['50',132.4]];
-  return '<svg viewBox="0 0 332 146" role="img" aria-label="Heart rate through the workout, averaging '
-       + sessionStats(s).avg + ' beats per minute">'
-       + grid.map(function(g){ return '<line class="grid-line" x1="10" y1="'+g[1]+'" x2="296" y2="'+g[1]+'"/>'; }).join('')
-       + grid.map(function(g){ return '<text class="axis-num" x="330" y="'+(g[1]+4)+'" text-anchor="end">'+g[0]+'</text>'; }).join('')
-       + '<path class="trace-fill" d="M' + coords.join(' ') + ' L296,140 L10,140 Z"/>'
-       + '<polyline class="trace" points="' + coords.join(' ') + '"/>'
-       + '</svg>'
-       + '<div class="hr-xlabels"><span>' + fmtHM(s.startedAt) + '</span>'
-       + '<span>' + fmtHM(new Date(s.startedAt.getTime() + s.elapsed * 1000)) + '</span></div>';
+  var plot = el('g', { class:'lc-plot' });
+  var pts = chartSession.data.map(function(pt){ return { px:x(pt.x), py:y(pt.value) }; });
+  if (pts.length === 1) pts.push({ px:plotW, py:pts[0].py });
+  var seg = function(i){
+    var p0 = pts[Math.max(i - 1, 0)], p1 = pts[i];
+    var p2 = pts[i + 1], p3 = pts[Math.min(i + 2, pts.length - 1)];
+    return 'C' + (p1.px + (p2.px - p0.px) / 6).toFixed(1) + ' ' + (p1.py + (p2.py - p0.py) / 6).toFixed(1)
+         + ' ' + (p2.px - (p3.px - p1.px) / 6).toFixed(1) + ' ' + (p2.py - (p3.py - p1.py) / 6).toFixed(1)
+         + ' ' + p2.px.toFixed(1) + ' ' + p2.py.toFixed(1);
+  };
+  var d = 'M' + pts[0].px.toFixed(1) + ' ' + pts[0].py.toFixed(1);
+  for (var i = 0; i < pts.length - 1; i++) d += seg(i);
+  el('path', { d:d + 'L' + pts[pts.length - 1].px.toFixed(1) + ' ' + plotH + 'L' + pts[0].px.toFixed(1) + ' ' + plotH + 'Z', fill:'url(#hrfill)' }, plot);
+  el('path', { class:'lc-line', d:d }, plot);
+
+  /* x axis: evenly spaced clock times; the two ends sit on pills, because
+     they are the session's start and end rather than interval marks. */
+  var pillH = 16, nT = CFG.xTicks, center = plotH + CFG.xAxisHeight / 2 + 2;
+  for (var t = 0; t < nT; t++){
+    var cx = CFG.frameW / 2 + t * (plotW - CFG.frameW) / (nT - 1);
+    var at = new Date(chartSession.startedAt.getTime() + (t / (nT - 1)) * span * 60000);
+    var label = fmtHM(at);
+    var isPill = (t === 0 || t === nT - 1);
+    if (isPill){
+      var pw = 6 * label.length + 8;
+      el('rect', { class:'lc-pill-bg', x:cx - pw / 2, y:center - pillH / 2, width:pw, height:pillH, rx:4 });
+    }
+    el('text', { class:isPill ? 'lc-pill-label' : 'lc-x-label', x:cx, y:center + 4, 'text-anchor':'middle' }).textContent = label;
+  }
+
+  geom = {
+    x:x, y:y, plotW:plotW, plot:plot,
+    hoverLine: el('line', { class:'lc-hover-line', y1:CFG.topPad, y2:plotH, x1:0, x2:0 }),
+    hoverDot:  el('circle', { class:'lc-hover-dot', r:4 })
+  };
 }
 
-/* Templated copy, not a model call — the numbers are real, the sentences
-   are picked from a small set. Flagged so nobody mistakes it for live AI. */
-function summaryCopy(s, st){
-  var a = s.act;
-  var dominant = ZONES[st.top].name.toLowerCase();
-  var share = Math.round(100 * st.buckets[st.top] / st.total);
-  var line1 = st.avg < 115
-    ? 'Easy, controlled session — heart rate stayed low and steady.'
-    : st.avg < 134
-      ? 'Steady session — most of the work sat in the fat-burning band.'
-      : st.avg < 153
-        ? 'Strong aerobic session — heart rate held in the endurance band.'
-        : 'Hard session — you spent real time above your aerobic ceiling.';
-  var line2 = share + '% of the time sat in ' + dominant + ', peaking at ' + st.max + ' bpm.';
-  var line3 = a.isDistance
-    ? ' You covered ' + s.third.toFixed(2) + ' km.'
-    : ' You logged ' + Math.floor(s.third) + ' ' + a.thirdLabel.toLowerCase() + '.';
-  return line1 + ' ' + line2 + line3;
+function scrubChart(evt){
+  if (!geom || !chartSession) return;
+  var svg = $('#chart');
+  var px = (evt.touches ? evt.touches[0].clientX : evt.clientX) - svg.getBoundingClientRect().left;
+  if (px < 0 || px > geom.plotW){ releaseChart(); return; }
+  var xv = (px / geom.plotW) * chartSession.length;
+  var best = chartSession.data[0], bd = Infinity;
+  chartSession.data.forEach(function(pt){
+    var dist = Math.abs(pt.x - xv);
+    if (dist < bd){ bd = dist; best = pt; }
+  });
+  geom.plot.classList.add('dim');
+  geom.hoverLine.setAttribute('x1', geom.x(best.x));
+  geom.hoverLine.setAttribute('x2', geom.x(best.x));
+  geom.hoverLine.style.opacity = 1;
+  geom.hoverDot.setAttribute('cx', geom.x(best.x));
+  geom.hoverDot.setAttribute('cy', geom.y(best.value));
+  geom.hoverDot.style.opacity = 1;
+  $('#hrValue').textContent = Math.round(best.value);
+  $('#hrSubText').textContent = fmtTime(new Date(chartSession.startedAt.getTime() + best.x * 60000));
+  $('#hrSub').classList.add('scrubbing');
+}
+
+function releaseChart(){
+  if (geom){
+    geom.plot.classList.remove('dim');
+    geom.hoverLine.style.opacity = 0;
+    geom.hoverDot.style.opacity = 0;
+  }
+  if (chartSession) $('#hrValue').textContent = chartSession.avg;
+  $('#hrSubText').textContent = 'Average';
+  $('#hrSub').classList.remove('scrubbing');
 }
 
 function renderDetails(){
@@ -1300,80 +1451,82 @@ function renderDetails(){
   var a  = s.act;
   var st = sessionStats(s);
   var end = new Date(s.startedAt.getTime() + s.elapsed * 1000);
-  var span = fmtTime(s.startedAt) + ' – ' + fmtTime(end);
 
-  $('#wd-date').textContent = 'Today, ' + s.startedAt.getDate() + ' '
-    + s.startedAt.toLocaleString('en-US', { month:'short' });
-  $('#wd-badge').innerHTML  = '<span data-icon="' + a.icon + '"></span>';
+  $('#wd-chip').innerHTML   = '<span data-icon="' + a.icon + '" data-weight="fill"></span>';
   $('#wd-name').textContent = a.name;
-  $('#wd-time').textContent = span;
-  $('#wd-summary').textContent = summaryCopy(s, st);
-  $('#wd-kcal').textContent    = Math.round(s.kcal);
-  $('#wd-context').textContent = a.name + ' · ' + span;
-  $('#wd-avghr').textContent   = st.avg;
-  $('#wd-maxhr').textContent   = st.max;
+  $('#wd-when').textContent = fmtSpan(s.startedAt, end);
 
-  /* Map card — distance activities only, with the KM / TIME / KCAL pill. */
-  var wrap = $('#wd-map-card');
-  wrap.hidden = !a.gps;
-  if (a.gps){
-    $('#wd-map').innerHTML = mapSVG('wd')
-      + '<div class="map-pill">'
-      + '<span class="cell"><span class="v">' + s.third.toFixed(2) + '</span><span class="k">km</span></span>'
-      + '<span class="cell"><span class="v">' + fmtClock(s.elapsed) + '</span><span class="k">time</span></span>'
-      + '<span class="cell"><span class="v">' + Math.round(s.kcal) + '</span><span class="k">kcal</span></span>'
-      + '</div>';
-  }
+  /* Route map — GPS activities only. */
+  var mapCard = $('#wd-map-card');
+  mapCard.hidden = !a.gps;
+  if (a.gps) $('#wd-map').innerHTML = mapSVG('wd');
 
-  /* Stat tiles. Distance activities trade the "peak zone" tile for pace. */
+  /* Tiles. Duration / Calories / Max HR / Effort are the approved four; the
+     activity's own metric (distance, reps, laps…) and one more heart-rate
+     figure fill the grid out, because a saved session that doesn't show what
+     you actually did isn't much of a record. */
   var tiles;
   if (a.isDistance){
     var pace = s.third > 0.02 ? fmtPace(s.elapsed / s.third) : '--';
     tiles = [
-      tileHTML('map-pin',     'Distance', s.third.toFixed(2), 'km'),
-      tileHTML('clock',       'Duration', fmtClock(s.elapsed), ''),
-      tileHTML('speedometer', 'Avg pace', pace, '/km'),
-      tileHTML('heart',       'Avg HR',   st.avg, 'bpm'),
-      tileHTML('heart',       'Max HR',   st.max, 'bpm'),
-      tileHTML('gauge',       'Effort',   st.effort, '', true)
+      tileHTML('Distance', s.third.toFixed(2), 'km'),
+      tileHTML('Duration', fmtClock(s.elapsed), ''),
+      tileHTML('Avg pace', pace, '/km'),
+      tileHTML('Calories', Math.round(s.kcal), 'kcal'),
+      tileHTML('Max HR',   st.max, 'bpm'),
+      tileHTML('Effort',   st.effort, '', true)
     ];
   } else {
     tiles = [
-      tileHTML('ruler',  a.thirdLabel, Math.floor(s.third), a.thirdUnit),
-      tileHTML('clock',  'Duration',   fmtClock(s.elapsed), ''),
-      tileHTML('heart',  'Avg HR',     st.avg, 'bpm'),
-      tileHTML('heart',  'Max HR',     st.max, 'bpm'),
-      tileHTML('gauge',  'Effort',     st.effort, '', true),
-      tileHTML('fire',   'Peak zone',  st.peakZone, '', true)
+      tileHTML(a.thirdLabel, Math.floor(s.third), a.thirdUnit),
+      tileHTML('Duration',   fmtClock(s.elapsed), ''),
+      tileHTML('Calories',   Math.round(s.kcal), 'kcal'),
+      tileHTML('Avg HR',     st.avg, 'bpm'),
+      tileHTML('Max HR',     st.max, 'bpm'),
+      tileHTML('Effort',     st.effort, '', true)
     ];
   }
   $('#wd-tiles').innerHTML = tiles.join('');
 
-  $('#wd-chart').innerHTML = chartHTML(s);
+  /* Zone rows. Seconds are the source of truth — the percentage and the bar
+     width both derive from them, so they can't disagree. */
+  var host = $('#wd-zones');
+  host.innerHTML = '';
+  ZONES.forEach(function(z, i){
+    var share = st.buckets[i] / st.total;
+    var row = document.createElement('div');
+    row.className = 'hrz-row';
+    row.style.setProperty('--zone', z.color);
+    row.innerHTML = '<div class="hrz-label"><span class="hrz-name"></span>'
+                  + '<span class="hrz-range"></span><span class="hrz-pct"></span></div>'
+                  + '<span class="hrz-dur"></span><span class="hrz-bar" role="img"><i></i></span>';
+    $('.hrz-name', row).textContent  = z.name;
+    $('.hrz-range', row).textContent = z.range;
+    $('.hrz-pct', row).textContent   = Math.round(share * 100) + '%';
+    $('.hrz-dur', row).textContent   = fmtClock(st.buckets[i]);
+    $('.hrz-bar i', row).style.width = (share * 100).toFixed(2) + '%';
+    $('.hrz-bar', row).setAttribute('aria-label', z.name + ', ' + z.range + ', ' + fmtClock(st.buckets[i]));
+    host.appendChild(row);
+  });
 
-  /* Zones. Short sessions are reported in seconds — rounding a 40-second
-     workout to "0 min" would read as broken. */
-  var useMin = st.total >= 300;
-  $('#wd-zones').innerHTML = ZONES.map(function(z, i){
-    var secs = st.buckets[i];
-    var pct  = Math.round(100 * secs / st.total);
-    var val  = useMin ? Math.round(secs / 60) : secs;
-    return '<div class="zone ' + z.cls + '">'
-         + '<div class="head"><span class="name">' + z.name + '</span>'
-         + '<span class="pct">' + pct + '%</span>'
-         + '<span class="time"><span class="value">' + val + '</span>'
-         + '<span class="unit">' + (useMin ? 'min' : 'sec') + '</span></span></div>'
-         + '<div class="track"><div class="fill" style="width:' + pct + '%"></div></div>'
-         + '</div>';
-  }).join('');
+  /* The chart reads the session's own readings; each covers an equal slice
+     of the elapsed time, so x is minutes from the start. */
+  var lengthMin = Math.max(s.elapsed / 60, 1 / 60);
+  chartSession = {
+    startedAt:s.startedAt, length:lengthMin, avg:st.avg,
+    data:s.hrs.map(function(hr, i){
+      return { x: s.hrs.length > 1 ? i * (lengthMin / (s.hrs.length - 1)) : 0, value:hr };
+    })
+  };
 
   renderIcons($('#p-details'));
+  show('p-details');
+  releaseChart();
+  drawChart();
   if (a.gps) drawRoute('wd', Math.min(1, s.elapsed / ROUTE_FULL_SECONDS) || 0.02);
 
   /* Saving pushes this activity to the front of Most recent. */
   recents = [a.name].concat(recents.filter(function(n){ return n !== a.name; })).slice(0, 5);
-
-  show('p-details');
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1464,6 +1617,18 @@ $('#btn-wd-back').addEventListener('click', function(){
   session = null;
   show('p-home');
 });
+
+/* Press and drag the chart to read a single moment. */
+(function(){
+  var svg = $('#chart');
+  svg.addEventListener('pointermove', scrubChart);
+  svg.addEventListener('pointerdown', scrubChart);
+  svg.addEventListener('pointerleave', releaseChart);
+  svg.addEventListener('pointerup', releaseChart);
+  var wrap = $('#chartWrap');
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(function(){ drawChart(); }).observe(wrap);
+  else window.addEventListener('resize', drawChart);
+})();
 
 /* Preview panel: how fast the workout clock runs. */
 $('#speed-opts').addEventListener('change', function(e){

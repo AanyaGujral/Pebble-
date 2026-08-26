@@ -101,6 +101,15 @@ what decisions were made, and the exact next steps.
 
 ## Workout flow — open questions / next steps (2026-08-26)
 
+0. Round 1 of owner feedback is applied (see the changelog entry for
+   2026-08-26 feedback round). Still open from it: whether the details
+   page's stat tiles should be three across rather than two — the "3 boxes
+   not 1" note was read as the LIVE screen's three metrics, which is where
+   it was applied; the details tiles follow the approved details screen's
+   2-up grid. One `grid-template-columns` value if that was wrong.
+   And the map: real Google imagery can't be fetched in this environment,
+   so the basemap is drawn. `assets/maps/route-newdelhi.png` is wired as an
+   override — drop a screenshot in and it takes over.
 1. Accent colour: the flow uses teal-400 for the countdown numeral,
    pause/play, End & Save and the dialog's primary button, because the spec
    names teal for discard. The owner's screenshots show a mint green

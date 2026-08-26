@@ -5,6 +5,41 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-26 (feedback round) — Workout flow, first round of owner fixes.
+  * Choose activity overlay: close X has no circle behind it, title is
+    sentence case, the section labels lost the hairline running out to the
+    edge, activity glyphs switched to Phosphor FILL weight, and activity
+    names are now paragraph p1 regular (15/22, weight 400) instead of
+    heading h3 semibold.
+  * Live screen: the three sub-metrics are three separate boxes with the
+    label uppercase on top and the figure under it, per the owner's stat-box
+    screenshot — not one card split by hairlines.
+  * Workout details rebuilt to the approved Workout details screen
+    (artifact 1a19949a): sticky blurred header (back · icon chip · name +
+    time · share), stat tiles at radius 24 with uppercase labels, and one
+    heart-rate card holding the smoothed crimson chart — press and drag to
+    scrub, the header swaps to that reading — over five zone rows with bpm
+    ranges, percentages, mm:ss and goal-bar rails. The Session Summary card,
+    the calories hero and the hairline-divided stat grid from the first pass
+    are gone. Everything still reads from the session that just ran.
+    Tiles extend the approved four to six so the activity's own metric
+    shows: GPS gets distance / duration / avg pace / calories / max HR /
+    effort, everything else gets its third metric / duration / calories /
+    avg HR / max HR / effort.
+  * Map (GPS activities only, on the live screen and the saved session):
+    redrawn in the Google Maps idiom — land, built-up blocks, side streets,
+    through roads, an arterial, a park and the river, all from neutral and
+    hue-900/700 tokens — with the route in teal-400 and a hairline
+    neutral-700 border on the card.
+    A real Google Maps tile CANNOT load here: an artifact page can only
+    reach Google Fonts (CSP), the Static Maps API needs a key, and every
+    tile host is blocked by this environment's proxy. So the card carries an
+    <img> slot pointed at `assets/maps/route-newdelhi.png` — drop a real
+    map screenshot there and it takes over the basemap automatically, with
+    the teal route still drawn on top (same pattern as the hero PNGs).
+  * Also: Android gesture bar added to the phone chrome; the details page
+    scrolls under a floating nav pill rather than sitting above a docked one.
+
 - 2026-08-26 — Built the workout flow as a new standalone prototype,
   `Workout Tab/Workout Flow.html` (owner's call: the Pebble Home artifact
   stays untouched, so this ships as its own link). Screens: Home stub with
