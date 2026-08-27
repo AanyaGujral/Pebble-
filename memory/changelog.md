@@ -5,6 +5,43 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-27 — Built the first-run onboarding flow as `onboarding.html`
+  (self-contained, opens by double-clicking). Nine screens: splash → sign-in →
+  enter code → you're in → 4 profile steps → mock Home hand-off, plus a
+  control panel beside the phone for every state (OTP wrong/expired, resend
+  running/at-zero/60s lockout, CTA loading, step-1 validation, and the
+  delivery states — no network / SMS undelivered / rate limited).
+  Built to the owner's build spec (D01–D27). Owner decisions taken up front:
+  (1) splash + sign-in follow the OWNER'S design — navy splash with the mark
+  and wordmark, photo-loop sign-in with the floating card, "Your health, your
+  way", one country+number pill — but keep the spec's copy rules, so the CTA
+  reads `Continue`, not `Get OTP` (D21); the spec's rings, indeterminate track
+  and version line are dropped. (2) The three-image 5-second loop runs on the
+  SIGN-IN SCREEN ONLY. (3) The delivery/network states were built even though
+  spec §9 listed them out of scope. (4) `Finish setup` hands off to a mock
+  Home empty state inside the same file, band-pairing card pinned at the top.
+  D25 built the NEUTRAL way (raised fill + neutral hairline ring, no tint);
+  the teal variant is a three-line swap via `--ob-selected-ring` /
+  `--ob-selected-mark` / `--ob-selected-seg`.
+  Maths reproduces the spec's example exactly — female, 165 cm, 61 kg, born
+  12 Apr 1998, lightly active, maintain → BMR 1340 · 8 000 steps · 5.5 km ·
+  500 kcal ACTIVE BURN (not the wireframe's 1 840, which is a TDEE intake
+  budget — D16). Verified in Chromium across all nine screens: no page errors,
+  every numeral League Spartan with tnum, every unit text-face uppercase,
+  focus ring on every control, one tab stop per radio group with arrow keys,
+  no slide/shake/spinner under reduced motion, and no clipping at 200% type.
+  Flagged in code rather than decided silently: the navy splash ground uses
+  `--sky-800` as brand ground, which house rule 3 otherwise reserves ("nothing
+  else in the chrome takes a hue"); the spec's own §2.3 vs §3.4 conflict over
+  Google/Apple buttons resolved to `.btn-neutral` per §2.3's stated reason;
+  the sign-in headline stays on the h1 token (24/30) although the owner's
+  screenshot is optically larger — a bigger display size needs a new token in
+  `js/tokens.js` first; the pebble mark and wordmark are code-drawn stand-ins;
+  steps derived from a distance edit round to the nearest 100.
+  Sign-in photos are NOT in the repo yet — slots are wired to
+  `assets/onboarding/signin-1/2/3.png` (see the README there); token gradients
+  show until the files land.
+
 - 2026-08-10 — Moved the named snapshot into `Activity Tab/Workout Tab.html`
   (folder layout mirrors `Sleep Tab/`). `index.html` stays the live working
   copy at the repo root. Pushed as is at the owner's request.

@@ -6,6 +6,7 @@ A table of every screen/feature and its state. Keeps work unambiguous.
 |---------|------|--------|-------|
 | Sleep   | `index.html` | Prototype (placeholder tokens) | First screen; static demo data |
 | Activity | — | Not started | |
+| Onboarding | `onboarding.html` | Built, awaiting owner review | 9 screens + control panel; see `docs/feature-onboarding.md`. Sign-in photos still to come. |
 | Stress  | — | Not started | |
 | Health / Peak score | — | Not started | |
 

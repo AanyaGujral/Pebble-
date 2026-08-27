@@ -1,5 +1,38 @@
 # Session Handoff
 
+> **2026-08-27 — read this first.** New file: **`onboarding.html`** — the
+> first-run flow (9 screens + a control panel), built to the owner's build
+> spec. It is SEPARATE from `index.html` and self-contained; `index.html` is
+> untouched by this work. Awaiting owner review.
+>
+> **What to pick up next, in order:**
+> 1. **Sign-in photos.** The owner has three images to upload. Save them as
+>    `assets/onboarding/signin-1.png`, `-2.png`, `-3.png` (a README in that
+>    folder spells out the crop: subject in the upper two thirds, portrait
+>    ~3:5). The slots are already wired — no code change needed. Token
+>    gradients show until then.
+> 2. **D25 is still the one open question.** Built neutral (raised fill +
+>    neutral hairline ring). Show the owner both; the teal variant is a
+>    three-line swap of `--ob-selected-ring` / `--ob-selected-mark` /
+>    `--ob-selected-seg` in `:root`.
+> 3. **Two things to confirm with the owner** (both flagged in code, not
+>    decided silently): the navy splash ground uses `--sky-800` as brand
+>    ground, which house rule 3 otherwise reserves for body signals; and the
+>    sign-in headline stays on the h1 token (24/30) although their screenshot
+>    is optically larger — going bigger needs a new type token in
+>    `js/tokens.js` first, never a hard-coded size.
+> 4. **The pebble mark and wordmark are code-drawn stand-ins.** A real
+>    `assets/pebble-mark.svg` would drop straight in.
+> 5. **When the flow merges into `index.html`**, `targets` must write the same
+>    record the Activity tab's goal-setting sub-page reads — one record, two
+>    editors (spec §5). Right now it only writes `localStorage`.
+>
+> Deliberately out of scope, with `TODO(D20)`-style markers where each
+> attaches: band pairing, permission primers, returning-user restore,
+> timezone/week-start, full a11y audit. The network / SMS-undelivered /
+> rate-limit states were out of scope in the spec but the owner asked for
+> them, so they are built and switchable from the panel.
+
 > **2026-08-10 — read this first.** `index.html` is now the MERGED source of
 > truth: it adopts the parallel session's build (metric details pages with a
 > D/W/M/Y period switcher; control panel reduced to Default + No data and

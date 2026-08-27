@@ -1,0 +1,2675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pebble — Onboarding</title>
+
+<!--
+  Pebble — ONBOARDING FLOW  (Pebble Band 2 first run)
+  ===================================================
+  Built to the "Pebble — Onboarding build spec" (decisions D01–D27).
+  Self-contained: open it by double-clicking, no server, no build step.
+
+  9 screens + a mock hand-off:
+    splash → sign-in → enter code → you're in
+           → step 1 profile → step 2 activity → step 3 goal → step 4 targets
+           → Home (empty state, band-pairing card pinned)
+
+  A control panel sits beside the phone (outside it) so every state can be
+  reached directly: OTP errors, resend timers, CTA loading, step-1 validation
+  and the delivery/network states.
+
+  OWNER DECISIONS taken in the brief for this build:
+    1. Splash + sign-in follow the OWNER'S design (navy splash, photo-loop
+       sign-in with the floating card and "Your health, your way"), but keep
+       the spec's copy rules — so the CTA reads "Continue", not "Get OTP"
+       (D21: the button says what happens, not what the backend calls it).
+       The spec's concentric rings, 2-segment track and "Pebble Band 2 · v3.1.4"
+       line are therefore NOT used.
+    2. The 3-image background loop runs on the SIGN-IN SCREEN ONLY.
+    3. Delivery/network states (no network, SMS undelivered, rate limited) are
+       BUILT, at the owner's request — spec §9 had listed them out of scope.
+    4. Finish setup hands off to a mock Home empty state inside this same file.
+-->
+
+<!-- Webfonts. Google Sans Flex (words) and League Spartan (every numeral),
+     same pair as the approved tabs. Offline they fall back to system sans and
+     the layout still holds. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,400..700&family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ==========================================================================
+   1. TOKENS
+   --------------------------------------------------------------------------
+   Flag: these custom properties are copied VERBATIM from js/tokens.js (the
+   single source of truth). They are inlined because the page must open by
+   double-clicking (file://), where ES-module imports are blocked by the
+   browser. Same approach as index.html and Activity Tab/Workout Tab.html.
+   If js/tokens.js changes, re-copy the values.
+   ========================================================================== */
+:root{
+  /* hue ramps — 0 lightest → 900 darkest, primary at 400 */
+  --crimson-0:#FFEAED;--crimson-100:#FFC2C9;--crimson-200:#FD99A5;--crimson-300:#F26E83;--crimson-400:#E43A62;--crimson-500:#C02D50;--crimson-600:#9E2040;--crimson-700:#7C142F;--crimson-800:#5D0820;--crimson-900:#3F0112;
+  --terracotta-0:#FFEEE5;--terracotta-100:#FDCEBE;--terracotta-200:#F2AF98;--terracotta-300:#E68F72;--terracotta-400:#D96F4A;--terracotta-500:#B65A3A;--terracotta-600:#93472B;--terracotta-700:#73341D;--terracotta-800:#532210;--terracotta-900:#361104;
+  --tangerine-0:#FFF0DF;--tangerine-100:#FFDCBA;--tangerine-200:#FDC894;--tangerine-300:#FAB36C;--tangerine-400:#F59E3B;--tangerine-500:#CA8028;--tangerine-600:#A16315;--tangerine-700:#7A4700;--tangerine-800:#552D00;--tangerine-900:#331500;
+  --gold-0:#FBF3DE;--gold-100:#F9E8BE;--gold-200:#F7DD9C;--gold-300:#F5D278;--gold-400:#F2C64B;--gold-500:#C6A034;--gold-600:#9C7C1C;--gold-700:#735901;--gold-800:#4D3900;--gold-900:#2A1B00;
+  --lime-0:#EEF8E0;--lime-100:#DCEEBF;--lime-200:#CAE39D;--lime-300:#B8D978;--lime-400:#A6CE4E;--lime-500:#86A839;--lime-600:#688424;--lime-700:#4B620F;--lime-800:#304100;--lime-900:#172300;
+  --emerald-0:#E6F9EC;--emerald-100:#C0E8CE;--emerald-200:#9BD7B0;--emerald-300:#73C693;--emerald-400:#43B476;--emerald-500:#329560;--emerald-600:#22774A;--emerald-700:#125B36;--emerald-800:#034023;--emerald-900:#002611;
+  --teal-0:#E4F9F4;--teal-100:#C1EDE4;--teal-200:#9EE0D3;--teal-300:#76D4C3;--teal-400:#45C7B3;--teal-500:#31A492;--teal-600:#1D8173;--teal-700:#076155;--teal-800:#004239;--teal-900:#00261F;
+  --sky-0:#E7F6FF;--sky-100:#C4E3FA;--sky-200:#A2CFF1;--sky-300:#7EBCE8;--sky-400:#58A8DF;--sky-500:#458ABA;--sky-600:#336E96;--sky-700:#215273;--sky-800:#113952;--sky-900:#032134;
+  --violet-0:#F1F1FF;--violet-100:#D6D4FF;--violet-200:#BBB7FC;--violet-300:#A29AF5;--violet-400:#8A7CEC;--violet-500:#7266C6;--violet-600:#5B50A2;--violet-700:#453C7F;--violet-800:#30295E;--violet-900:#1D163E;
+  --orchid-0:#FEEDFF;--orchid-100:#F1CFFA;--orchid-200:#E4B1F2;--orchid-300:#D692E8;--orchid-400:#C873DE;--orchid-500:#A65DB9;--orchid-600:#864896;--orchid-700:#663474;--orchid-800:#492053;--orchid-900:#2D0E35;
+  --neutral-0:#EFF1F9;--neutral-100:#D5D9EA;--neutral-200:#B8BDD3;--neutral-300:#999FB9;--neutral-400:#7B819C;--neutral-500:#5E637D;--neutral-600:#42465B;--neutral-700:#282B39;--neutral-800:#0F111B;--neutral-900:#07080C;
+
+  /* surfaces — elevation is lightness, never shadow */
+  --surface-app:var(--neutral-900);
+  --surface-card:var(--neutral-800);
+  --surface-raised:var(--neutral-700);
+  --surface-fill:var(--neutral-600);
+
+  /* text */
+  --text-1:var(--neutral-0);
+  --text-2:var(--neutral-200);
+  --text-3:var(--neutral-400);
+
+  /* lines */
+  --divider:var(--neutral-700);
+  --gridline:var(--neutral-700);
+
+  /* metric aliases — one hue per body signal, always step 400 */
+  --metric-heart-rate:var(--crimson-400);
+  --metric-hrv:var(--terracotta-400);
+  --metric-calories:var(--tangerine-400);
+  --metric-steps:var(--gold-400);
+  --metric-activity:var(--lime-400);
+  --metric-distance:var(--emerald-400);
+  --metric-readiness:var(--teal-400);
+  --metric-spo2:var(--sky-400);
+  --metric-sleep:var(--violet-400);
+  --metric-skin-temp:var(--orchid-400);
+
+  /* semantic quads — glyphs and badges only, never chart lines or fills */
+  --positive-bg:#0E2A1B;--positive-fill:#1E5B38;--positive-icon:#4ADE80;--positive-text:#8AF0B0;
+  --negative-bg:#331109;--negative-fill:#6E2418;--negative-icon:#F4604C;--negative-text:#FF9184;
+  --caution-bg:#2E2103;--caution-fill:#6B4E0E;--caution-icon:#EFB428;--caution-text:#F5CE6F;
+  --neutral-bg:var(--neutral-700);--neutral-fill:var(--neutral-600);--neutral-icon:var(--neutral-300);--neutral-text:var(--neutral-200);
+
+  /* type — Google Sans Flex for words, League Spartan for every numeral */
+  --font-text:'Google Sans Flex','Google Sans',sans-serif;
+  --font-number:'Spartan','League Spartan',sans-serif;
+  --num-features:'tnum' 1,'lnum' 1;
+
+  /* radii, spacing helpers, motion */
+  --radius-card:20px;
+  --duration-fast:120ms;
+  --duration-base:140ms;
+  --duration-slow:240ms;
+
+  /* ------------------------------------------------------------------
+     D25 — the one open question in the spec, built the NEUTRAL way.
+     Selection is a raised surface + a neutral hairline ring, not a tint.
+     To try the teal variant, swap these three lines and nothing else:
+       --ob-selected-ring:var(--metric-readiness);
+       --ob-selected-mark:var(--metric-readiness);
+       --ob-selected-seg:var(--metric-readiness);
+     They drive, in order: the option-card ring, the option-card check +
+     the OTP current-box ring, and the segmented-control active thumb.
+     (The spec named two properties; the segmented thumb needed a third
+     to stay a one-line switch — flagged rather than decided silently.)
+     ------------------------------------------------------------------ */
+  --ob-selected-ring:var(--neutral-500);
+  --ob-selected-mark:var(--text-1);
+  --ob-selected-seg:transparent;
+}
+
+/* ==========================================================================
+   2. PAGE SCAFFOLD — the desk the phone sits on, plus the control panel
+   ========================================================================== */
+:root{color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+/* The hidden attribute only sets display:none at low priority, so any element
+   we also give display:flex/grid would keep showing. This makes [hidden] mean
+   hidden everywhere — the flow toggles fields and notices with it. */
+[hidden]{display:none !important}
+body{
+  min-height:100vh;
+  background:var(--neutral-900);
+  color:var(--text-1);
+  font-family:var(--font-text);
+  display:flex;align-items:flex-start;justify-content:center;
+  gap:32px;padding:32px 16px;flex-wrap:wrap;
+}
+
+/* Control panel — lives OUTSIDE the phone, same idiom as the existing tabs.
+   Every state in the flow is reachable from here without having to type a
+   wrong code six times to see the error. */
+.panel{
+  position:sticky;top:32px;
+  width:252px;max-height:calc(100vh - 64px);overflow-y:auto;
+  background:var(--surface-card);
+  border:0.5px solid var(--neutral-700);border-radius:var(--radius-card);
+  padding:16px;
+}
+.panel::-webkit-scrollbar{width:0}
+.panel h2{margin:0;font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.panel h3{margin:18px 0 6px;font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.panel .hint{margin:8px 0 12px;font-size:11px;line-height:16px;color:var(--text-3)}
+.panel .opts{display:flex;flex-direction:column;gap:2px}
+.panel label{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:8px 10px;border-radius:12px;cursor:pointer;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);
+}
+.panel label:hover{background:var(--surface-raised)}
+.panel label.on{background:var(--surface-raised);color:var(--text-1)}
+.panel input{accent-color:var(--metric-readiness);margin:2px 0 0}
+.panel .desc{display:block;font-size:10px;line-height:14px;font-weight:400;color:var(--text-3)}
+.panel .pbtn{
+  width:100%;margin-top:6px;padding:9px 10px;border:0;border-radius:12px;cursor:pointer;
+  background:var(--surface-raised);color:var(--text-1);font-family:inherit;
+  font-size:13px;line-height:18px;font-weight:500;text-align:left;
+}
+.panel .pbtn:hover{background:var(--surface-fill)}
+.panel .note{
+  margin:16px 0 0;padding:10px;border-radius:12px;background:var(--surface-app);
+  font-size:10px;line-height:15px;color:var(--text-3);
+}
+.panel .note b{color:var(--text-2);font-weight:600}
+
+/* ==========================================================================
+   3. PHONE MOCKUP — reused verbatim from Activity Tab/Workout Tab.html
+   ========================================================================== */
+.phone{
+  flex:0 0 auto;
+  border-radius:40px;
+  background:var(--neutral-900);
+  border:2px solid var(--neutral-700);
+  outline:6px solid var(--neutral-800);
+  padding:10px;
+}
+.screen{
+  position:relative;width:360px;height:780px;
+  border-radius:32px;overflow:hidden;
+  background:var(--surface-app);
+  display:flex;flex-direction:column;
+}
+/* punch-hole selfie camera */
+.screen::before{
+  content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:12px;height:12px;border-radius:50%;
+  background:var(--neutral-900);border:2px solid var(--neutral-700);
+  z-index:60;pointer-events:none;
+}
+/* The status bar floats OVER the app, so the splash navy and the sign-in
+   photo reach the top edge. It stays on every onboarding screen, which is
+   why content starts 44px down (32px bar + 12px head padding). */
+.statusbar{
+  position:absolute;top:0;left:0;right:0;height:32px;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-1);
+  pointer-events:none;
+}
+.statusbar .batt{width:20px;height:10px;border-radius:3px;border:1px solid var(--text-2);padding:1px}
+.statusbar .batt i{display:block;width:12px;height:100%;border-radius:2px;background:var(--text-1)}
+.statusbar .right{display:flex;align-items:center;gap:6px;color:var(--text-2)}
+
+/* gesture bar */
+.gesture{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:112px;height:4px;border-radius:999px;background:var(--neutral-600);
+  z-index:60;pointer-events:none;
+}
+
+/* Phosphor icon holder — JS injects the SVG into these spans.
+   The [hidden] rule is needed because inline-flex would otherwise win over
+   the hidden attribute's own display:none. */
+.phi{display:inline-flex;align-items:center;justify-content:center}
+.phi[hidden]{display:none}
+.phi svg{width:100%;height:100%;display:block}
+
+/* ==========================================================================
+   4. ONBOARDING SHELL — one .ob-screen per step, stacked and cross-faded.
+      Uses the .subpage idea from the tabs (D01): no bottom nav, no
+      .screen-head, no three-dot menu.
+   ========================================================================== */
+.ob-stack{position:absolute;inset:0;overflow:hidden}
+.ob-screen{
+  position:absolute;inset:0;
+  display:none;flex-direction:column;
+  background:var(--surface-app);
+  padding-top:32px;               /* clears the floating status bar */
+}
+.ob-screen.active{display:flex}
+
+/* D19 — forward: the incoming screen slides in from +16px with a fade.
+   Back reverses it. Cross-fade only under reduced motion (see §12). */
+@keyframes ob-in-fwd{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+@keyframes ob-in-back{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+.ob-screen.anim-fwd{animation:ob-in-fwd var(--duration-slow) ease-out}
+.ob-screen.anim-back{animation:ob-in-back var(--duration-slow) ease-out}
+
+.ob-head{flex:0 0 auto;padding:12px 16px 0;display:flex;flex-direction:column;gap:14px}
+.ob-topbar{display:flex;align-items:center;gap:8px;min-height:40px}
+
+/* D02 + D26 — back button: 40×40, arrow-left, NO circle behind it,
+   pulled 12px left so the glyph optically aligns to the 16px gutter. */
+.backbtn{
+  width:40px;height:40px;margin-left:-12px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;
+  background:none;border:0;cursor:pointer;color:var(--text-1);
+}
+.backbtn .phi{width:24px;height:24px}
+.backbtn:focus-visible{outline:2px solid var(--neutral-0);outline-offset:2px;border-radius:999px}
+
+/* 2.8 .prog — step indicator, top-right on the back-button row (D03).
+   No "Step n of 4" text on screen; the label lives in aria-valuetext. */
+.prog{width:104px;margin-left:auto;display:flex;gap:4px;flex:0 0 auto}
+.prog i{flex:1;height:4px;border-radius:999px;background:var(--divider);transition:background var(--duration-slow) ease}
+.prog i.on{background:var(--metric-readiness)}
+
+.ob-title{margin:0;font-size:24px;line-height:30px;font-weight:500;letter-spacing:-0.01em;color:var(--text-1)}
+.ob-sub{margin:6px 0 0;font-size:15px;line-height:22px;font-weight:400;color:var(--text-2)}
+
+.ob-body{flex:1;min-height:0;overflow-y:auto;padding:24px 16px 0;scrollbar-width:none}
+.ob-body::-webkit-scrollbar{display:none}
+.ob-body>*+*{margin-top:16px}
+
+/* 2.11 .ob-foot — docked footer. The gradient lets content scroll under it. */
+.ob-foot{
+  flex:0 0 auto;padding:16px 16px 24px;
+  background:linear-gradient(to top, var(--surface-app) 62%, transparent);
+}
+.ob-foot>*+*{margin-top:4px}
+/* footer with a back button beside the CTA (steps 2–4) */
+.ob-foot .footrow{display:flex;align-items:center;gap:12px}
+.ob-foot .footrow .btn-primary{flex:1}
+
+/* ==========================================================================
+   5. BUTTONS (spec §2.1–2.4, all D17)
+   --------------------------------------------------------------------------
+   Teal carries interaction and only teal does: the primary is a teal fill,
+   the secondary a teal hairline. Nothing else in the chrome takes a hue.
+   ========================================================================== */
+.btn-primary{
+  min-height:56px;width:100%;border:0;border-radius:999px;
+  background:var(--metric-readiness);color:var(--neutral-900);
+  font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
+  transition:background var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+.btn-primary:active{background:var(--teal-500);transform:scale(.98)}
+/* no opacity — a disabled button is a lighter neutral, not a faded teal */
+.btn-primary[disabled]{background:var(--surface-raised);color:var(--text-3);cursor:default;transform:none}
+.btn-primary:focus-visible{outline:2px solid var(--neutral-0);outline-offset:2px}
+.btn-primary .phi{width:20px;height:20px;color:var(--neutral-900)}
+.btn-primary[disabled] .phi{color:var(--text-3)}
+
+/* loading: the label is swapped for a spinner. The button keeps its width. */
+.btn-primary .spin{display:none;width:20px;height:20px;color:var(--neutral-900)}
+.btn-primary.is-loading .lab{visibility:hidden}
+.btn-primary.is-loading .spin{display:block;position:absolute;animation:ob-spin 800ms linear infinite}
+.btn-primary.is-loading{position:relative}
+@keyframes ob-spin{to{transform:rotate(360deg)}}
+
+.btn-secondary{
+  min-height:52px;width:100%;border-radius:999px;background:none;cursor:pointer;
+  border:1px solid var(--metric-readiness);color:var(--metric-readiness);
+  font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:background var(--duration-fast) ease;
+}
+.btn-secondary:active{background:color-mix(in srgb, var(--metric-readiness) 10%, transparent)}
+.btn-secondary:focus-visible{outline:2px solid var(--neutral-0);outline-offset:2px}
+.btn-secondary .phi{width:20px;height:20px}
+
+/* 2.3 — neutral button. ONLY the Google and Apple buttons use this: teal text
+   beside a provider mark would read as a Pebble action, not a third-party
+   sign-in.
+   Flag: spec §3.4 lists these two as .btn-secondary while §2.3 reserves
+   .btn-neutral for exactly them. §2.3 gives a reason, so §2.3 wins — noted
+   here rather than resolved silently. */
+.btn-neutral{
+  min-height:52px;width:100%;border:0;border-radius:999px;cursor:pointer;
+  background:var(--surface-raised);color:var(--text-1);
+  font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:500;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:background var(--duration-fast) ease;
+}
+.btn-neutral:active{background:var(--surface-fill)}
+.btn-neutral:focus-visible{outline:2px solid var(--neutral-0);outline-offset:2px}
+.btn-neutral .phi{width:20px;height:20px;color:var(--text-1)}
+
+.btn-text{
+  min-height:48px;width:100%;border:0;background:none;cursor:pointer;
+  font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:500;
+  color:var(--text-2);border-radius:999px;
+}
+.btn-text:hover{color:var(--text-1)}
+.btn-text:focus-visible{outline:2px solid var(--neutral-0);outline-offset:2px}
+/* inline flavour — "Edit" beside the phone number, "Resend" in the timer line */
+.btn-text.inline{
+  display:inline-flex;align-items:center;width:auto;min-height:0;padding:0;
+  font-size:15px;line-height:22px;text-decoration:underline;
+  text-decoration-color:var(--surface-fill);text-underline-offset:3px;
+}
+.btn-text.small{font-size:13px;line-height:18px;min-height:0;width:auto;padding:6px 8px}
+.btn-text[disabled]{color:var(--text-3);cursor:default;text-decoration:none}
+
+/* ==========================================================================
+   6. 2.5 .optcard — single-select option (D06, D07)
+      Selection = one step lighter + a hairline ring. No radio dot, no tint.
+   ========================================================================== */
+.optlist{display:flex;flex-direction:column;gap:8px}
+.optcard{
+  width:100%;min-height:56px;text-align:left;border:0;border-radius:20px;
+  padding:14px 16px;background:var(--surface-card);cursor:pointer;
+  display:flex;align-items:center;gap:12px;font-family:inherit;
+  transition:background var(--duration-base) ease;
+}
+.optcard:hover{background:var(--surface-raised)}
+.optcard .otext{flex:1;min-width:0}
+.optcard .o1{display:block;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.optcard .o2{display:block;margin-top:2px;font-size:13px;line-height:18px;font-weight:400;color:var(--text-3)}
+.optcard .omark{
+  width:20px;height:20px;flex:0 0 auto;color:var(--ob-selected-mark);
+  opacity:0;transition:opacity var(--duration-base) ease;
+}
+.optcard[aria-checked="true"]{
+  background:var(--surface-raised);
+  box-shadow:inset 0 0 0 1px var(--ob-selected-ring);
+}
+.optcard[aria-checked="true"] .omark{opacity:1}
+.optcard:focus-visible{outline:2px solid var(--neutral-0);outline-offset:2px}
+
+/* ==========================================================================
+   7. 2.6 .field — text / number input (D11)
+      A control ON a card recesses to the app ground (D10).
+   ========================================================================== */
+.field{
+  min-height:48px;border-radius:12px;background:var(--surface-app);
+  box-shadow:inset 0 0 0 1px var(--divider);
+  display:flex;align-items:center;gap:8px;padding:0 14px;
+  transition:box-shadow var(--duration-base) ease;
+}
+.field:focus-within{box-shadow:inset 0 0 0 2px var(--neutral-0)}
+/* numerals are Spartan; the placeholder is the TEXT face, so an empty field
+   never looks like it is already holding a number */
+.field input{
+  flex:1;min-width:0;background:none;border:0;outline:0;padding:0;
+  font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:700;
+  font-feature-settings:var(--num-features);color:var(--text-1);
+}
+.field input::placeholder{
+  font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:400;color:var(--text-3);
+}
+/* words, not numerals — first name and email are set in the text face */
+.field input.txt{font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:500}
+/* trailing unit — text face, uppercase overline, never Spartan */
+.field .unit{
+  flex:0 0 auto;font-size:11px;line-height:16px;font-weight:500;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+}
+.field.is-error{box-shadow:inset 0 0 0 1px var(--negative-fill)}
+.errline{margin:6px 0 0;font-size:11px;line-height:16px;font-weight:400;color:var(--negative-text)}
+.errline[hidden]{display:none}
+.hintline{margin:6px 0 0;font-size:11px;line-height:16px;font-weight:400;color:var(--text-3)}
+
+/* a field that behaves like a button (date of birth opens a sheet) */
+.field.tappable{cursor:pointer}
+.field .fval{
+  flex:1;text-align:left;
+  font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:700;
+  font-feature-settings:var(--num-features);color:var(--text-1);
+}
+.field .fval.empty{
+  font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:400;color:var(--text-3);
+}
+.field .caret{width:20px;height:20px;flex:0 0 auto;color:var(--text-3)}
+
+/* ft/in — two fields sharing one row, 8px apart */
+.fieldrow{display:flex;gap:8px}
+.fieldrow .field{flex:1;min-width:0}
+
+/* ==========================================================================
+   8. 2.7 .seg — segmented control (D09, D10, D12)
+      Structure from .seg4, but the labels are WORDS, so the text face is
+      used — not the numeric face .seg4 needs for D/W/M/Y.
+   ========================================================================== */
+.seg{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface-app)}
+.seg button{
+  flex:1;min-height:36px;border:0;border-radius:999px;background:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-text);font-size:13px;line-height:18px;font-weight:500;
+  color:var(--text-3);transition:background var(--duration-base) ease, color var(--duration-base) ease;
+}
+.seg button:hover{color:var(--text-1)}
+/* active thumb is always one step lighter than its track (D10) */
+.seg button.active{
+  background:var(--surface-raised);color:var(--text-1);
+  box-shadow:inset 0 0 0 1px var(--ob-selected-seg);
+}
+.seg button:focus-visible{outline:2px solid var(--neutral-0);outline-offset:2px}
+
+/* unit toggles — small, right-aligned in the label row */
+.seg--mini{padding:3px;flex:0 0 auto;background:var(--surface-app)}
+.seg--mini button{min-height:26px;flex:0 0 auto;padding:0 12px;font-size:11px;line-height:16px}
+
+/* label row: name on the left, unit toggle hard right */
+.labelrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.labelrow .lab{font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+/* units and secondary markers — text face, uppercase, tracked out */
+.overline{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+
+/* ==========================================================================
+   9. 2.10 .otp — code input (D22)
+   ========================================================================== */
+.otp{display:flex;gap:8px}
+.otp input{
+  flex:1;min-width:0;min-height:56px;border:0;border-radius:12px;text-align:center;
+  background:var(--surface-app);box-shadow:inset 0 0 0 1px var(--divider);
+  font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;
+  letter-spacing:-0.005em;font-feature-settings:var(--num-features);color:var(--text-1);
+  outline:0;padding:0;transition:box-shadow var(--duration-base) ease;
+  caret-color:var(--ob-selected-mark);
+}
+.otp input:focus{box-shadow:inset 0 0 0 2px var(--ob-selected-mark)}
+.otp.is-error input{box-shadow:inset 0 0 0 1px var(--negative-fill)}
+@keyframes ob-shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-4px)}
+  75%{transform:translateX(4px)}
+}
+.otp.shake{animation:ob-shake 120ms ease-in-out 2}
+
+/* resend line — the timer numerals are Spartan, the words are not */
+.resendline{
+  margin-top:20px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  font-size:13px;line-height:18px;font-weight:400;color:var(--text-3);
+}
+.resendline .tnum{
+  font-family:var(--font-number);font-weight:500;
+  font-feature-settings:var(--num-features);color:var(--text-2);
+}
+
+/* ==========================================================================
+   10. 2.9 .stepper — target adjuster (D13, D14, D15)
+       Spec grid is "label label tag" / "minus value plus". Built as a head
+       row spanning all three columns so the tag can size to its own text.
+   ========================================================================== */
+.stepper{
+  background:var(--surface-card);border-radius:var(--radius-card);padding:16px;
+  display:grid;grid-template-columns:44px 1fr 44px;
+  grid-template-areas:"head head head" "minus value plus";
+  row-gap:14px;align-items:center;
+}
+.stepper .st-head{grid-area:head;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.stepper .st-lab{font-size:15px;line-height:22px;font-weight:500;color:var(--text-1);display:flex;align-items:baseline;gap:6px}
+.stepper .st-unit{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.stepper .st-tag{
+  flex:0 0 auto;font-size:13px;line-height:18px;font-weight:400;color:var(--text-3);
+  display:flex;align-items:center;gap:6px;background:none;border:0;padding:0;font-family:inherit;
+}
+.stepper .st-tag.resettable{cursor:pointer;font-weight:500;color:var(--text-2)}
+.stepper .st-tag .phi{width:16px;height:16px}
+.stepper .st-tag:focus-visible{outline:2px solid var(--neutral-0);outline-offset:2px;border-radius:8px}
+.stepper .st-minus{grid-area:minus}
+.stepper .st-plus{grid-area:plus}
+.stepper .rndbtn{
+  width:44px;height:44px;border:0;border-radius:999px;cursor:pointer;
+  background:var(--surface-raised);color:var(--text-1);
+  display:flex;align-items:center;justify-content:center;
+  transition:background var(--duration-fast) ease;
+}
+.stepper .rndbtn:hover{background:var(--surface-fill)}
+.stepper .rndbtn:active{transform:scale(.94)}
+.stepper .rndbtn[disabled]{color:var(--text-3);cursor:default;background:var(--surface-raised)}
+.stepper .rndbtn .phi{width:20px;height:20px}
+.stepper .rndbtn:focus-visible{outline:2px solid var(--neutral-0);outline-offset:2px}
+.stepper .st-val{
+  grid-area:value;text-align:center;
+  font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;
+  letter-spacing:-0.005em;font-feature-settings:var(--num-features);color:var(--text-1);
+  transition:opacity var(--duration-base) ease;
+}
+.stepper .st-val.fade{opacity:0}
+.sronly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ==========================================================================
+   11. CARDS, ROWS AND SHEETS — reused from the approved tabs
+   ========================================================================== */
+.card{background:var(--surface-card);border-radius:var(--radius-card);padding:16px;position:relative}
+.card .ct{margin:0;font-size:17px;line-height:22px;font-weight:500;color:var(--text-1)}
+.card .cp{margin:6px 0 0;font-size:13px;line-height:18px;font-weight:400;color:var(--text-3)}
+.stack16{display:flex;flex-direction:column;gap:16px}
+.stack12{display:flex;flex-direction:column;gap:12px}
+.stack8{display:flex;flex-direction:column;gap:8px}
+
+/* settings-style row — "How these are worked out" on step 4 */
+.setrow{
+  display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;
+  background:var(--surface-card);border:0;border-radius:var(--radius-card);
+  width:100%;font-family:inherit;text-align:left;
+}
+.setrow:hover{background:var(--surface-raised)}
+.setrow .itile{
+  width:32px;height:32px;border-radius:8px;background:var(--surface-raised);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--text-2);
+}
+.setrow .itile .phi{width:18px;height:18px}
+.setrow .lab{flex:1;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.setrow .val{font-size:13px;line-height:18px;color:var(--text-3);display:flex;align-items:center;gap:6px}
+.setrow .val .phi{width:16px;height:16px}
+.setrow:focus-visible{outline:2px solid var(--neutral-0);outline-offset:2px}
+
+/* sheets — inset 8, radius 24, exactly as the tabs build them */
+.scrim{position:absolute;inset:0;z-index:65;background:color-mix(in srgb, var(--neutral-900) 60%, transparent)}
+.scrim[hidden],.sheet[hidden]{display:none}
+.sheet{
+  position:absolute;left:8px;right:8px;bottom:8px;z-index:70;
+  background:var(--surface-card);border-radius:24px;padding:16px 16px 24px;
+}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sheet-head .t{font-size:17px;line-height:22px;font-weight:500;color:var(--text-1)}
+.iconbtn{
+  width:36px;height:36px;border-radius:999px;background:var(--surface-raised);border:0;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--text-1);
+}
+.iconbtn:hover{background:var(--surface-fill)}
+.iconbtn .phi{width:18px;height:18px}
+.sheet-rows{margin-top:16px;display:flex;flex-direction:column;gap:2px}
+.sheet-row{
+  width:100%;background:none;border:0;padding:10px;border-radius:12px;cursor:pointer;font-family:inherit;
+  display:flex;justify-content:center;
+}
+.sheet-row .v{
+  font-family:var(--font-number);font-size:15px;line-height:20px;font-weight:500;
+  font-feature-settings:var(--num-features);color:var(--text-3);
+}
+.sheet-row.sel{background:var(--surface-raised)}
+.sheet-row.sel .v{font-size:20px;line-height:24px;font-weight:700;color:var(--text-1)}
+.sheet .sheet-note{margin:12px 0 0;font-size:13px;line-height:18px;color:var(--text-2)}
+.sheet .sheet-note b{color:var(--text-1);font-weight:600}
+.sheet .btn-primary,.sheet .btn-secondary{margin-top:16px}
+
+/* country picker — dial code in Spartan, country name in the text face */
+.ctrylist{margin-top:12px;max-height:300px;overflow-y:auto;scrollbar-width:none}
+.ctrylist::-webkit-scrollbar{display:none}
+.ctryrow{
+  width:100%;display:flex;align-items:center;gap:12px;padding:12px 10px;
+  background:none;border:0;border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;
+}
+.ctryrow:hover{background:var(--surface-raised)}
+.ctryrow .dial{
+  width:56px;flex:0 0 auto;
+  font-family:var(--font-number);font-size:15px;line-height:20px;font-weight:600;
+  font-feature-settings:var(--num-features);color:var(--text-1);
+}
+.ctryrow .cname{flex:1;font-size:15px;line-height:22px;font-weight:400;color:var(--text-2)}
+.ctryrow .phi{width:18px;height:18px;color:var(--ob-selected-mark);opacity:0}
+.ctryrow[aria-selected="true"] .phi{opacity:1}
+.ctryrow[aria-selected="true"] .cname{color:var(--text-1)}
+
+/* date-of-birth sheet — three snap-scrolling columns (D08) */
+.dobcols{margin-top:16px;display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:8px}
+.dobcol{
+  /* position:relative matters: the centring maths reads row.offsetTop, which
+     is measured from the offsetParent. Without this the parent is the sheet,
+     so every column lands a couple of rows off centre. */
+  position:relative;
+  height:184px;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none;
+  background:var(--surface-app);border-radius:12px;padding:70px 0;
+}
+.dobcol::-webkit-scrollbar{display:none}
+.dobcol .sheet-row{scroll-snap-align:center;padding:6px}
+.dobcol .sheet-row .v{white-space:nowrap}
+/* month names are words, so they take the text face, not Spartan */
+.dobcol.months .sheet-row .v{font-family:var(--font-text);font-size:15px;line-height:20px}
+.dobcol.months .sheet-row.sel .v{font-size:17px;line-height:22px;font-weight:600}
+
+/* ==========================================================================
+   12. NOTICE — delivery / network states.
+       Flag: spec §9 put these out of scope; the owner asked for them in this
+       build, so they are designed here rather than left as TODO markers.
+       Semantic quads only, glyph + text — never a hue from the metric set.
+   ========================================================================== */
+.notice{
+  display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:12px;
+  background:var(--negative-bg);box-shadow:inset 0 0 0 1px var(--negative-fill);
+  font-size:13px;line-height:18px;font-weight:400;color:var(--negative-text);
+}
+.notice .phi{width:18px;height:18px;flex:0 0 auto;color:var(--negative-icon);margin-top:1px}
+.notice[hidden]{display:none}
+.notice.caution{background:var(--caution-bg);box-shadow:inset 0 0 0 1px var(--caution-fill);color:var(--caution-text)}
+.notice.caution .phi{color:var(--caution-icon)}
+
+/* ==========================================================================
+   13. SPLASH — the owner's design: navy ground, mark + wordmark, nothing else.
+       Flag: the navy ground is --sky-800, a hue used as brand ground rather
+       than as a body signal. House rule 3 says only metric hues take a step
+       400 and "nothing else in the chrome takes a hue" — a full-bleed brand
+       splash is the deliberate exception the owner's design asks for.
+       Flag: the spec's concentric rings, 2-segment indeterminate track and
+       "Pebble Band 2 · v3.1.4" line are dropped, per the owner's answer.
+   ========================================================================== */
+.ob-screen[data-screen="splash"]{
+  background:var(--sky-800);
+  align-items:center;justify-content:center;padding:32px 16px 0;
+}
+.logo-lockup{display:flex;flex-direction:column;align-items:center;gap:18px;margin-bottom:40px}
+.logo-mark{color:var(--metric-readiness)}
+/* Flag: the pebble mark and wordmark are code-drawn STAND-INS so the file
+   stays self-contained. Dropping a real assets/pebble-mark.svg in and
+   pointing .logo-mark at it replaces them without touching layout. */
+.logo-word{
+  font-family:var(--font-text);font-weight:400;letter-spacing:0.01em;
+  color:var(--text-1);font-size:44px;line-height:48px;
+}
+.logo-word.small{font-size:22px;line-height:26px}
+
+/* ==========================================================================
+   14. SIGN-IN — the owner's design: three photos crossfading behind a card
+       that floats at the bottom. The loop runs on THIS SCREEN ONLY.
+   ========================================================================== */
+.ob-screen[data-screen="signin"]{padding-top:0;justify-content:flex-end}
+.ob-photo{position:absolute;inset:0;overflow:hidden;background:var(--sky-900)}
+.ob-photo .slide{
+  position:absolute;inset:0;background-size:cover;background-position:center;
+  opacity:0;transition:opacity 900ms ease;
+}
+.ob-photo .slide.on{opacity:1}
+/* The image slots are wired up already: drop signin-1/2/3.png into
+   assets/onboarding/ and the real photos take over automatically. Until then
+   the token gradient underneath shows, so the 5-second loop is still visible. */
+.ob-photo .s1{background-image:url('assets/onboarding/signin-1.png'),
+  linear-gradient(160deg, var(--sky-700) 0%, var(--sky-900) 55%, var(--neutral-900) 100%)}
+.ob-photo .s2{background-image:url('assets/onboarding/signin-2.png'),
+  linear-gradient(160deg, var(--teal-700) 0%, var(--sky-800) 55%, var(--neutral-900) 100%)}
+.ob-photo .s3{background-image:url('assets/onboarding/signin-3.png'),
+  linear-gradient(160deg, var(--emerald-700) 0%, var(--sky-900) 55%, var(--neutral-900) 100%)}
+/* scrim: keeps the status bar legible at the top and melts the photo into
+   the card at the bottom */
+.ob-photo::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--neutral-900) 45%, transparent) 0%,
+    transparent 26%,
+    color-mix(in srgb, var(--neutral-900) 55%, transparent) 68%,
+    var(--neutral-900) 100%);
+}
+.ob-hero{
+  position:relative;z-index:2;margin:0 8px 0;
+  background:var(--surface-card);border-radius:28px;padding:20px 16px 16px;
+}
+.ob-hero .mk{color:var(--metric-readiness);margin-bottom:18px}
+.ob-hero h1{
+  margin:0 0 20px;font-size:24px;line-height:30px;font-weight:600;
+  letter-spacing:-0.01em;color:var(--text-1);
+}
+.ob-hero h1 span{display:block;font-weight:700}
+/* Flag: the owner's screenshot sets this headline optically larger than the
+   h1 token (24/30). Kept on-token here — a bigger display size would need a
+   new type token in js/tokens.js first, never a hard-coded size. */
+.ob-legal{
+  position:relative;z-index:2;padding:14px 16px 24px;text-align:center;
+  font-size:11px;line-height:16px;font-weight:400;color:var(--text-3);
+}
+.ob-legal a{color:var(--text-2);text-decoration:underline;text-decoration-color:var(--surface-fill);text-underline-offset:3px}
+
+/* the single pill that holds country code + number (owner's design) */
+.pillfield{
+  display:flex;align-items:center;min-height:56px;border-radius:999px;
+  background:var(--surface-app);box-shadow:inset 0 0 0 1px var(--divider);
+  transition:box-shadow var(--duration-base) ease;
+}
+.pillfield:focus-within{box-shadow:inset 0 0 0 2px var(--neutral-0)}
+.pillfield.is-error{box-shadow:inset 0 0 0 1px var(--negative-fill)}
+.pillfield .cc{
+  display:flex;align-items:center;gap:6px;height:100%;padding:0 12px 0 18px;
+  background:none;border:0;cursor:pointer;font-family:inherit;border-radius:999px 0 0 999px;
+}
+.pillfield .cc .code{
+  font-family:var(--font-number);font-size:17px;line-height:22px;font-weight:600;
+  font-feature-settings:var(--num-features);color:var(--text-1);
+}
+.pillfield .cc .phi{width:16px;height:16px;color:var(--text-3)}
+.pillfield .sep{width:1px;height:26px;background:var(--divider);flex:0 0 auto}
+.pillfield input{
+  flex:1;min-width:0;background:none;border:0;outline:0;padding:0 18px;
+  font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:700;
+  font-feature-settings:var(--num-features);color:var(--text-1);
+}
+.pillfield input::placeholder{
+  font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:400;color:var(--text-3);
+}
+.pillfield .cc:focus-visible{outline:2px solid var(--neutral-0);outline-offset:-2px}
+
+/* ==========================================================================
+   15. YOU'RE IN (D24) — verified disc
+   ========================================================================== */
+.verifydisc{
+  width:64px;height:64px;border-radius:999px;background:var(--teal-800);
+  display:flex;align-items:center;justify-content:center;margin:0 auto;
+  color:var(--metric-readiness);
+}
+.verifydisc .phi{width:32px;height:32px}
+.centered{text-align:center}
+.centered .ob-title{margin-top:16px}
+.centered .ob-sub{margin-top:4px}
+
+/* ==========================================================================
+   16. HOME HAND-OFF (D20) — the mock the flow lands on after Finish setup.
+       TODO(D20): in the shipped app this is index.html's Home tab in its
+       existing data-state="empty"; band pairing screens attach to the card
+       below. Permission primers (motion / health / notifications) attach
+       between Finish setup and this screen — both out of scope here.
+   ========================================================================== */
+.ob-screen[data-screen="home"]{padding-top:32px}
+.homehead{padding:12px 16px 0}
+.homehead .greet{margin:0;font-size:24px;line-height:30px;font-weight:500;letter-spacing:-0.01em;color:var(--text-1)}
+.homehead .date{margin:4px 0 0;font-size:13px;line-height:18px;color:var(--text-3)}
+.paircard{
+  display:flex;align-items:flex-start;gap:12px;
+  background:var(--surface-card);border-radius:var(--radius-card);padding:16px;
+  box-shadow:inset 0 0 0 1px var(--teal-800);
+}
+.paircard .disc{
+  width:40px;height:40px;border-radius:999px;background:var(--teal-800);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--metric-readiness);
+}
+.paircard .disc .phi{width:22px;height:22px}
+.pairtext{display:block}
+.pairtext .pt{display:block;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.pairtext .ps{display:block;margin-top:2px;font-size:13px;line-height:18px;color:var(--text-3)}
+
+/* three target cards showing the goals the flow just wrote, all empty of data */
+.tgtrow{display:flex;gap:8px}
+.tgtcard{flex:1;background:var(--surface-card);border-radius:var(--radius-card);padding:14px 12px;text-align:center}
+.tgtcard .phi{width:20px;height:20px;margin:0 auto}
+.tgtcard .tn{
+  margin-top:8px;font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:700;
+  font-feature-settings:var(--num-features);color:var(--text-3);
+}
+.tgtcard .tg{
+  margin-top:2px;font-family:var(--font-number);font-size:13px;line-height:16px;font-weight:500;
+  font-feature-settings:var(--num-features);color:var(--text-2);
+}
+.tgtcard .tl{margin-top:4px;font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+
+/* a static bottom nav so the hand-off reads as Home, not as another step */
+.mocknav{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:20px;z-index:55;
+  display:flex;align-items:center;gap:4px;
+  width:328px;height:60px;padding:0 14px;border-radius:999px;
+  background:color-mix(in srgb, var(--neutral-800) 88%, transparent);
+  box-shadow:inset 0 0 0 0.5px var(--divider);
+}
+.mocknav .nt{
+  flex:1;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  color:var(--text-3);font-size:10px;line-height:14px;font-weight:500;
+}
+.mocknav .nt.on{color:var(--metric-readiness)}
+.mocknav .nt .phi{width:22px;height:22px}
+
+/* ==========================================================================
+   17. REDUCED MOTION — no slide, no shake, no spinner rotation (house rule 6)
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce){
+  *{transition-duration:0.01ms !important}
+  @keyframes ob-in-fwd{from{opacity:0}to{opacity:1}}
+  @keyframes ob-in-back{from{opacity:0}to{opacity:1}}
+  .ob-screen.anim-fwd,.ob-screen.anim-back{animation:ob-in-fwd var(--duration-slow) ease-out}
+  .otp.shake{animation:none}
+  .btn-primary.is-loading .spin{animation:none}
+  .ob-photo .slide{transition:opacity 0.01ms}
+  .dobcol{scroll-behavior:auto}
+}
+/* the control panel's "preview reduced motion" switch does the same thing
+   without needing the OS setting changed */
+body.rm-preview *{transition-duration:0.01ms !important}
+body.rm-preview .ob-screen.anim-fwd,body.rm-preview .ob-screen.anim-back{animation-name:ob-in-fade}
+@keyframes ob-in-fade{from{opacity:0}to{opacity:1}}
+body.rm-preview .otp.shake{animation:none}
+body.rm-preview .btn-primary.is-loading .spin{animation:none}
+</style>
+</head>
+<body>
+
+<!-- ======================= CONTROL PANEL =======================
+     Outside the phone, same idiom as the existing tabs. Every state in the
+     flow is reachable from here — no need to type a wrong code six times to
+     see the error state.
+     ============================================================ -->
+<aside class="panel" aria-label="Prototype controls">
+  <h2>Screen</h2>
+  <p class="hint">Jump straight to any screen. Entered values are kept.</p>
+  <div class="opts" id="screenOpts">
+    <label class="on"><input type="radio" name="screen" value="splash" checked><span>Splash</span></label>
+    <label><input type="radio" name="screen" value="signin"><span>Sign in<span class="desc">Photo loop, 5s crossfade</span></span></label>
+    <label><input type="radio" name="screen" value="code"><span>Enter code</span></label>
+    <label><input type="radio" name="screen" value="welcome"><span>You're in</span></label>
+    <label><input type="radio" name="screen" value="step1"><span>1 · Your profile</span></label>
+    <label><input type="radio" name="screen" value="step2"><span>2 · Activity level</span></label>
+    <label><input type="radio" name="screen" value="step3"><span>3 · Your goal</span></label>
+    <label><input type="radio" name="screen" value="step4"><span>4 · Daily targets</span></label>
+    <label><input type="radio" name="screen" value="home"><span>Home hand-off<span class="desc">Empty state + pairing card</span></span></label>
+  </div>
+
+  <h3>Code &amp; resend</h3>
+  <div class="opts" id="authOpts">
+    <label class="on"><input type="radio" name="auth" value="normal" checked><span>Normal<span class="desc">Any 6 digits verify</span></span></label>
+    <label><input type="radio" name="auth" value="wrong"><span>Wrong code<span class="desc">Shake, clear, focus box 1</span></span></label>
+    <label><input type="radio" name="auth" value="expired"><span>Expired code<span class="desc">Asks for a fresh one</span></span></label>
+    <label><input type="radio" name="auth" value="zero"><span>Resend available<span class="desc">Timer already at zero</span></span></label>
+    <label><input type="radio" name="auth" value="lockout"><span>Locked out<span class="desc">3 failures → 60s wait</span></span></label>
+  </div>
+
+  <h3>Delivery</h3>
+  <p class="hint">Out of spec §9 scope — built at your request.</p>
+  <div class="opts" id="netOpts">
+    <label class="on"><input type="radio" name="net" value="online" checked><span>Online</span></label>
+    <label><input type="radio" name="net" value="offline"><span>No network</span></label>
+    <label><input type="radio" name="net" value="undelivered"><span>SMS undelivered</span></label>
+    <label><input type="radio" name="net" value="ratelimit"><span>Rate limited</span></label>
+  </div>
+
+  <h3>Buttons &amp; validation</h3>
+  <div class="opts">
+    <label id="loadWrap"><input type="checkbox" id="loadToggle"><span>Hold CTA loading<span class="desc">Spinner stays, width fixed</span></span></label>
+    <label id="rmWrap"><input type="checkbox" id="rmToggle"><span>Preview reduced motion<span class="desc">No slide, shake or spin</span></span></label>
+  </div>
+  <button class="pbtn" id="btnValidate">Trigger step-1 errors</button>
+  <button class="pbtn" id="btnFill">Fill the spec's example profile</button>
+  <button class="pbtn" id="btnReset">Reset the whole flow</button>
+
+  <p class="note">
+    <b>Example profile (spec §4):</b> female, 165 cm, 61 kg, born 12 Apr 1998,
+    lightly active, maintain → 8 000 steps · 5.5 km · 500 kcal active burn.
+  </p>
+</aside>
+
+<!-- ======================= PHONE ======================= -->
+<div class="phone">
+  <div class="screen">
+
+    <div class="statusbar">
+      <span>12:30</span>
+      <span class="right">
+        <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M1 11h2V8H1v3Zm4 0h2V5H5v6Zm4 0h2V2H9v9Z" fill="currentColor"/></svg>
+        <span class="batt"><i></i></span>
+      </span>
+    </div>
+
+    <div class="ob-stack" id="stack">
+
+      <!-- ================= SPLASH =================
+           Owner's design: navy ground, mark + wordmark, nothing else.
+           Minimum 600ms, maximum 2000ms, then sign-in — the splash is never
+           padded to look busy. -->
+      <section class="ob-screen active" data-screen="splash" aria-label="Pebble">
+        <div class="logo-lockup">
+          <span class="logo-mark" data-mark="96" aria-hidden="true"></span>
+          <span class="logo-word">pebble</span>
+        </div>
+      </section>
+
+      <!-- ================= SIGN IN =================
+           Owner's design: three photos crossfading every 5s behind a card that
+           floats at the bottom. Copy follows the spec's rules — the button
+           says Continue, not Get OTP (D21). No back button on this screen. -->
+      <section class="ob-screen" data-screen="signin" aria-label="Sign in">
+        <div class="ob-photo" id="photoLoop" aria-hidden="true">
+          <i class="slide s1 on"></i><i class="slide s2"></i><i class="slide s3"></i>
+        </div>
+
+        <div class="ob-hero">
+          <span class="logo-mark mk" data-mark="34" aria-hidden="true"></span>
+          <h1>Your health,<span>your way</span></h1>
+
+          <div class="pillfield" id="phonePill">
+            <button class="cc" id="ccBtn" aria-label="Country dial code, currently +91">
+              <span class="code" id="ccCode">+91</span>
+              <span class="phi" data-ph="caret-down"></span>
+            </button>
+            <span class="sep"></span>
+            <input id="phoneInput" type="tel" inputmode="tel" autocomplete="tel-national"
+                   placeholder="Mobile number" maxlength="14" aria-label="Mobile number">
+          </div>
+          <p class="errline" id="phoneErr" hidden></p>
+          <div class="notice" id="signinNotice" hidden style="margin-top:12px">
+            <span class="phi" data-ph="warning-circle"></span><span class="nmsg"></span>
+          </div>
+
+          <div style="margin-top:16px">
+            <button class="btn-primary" id="signinCta">
+              <span class="lab">Continue</span>
+              <span class="phi spin" data-ph="spinner-gap"></span>
+            </button>
+          </div>
+        </div>
+
+        <p class="ob-legal">
+          By continuing, you agree to our <a href="#" onclick="return false">Terms of Service</a>
+          &amp; <a href="#" onclick="return false">Privacy Policy</a>
+        </p>
+      </section>
+
+      <!-- ================= ENTER CODE (D22) ================= -->
+      <section class="ob-screen" data-screen="code" aria-label="Enter code">
+        <div class="ob-head">
+          <div class="ob-topbar">
+            <button class="backbtn" data-back="signin" aria-label="Back">
+              <span class="phi" data-ph="arrow-left"></span>
+            </button>
+          </div>
+          <div>
+            <h1 class="ob-title">Enter code</h1>
+            <p class="ob-sub">
+              Sent to <span id="codeNumber" style="font-family:var(--font-number);font-feature-settings:var(--num-features);font-weight:600">+91 98765 43210</span>
+              · <button class="btn-text inline" data-back="signin">Edit</button>
+            </p>
+          </div>
+        </div>
+
+        <div class="ob-body">
+          <!-- Auto-submits on the sixth digit; Verify is the fallback for
+               someone reading the code off another device. -->
+          <div class="otp" id="otp">
+            <input inputmode="numeric" autocomplete="one-time-code" maxlength="1" aria-label="Digit 1">
+            <input inputmode="numeric" maxlength="1" aria-label="Digit 2">
+            <input inputmode="numeric" maxlength="1" aria-label="Digit 3">
+            <input inputmode="numeric" maxlength="1" aria-label="Digit 4">
+            <input inputmode="numeric" maxlength="1" aria-label="Digit 5">
+            <input inputmode="numeric" maxlength="1" aria-label="Digit 6">
+          </div>
+          <p class="errline" id="otpErr" hidden style="margin-top:12px"></p>
+
+          <div class="resendline" id="resendLine"></div>
+
+          <div class="notice" id="codeNotice" hidden style="margin-top:16px">
+            <span class="phi" data-ph="warning-circle"></span><span class="nmsg"></span>
+          </div>
+        </div>
+
+        <div class="ob-foot">
+          <!-- the one legitimately disabled CTA in the flow (D18) -->
+          <button class="btn-primary" id="verifyCta" disabled>
+            <span class="lab">Verify</span>
+            <span class="phi spin" data-ph="spinner-gap"></span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ================= YOU'RE IN (D24) ================= -->
+      <section class="ob-screen" data-screen="welcome" aria-label="You're in">
+        <div class="ob-head">
+          <div class="ob-topbar">
+            <button class="backbtn" data-back="code" aria-label="Back">
+              <span class="phi" data-ph="arrow-left"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="ob-body">
+          <div class="centered">
+            <div class="verifydisc"><span class="phi" data-ph="check"></span></div>
+            <h1 class="ob-title">You're in</h1>
+            <p class="ob-sub">
+              <span id="verifiedNumber" style="font-family:var(--font-number);font-feature-settings:var(--num-features);font-weight:600">+91 98765 43210</span>
+              verified.
+            </p>
+          </div>
+
+          <div>
+            <div class="labelrow"><span class="lab">What should we call you?</span>
+              <span class="overline">Optional</span></div>
+            <div class="field">
+              <input class="txt" id="nameInput" type="text" autocomplete="given-name"
+                     placeholder="First name" aria-label="First name">
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="ct">Add a backup</h3>
+            <p class="cp">Connect Google or Apple, or add an email, so you never lose access.</p>
+            <div class="stack8" style="margin-top:16px">
+              <button class="btn-neutral"><span class="phi" data-ph="google-logo"></span>Connect Google</button>
+              <button class="btn-neutral"><span class="phi" data-ph="apple-logo"></span>Connect Apple</button>
+              <div class="field">
+                <input class="txt" id="emailInput" type="email" autocomplete="email"
+                       placeholder="Or add email address" aria-label="Email address">
+              </div>
+            </div>
+            <p class="errline" id="emailErr" hidden></p>
+          </div>
+        </div>
+
+        <div class="ob-foot">
+          <button class="btn-primary" id="welcomeCta">
+            <span class="lab">Continue</span>
+            <span class="phi spin" data-ph="spinner-gap"></span>
+          </button>
+          <button class="btn-text" id="skipBackup">Skip for now</button>
+        </div>
+      </section>
+
+      <!-- ================= STEP 1 — YOUR PROFILE ================= -->
+      <section class="ob-screen" data-screen="step1" data-step="1" aria-label="Your profile">
+        <div class="ob-head">
+          <div class="ob-topbar">
+            <button class="backbtn" data-back="welcome" aria-label="Back">
+              <span class="phi" data-ph="arrow-left"></span>
+            </button>
+            <div class="prog" role="progressbar" aria-valuemin="1" aria-valuemax="4"
+                 aria-valuenow="1" aria-valuetext="Step 1 of 4">
+              <i class="on"></i><i></i><i></i><i></i>
+            </div>
+          </div>
+          <div>
+            <h1 class="ob-title" id="s1title">Your profile</h1>
+            <p class="ob-sub">Required. Pebble uses this to calculate your daily targets.</p>
+          </div>
+        </div>
+
+        <div class="ob-body">
+          <!-- One card holds the whole form, 16px internal gaps. No group
+               overlines anywhere (D05). -->
+          <div class="card">
+            <div class="stack16">
+
+              <!-- Date of birth — opens the 3-column sheet (D08) -->
+              <div>
+                <div class="labelrow"><span class="lab">Date of birth</span></div>
+                <div class="field tappable" id="dobField" role="button" tabindex="0"
+                     aria-label="Date of birth, not set">
+                  <span class="fval empty" id="dobValue">Select your date of birth</span>
+                  <span class="phi caret" data-ph="caret-down"></span>
+                </div>
+                <p class="errline" id="dobErr" hidden></p>
+              </div>
+
+              <!-- Biological sex (D09) -->
+              <div>
+                <div class="labelrow"><span class="lab">Biological sex</span></div>
+                <div class="seg" id="sexSeg" role="group" aria-label="Biological sex">
+                  <button type="button" data-val="male">Male</button>
+                  <button type="button" data-val="female">Female</button>
+                </div>
+                <div style="display:flex;justify-content:flex-end">
+                  <button class="btn-text small" id="sexSkip">Prefer not to say</button>
+                </div>
+                <p class="hintline" id="sexHint" hidden>Targets will use an average of both. You can change this in Settings.</p>
+                <p class="errline" id="sexErr" hidden></p>
+              </div>
+
+              <!-- Height — unit toggle writes the app-wide preference (D12) -->
+              <div>
+                <div class="labelrow">
+                  <span class="lab">Height</span>
+                  <div class="seg seg--mini" id="heightUnitSeg" role="group" aria-label="Height unit">
+                    <button type="button" data-val="cm" class="active">cm</button>
+                    <button type="button" data-val="ftin">ft/in</button>
+                  </div>
+                </div>
+                <!-- cm: one field -->
+                <div class="field" id="heightCmWrap">
+                  <input id="heightCm" inputmode="numeric" placeholder="Height" aria-label="Height in centimetres">
+                  <span class="unit">cm</span>
+                </div>
+                <!-- ft/in: two fields sharing one row, 8px apart -->
+                <div class="fieldrow" id="heightFtWrap" hidden>
+                  <div class="field">
+                    <input id="heightFt" inputmode="numeric" placeholder="Feet" aria-label="Height, feet">
+                    <span class="unit">ft</span>
+                  </div>
+                  <div class="field">
+                    <input id="heightIn" inputmode="numeric" placeholder="Inches" aria-label="Height, inches">
+                    <span class="unit">in</span>
+                  </div>
+                </div>
+                <p class="errline" id="heightErr" hidden></p>
+              </div>
+
+              <!-- Weight -->
+              <div>
+                <div class="labelrow">
+                  <span class="lab">Weight</span>
+                  <div class="seg seg--mini" id="weightUnitSeg" role="group" aria-label="Weight unit">
+                    <button type="button" data-val="kg" class="active">kg</button>
+                    <button type="button" data-val="lb">lb</button>
+                  </div>
+                </div>
+                <div class="field">
+                  <input id="weightVal" inputmode="numeric" placeholder="Weight" aria-label="Weight">
+                  <span class="unit" id="weightUnitLabel">kg</span>
+                </div>
+                <p class="errline" id="weightErr" hidden></p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="ob-foot">
+          <button class="btn-primary" data-next="step2">
+            <span class="lab">Continue</span>
+            <span class="phi spin" data-ph="spinner-gap"></span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ================= STEP 2 — ACTIVITY LEVEL ================= -->
+      <section class="ob-screen" data-screen="step2" data-step="2" aria-label="Activity level">
+        <div class="ob-head">
+          <div class="ob-topbar">
+            <button class="backbtn" data-back="step1" aria-label="Back">
+              <span class="phi" data-ph="arrow-left"></span>
+            </button>
+            <div class="prog" role="progressbar" aria-valuemin="1" aria-valuemax="4"
+                 aria-valuenow="2" aria-valuetext="Step 2 of 4">
+              <i class="on"></i><i class="on"></i><i></i><i></i>
+            </div>
+          </div>
+          <div>
+            <h1 class="ob-title" id="s2title">Activity level</h1>
+            <p class="ob-sub">How much movement does a typical week include?</p>
+          </div>
+        </div>
+
+        <div class="ob-body">
+          <!-- one tab stop for the group; Up/Down and Left/Right move selection -->
+          <div class="optlist" id="activityGroup" role="radiogroup" aria-labelledby="s2title">
+            <button class="optcard" role="radio" aria-checked="false" data-val="sedentary" type="button">
+              <span class="otext"><span class="o1">Sedentary</span><span class="o2">Desk job, little exercise</span></span>
+              <span class="phi omark" data-ph="check"></span>
+            </button>
+            <button class="optcard" role="radio" aria-checked="false" data-val="light" type="button">
+              <span class="otext"><span class="o1">Lightly active</span><span class="o2">Light exercise 1–3 days a week</span></span>
+              <span class="phi omark" data-ph="check"></span>
+            </button>
+            <button class="optcard" role="radio" aria-checked="false" data-val="active" type="button">
+              <span class="otext"><span class="o1">Active</span><span class="o2">Moderate exercise 3–5 days a week</span></span>
+              <span class="phi omark" data-ph="check"></span>
+            </button>
+            <button class="optcard" role="radio" aria-checked="false" data-val="very" type="button">
+              <span class="otext"><span class="o1">Very active</span><span class="o2">Hard exercise 6–7 days a week</span></span>
+              <span class="phi omark" data-ph="check"></span>
+            </button>
+          </div>
+          <p class="errline" id="activityErr" hidden></p>
+        </div>
+
+        <div class="ob-foot">
+          <div class="footrow">
+            <button class="btn-primary" data-next="step3">
+              <span class="lab">Continue</span>
+              <span class="phi spin" data-ph="spinner-gap"></span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= STEP 3 — YOUR GOAL (D06) =================
+           A list, not a 2×2 grid, so each goal can carry a description. -->
+      <section class="ob-screen" data-screen="step3" data-step="3" aria-label="Your goal">
+        <div class="ob-head">
+          <div class="ob-topbar">
+            <button class="backbtn" data-back="step2" aria-label="Back">
+              <span class="phi" data-ph="arrow-left"></span>
+            </button>
+            <div class="prog" role="progressbar" aria-valuemin="1" aria-valuemax="4"
+                 aria-valuenow="3" aria-valuetext="Step 3 of 4">
+              <i class="on"></i><i class="on"></i><i class="on"></i><i></i>
+            </div>
+          </div>
+          <div>
+            <h1 class="ob-title" id="s3title">Your goal</h1>
+            <p class="ob-sub">What should Pebble optimise your targets for?</p>
+          </div>
+        </div>
+
+        <div class="ob-body">
+          <div class="optlist" id="goalGroup" role="radiogroup" aria-labelledby="s3title">
+            <button class="optcard" role="radio" aria-checked="false" data-val="lose" type="button">
+              <span class="otext"><span class="o1">Lose weight</span><span class="o2">A steady deficit, around 0.5 kg a week</span></span>
+              <span class="phi omark" data-ph="check"></span>
+            </button>
+            <button class="optcard" role="radio" aria-checked="false" data-val="maintain" type="button">
+              <span class="otext"><span class="o1">Maintain</span><span class="o2">Hold your current weight</span></span>
+              <span class="phi omark" data-ph="check"></span>
+            </button>
+            <button class="optcard" role="radio" aria-checked="false" data-val="gain" type="button">
+              <span class="otext"><span class="o1">Gain weight</span><span class="o2">A small surplus with a higher protein target</span></span>
+              <span class="phi omark" data-ph="check"></span>
+            </button>
+            <button class="optcard" role="radio" aria-checked="false" data-val="fitness" type="button">
+              <span class="otext"><span class="o1">General fitness</span><span class="o2">Move more, no weight target</span></span>
+              <span class="phi omark" data-ph="check"></span>
+            </button>
+          </div>
+          <p class="errline" id="goalErr" hidden></p>
+        </div>
+
+        <div class="ob-foot">
+          <div class="footrow">
+            <button class="btn-primary" data-next="step4">
+              <span class="lab">Continue</span>
+              <span class="phi spin" data-ph="spinner-gap"></span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= STEP 4 — DAILY TARGETS (D13–D16) ================= -->
+      <section class="ob-screen" data-screen="step4" data-step="4" aria-label="Daily targets">
+        <div class="ob-head">
+          <div class="ob-topbar">
+            <button class="backbtn" data-back="step3" aria-label="Back">
+              <span class="phi" data-ph="arrow-left"></span>
+            </button>
+            <div class="prog" role="progressbar" aria-valuemin="1" aria-valuemax="4"
+                 aria-valuenow="4" aria-valuetext="Step 4 of 4">
+              <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+            </div>
+          </div>
+          <div>
+            <h1 class="ob-title">Daily targets</h1>
+            <p class="ob-sub">Worked out from your profile. Adjust anything you like.</p>
+          </div>
+        </div>
+
+        <div class="ob-body">
+          <div class="stack8" id="targetCards">
+
+            <div class="stepper" data-target="steps">
+              <div class="st-head">
+                <span class="st-lab">Steps</span>
+                <button class="st-tag" type="button" data-reset="steps">
+                  <span class="tagtext">Suggested</span>
+                  <span class="phi" data-ph="arrow-counter-clockwise" hidden></span>
+                </button>
+              </div>
+              <button class="rndbtn st-minus" data-adj="-1" aria-label="Decrease steps target">
+                <span class="phi" data-ph="minus"></span>
+              </button>
+              <div class="st-val" data-val>0</div>
+              <button class="rndbtn st-plus" data-adj="1" aria-label="Increase steps target">
+                <span class="phi" data-ph="plus"></span>
+              </button>
+            </div>
+
+            <div class="stepper" data-target="distance">
+              <div class="st-head">
+                <span class="st-lab">Distance <span class="st-unit" data-unit>km</span></span>
+                <button class="st-tag" type="button" data-reset="distance">
+                  <span class="tagtext">Suggested</span>
+                  <span class="phi" data-ph="arrow-counter-clockwise" hidden></span>
+                </button>
+              </div>
+              <button class="rndbtn st-minus" data-adj="-1" aria-label="Decrease distance target">
+                <span class="phi" data-ph="minus"></span>
+              </button>
+              <div class="st-val" data-val>0</div>
+              <button class="rndbtn st-plus" data-adj="1" aria-label="Increase distance target">
+                <span class="phi" data-ph="plus"></span>
+              </button>
+            </div>
+
+            <div class="stepper" data-target="calories">
+              <div class="st-head">
+                <span class="st-lab">Calories <span class="st-unit">kcal</span></span>
+                <button class="st-tag" type="button" data-reset="calories">
+                  <span class="tagtext">Suggested</span>
+                  <span class="phi" data-ph="arrow-counter-clockwise" hidden></span>
+                </button>
+              </div>
+              <button class="rndbtn st-minus" data-adj="-1" aria-label="Decrease calories target">
+                <span class="phi" data-ph="minus"></span>
+              </button>
+              <div class="st-val" data-val>0</div>
+              <button class="rndbtn st-plus" data-adj="1" aria-label="Increase calories target">
+                <span class="phi" data-ph="plus"></span>
+              </button>
+            </div>
+          </div>
+
+          <!-- one hint, then the explainer row. No per-card ⓘ buttons (D16). -->
+          <p class="hintline">Steps and distance move together, worked out from your height.</p>
+          <button class="setrow" id="explainRow">
+            <span class="itile"><span class="phi" data-ph="info"></span></span>
+            <span class="lab">How these are worked out</span>
+            <span class="val"><span class="phi" data-ph="caret-right"></span></span>
+          </button>
+
+          <!-- screen-reader announcements for every stepper change -->
+          <p class="sronly" id="tgtLive" aria-live="polite"></p>
+        </div>
+
+        <div class="ob-foot">
+          <div class="footrow">
+            <button class="btn-primary" id="finishCta">
+              <span class="lab">Finish setup</span>
+              <span class="phi spin" data-ph="spinner-gap"></span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= HOME HAND-OFF (D20) =================
+           Mock of index.html's Home tab in its existing data-state="empty",
+           with the band-pairing card pinned at the top.
+           TODO(D20): band pairing screens attach to that card.
+           TODO(D20): permission primers for motion / health / notifications
+                      attach between Finish setup and this screen.
+           TODO: returning-user restore branch attaches before sign-in.
+           TODO: timezone and week-start are set here on first sync. -->
+      <section class="ob-screen" data-screen="home" aria-label="Home">
+        <div class="homehead">
+          <h1 class="greet" id="homeGreet">Good morning</h1>
+          <p class="date">Thursday, 27 August</p>
+        </div>
+
+        <div class="ob-body" style="padding-bottom:96px">
+          <div class="paircard">
+            <span class="disc"><span class="phi" data-ph="watch"></span></span>
+            <span class="pairtext">
+              <span class="pt">Pair your Pebble Band 2</span>
+              <span class="ps">Your rings fill in once it's connected.</span>
+            </span>
+          </div>
+
+          <div class="tgtrow">
+            <div class="tgtcard">
+              <span class="phi" data-ph="footprints" style="color:var(--metric-steps)"></span>
+              <div class="tn">—</div>
+              <div class="tg" id="homeSteps">8,000</div>
+              <div class="tl">Steps</div>
+            </div>
+            <div class="tgtcard">
+              <span class="phi" data-ph="map-pin" style="color:var(--metric-distance)"></span>
+              <div class="tn">—</div>
+              <div class="tg" id="homeDistance">5.5</div>
+              <div class="tl">Km</div>
+            </div>
+            <div class="tgtcard">
+              <span class="phi" data-ph="fire" style="color:var(--metric-calories)"></span>
+              <div class="tn">—</div>
+              <div class="tg" id="homeCalories">500</div>
+              <div class="tl">Kcal</div>
+            </div>
+          </div>
+
+          <p class="hintline" style="text-align:center">
+            Targets saved. Pebble refines the ones you haven't edited as it learns your patterns.
+          </p>
+        </div>
+
+        <!-- static, non-interactive — this is the hand-off, not a working tab -->
+        <div class="mocknav" aria-hidden="true">
+          <span class="nt on"><span class="phi" data-ph="house"></span>Health</span>
+          <span class="nt"><span class="phi" data-ph="sneaker-move"></span>Activity</span>
+          <span class="nt"><span class="phi" data-ph="moon"></span>Sleep</span>
+          <span class="nt"><span class="phi" data-ph="user"></span>Me</span>
+        </div>
+      </section>
+
+    </div><!-- /.ob-stack -->
+
+    <!-- ================= SHEETS ================= -->
+    <div class="scrim" id="scrim" hidden></div>
+
+    <!-- country picker (D23) -->
+    <div class="sheet" id="ctrySheet" hidden role="dialog" aria-modal="true" aria-label="Choose country">
+      <div class="sheet-head">
+        <span class="t">Country</span>
+        <button class="iconbtn" data-close><span class="phi" data-ph="x"></span></button>
+      </div>
+      <div class="field" style="margin-top:16px">
+        <span class="phi caret" data-ph="magnifying-glass"></span>
+        <input class="txt" id="ctrySearch" type="text" placeholder="Search country or code" aria-label="Search countries">
+      </div>
+      <div class="ctrylist" id="ctryList"></div>
+    </div>
+
+    <!-- date of birth (D08) — three snap-scrolling columns, range 13–100 years -->
+    <div class="sheet" id="dobSheet" hidden role="dialog" aria-modal="true" aria-label="Date of birth">
+      <div class="sheet-head">
+        <span class="t">Date of birth</span>
+        <button class="iconbtn" data-close><span class="phi" data-ph="x"></span></button>
+      </div>
+      <div class="dobcols">
+        <div class="dobcol" id="dobDay" role="listbox" aria-label="Day"></div>
+        <div class="dobcol months" id="dobMonth" role="listbox" aria-label="Month"></div>
+        <div class="dobcol" id="dobYear" role="listbox" aria-label="Year"></div>
+      </div>
+      <button class="btn-primary" id="dobConfirm"><span class="lab">Confirm</span></button>
+    </div>
+
+    <!-- how the targets are worked out (D16) -->
+    <div class="sheet" id="explainSheet" hidden role="dialog" aria-modal="true" aria-label="How these are worked out">
+      <div class="sheet-head">
+        <span class="t">How these are worked out</span>
+        <button class="iconbtn" data-close><span class="phi" data-ph="x"></span></button>
+      </div>
+      <p class="sheet-note">
+        <b>Steps</b> start from your activity level, then move with any change you make.
+      </p>
+      <p class="sheet-note">
+        <b>Distance</b> is your steps times your stride, which we estimate at 41.5% of your
+        height. Edit either one and the other follows.
+      </p>
+      <p class="sheet-note">
+        <b>Calories</b> is the energy you burn <i>moving</i> — not a food budget. We work out
+        what your body uses at rest, scale it by your activity level, and count the difference.
+      </p>
+      <p class="sheet-note" id="explainNumbers"></p>
+      <button class="btn-secondary" data-close><span class="lab">Got it</span></button>
+    </div>
+
+    <div class="gesture"></div>
+  </div><!-- /.screen -->
+</div><!-- /.phone -->
+
+<script>
+/* ==========================================================================
+   ONBOARDING CONTROLLER
+   --------------------------------------------------------------------------
+   Plain JS, no framework — same idiom as the existing tabs. One controller
+   holds the state, the maths and every screen's behaviour.
+   ========================================================================== */
+const $  = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+/* --------------------------------------------------------------------------
+   PHOSPHOR ICONS — path data copied verbatim from @phosphor-icons/core
+   (256×256 viewBox, regular weight) and injected into .phi spans.
+   -------------------------------------------------------------------------- */
+const PH = {
+  "arrow-left":"M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z",
+  "caret-down":"M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z",
+  "caret-right":"M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z",
+  "check":"M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z",
+  "minus":"M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128Z",
+  "plus":"M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z",
+  "x":"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z",
+  "magnifying-glass":"M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z",
+  "arrow-counter-clockwise":"M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z",
+  "spinner-gap":"M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z",
+  "info":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z",
+  "google-logo":"M224,128a96,96,0,1,1-21.95-61.09,8,8,0,1,1-12.33,10.18A80,80,0,1,0,207.6,136H128a8,8,0,0,1,0-16h88A8,8,0,0,1,224,128Z",
+  "apple-logo":"M223.3,169.59a8.07,8.07,0,0,0-2.8-3.4C203.53,154.53,200,134.64,200,120c0-17.67,13.47-33.06,21.5-40.67a8,8,0,0,0,0-11.62C208.82,55.74,187.82,48,168,48a72.2,72.2,0,0,0-40,12.13,71.56,71.56,0,0,0-90.71,9.09A74.63,74.63,0,0,0,16,123.4a127.06,127.06,0,0,0,40.14,89.73A39.8,39.8,0,0,0,83.59,224h87.68a39.84,39.84,0,0,0,29.12-12.57,125,125,0,0,0,17.82-24.6C225.23,174,224.33,172,223.3,169.59Zm-34.63,30.94a23.76,23.76,0,0,1-17.4,7.47H83.59a23.82,23.82,0,0,1-16.44-6.51A111.14,111.14,0,0,1,32,123,58.5,58.5,0,0,1,48.65,80.47,54.81,54.81,0,0,1,88,64h.78A55.45,55.45,0,0,1,123,76.28a8,8,0,0,0,10,0A55.44,55.44,0,0,1,168,64a70.64,70.64,0,0,1,36,10.35c-13,14.52-20,30.47-20,45.65,0,23.77,7.64,42.73,22.18,55.3A105.82,105.82,0,0,1,188.67,200.53ZM128.23,30A40,40,0,0,1,167,0h1a8,8,0,0,1,0,16h-1a24,24,0,0,0-23.24,18,8,8,0,1,1-15.5-4Z",
+  "watch":"M208,128a79.94,79.94,0,0,0-32.7-64.47l-6.24-34.38A16,16,0,0,0,153.32,16H102.68A16,16,0,0,0,86.94,29.15L80.7,63.53a79.9,79.9,0,0,0,0,128.94l6.24,34.38A16,16,0,0,0,102.68,240h50.64a16,16,0,0,0,15.74-13.15l6.24-34.38A79.94,79.94,0,0,0,208,128ZM102.68,32h50.64l3.91,21.55a79.75,79.75,0,0,0-58.46,0ZM64,128a64,64,0,1,1,64,64A64.07,64.07,0,0,1,64,128Zm89.32,96H102.68l-3.91-21.55a79.75,79.75,0,0,0,58.46,0ZM120,128V88a8,8,0,0,1,16,0v32h32a8,8,0,0,1,0,16H128A8,8,0,0,1,120,128Z",
+  "footprints":"M208.06,184H152a8,8,0,0,0-8,8v12a36,36,0,0,0,72.05,0V192A8,8,0,0,0,208.06,184Zm-8,20a20,20,0,0,1-40,0v-4h40ZM104,160h-56a8,8,0,0,0-8,8v12A36,36,0,0,0,112,180V168A8,8,0,0,0,104,160Zm-8,20a20,20,0,0,1-40,0v-4H96ZM76,16C64.36,16,53.07,26.31,44.2,45c-13.93,29.38-18.56,73,.29,96a8,8,0,0,0,6.2,2.93h50.55a8,8,0,0,0,6.2-2.93c18.85-23,14.22-66.65.29-96C98.85,26.31,87.57,16,76,16ZM97.15,128H54.78c-11.4-18.1-7.21-52.7,3.89-76.11C65.14,38.22,72.17,32,76,32s10.82,6.22,17.3,19.89C104.36,75.3,108.55,109.9,97.15,128Zm57.61,40h50.55a8,8,0,0,0,6.2-2.93c18.85-23,14.22-66.65.29-96C202.93,50.31,191.64,40,180,40s-22.89,10.31-31.77,29c-13.93,29.38-18.56,73,.29,96A8.05,8.05,0,0,0,154.76,168Zm8-92.11C169.22,62.22,176.25,56,180,56s10.82,6.22,17.29,19.89c11.1,23.41,15.29,58,3.9,76.11H158.85C147.45,133.9,151.64,99.3,162.74,75.89Z",
+  "map-pin":"M128,64a40,40,0,1,0,40,40A40,40,0,0,0,128,64Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,128Zm0-112a88.1,88.1,0,0,0-88,88c0,31.4,14.51,64.68,42,96.25a254.19,254.19,0,0,0,41.45,38.3,8,8,0,0,0,9.18,0A254.19,254.19,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25A88.1,88.1,0,0,0,128,16Zm0,206c-16.53-13-72-60.75-72-118a72,72,0,0,1,144,0C200,161.23,144.53,209,128,222Z",
+  "fire":"M183.89,153.34a57.6,57.6,0,0,1-46.56,46.55A8.75,8.75,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68ZM216,144a88,88,0,0,1-176,0c0-27.92,11-56.47,32.66-84.85a8,8,0,0,1,11.93-.89l24.12,23.41,22-60.41a8,8,0,0,1,12.63-3.41C165.21,36,216,84.55,216,144Zm-16,0c0-46.09-35.79-85.92-58.21-106.33L119.52,98.74a8,8,0,0,1-13.09,3L80.06,76.16C64.09,99.21,56,122,56,144a72,72,0,0,0,144,0Z",
+  "warning-circle":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,172Z",
+  "wifi-slash":"M213.92,210.62a8,8,0,1,1-11.84,10.76l-52-57.15a60,60,0,0,0-57.41,7.24,8,8,0,1,1-9.42-12.93A75.43,75.43,0,0,1,128,144c1.28,0,2.55,0,3.82.1L104.9,114.49A108,108,0,0,0,61,135.31,8,8,0,0,1,49.73,134,8,8,0,0,1,51,122.77a124.27,124.27,0,0,1,41.71-21.66L69.37,75.4a155.43,155.43,0,0,0-40.29,24A8,8,0,0,1,18.92,87,171.87,171.87,0,0,1,58,62.86L42.08,45.38A8,8,0,1,1,53.92,34.62ZM128,192a12,12,0,1,0,12,12A12,12,0,0,0,128,192ZM237.08,87A172.3,172.3,0,0,0,106,49.4a8,8,0,1,0,2,15.87A158.33,158.33,0,0,1,128,64a156.25,156.25,0,0,1,98.92,35.37A8,8,0,0,0,237.08,87ZM195,135.31a8,8,0,0,0,11.24-1.3,8,8,0,0,0-1.3-11.24,124.25,124.25,0,0,0-51.73-24.2A8,8,0,1,0,150,114.24,108.12,108.12,0,0,1,195,135.31Z",
+  "house":"M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z",
+  "moon":"M233.54,142.23a8,8,0,0,0-8-2,88.08,88.08,0,0,1-109.8-109.8,8,8,0,0,0-10-10,104.84,104.84,0,0,0-52.91,37A104,104,0,0,0,136,224a103.09,103.09,0,0,0,62.52-20.88,104.84,104.84,0,0,0,37-52.91A8,8,0,0,0,233.54,142.23ZM188.9,190.34A88,88,0,0,1,65.66,67.11a89,89,0,0,1,31.4-26A106,106,0,0,0,96,56,104.11,104.11,0,0,0,200,160a106,106,0,0,0,14.92-1.06A89,89,0,0,1,188.9,190.34Z",
+  "user":"M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z",
+  "sneaker-move":"M231.16,166.63l-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-8-8,48.05,48.05,0,0,1-48-48,8,8,0,0,0-12.83-6.37L30.13,76l-.2.16a16,16,0,0,0-1.24,23.75L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63ZM224,200H151.37L40,88.63l12.87-9.76,38.79,38.79A8,8,0,0,0,103,106.34L65.74,69.11l40-30.31A64.15,64.15,0,0,0,160,87.5v21.89a63.65,63.65,0,0,0,35.38,57.24L224,180.94ZM70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm40,24a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16h54.8A8,8,0,0,1,110.8,208Z"
+};
+function injectIcons(){
+  $$('.phi').forEach(el => {
+    if (el.dataset.done) return;
+    const d = PH[el.dataset.ph];
+    if (!d) return;
+    el.innerHTML = '<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="' + d + '"/></svg>';
+    el.dataset.done = '1';
+  });
+}
+
+/* The pebble mark. Flag: code-drawn STAND-IN so the file stays self-contained
+   and needs no image. Drop a real assets/pebble-mark.svg in and point this at
+   it — nothing else has to change. */
+function injectMarks(){
+  $$('[data-mark]').forEach(el => {
+    if (el.dataset.done) return;
+    const w = +el.dataset.mark;
+    el.style.display = 'inline-block';
+    el.style.width  = w + 'px';
+    el.style.height = Math.round(w * 1.25) + 'px';
+    el.innerHTML =
+      '<svg viewBox="22 20 112 140" fill="none" stroke="currentColor" stroke-width="9"' +
+      ' stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%;display:block">' +
+      '<path d="M52 152 C40 120 30 100 30 78 C30 42 60 26 84 32 C112 39 124 68 112 92 C100 116 68 122 46 108"/>' +
+      '</svg>';
+    el.dataset.done = '1';
+  });
+}
+injectIcons();
+injectMarks();
+
+/* ==========================================================================
+   STATE (spec §5)
+   Persisted after every step, so a killed app resumes where it stopped.
+   ========================================================================== */
+const STORE_KEY = 'pebble.onboarding.v1';
+
+const defaultState = () => ({
+  screen: 'splash',
+  profile:  { dob:null, sex:null, heightCm:null, weightKg:null, name:'' },
+  prefs:    { heightUnit:'cm', weightUnit:'kg', distanceUnit:'km' },
+  activity: null,
+  goal:     null,
+  targets:  {
+    steps:    { value:null, source:'suggested' },
+    distance: { value:null, source:'suggested' },   /* stored in KM, always */
+    calories: { value:null, source:'suggested' }
+  },
+  phone:    { dial:'+91', national:'' },
+  email:    ''
+});
+
+let state = defaultState();
+
+/* localStorage can be blocked on file:// in some browsers — fall back to
+   memory only, so the prototype never breaks on a double-click. */
+function save(){
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch(e){}
+}
+function load(){
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) state = Object.assign(defaultState(), JSON.parse(raw));
+  } catch(e){}
+}
+
+/* ==========================================================================
+   THE MATHS (spec §4)
+   ========================================================================== */
+const ACT = {
+  sedentary: { factor:1.2,   steps:6000  },
+  light:     { factor:1.375, steps:8000  },
+  active:    { factor:1.55,  steps:10000 },
+  very:      { factor:1.725, steps:12000 }
+};
+const GOAL_MULT = { lose:1.15, gain:0.9, maintain:1.0, fitness:1.0 };
+const KM_PER_MI = 1.609344;
+
+const clamp   = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const round25 = v => Math.round(v / 25) * 25;
+
+/* age from date of birth at today's date */
+function ageFrom(dob){
+  if (!dob) return null;
+  const t = new Date(), d = new Date(dob + 'T00:00:00');
+  let a = t.getFullYear() - d.getFullYear();
+  const m = t.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && t.getDate() < d.getDate())) a--;
+  return a;
+}
+
+/* Suggested targets from the profile. Where the profile is still blank —
+   which only happens when jumping in from the control panel — sensible
+   middles stand in so step 4 always shows real numbers. */
+function suggested(){
+  const p = state.profile;
+  const h = p.heightCm != null ? p.heightCm : 170;
+  const w = p.weightKg != null ? p.weightKg : 70;
+  const a = ageFrom(p.dob) != null ? ageFrom(p.dob) : 30;
+  const sex = p.sex || 'unstated';
+
+  const bmr = sex === 'male'   ? 10*w + 6.25*h - 5*a + 5
+            : sex === 'female' ? 10*w + 6.25*h - 5*a - 161
+            :                    10*w + 6.25*h - 5*a - 78;   /* unstated = midpoint */
+
+  const act    = ACT[state.activity || 'light'];
+  const factor = act.factor;
+  const goalMult = GOAL_MULT[state.goal || 'maintain'];
+
+  const steps    = act.steps;
+  const strideCm = h * 0.415;
+  const distance = +(steps * strideCm / 100000).toFixed(1);          /* km */
+  /* ACTIVE BURN, not an intake budget (D16) — Pebble has no food log. */
+  const calories = clamp(round25((bmr*factor - bmr) * goalMult), 100, 1500);
+
+  return { bmr, factor, steps, strideCm, distance, calories };
+}
+
+/* Re-derive every target still marked 'suggested'; leave 'manual' ones alone
+   (D15 — this is what "your manual edits are always respected" commits us to). */
+function refreshSuggested(){
+  const s = suggested();
+  ['steps','distance','calories'].forEach(k => {
+    if (state.targets[k].source === 'suggested' || state.targets[k].value == null){
+      state.targets[k].value = s[k];
+    }
+  });
+  save();
+}
+
+/* ==========================================================================
+   SCREEN NAVIGATION (D19)
+   ========================================================================== */
+const ORDER = ['splash','signin','code','welcome','step1','step2','step3','step4','home'];
+let current = 'splash';
+
+function showScreen(name, dir){
+  const from = $('.ob-screen[data-screen="' + current + '"]');
+  const to   = $('.ob-screen[data-screen="' + name + '"]');
+  if (!to) return;
+
+  if (from && from !== to) from.classList.remove('active','anim-fwd','anim-back');
+  to.classList.remove('anim-fwd','anim-back');
+  to.classList.add('active');
+
+  if (dir){
+    /* reflow so the animation restarts even on the same element */
+    void to.offsetWidth;
+    to.classList.add(dir === 'back' ? 'anim-back' : 'anim-fwd');
+  }
+  to.scrollTop = 0;
+  const body = $('.ob-body', to);
+  if (body) body.scrollTop = 0;
+
+  current = name;
+  state.screen = name;
+  save();
+
+  syncPanelScreen(name);
+  onEnterScreen(name);
+}
+
+function goNext(name){ showScreen(name, 'fwd'); }
+function goBack(name){ showScreen(name, 'back'); }
+
+/* what each screen needs doing on arrival */
+function onEnterScreen(name){
+  stopPhotoLoop();
+  stopResend();
+
+  if (name === 'signin')  startPhotoLoop();
+  if (name === 'code')    enterCodeScreen();
+  if (name === 'welcome') { $('#verifiedNumber').textContent = prettyPhone(); }
+  if (name === 'step1')   syncStep1();
+  if (name === 'step2')   syncGroup('activity');
+  if (name === 'step3')   syncGroup('goal');
+  if (name === 'step4')   { refreshSuggested(); renderTargets(); }
+  if (name === 'home')    renderHome();
+}
+
+/* every back button in the flow (D02) */
+$$('[data-back]').forEach(b => b.addEventListener('click', () => goBack(b.dataset.back)));
+/* every plain forward CTA that only needs validation */
+$$('[data-next]').forEach(b => b.addEventListener('click', () => {
+  const step = b.closest('.ob-screen').dataset.screen;
+  if (!validateStep(step)) return;
+  goNext(b.dataset.next);
+}));
+
+/* ==========================================================================
+   SPLASH — minimum 600ms, maximum 2000ms, then sign-in. Never padded.
+   ========================================================================== */
+let splashTimer = setTimeout(() => { if (current === 'splash') goNext('signin'); }, 1400);
+
+/* ==========================================================================
+   SIGN-IN — the three-image loop (sign-in screen only), 5s per image
+   ========================================================================== */
+let photoTimer = null, photoIdx = 0;
+function startPhotoLoop(){
+  const slides = $$('#photoLoop .slide');
+  stopPhotoLoop();
+  photoTimer = setInterval(() => {
+    slides[photoIdx].classList.remove('on');
+    photoIdx = (photoIdx + 1) % slides.length;
+    slides[photoIdx].classList.add('on');
+  }, 5000);
+}
+function stopPhotoLoop(){ if (photoTimer){ clearInterval(photoTimer); photoTimer = null; } }
+
+/* ---- country picker (D23) ------------------------------------------------ */
+const COUNTRIES = [
+  { dial:'+91',  name:'India' },            { dial:'+1',   name:'United States' },
+  { dial:'+1',   name:'Canada' },           { dial:'+44',  name:'United Kingdom' },
+  { dial:'+61',  name:'Australia' },        { dial:'+64',  name:'New Zealand' },
+  { dial:'+65',  name:'Singapore' },        { dial:'+971', name:'United Arab Emirates' },
+  { dial:'+966', name:'Saudi Arabia' },     { dial:'+49',  name:'Germany' },
+  { dial:'+33',  name:'France' },           { dial:'+34',  name:'Spain' },
+  { dial:'+39',  name:'Italy' },            { dial:'+31',  name:'Netherlands' },
+  { dial:'+46',  name:'Sweden' },           { dial:'+47',  name:'Norway' },
+  { dial:'+353', name:'Ireland' },          { dial:'+41',  name:'Switzerland' },
+  { dial:'+81',  name:'Japan' },            { dial:'+82',  name:'South Korea' },
+  { dial:'+86',  name:'China' },            { dial:'+852', name:'Hong Kong' },
+  { dial:'+60',  name:'Malaysia' },         { dial:'+62',  name:'Indonesia' },
+  { dial:'+63',  name:'Philippines' },      { dial:'+66',  name:'Thailand' },
+  { dial:'+27',  name:'South Africa' },     { dial:'+234', name:'Nigeria' },
+  { dial:'+254', name:'Kenya' },            { dial:'+55',  name:'Brazil' },
+  { dial:'+52',  name:'Mexico' },           { dial:'+92',  name:'Pakistan' },
+  { dial:'+880', name:'Bangladesh' },       { dial:'+94',  name:'Sri Lanka' },
+  { dial:'+977', name:'Nepal' }
+];
+
+function renderCountries(filter){
+  const q = (filter || '').trim().toLowerCase();
+  const list = $('#ctryList');
+  list.innerHTML = '';
+  COUNTRIES
+    .filter(c => !q || c.name.toLowerCase().includes(q) || c.dial.includes(q))
+    .forEach(c => {
+      const b = document.createElement('button');
+      b.className = 'ctryrow';
+      b.type = 'button';
+      b.setAttribute('aria-selected', c.dial === state.phone.dial ? 'true' : 'false');
+      b.innerHTML = '<span class="dial">' + c.dial + '</span>' +
+                    '<span class="cname">' + c.name + '</span>' +
+                    '<span class="phi" data-ph="check"></span>';
+      b.addEventListener('click', () => {
+        state.phone.dial = c.dial;
+        $('#ccCode').textContent = c.dial;
+        $('#ccBtn').setAttribute('aria-label', 'Country dial code, currently ' + c.dial);
+        save();
+        closeSheets();
+      });
+      list.appendChild(b);
+    });
+  injectIcons();
+}
+
+/* ---- sheets -------------------------------------------------------------- */
+function openSheet(id){
+  $('#scrim').hidden = false;
+  $('#' + id).hidden = false;
+  if (id === 'ctrySheet'){ renderCountries(''); $('#ctrySearch').value = ''; }
+  if (id === 'dobSheet')  buildDobSheet();
+  if (id === 'explainSheet') fillExplainer();
+}
+function closeSheets(){
+  $('#scrim').hidden = true;
+  $$('.sheet').forEach(s => s.hidden = true);
+}
+$('#scrim').addEventListener('click', closeSheets);
+$$('[data-close]').forEach(b => b.addEventListener('click', closeSheets));
+$('#ccBtn').addEventListener('click', () => openSheet('ctrySheet'));
+$('#ctrySearch').addEventListener('input', e => renderCountries(e.target.value));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
+
+/* ---- phone number ------------------------------------------------------- */
+const phoneInput = $('#phoneInput');
+
+const SAMPLE_NATIONAL = '9876543210';   /* sample data, as the other tabs use */
+function prettyPhone(){
+  /* nothing typed yet (a control-panel jump) — show the sample number so the
+     screen reads correctly instead of trailing off after the dial code */
+  const n = (state.phone.national || SAMPLE_NATIONAL).replace(/\D/g,'');
+  const grouped = n.length > 5 ? n.slice(0, n.length - 5) + ' ' + n.slice(-5) : n;
+  return state.phone.dial + ' ' + grouped;
+}
+
+phoneInput.addEventListener('input', () => {
+  /* digits only, kept readable as the owner types */
+  const digits = phoneInput.value.replace(/\D/g,'').slice(0,12);
+  state.phone.national = digits;
+  phoneInput.value = digits.length > 5 ? digits.slice(0, digits.length - 5) + ' ' + digits.slice(-5) : digits;
+  clearError($('#phonePill'), $('#phoneErr'));
+  $('#signinNotice').hidden = true;
+  save();
+});
+
+$('#signinCta').addEventListener('click', () => {
+  const digits = state.phone.national;
+  if (digits.length < 7){
+    /* errors say what to do, never apologise */
+    setError($('#phonePill'), $('#phoneErr'), 'Enter your mobile number so we can text you a code.');
+    phoneInput.focus();
+    return;
+  }
+  sendCode('#signinCta', '#signinNotice');
+});
+
+/* ==========================================================================
+   SHARED BITS — loading, errors, notices
+   ========================================================================== */
+const panel = { auth:'normal', net:'online', load:false };
+const busy = new WeakSet();
+
+function setLoading(btn, on){
+  /* the label is swapped for the spinner; the button keeps its width */
+  btn.classList.toggle('is-loading', on);
+  btn.setAttribute('aria-busy', on ? 'true' : 'false');
+  if (on) busy.add(btn); else busy.delete(btn);
+}
+function setError(fieldEl, msgEl, msg){
+  if (fieldEl) fieldEl.classList.add('is-error');
+  if (msgEl){ msgEl.textContent = msg; msgEl.hidden = false; }
+}
+function clearError(fieldEl, msgEl){
+  if (fieldEl) fieldEl.classList.remove('is-error');
+  if (msgEl) msgEl.hidden = true;
+}
+function showNotice(sel, msg, kind){
+  const n = $(sel);
+  n.classList.toggle('caution', kind === 'caution');
+  $('.nmsg', n).textContent = msg;
+  n.hidden = false;
+}
+
+/* Send the code. Delivery states come from the control panel. */
+function sendCode(ctaSel, noticeSel){
+  const cta = $(ctaSel);
+  if (busy.has(cta)) return;
+  $(noticeSel).hidden = true;
+  setLoading(cta, true);
+
+  setTimeout(() => {
+    if (panel.load) return;             /* "hold CTA loading" — stay spinning */
+    setLoading(cta, false);
+
+    if (panel.net === 'offline'){
+      showNotice(noticeSel, 'No connection. Check your network and try again.');
+      return;
+    }
+    if (panel.net === 'ratelimit'){
+      showNotice(noticeSel, 'Too many code requests. Try again in 15 minutes.', 'caution');
+      return;
+    }
+    goNext('code');
+  }, 700);
+}
+
+/* ==========================================================================
+   ENTER CODE (D22)
+   ========================================================================== */
+const otpInputs = $$('#otp input');
+let resendLeft = 0, resendTimer = null, otpAttempts = 0;
+
+function otpValue(){ return otpInputs.map(i => i.value).join(''); }
+function syncVerify(){ $('#verifyCta').disabled = otpValue().length < 6; }
+function clearOtpError(){
+  $('#otp').classList.remove('is-error');
+  $('#otpErr').hidden = true;
+}
+
+function enterCodeScreen(){
+  $('#codeNumber').textContent = prettyPhone();
+  otpInputs.forEach(i => i.value = '');
+  clearOtpError();
+  syncVerify();
+  $('#codeNotice').hidden = true;
+
+  /* the panel decides which resend state we land in */
+  if (panel.auth === 'lockout'){ otpAttempts = 3; startResend(60); }
+  else if (panel.auth === 'zero'){ otpAttempts = 0; startResend(0); }
+  else { otpAttempts = 0; startResend(30); }
+
+  if (panel.net === 'undelivered'){
+    startResend(0);
+    showNotice('#codeNotice', "We couldn't deliver that code. Resend it, or edit your number.");
+  }
+  setTimeout(() => otpInputs[0].focus(), 60);
+}
+
+function startResend(sec){
+  stopResend();
+  resendLeft = sec;
+  renderResend();
+  if (sec > 0){
+    resendTimer = setInterval(() => {
+      resendLeft--;
+      if (resendLeft <= 0){ resendLeft = 0; stopResend(); }
+      renderResend();
+    }, 1000);
+  }
+}
+function stopResend(){ if (resendTimer){ clearInterval(resendTimer); resendTimer = null; } }
+
+function renderResend(){
+  const line = $('#resendLine');
+  line.innerHTML = '';
+  const lead = document.createElement('span');
+  lead.textContent = "Didn't get it?";
+  line.appendChild(lead);
+
+  if (resendLeft > 0){
+    /* the timer numerals are Spartan; the words around them are not */
+    const t = document.createElement('span');
+    t.innerHTML = 'Resend in <span class="tnum">' + resendLeft + 's</span>';
+    line.appendChild(t);
+  } else {
+    const b = document.createElement('button');
+    b.className = 'btn-text inline';
+    b.textContent = 'Resend';
+    b.addEventListener('click', onResend);
+    line.appendChild(b);
+  }
+}
+
+function onResend(){
+  otpInputs.forEach(i => i.value = '');
+  clearOtpError();
+  syncVerify();
+  otpInputs[0].focus();
+  /* after 3 failed attempts the countdown starts at 60s */
+  startResend(otpAttempts >= 3 ? 60 : 30);
+  if (panel.net === 'undelivered'){
+    startResend(0);
+    showNotice('#codeNotice', "Still not delivered. Check the number, or try again in a minute.");
+  } else {
+    $('#codeNotice').hidden = true;
+  }
+}
+
+otpInputs.forEach((inp, i) => {
+  inp.addEventListener('input', () => {
+    inp.value = inp.value.replace(/\D/g,'').slice(-1);
+    clearOtpError();
+    if (inp.value && i < 5) otpInputs[i+1].focus();
+    syncVerify();
+    /* auto-submits on the sixth digit — Verify is the cross-device fallback */
+    if (otpValue().length === 6) verify();
+  });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !inp.value && i > 0){
+      otpInputs[i-1].value = '';
+      otpInputs[i-1].focus();
+      syncVerify();
+      e.preventDefault();
+    }
+    if (e.key === 'ArrowLeft'  && i > 0) otpInputs[i-1].focus();
+    if (e.key === 'ArrowRight' && i < 5) otpInputs[i+1].focus();
+  });
+  /* paste distributes across all six boxes */
+  inp.addEventListener('paste', e => {
+    e.preventDefault();
+    const digits = ((e.clipboardData || window.clipboardData).getData('text') || '').replace(/\D/g,'').slice(0,6);
+    if (!digits) return;
+    digits.split('').forEach((d, k) => { if (otpInputs[k]) otpInputs[k].value = d; });
+    otpInputs[Math.min(digits.length, 5)].focus();
+    clearOtpError();
+    syncVerify();
+    if (otpValue().length === 6) verify();
+  });
+});
+
+function verify(){
+  if (otpValue().length < 6) return;
+  const cta = $('#verifyCta');
+  if (busy.has(cta)) return;
+  setLoading(cta, true);
+
+  setTimeout(() => {
+    if (panel.load) return;
+    setLoading(cta, false);
+
+    if (panel.net === 'offline'){
+      showNotice('#codeNotice', 'No connection. Check your network and try again.');
+      return;
+    }
+    if (panel.auth === 'wrong' || panel.auth === 'lockout'){
+      otpFail("That code doesn't match. Check the six digits and try again.");
+      return;
+    }
+    if (panel.auth === 'expired'){
+      otpFail('That code has expired. Tap Resend for a new one.');
+      return;
+    }
+    goNext('welcome');
+  }, 700);
+}
+
+function otpFail(msg){
+  otpAttempts++;
+  const otp = $('#otp');
+  otp.classList.add('is-error');
+  setError(null, $('#otpErr'), msg);
+  otp.classList.add('shake');
+  setTimeout(() => otp.classList.remove('shake'), 280);
+  /* boxes clear, focus returns to box 1 */
+  setTimeout(() => {
+    otpInputs.forEach(i => i.value = '');
+    otpInputs[0].focus();
+    syncVerify();
+  }, 300);
+  if (otpAttempts >= 3) startResend(60);
+}
+
+$('#verifyCta').addEventListener('click', verify);
+
+/* ==========================================================================
+   YOU'RE IN (D24)
+   ========================================================================== */
+$('#nameInput').addEventListener('input', e => { state.profile.name = e.target.value.trim(); save(); });
+$('#emailInput').addEventListener('input', e => {
+  state.email = e.target.value.trim();
+  clearError(e.target.closest('.field'), $('#emailErr'));
+  save();
+});
+$('#welcomeCta').addEventListener('click', () => {
+  const email = state.email;
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    setError($('#emailInput').closest('.field'), $('#emailErr'),
+             'Check the email address — it needs an @ and a domain.');
+    $('#emailInput').focus();
+    return;
+  }
+  goNext('step1');
+});
+$('#skipBackup').addEventListener('click', () => goNext('step1'));
+
+/* ==========================================================================
+   STEP 1 — YOUR PROFILE
+   ========================================================================== */
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function syncStep1(){
+  /* date of birth */
+  const dv = $('#dobValue');
+  if (state.profile.dob){
+    const d = new Date(state.profile.dob + 'T00:00:00');
+    dv.textContent = d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+    dv.classList.remove('empty');
+    $('#dobField').setAttribute('aria-label', 'Date of birth, ' + dv.textContent);
+  } else {
+    dv.textContent = 'Select your date of birth';
+    dv.classList.add('empty');
+    $('#dobField').setAttribute('aria-label', 'Date of birth, not set');
+  }
+
+  /* biological sex */
+  $$('#sexSeg button').forEach(b => b.classList.toggle('active', b.dataset.val === state.profile.sex));
+  $('#sexHint').hidden = state.profile.sex !== 'unstated';
+
+  /* height + weight in whatever unit is selected */
+  $$('#heightUnitSeg button').forEach(b => b.classList.toggle('active', b.dataset.val === state.prefs.heightUnit));
+  $$('#weightUnitSeg button').forEach(b => b.classList.toggle('active', b.dataset.val === state.prefs.weightUnit));
+  paintHeight();
+  paintWeight();
+}
+
+function paintHeight(){
+  const ftin = state.prefs.heightUnit === 'ftin';
+  $('#heightCmWrap').hidden = ftin;
+  $('#heightFtWrap').hidden = !ftin;
+  const cm = state.profile.heightCm;
+  if (ftin){
+    if (cm != null){
+      const totalIn = cm / 2.54;
+      $('#heightFt').value = Math.floor(totalIn / 12);
+      $('#heightIn').value = Math.round(totalIn % 12);
+    }
+  } else if (cm != null){
+    $('#heightCm').value = Math.round(cm);
+  }
+}
+function paintWeight(){
+  const lb = state.prefs.weightUnit === 'lb';
+  $('#weightUnitLabel').textContent = lb ? 'lb' : 'kg';
+  const kg = state.profile.weightKg;
+  if (kg != null) $('#weightVal').value = lb ? Math.round(kg * 2.20462) : Math.round(kg);
+}
+
+/* store metric, convert on display (D12) */
+function readHeight(){
+  if (state.prefs.heightUnit === 'ftin'){
+    const ft = parseFloat($('#heightFt').value), inch = parseFloat($('#heightIn').value);
+    if (isNaN(ft) && isNaN(inch)) return null;
+    return +(((isNaN(ft) ? 0 : ft) * 12 + (isNaN(inch) ? 0 : inch)) * 2.54).toFixed(1);
+  }
+  const cm = parseFloat($('#heightCm').value);
+  return isNaN(cm) ? null : cm;
+}
+function readWeight(){
+  const v = parseFloat($('#weightVal').value);
+  if (isNaN(v)) return null;
+  return state.prefs.weightUnit === 'lb' ? +(v / 2.20462).toFixed(1) : v;
+}
+
+$('#dobField').addEventListener('click', () => openSheet('dobSheet'));
+$('#dobField').addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openSheet('dobSheet'); }
+});
+
+$$('#sexSeg button').forEach(b => b.addEventListener('click', () => {
+  state.profile.sex = b.dataset.val;
+  clearError(null, $('#sexErr'));
+  syncStep1();
+  save();
+}));
+$('#sexSkip').addEventListener('click', () => {
+  state.profile.sex = 'unstated';
+  clearError(null, $('#sexErr'));
+  syncStep1();
+  save();
+});
+
+/* Unit toggles write the app-wide preference (D12).
+   Flag: the flow has no distance-unit control of its own, so distance follows
+   the height unit — ft/in means the owner thinks in miles. */
+$$('#heightUnitSeg button').forEach(b => b.addEventListener('click', () => {
+  /* Do NOT re-read the visible field here. It shows a rounded value, so
+     reading it back would write the rounding into the store and drift the
+     real measurement (61 kg -> 134 lb -> 60.8 kg). Typing already keeps
+     state.profile current, so switching units only has to repaint. */
+  state.prefs.heightUnit = b.dataset.val;
+  state.prefs.distanceUnit = b.dataset.val === 'ftin' ? 'mi' : 'km';
+  syncStep1();
+  save();
+}));
+$$('#weightUnitSeg button').forEach(b => b.addEventListener('click', () => {
+  /* same reason as the height toggle above — repaint only, never read back */
+  state.prefs.weightUnit = b.dataset.val;
+  syncStep1();
+  save();
+}));
+
+['#heightCm','#heightFt','#heightIn'].forEach(sel => $(sel).addEventListener('input', () => {
+  state.profile.heightCm = readHeight();
+  $$('#heightCmWrap, #heightFtWrap .field').forEach(f => f.classList.remove('is-error'));
+  $('#heightErr').hidden = true;
+  save();
+}));
+$('#weightVal').addEventListener('input', () => {
+  state.profile.weightKg = readWeight();
+  clearError($('#weightVal').closest('.field'), $('#weightErr'));
+  save();
+});
+
+/* ---- date-of-birth sheet (D08) — three snap-scrolling columns ------------ */
+const dobSel = { d:1, m:0, y:new Date().getFullYear() - 30 };
+
+function buildDobSheet(){
+  if (state.profile.dob){
+    const d = new Date(state.profile.dob + 'T00:00:00');
+    dobSel.d = d.getDate(); dobSel.m = d.getMonth(); dobSel.y = d.getFullYear();
+  }
+  const thisYear = new Date().getFullYear();
+  fillCol($('#dobDay'),   range(1, 31).map(n => ({ v:n, label:String(n) })), dobSel.d, v => dobSel.d = v);
+  fillCol($('#dobMonth'), MONTHS.map((m, i) => ({ v:i, label:m })),          dobSel.m, v => dobSel.m = v);
+  /* range 13–100 years, newest first so the likely years are near the top */
+  fillCol($('#dobYear'),  range(thisYear - 100, thisYear - 13).reverse().map(n => ({ v:n, label:String(n) })),
+          dobSel.y, v => dobSel.y = v);
+}
+function range(a, b){ const out = []; for (let i = a; i <= b; i++) out.push(i); return out; }
+
+function fillCol(col, items, selected, onPick){
+  col.innerHTML = '';
+  items.forEach(it => {
+    const b = document.createElement('button');
+    b.className = 'sheet-row' + (it.v === selected ? ' sel' : '');
+    b.type = 'button';
+    b.dataset.val = it.v;
+    b.innerHTML = '<span class="v">' + it.label + '</span>';
+    b.addEventListener('click', () => { centre(col, b); });
+    col.appendChild(b);
+  });
+  col._onPick = onPick;
+  /* open with the current value centred */
+  const sel = $('.sheet-row.sel', col) || col.firstElementChild;
+  requestAnimationFrame(() => centre(col, sel, true));
+
+  if (!col._wired){
+    let t = null;
+    col.addEventListener('scroll', () => {
+      clearTimeout(t);
+      t = setTimeout(() => markCentred(col), 90);
+    });
+    col._wired = true;
+  }
+}
+function centre(col, el, instant){
+  if (!el) return;
+  const top = el.offsetTop + el.offsetHeight/2 - col.clientHeight/2;
+  col.scrollTo({ top, behavior: instant ? 'auto' : 'smooth' });
+  setTimeout(() => markCentred(col), instant ? 0 : 220);
+}
+function markCentred(col){
+  const mid = col.scrollTop + col.clientHeight/2;
+  let best = null, bestD = Infinity;
+  $$('.sheet-row', col).forEach(r => {
+    const d = Math.abs(r.offsetTop + r.offsetHeight/2 - mid);
+    if (d < bestD){ bestD = d; best = r; }
+  });
+  if (!best) return;
+  $$('.sheet-row', col).forEach(r => r.classList.toggle('sel', r === best));
+  if (col._onPick) col._onPick(isNaN(+best.dataset.val) ? best.dataset.val : +best.dataset.val);
+}
+
+$('#dobConfirm').addEventListener('click', () => {
+  /* clamp the day to the month actually picked (31 Feb becomes 28/29 Feb) */
+  const days = new Date(dobSel.y, dobSel.m + 1, 0).getDate();
+  const day  = Math.min(dobSel.d, days);
+  state.profile.dob = dobSel.y + '-' + String(dobSel.m + 1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+  clearError(null, $('#dobErr'));
+  syncStep1();
+  save();
+  closeSheets();
+});
+
+/* ==========================================================================
+   STEPS 2 & 3 — option groups (D06, D07)
+   One tab stop per group; Up/Down and Left/Right move the selection.
+   ========================================================================== */
+function groupEl(kind){ return kind === 'activity' ? $('#activityGroup') : $('#goalGroup'); }
+
+function syncGroup(kind){
+  const g = groupEl(kind);
+  const val = kind === 'activity' ? state.activity : state.goal;
+  const cards = $$('.optcard', g);
+  cards.forEach(c => {
+    const on = c.dataset.val === val;
+    c.setAttribute('aria-checked', on ? 'true' : 'false');
+    c.tabIndex = on ? 0 : -1;
+  });
+  if (!val && cards[0]) cards[0].tabIndex = 0;
+}
+
+function pick(kind, val){
+  if (kind === 'activity') state.activity = val; else state.goal = val;
+  clearError(null, $(kind === 'activity' ? '#activityErr' : '#goalErr'));
+  syncGroup(kind);
+  /* changing either one re-derives any target still marked suggested (D15) */
+  recomputeTargets();
+  save();
+}
+
+['activity','goal'].forEach(kind => {
+  const g = groupEl(kind);
+  const cards = $$('.optcard', g);
+  cards.forEach((c, i) => {
+    c.addEventListener('click', () => pick(kind, c.dataset.val));
+    c.addEventListener('keydown', e => {
+      const fwd  = e.key === 'ArrowDown'  || e.key === 'ArrowRight';
+      const back = e.key === 'ArrowUp'    || e.key === 'ArrowLeft';
+      if (!fwd && !back) return;
+      e.preventDefault();
+      const next = cards[(i + (fwd ? 1 : cards.length - 1)) % cards.length];
+      pick(kind, next.dataset.val);
+      next.focus();
+    });
+  });
+});
+
+/* ==========================================================================
+   STEP 4 — DAILY TARGETS (D13–D15)
+   ========================================================================== */
+const TGT = {
+  steps:    { step:500, minKm:null, min:2000, max:25000, dec:0 },
+  distance: { step:0.1, min:1,      max:20,   dec:1 },   /* clamps are in KM */
+  calories: { step:25,  min:100,    max:1500, dec:0 }
+};
+const holdTimers = {};
+
+function distUnit(){ return state.prefs.distanceUnit; }
+function kmToDisplay(km){ return distUnit() === 'mi' ? km / KM_PER_MI : km; }
+function displayToKm(v){ return distUnit() === 'mi' ? v * KM_PER_MI : v; }
+
+/* Re-derive suggested targets. A 'manual' value is never touched (D15).
+   Distance follows the live step count while it is still 'suggested', so the
+   pair always agrees (D14). */
+function recomputeTargets(){
+  const s = suggested(), t = state.targets;
+  if (t.steps.source === 'suggested' || t.steps.value == null)       t.steps.value = s.steps;
+  if (t.calories.source === 'suggested' || t.calories.value == null) t.calories.value = s.calories;
+
+  if (t.distance.source === 'suggested' || t.distance.value == null){
+    t.distance.value = +(t.steps.value * s.strideCm / 100000).toFixed(1);
+  } else if (t.steps.source === 'suggested'){
+    t.steps.value = stepsFromKm(t.distance.value, s.strideCm);
+  }
+  save();
+}
+function refreshSuggested(){ recomputeTargets(); }
+
+/* Flag: the spec fixes the steps increment at ±500 but does not say what a
+   distance edit should round steps to. Nearest 100 keeps the number readable
+   without drifting the pair apart. */
+function stepsFromKm(km, strideCm){
+  return clamp(Math.round(km * 100000 / strideCm / 100) * 100, TGT.steps.min, TGT.steps.max);
+}
+
+function renderTargets(){
+  const t = state.targets;
+  $$('#targetCards .stepper').forEach(card => {
+    const key = card.dataset.target;
+    const valEl = $('[data-val]', card);
+    const next  = formatTarget(key, t[key].value);
+
+    if (valEl.textContent !== next){
+      /* value cross-fades on change */
+      valEl.classList.add('fade');
+      setTimeout(() => { valEl.textContent = next; valEl.classList.remove('fade'); }, 80);
+    }
+
+    /* the tag is "Suggested" until the owner edits it, then a tappable Reset */
+    const tag  = $('.st-tag', card);
+    const manual = t[key].source === 'manual';
+    $('.tagtext', tag).textContent = manual ? 'Reset' : 'Suggested';
+    $('.phi', tag).hidden = !manual;
+    tag.classList.toggle('resettable', manual);
+    tag.disabled = !manual;
+    tag.setAttribute('aria-label', manual ? 'Reset ' + key + ' to the suggested value' : '');
+
+    /* clamps disable the button that can no longer move */
+    const lim = limitsFor(key);
+    const cur = displayValue(key);
+    $('.st-minus', card).disabled = cur <= lim.min + 1e-9;
+    $('.st-plus',  card).disabled = cur >= lim.max - 1e-9;
+  });
+
+  /* distance unit label follows the app-wide preference */
+  const du = $('#targetCards [data-unit]');
+  if (du) du.textContent = distUnit();
+}
+
+function limitsFor(key){
+  if (key !== 'distance') return { min:TGT[key].min, max:TGT[key].max };
+  return { min:kmToDisplay(TGT.distance.min), max:kmToDisplay(TGT.distance.max) };
+}
+function displayValue(key){
+  const v = state.targets[key].value;
+  return key === 'distance' ? kmToDisplay(v) : v;
+}
+function formatTarget(key, v){
+  if (v == null) return '—';
+  if (key === 'distance') return kmToDisplay(v).toFixed(1);
+  if (key === 'steps')    return v.toLocaleString('en-US');
+  return String(v);
+}
+
+function adjust(key, dir){
+  const lim = limitsFor(key);
+  const stepSize = TGT[key].step;
+  let v = displayValue(key) + dir * stepSize;
+  v = clamp(v, lim.min, lim.max);
+  if (key === 'distance') v = +v.toFixed(1);
+
+  const t = state.targets;
+  t[key].source = 'manual';
+
+  if (key === 'distance'){
+    t.distance.value = +displayToKm(v).toFixed(2);
+    /* editing distance recomputes steps — both derive from stride (D14) */
+    t.steps.value = stepsFromKm(t.distance.value, suggested().strideCm);
+  } else if (key === 'steps'){
+    t.steps.value = Math.round(v);
+    t.distance.value = +(t.steps.value * suggested().strideCm / 100000).toFixed(1);
+  } else {
+    t.calories.value = Math.round(v);
+  }
+
+  save();
+  renderTargets();
+  announce(key);
+}
+
+function announce(key){
+  const label = key.charAt(0).toUpperCase() + key.slice(1);
+  const unit  = key === 'distance' ? ' ' + distUnit() : (key === 'calories' ? ' kcal' : '');
+  $('#tgtLive').textContent = label + ', ' + formatTarget(key, state.targets[key].value) + unit;
+}
+
+/* hold-to-repeat: 400ms delay, then 6 per second */
+$$('#targetCards .rndbtn').forEach(btn => {
+  const card = btn.closest('.stepper');
+  const key  = card.dataset.target;
+  const dir  = +btn.dataset.adj;
+
+  const start = e => {
+    if (btn.disabled) return;
+    if (e.type === 'mousedown' && e.button !== 0) return;
+    adjust(key, dir);
+    holdTimers[key] = setTimeout(() => {
+      holdTimers[key] = setInterval(() => {
+        if (btn.disabled){ stopHold(key); return; }
+        adjust(key, dir);
+      }, 167);
+    }, 400);
+  };
+  btn.addEventListener('mousedown', start);
+  btn.addEventListener('touchstart', e => { e.preventDefault(); start(e); }, { passive:false });
+  ['mouseup','mouseleave','touchend','touchcancel','blur'].forEach(ev =>
+    btn.addEventListener(ev, () => stopHold(key)));
+  /* keyboard: one press, one step — no repeat surprises */
+  btn.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); adjust(key, dir); }
+  });
+});
+function stopHold(key){
+  clearTimeout(holdTimers[key]);
+  clearInterval(holdTimers[key]);
+  holdTimers[key] = null;
+}
+
+$$('#targetCards .st-tag').forEach(tag => tag.addEventListener('click', () => {
+  const key = tag.dataset.reset;
+  state.targets[key].source = 'suggested';
+  /* resetting steps or distance puts the pair back on the suggestion together */
+  if (key === 'steps' || key === 'distance'){
+    state.targets.steps.source = 'suggested';
+    state.targets.distance.source = 'suggested';
+    state.targets.steps.value = null;
+    state.targets.distance.value = null;
+  } else {
+    state.targets[key].value = null;
+  }
+  recomputeTargets();
+  renderTargets();
+  announce(key);
+}));
+
+$('#explainRow').addEventListener('click', () => openSheet('explainSheet'));
+
+function fillExplainer(){
+  const s = suggested(), p = state.profile;
+  const h = p.heightCm != null ? Math.round(p.heightCm) : 170;
+  $('#explainNumbers').innerHTML =
+    'For you: <b>' + Math.round(s.bmr) + ' kcal</b> at rest, a stride of <b>' +
+    s.strideCm.toFixed(1) + ' cm</b> from your ' + h + ' cm height, and an activity factor of <b>' +
+    s.factor + '</b>.';
+}
+
+/* ==========================================================================
+   VALIDATION (D18) — Continue is never disabled on steps 1–4. On tap with
+   something missing: scroll to the first empty field, mark it, print one line
+   that says what to do.
+   ========================================================================== */
+function validateStep(screen){
+  if (screen === 'step1'){
+    const p = state.profile;
+    const checks = [
+      { ok: !!p.dob,          field:$('#dobField'),  msg:$('#dobErr'),
+        text:'Add your date of birth so we can work out your age.' },
+      { ok: !!p.sex,          field:null,            msg:$('#sexErr'),
+        text:'Choose one, or tap "Prefer not to say".' },
+      { ok: p.heightCm != null && p.heightCm > 0,
+        field: state.prefs.heightUnit === 'ftin' ? $('#heightFtWrap .field') : $('#heightCmWrap'),
+        msg:$('#heightErr'),
+        text:'Add your height so we can work out your stride.' },
+      { ok: p.weightKg != null && p.weightKg > 0,
+        field:$('#weightVal').closest('.field'), msg:$('#weightErr'),
+        text:'Add your weight so we can work out your calorie burn.' }
+    ];
+    const first = checks.find(c => !c.ok);
+    if (!first) return true;
+    /* one field, one line — the owner is told the next thing to do, not
+       handed a list of four complaints (D18) */
+    setError(first.field, first.msg, first.text);
+    (first.field || first.msg).scrollIntoView({ block:'center', behavior:'smooth' });
+    return false;
+  }
+
+  if (screen === 'step2' && !state.activity){
+    setError(null, $('#activityErr'), 'Choose the option that fits a typical week.');
+    return false;
+  }
+  if (screen === 'step3' && !state.goal){
+    setError(null, $('#goalErr'), 'Choose a goal so we can set your targets.');
+    return false;
+  }
+  return true;
+}
+
+/* ==========================================================================
+   FINISH SETUP (D20)
+   ========================================================================== */
+$('#finishCta').addEventListener('click', () => {
+  const cta = $('#finishCta');
+  if (busy.has(cta)) return;
+  setLoading(cta, true);
+  setTimeout(() => {
+    if (panel.load) return;
+    setLoading(cta, false);
+    save();
+    goNext('home');
+  }, 700);
+});
+
+function renderHome(){
+  const t = state.targets;
+  $('#homeSteps').textContent    = formatTarget('steps', t.steps.value);
+  $('#homeDistance').textContent = formatTarget('distance', t.distance.value);
+  $('#homeCalories').textContent = formatTarget('calories', t.calories.value);
+  $$('.tgtcard .tl')[1].textContent = distUnit();
+  const name = state.profile.name;
+  $('#homeGreet').textContent = name ? 'Good morning, ' + name : 'Good morning';
+}
+
+/* ==========================================================================
+   KEYBOARD — the docked footer rises with the keyboard, and the focused field
+   scrolls clear of it.
+   ========================================================================== */
+if (window.visualViewport){
+  const vv = window.visualViewport;
+  const lift = () => {
+    const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    $$('.ob-foot').forEach(f => {
+      f.style.transform = 'translateY(-' + inset + 'px)';
+      f.style.transition = 'transform var(--duration-base) ease';
+    });
+  };
+  vv.addEventListener('resize', lift);
+  vv.addEventListener('scroll', lift);
+}
+document.addEventListener('focusin', e => {
+  if (e.target.matches('input')) {
+    setTimeout(() => e.target.scrollIntoView({ block:'center', behavior:'smooth' }), 120);
+  }
+});
+
+/* ==========================================================================
+   CONTROL PANEL
+   ========================================================================== */
+function paintPanelLabels(groupId){
+  $$('#' + groupId + ' label').forEach(l => l.classList.toggle('on', $('input', l).checked));
+}
+function syncPanelScreen(name){
+  const r = $('#screenOpts input[value="' + name + '"]');
+  if (r){ r.checked = true; paintPanelLabels('screenOpts'); }
+}
+
+$$('#screenOpts input').forEach(r => r.addEventListener('change', () => {
+  clearTimeout(splashTimer);
+  paintPanelLabels('screenOpts');
+  const to = r.value;
+  const dir = ORDER.indexOf(to) >= ORDER.indexOf(current) ? 'fwd' : 'back';
+  showScreen(to, dir);
+  /* jumping back to the splash re-arms its own timed hand-off */
+  if (to === 'splash'){
+    splashTimer = setTimeout(() => { if (current === 'splash') goNext('signin'); }, 1400);
+  }
+}));
+
+$$('#authOpts input').forEach(r => r.addEventListener('change', () => {
+  panel.auth = r.value;
+  paintPanelLabels('authOpts');
+  /* re-enter the code screen so the new resend state takes effect at once */
+  if (current === 'code') enterCodeScreen();
+}));
+
+$$('#netOpts input').forEach(r => r.addEventListener('change', () => {
+  panel.net = r.value;
+  paintPanelLabels('netOpts');
+  $('#signinNotice').hidden = true;
+  if (current === 'code') enterCodeScreen();
+}));
+
+$('#loadToggle').addEventListener('change', e => {
+  panel.load = e.target.checked;
+  $('#loadWrap').classList.toggle('on', e.target.checked);
+  if (!panel.load){
+    $$('.btn-primary').forEach(b => setLoading(b, false));
+  } else {
+    /* show it immediately on whichever CTA this screen owns */
+    const cta = $('.ob-screen[data-screen="' + current + '"] .btn-primary');
+    if (cta && !cta.disabled) setLoading(cta, true);
+  }
+});
+
+$('#rmToggle').addEventListener('change', e => {
+  document.body.classList.toggle('rm-preview', e.target.checked);
+  $('#rmWrap').classList.toggle('on', e.target.checked);
+});
+
+$('#btnValidate').addEventListener('click', () => {
+  /* empties the profile, then taps Continue — so the error state is visible */
+  state.profile.dob = null; state.profile.sex = null;
+  state.profile.heightCm = null; state.profile.weightKg = null;
+  $('#heightCm').value = ''; $('#heightFt').value = ''; $('#heightIn').value = '';
+  $('#weightVal').value = '';
+  save();
+  showScreen('step1', 'fwd');
+  syncStep1();
+  setTimeout(() => validateStep('step1'), 60);
+});
+
+$('#btnFill').addEventListener('click', () => {
+  /* the spec's §4 example — female, 165 cm, 61 kg, born 12 Apr 1998,
+     lightly active, maintain → 8 000 / 5.5 / 500 */
+  state.profile = { dob:'1998-04-12', sex:'female', heightCm:165, weightKg:61, name:state.profile.name };
+  state.prefs   = { heightUnit:'cm', weightUnit:'kg', distanceUnit:'km' };
+  state.activity = 'light';
+  state.goal     = 'maintain';
+  state.targets  = {
+    steps:{ value:null, source:'suggested' },
+    distance:{ value:null, source:'suggested' },
+    calories:{ value:null, source:'suggested' }
+  };
+  recomputeTargets();
+  syncStep1(); syncGroup('activity'); syncGroup('goal'); renderTargets();
+  save();
+  showScreen('step4', 'fwd');
+});
+
+$('#btnReset').addEventListener('click', () => {
+  try { localStorage.removeItem(STORE_KEY); } catch(e){}
+  state = defaultState();
+  otpAttempts = 0;
+  ['#phoneInput','#nameInput','#emailInput','#heightCm','#heightFt','#heightIn','#weightVal']
+    .forEach(s => { const el = $(s); if (el) el.value = ''; });
+  otpInputs.forEach(i => i.value = '');
+  $('#ccCode').textContent = state.phone.dial;
+  clearError($('#phonePill'), $('#phoneErr'));
+  $$('.notice').forEach(n => n.hidden = true);
+  $$('.errline').forEach(n => n.hidden = true);
+  syncStep1(); syncGroup('activity'); syncGroup('goal');
+  closeSheets();
+  showScreen('splash');
+  clearTimeout(splashTimer);
+  splashTimer = setTimeout(() => { if (current === 'splash') goNext('signin'); }, 1400);
+});
+
+/* ==========================================================================
+   BOOT
+   ========================================================================== */
+load();
+/* a resumed session picks up where it stopped, but never mid-splash */
+$('#phoneInput').value = state.phone.national;
+$('#ccCode').textContent = state.phone.dial;
+$('#nameInput').value = state.profile.name || '';
+$('#emailInput').value = state.email || '';
+syncStep1();
+syncGroup('activity');
+syncGroup('goal');
+recomputeTargets();
+renderTargets();
+paintPanelLabels('screenOpts');
+paintPanelLabels('authOpts');
+paintPanelLabels('netOpts');
+injectIcons();
+</script>
+</body>
+</html>
