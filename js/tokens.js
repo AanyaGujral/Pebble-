@@ -160,6 +160,11 @@ export const metric = {
   steps: '#F2C64B',
   activity: '#A6CE4E',
   distance: '#43B476',
+  // Added 2026-08-27 (owner): Stress had no system token — the Measure All
+  // component was using a raw aqua-400 (#3DD2F3) with no 0-900 ramp behind it.
+  // Flag: emerald-400 is also `distance`, so two body signals share one hue,
+  // against the one-hue-per-signal rule. Owner chose emerald knowingly.
+  stress: '#43B476',
   readiness: '#45C7B3',
   spo2: '#58A8DF',
   sleep: '#8A7CEC',

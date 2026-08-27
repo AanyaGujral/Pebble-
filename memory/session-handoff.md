@@ -1,5 +1,26 @@
 # Session Handoff
 
+> **2026-08-27 — read this first.** The homepage now lives as a standalone
+> screen at `Home Tab/Home Tab.html`, pulled from the published "Pebble Home"
+> artifact (the newer 4-tab build — note `index.html` at the root is still the
+> OLDER Activity-focused prototype and does not contain the home tab, the
+> three score rings, or the Health monitor at all). Three owner fixes are in:
+> ring labels take the Workout Tab's "SCORE" overline token (now uppercase),
+> health-monitor unit words take the KM/KCAL token (weight 600 → 500), and the
+> Stress dot is now `metric.stress` = emerald-400, added to `tokens.json` and
+> `js/tokens.js` — it had been a raw aqua placeholder that existed in neither.
+> FLAG carried forward: emerald-400 is also `metric.distance`, so two signals
+> share a hue; owner chose this knowingly.
+>
+> **Next step is the owner's call:** this file is the homepage only, meant to
+> be merged back into the full prototype. Nothing has merged it yet. Decide
+> whether `index.html` gets replaced by the artifact build (with this home
+> screen dropped in) or whether the artifact stays the working source. See the
+> 2026-08-27 changelog entry for exactly what was dropped from the artifact to
+> isolate the screen, and for the two artifact defects fixed on the way (a
+> stray `</style>` that was leaking ~75 lines of CSS onto the page as text,
+> and a raw-hex `html` background).
+
 > **2026-08-10 — read this first.** `index.html` is now the MERGED source of
 > truth: it adopts the parallel session's build (metric details pages with a
 > D/W/M/Y period switcher; control panel reduced to Default + No data and
