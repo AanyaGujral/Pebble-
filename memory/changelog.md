@@ -5,6 +5,28 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-27 — Home tab updated from the owner's Home_Tab.html
+  (saved at components/home-tab.html). That file is a copy of this prototype
+  with the workout flow stripped out, so it was applied as a diff rather than
+  a replacement — three real changes, everything else in it was standalone
+  scaffolding (its own doctype, no control panel, paintScene trimmed to the
+  one home scene) and was deliberately not carried over.
+  (1) Stress is a real token now: metric.stress = emerald-400, retiring the
+  Figma aqua-400 placeholder that had no 0–900 ramp. Changed in index.html,
+  js/tokens.js AND tokens.json, so every health-monitor dot reads a system
+  metric token and none carries a raw hue. This also answers the owner's
+  separate ask to make the readings sheet's Stress dot emerald — the card and
+  the sheet share one metric list, so both moved together and stay in
+  agreement. Supersedes round 8b's "keep aqua" decision.
+  FLAGGED: emerald-400 is also metric.distance, so two body signals share a
+  hue against the scale's one-hue-per-signal rule. Owner chose it knowing
+  Distance never appears on the health screen.
+  (2) Ring labels take the overlineMedium token (11/16, weight 500, +0.08em,
+  uppercase) matching "SCORE" in the Workout Tab's hero ring — so they now
+  read SLEEP / READINESS / ACTIVITY. Was 13/18 medium sentence case.
+  (3) Unit words (MS / BPM / °C / %) drop from weight 600 to 500, matching
+  KM / KCAL on the Workout Tab tiles; the component shipped one step heavy.
+
 - 2026-08-14 (round 8b) — Owner settled the four questions round 8 raised, all
   in favour of what shipped, so the code comments now record decisions rather
   than open flags: workout-flow accent stays teal-400 (not the mint green in

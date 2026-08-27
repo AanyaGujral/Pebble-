@@ -30,10 +30,14 @@
 > MA_SPEED dials the ~9s pace); Start Workout opens the owner's full workout
 > flow (components/workout-flow.html), scoped under #wf with collision resets
 > at the top of that CSS block.
-> Open items: add a real
-> stress token to js/tokens.js (Stress card uses the component's aqua
-> placeholder); owner to decide on the doubled "Workout"/"Workouts" title
-> above the reused card.
+> 2026-08-27: home tab updated from the owner's Home_Tab.html (that file is
+> this prototype minus the workout flow, so it was applied as a diff — see
+> the changelog). metric.stress is now emerald-400 across index.html,
+> js/tokens.js and tokens.json, retiring the aqua placeholder; ring labels
+> are overlines (SLEEP / READINESS / ACTIVITY); unit words are weight 500.
+> Open items: Stress and Distance now share emerald-400 — fine while they
+> never meet, revisit if they do; owner to decide on the doubled
+> "Workout"/"Workouts" title above the reused card.
 
 > **2026-08-10 — previous status.** `index.html` is now the MERGED source of
 > truth: it adopts the parallel session's build (metric details pages with a

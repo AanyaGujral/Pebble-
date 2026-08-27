@@ -68,13 +68,16 @@
   --metric-spo2:var(--sky-400);
   --metric-sleep:var(--violet-400);
   --metric-skin-temp:var(--orchid-400);
-  /* Stress now has a metric alias in js/tokens.js (metric.stress), so the
-     Stress card reads --metric-stress like every other card reads its own.
-     Flag kept: the value is still the Figma-generated aqua-400 placeholder
-     the Measure All component shipped with — there's no aqua ramp (0–900)
-     in the design system yet, so this hue has no light/dark steps. */
-  --aqua-400:#3DD2F3;
-  --metric-stress:var(--aqua-400);
+  /* Stress is now a real design-system token: metric.stress = emerald-400
+     (owner, 2026-08-27). This retires the Figma-generated aqua-400
+     placeholder the Measure All component shipped with — aqua had no 0–900
+     ramp, so it was the one health-monitor dot not reading the system.
+     Added to js/tokens.js alongside this change.
+     FLAG: emerald-400 is also metric.distance, so two body signals now share
+     one hue — the system's rule is one hue per signal. Owner chose emerald
+     deliberately; Distance never appears on this screen, so the two are
+     never side by side here. Revisit if Stress and Distance ever meet. */
+  --metric-stress:var(--emerald-400);
 
   /* semantic quads — glyphs and badges only, never chart lines or fills */
   --positive-bg:#0E2A1B;--positive-fill:#1E5B38;--positive-icon:#4ADE80;--positive-text:#8AF0B0;
@@ -682,7 +685,17 @@ body{
   transform:translateY(0.109em);
 }
 .r3num .value-dash{font-size:inherit;line-height:inherit;font-weight:inherit}
-.r3lab{margin-top:8px;font-size:13px;line-height:18px;font-weight:500;color:var(--text-2)}
+/* Ring labels now carry the same type token as "SCORE" inside the Workout
+   Tab's hero ring (Activity Tab/Workout Tab.html, .hero .score-cap):
+   overlineMedium — 11/16, weight 500, +0.08em, uppercase — on text-2.
+   Was paragraphP2Medium (13/18, sentence case). text-transform is part of
+   the overline token, so the labels read SLEEP / READINESS / ACTIVITY;
+   owner confirmed the casing change. */
+.r3lab{
+  margin-top:8px;
+  font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;
+  text-transform:uppercase;color:var(--text-2);
+}
 
 /* section headers between card groups (home tab) — 24px above each section
    (owner asked for more space between sections, 2026-08-14).
@@ -749,7 +762,11 @@ body{
 .hm .label,.hm-sheet .label{font:600 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hm .figure,.hm-sheet .figure{display:flex;align-items:baseline;justify-content:flex-start;gap:4px}
 .hm .value,.hm-sheet .value{font:700 24px/28px var(--font-number);letter-spacing:-0.005em;color:var(--text-1);font-feature-settings:var(--num-features)}
-.hm .unit,.hm-sheet .unit{font:600 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+/* Unit words (MS / BPM / °C / %) now carry the same token as KM and KCAL on
+   the Workout Tab's Steps · Distance · Calories tiles (.card-metric .unit /
+   .stattile .unit): overlineMedium — 11/16, weight 500 — on text-3.
+   Only change is weight 600 -> 500; the component shipped one step heavy. */
+.hm .unit,.hm-sheet .unit{font:500 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
 .hm .tri,.hm-sheet .tri{align-self:center;margin-left:4px;flex:0 0 auto;display:block}
 .hm .card-foot{margin-top:auto;padding-top:12px;font:400 13px/18px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
 
@@ -3968,10 +3985,11 @@ function hmTri(t){
 const HM_METRICS = [
   { n:'HRV',        c:'var(--metric-hrv)',        v:'57',   u:'ms',  t:{d:'up',tone:'pos'},   f:'7-day avg 54 ms' },
   { n:'Heart Rate', c:'var(--metric-heart-rate)', v:'72',   u:'bpm', t:{d:'down',tone:'pos'}, f:'Resting · just now' },
-  // reads the --metric-stress alias (js/tokens.js metric.stress) rather than
-  // the raw aqua hue the component shipped with. The reading animation colours
-  // this dot teal instead; SETTLED 2026-08-14: owner chose aqua, so the sheet
-  // and the card agree and Stress stays distinct from Readiness.
+  // Stress reads --metric-stress, which is now emerald-400 in the design
+  // system (owner, 2026-08-27) — was the aqua-400 placeholder the Measure
+  // All component shipped with. All five dots below now read a system
+  // metric token; none carries a raw hue. The card and the readings sheet
+  // share this list, so both dots change together.
   { n:'Stress',     c:'var(--metric-stress)',     v:'38',   u:'',    t:{d:'down',tone:'pos'}, f:'Below your baseline' },
   { n:'Skin Temp',  c:'var(--metric-skin-temp)',  v:'36.4', u:'°C',  t:{d:'up',tone:'pos'},   f:'Same as baseline' },
   { n:'SpO₂',       c:'var(--metric-spo2)',       v:'97',   u:'%',   t:{d:'up',tone:'pos'},   f:'Overnight low 95%' }

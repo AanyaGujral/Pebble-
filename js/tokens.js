@@ -164,12 +164,14 @@ export const metric = {
   spo2: '#58A8DF',
   sleep: '#8A7CEC',
   skinTemp: '#C873DE',
-  /* Added 2026-08-14 for the Measure All component's Stress card.
-     FLAG: this is the Figma-generated aqua-400 placeholder the component
-     shipped with — there is still no aqua ramp (0–900) in tokens-final.json,
-     so Stress has a hue but no light/dark steps. Replace with the real ramp
-     value when it lands; the alias name can stay. */
-  stress: '#3DD2F3'
+  /* Stress, settled 2026-08-27: emerald-400. Replaces the Figma-generated
+     aqua-400 placeholder the Measure All component shipped with, which had
+     no 0–900 ramp behind it.
+     FLAG: this is the same value as `distance` above, so two body signals
+     share a hue — the scale's rule is one hue per signal. The owner chose
+     emerald deliberately (Stress and Distance never appear together on the
+     health screen). Revisit if they ever meet. */
+  stress: '#43B476'
 };
 
 /** Semantic states — glyphs and badges only, never chart lines or fills. */
