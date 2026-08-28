@@ -5,6 +5,19 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-28 (decisions) — Owner settled three open flags. All three were
+  "keep what is built", so no behaviour changed; the code comments were
+  rewritten from "needs a decision" to "settled, do not re-raise" so the next
+  session does not reopen them.
+  1. text-3 split is DELIBERATE. Onboarding follows the Figma variable
+     (#999FB9); the rest of the app follows js/tokens.js (#7B819C). Both
+     files now say so.
+  2. The pebble mark's #5BBCB1 fill stays hard-coded and untokenised — the
+     one deliberate exception to the tokens-only rule.
+  3. Height reads as total inches, not feet+inches, so the value picker
+     stays two columns (number | unit) rather than growing a third.
+  Also published a preview artifact of the flow.
+
 - 2026-08-28 (later) — Owner feedback round on the onboarding flow.
   Logo: dropped in the supplied pebble mark SVG and used it verbatim, on both
   the splash (96px) and the onboarding screen (48px, the size the comp

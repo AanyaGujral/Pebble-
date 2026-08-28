@@ -66,13 +66,12 @@
   /* text */
   --text-1:var(--neutral-0);             /* Figma `text/text-1`  */
   --text-2:var(--neutral-200);           /* Figma `text/text-2`  */
-  /* FLAG — token conflict, owner decision needed. js/tokens.js defines
-     text3 = #7B819C (neutral 400). The Figma variable `text/text-3` is
-     #999FB9 (neutral 300), one step lighter, and that is what every
-     onboarding screen uses for placeholders and card sub-labels. Using the
-     Figma value here so these screens match the design, WITHOUT touching the
-     global token (that would shift the shipped Activity/Sleep/Me screens).
-     Pick one and align both. */
+  /* KNOWN SPLIT (owner decided 2026-08-28 — deliberate, do not "fix").
+     js/tokens.js defines text3 = #7B819C (neutral 400). The Figma variable
+     `text/text-3` is #999FB9 (neutral 300), one step lighter, and that is
+     what every onboarding screen uses for placeholders and card sub-labels.
+     The owner chose to keep both: onboarding follows Figma, the rest of the
+     app follows the token. Same note sits in js/tokens.js. */
   --text-3:var(--neutral-300);
 
   /* semantic — only the negative state appears in this flow (invalid OTP) */
@@ -355,13 +354,13 @@ button.field{
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   width:195.5px;height:190px;display:grid;place-items:center;
 }
-/* The mark is the owner-supplied SVG, used verbatim. FLAG: it is filled
-   #5BBCB1, which is NOT a token — it sits between teal-300 (#76D4C3) and
-   teal-400 (#45C7B3). Kept as supplied ("use it as is"); worth deciding
-   whether the brand mark should be pinned to teal-400 or #5BBCB1 added to
-   js/tokens.js as its own brand-mark token.
-   FLAG: only the mark was supplied, not the "pebble" wordmark under it, so
-   the wordmark is still live text in the brand face. */
+/* The mark is the owner-supplied SVG, used verbatim.
+   DECIDED (owner, 2026-08-28): its #5BBCB1 fill stays hard-coded and
+   untokenised. It is NOT a token value — it sits between teal-300 (#76D4C3)
+   and teal-400 (#45C7B3) — and it is the one deliberate exception to the
+   tokens-only rule in this file. Do not "correct" it to teal-400.
+   STILL OPEN: only the mark was supplied, not the "pebble" wordmark under
+   it, so the wordmark is live text in the brand face. */
 #v-splash .lockup{text-align:center}
 #v-splash .lockup .mk{width:96px;height:96px;margin:0 auto 14px;display:block}
 #v-splash .lockup .word{
@@ -1139,11 +1138,13 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeGender(
    scroll independently; one selection band spans both, so it reads as a
    single selector area.
 
-   FLAG: switching unit CONVERTS the current value (168 cm -> 66 in) rather
-   than keeping the raw number. That is the behaviour that avoids nonsense
-   like "66 cm", but it is an assumption — confirm.
-   FLAG: ranges and whether height should offer feet+inches as a paired
-   picker (5' 6") instead of total inches are both undecided. */
+   Switching unit CONVERTS the current value (165 cm -> 65 in) rather than
+   keeping the raw number, so you can never land on "65 cm".
+   DECIDED (owner, 2026-08-28): height reads as TOTAL INCHES, not feet plus
+   inches — so the picker stays two columns (number | unit) rather than
+   growing a third. Do not switch it to 5' 6" without asking.
+   STILL OPEN: the ranges themselves (cm 80-250, in 30-98, kg 25-300,
+   lb 55-660) are reasonable defaults, not specified. */
 const MEASURES = {
   height: {
     title:'Height',
@@ -1434,25 +1435,34 @@ runSplash();
   MISSING SCREENS
    4. Onboarding slides 2 and 3 — three frames exist, one node link was given.
    5. Country picker list (the +91 control).
-   6. Gender options list.
-   7. Date-of-birth picker.
-   8. Completion / success screen after the last Continue.
+   6. Date-of-birth picker sheet (the calendar icon is inert).
+   7. Completion / success screen after the last Continue.
 
   MISSING CONTENT
-   9. All four Goal descriptions are "Lorem ipsum".
+   8. All four Goal descriptions are "Lorem ipsum".
+   9. The "pebble" wordmark under the splash mark — only the mark was
+      supplied, so the wordmark is live text.
 
   UNSPECIFIED BEHAVIOUR
   10. Splash duration (using 1.6s).
   11. Toast duration (using 2.4s).
   12. Stepper increments and ranges on Daily targets.
   13. Whether the suggested targets are computed from the profile answers.
-  14. Height / weight units — assumed metric, no toggle designed.
+  14. Height / weight picker ranges (cm 80-250, in 30-98, kg 25-300,
+      lb 55-660 are defaults, not specified).
   15. No validation or error states designed for phone, name, or profile —
       only the OTP screen has an error state.
+  16. Gender options list — the four in use are a default. Also undecided
+      what "Prefer not to say" should fall back to for the target maths.
 
-  TOKENS
-  16. text-3 conflict: js/tokens.js says #7B819C, Figma says #999FB9.
-      Flagged in both files; onboarding follows Figma.
+  ==========================================================================
+  SETTLED — do not re-raise these
+  ==========================================================================
+  - text-3 split is DELIBERATE: onboarding follows Figma (#999FB9), the rest
+    of the app follows js/tokens.js (#7B819C). Owner, 2026-08-28.
+  - The mark's #5BBCB1 stays hard-coded and untokenised. Owner, 2026-08-28.
+  - Height reads as total inches, not feet+inches, so the picker stays two
+    columns. Owner, 2026-08-28.
   ==========================================================================
 -->
 </body>

@@ -154,13 +154,14 @@ export const surface = {
 export const textColor = {
   text1: '#EFF1F9',
   text2: '#B8BDD3',
-  /* FLAG (2026-08-28) — unresolved conflict, owner decision needed.
+  /* KNOWN SPLIT (owner decided 2026-08-28 — deliberate, do not "fix").
      This file says text3 = #7B819C (neutral 400). The Figma library variable
      `text/text-3` resolves to #999FB9 (neutral 300) — one step lighter — and
      every onboarding screen uses that lighter value for input placeholders
-     and card sub-labels. Left as-is here so the shipped Activity/Sleep/Me
-     screens do not shift; the onboarding screens reference neutral-300
-     directly and flag it at the point of use. Pick one and align both. */
+     and card sub-labels. The owner chose to keep both: the app follows this
+     token so the shipped Activity/Sleep/Me screens do not shift, and
+     onboarding follows Figma. If you are here to reconcile them, that is a
+     new decision, not a bug. */
   text3: '#7B819C'
 };
 

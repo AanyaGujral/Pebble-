@@ -17,10 +17,15 @@
 >   2. Onboarding slides 2 and 3 — three frames exist in Figma, one node link
 >      was supplied. The carousel is already wired for more.
 >   3. Goal screen copy — all four descriptions are "Lorem ipsum" in Figma.
->   4. `text-3` token conflict: tokens.js #7B819C vs Figma #999FB9. Flagged in
->      both files, onboarding follows Figma, global token untouched.
->   5. No designed screens for: country picker, gender list, DOB picker, or a
+>   4. No designed screens for: country picker, DOB picker, or a
 >      completion/success screen after the final Continue.
+>   5. The onboarding ANIMATION. The Claude Design canvas link 403s — it is
+>      not an artifact URL and cannot be fetched from a session. Needs to be
+>      pasted or attached as a file.
+>
+> **Settled 2026-08-28 — do not re-raise:** the text-3 split (onboarding
+> #999FB9 vs app #7B819C) is deliberate; the mark's #5BBCB1 stays
+> hard-coded; height reads as total inches, not feet+inches.
 > The full list of 16 open questions is in a comment at the bottom of
 > `onboarding.html`.
 
