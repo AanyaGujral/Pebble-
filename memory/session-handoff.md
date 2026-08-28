@@ -8,15 +8,15 @@
 > `index.html` is unchanged and is still the signed-in app.
 >
 > **Blocked on the owner — nothing else can close these:**
->   1. Splash logo + onboarding hero (and the hero VIDEO). Could not be
->      downloaded: this sandbox has no network egress to figma.com. Drop them
->      at `assets/onboarding/splash-logo.png`, `onboarding-hero.png` and
->      `onboarding-hero.mp4` and they take over automatically. This is the
->      same wall the Activity/Sleep background PNGs hit — files need to arrive
->      as uploads, not inline previews.
->   2. Onboarding slides 2 and 3 — three frames exist in Figma, one node link
->      was supplied. The carousel is already wired for more.
->   3. Goal screen copy — all four descriptions are "Lorem ipsum" in Figma.
+>   1. Goal screen copy — all four descriptions are "Lorem ipsum" in Figma.
+>   2. The "pebble" wordmark on the splash — only the mark SVG was supplied,
+>      so the wordmark is live text.
+>
+> **Closed since:** the onboarding backdrop animation landed (sent as a zip;
+> the Claude Design canvas link is not fetchable from a session). The three
+> photos ship at `assets/onboarding/onb-1..3.jpg`. The "three Onboarding
+> frames" question is answered — they are three backgrounds behind one
+> screen, not three slides.
 >   4. No designed screens for: country picker, DOB picker, or a
 >      completion/success screen after the final Continue.
 >   5. The onboarding ANIMATION. The Claude Design canvas link 403s — it is

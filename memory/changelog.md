@@ -5,6 +5,33 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-28 (animation landed) — The onboarding backdrop animation is IN.
+  The owner sent the Claude Design composition as a zip (the canvas link was
+  never fetchable from a session — 403, and it is not an artifact URL).
+  Ported from `onboarding-bg.jsx` + `Onboarding Animation.dc.html`: three
+  photographs, each held 1.5s then cross-faded over 1.5s on a 9s loop, with a
+  slow Ken Burns drift. Every number is from the composition, none invented —
+  base scale 1.03, zoom 0.08, alternateDirection on, transform-origin
+  50% 42%, easeInOutSine on opacity, linear on drift. Driven by
+  requestAnimationFrame, and it only runs while the onboarding screen is
+  actually on show. Under prefers-reduced-motion it holds the first
+  photograph with no fade and no drift (verified).
+  RESOLVED, a question open since the first session: the three Figma frames
+  named "Onboarding" are these three BACKGROUNDS behind one screen, not three
+  content slides with their own copy. The slide-dot carousel built on that
+  wrong assumption is removed and Get Started now goes straight to the phone
+  screen.
+  Assets: the zip carried the three photos at 1080x2385 PNG (4.0 MB total).
+  Downscaled to 720x1590 JPEG q78 via Chromium's canvas — 168 KB for all
+  three, a 96% saving, at 2x the display size. They live at
+  assets/onboarding/onb-1..3.jpg.
+  Dropped the separate CSS scrim: the exported photos already have the dark
+  gradient baked into their lower half, and the composition draws them with
+  no overlay. Keeping both double-darkened the headline. Flagged in the file
+  in case the photos are ever re-exported without it.
+  The 438x656 media plate from the static Figma frame is gone too — the
+  animation composition is full-bleed 360x795 and is the newer source.
+
 - 2026-08-28 (date picker + sheet corrections) — Added the date-of-birth
   picker, matching the two-mode calendar in the owner's reference shots: a
   month grid (SUN-SAT header, selected day as a filled teal circle, prev/next

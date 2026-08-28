@@ -429,29 +429,25 @@ button.field{
 }
 
 /* ---- Onboarding ---------------------------------------------------------- */
-/* Media plate. The owner has said this is a VIDEO in the real build and the
-   Figma frame only carries a still, so the slot is a <video> with the still
-   as its poster. Both files are optional — the gradient stand-in shows
-   through until they are dropped in. */
-#v-onb .media{position:absolute;left:50%;transform:translateX(-50%);
-  top:-10px;width:438px;height:656px;overflow:hidden}
-#v-onb .media video,#v-onb .media img{width:100%;height:100%;object-fit:cover;display:block}
-/* Code-drawn stand-in: a dusk court, close enough in value + hue to judge the
-   scrim and type contrast against. Replaced the moment real media lands. */
-#v-onb .media .standin{
-  position:absolute;inset:0;
-  background:
-    radial-gradient(70% 45% at 62% 22%, rgba(69,199,179,0.16) 0%, transparent 70%),
-    linear-gradient(168deg,#0B1418 0%,#12262B 38%,#0A1C24 68%,#070D10 100%);
+/* Media plate. This is the animated backdrop from the owner's Claude Design
+   file (Onboarding Animation.dc.html + onboarding-bg.jsx): three photographs
+   that cross-fade on a loop with a slow Ken Burns drift. The timing and
+   easing are reproduced exactly in the JS below; this block only positions
+   the layers.
+   The photos are full-bleed 360x795, NOT the 438x656 plate the static Figma
+   frame used — the animation composition is the newer source. */
+#v-onb .media{position:absolute;inset:0;overflow:hidden;background:var(--surface-app)}
+#v-onb .media img{
+  position:absolute;left:0;top:0;width:360px;height:795px;
+  object-fit:cover;display:block;
+  transform-origin:50% 42%;      /* from the composition */
+  will-change:opacity,transform;
 }
-/* Scrim, straight from the comp: transparent to #090D0E between 25% and 62% */
-#v-onb .scrim{
-  position:absolute;left:0;bottom:0;width:360px;height:668px;pointer-events:none;
-  background:linear-gradient(180deg,
-    rgba(9,13,14,0) 25.545%,
-    rgba(9,13,14,0.46) 35.743%,
-    #090D0E 62.132%);
-}
+/* FLAG: no separate scrim element any more. The exported photos already have
+   the dark gradient baked into their lower half — the composition draws them
+   with no overlay, and adding the old CSS scrim on top double-darkened the
+   headline area. If the photos are ever re-exported without that gradient,
+   the scrim has to come back. */
 #v-onb .leaf{position:absolute;left:24px;top:519px;width:48px;height:48px;color:var(--teal-400)}
 #v-onb .head{
   position:absolute;left:24px;top:583px;width:303px;margin:0;
@@ -468,11 +464,6 @@ button.field{
 }
 #v-onb .legal a{color:rgba(255,255,255,0.75);text-decoration:none}
 #v-onb .legal a:hover{text-decoration:underline}
-/* Slide dots — see the FLAG in the notes: Figma has three Onboarding frames
-   but only one was linked, so this carousel currently has one real slide. */
-#v-onb .dots{position:absolute;left:24px;top:497px;display:flex;gap:6px}
-#v-onb .dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3)}
-#v-onb .dots i.on{background:var(--teal-400);width:16px;border-radius:3px}
 
 /* ---- Phone number -------------------------------------------------------- */
 #v-phone .row{position:absolute;left:16px;top:174px;width:328px;
@@ -653,23 +644,18 @@ button.field{
        2. ONBOARDING  (Figma 940:5067)
        ==================================================================== -->
   <section class="view" id="v-onb" aria-label="Welcome">
-    <div class="media">
-      <!-- Video first, still as poster, gradient stand-in behind both. -->
-      <div class="standin"></div>
-      <video id="onbVideo" autoplay muted loop playsinline
-             poster="assets/onboarding/onboarding-hero.png"
-             onerror="this.style.display='none'">
-        <source src="assets/onboarding/onboarding-hero.mp4" type="video/mp4">
-      </video>
+    <!-- Three cross-fading photographs, driven by the JS at the bottom.
+         Scene names from the composition: Court, Cable, Press. -->
+    <div class="media" id="onbMedia">
+      <img src="assets/onboarding/onb-1.jpg" alt="" data-i="0">
+      <img src="assets/onboarding/onb-2.jpg" alt="" data-i="1">
+      <img src="assets/onboarding/onb-3.jpg" alt="" data-i="2">
     </div>
-    <div class="scrim"></div>
 
     <!-- Owner-supplied mark, used verbatim, at the 48x48 the comp specifies -->
     <svg class="leaf" viewBox="0 0 48 48" fill="none" aria-label="Pebble" role="img">
       <path d="M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z" fill="#5BBCB1"/>
     </svg>
-
-    <div class="dots" id="onbDots"></div>
 
     <h1 class="head"><span class="dim">Your health,</span><span class="lit">your way</span></h1>
 
@@ -1034,6 +1020,8 @@ function go(id, {push=true} = {}){
   current = id;
   syncJump();
   if (id === 'otp') startOtpTimer();
+  /* The backdrop only animates while its screen is on show. */
+  if (id === 'onb') startBackdrop(); else stopBackdrop();
   /* Move focus to the first field so the screen is usable from the keyboard. */
   const first = $('#v-'+id+' input:not([type=hidden])');
   if (first) setTimeout(() => first.focus(), 60);
@@ -1067,27 +1055,81 @@ function runSplash(){
   splashTimer = setTimeout(() => { if (current === 'splash') go('onb'); }, SPLASH_MS);
 }
 
-/* ---- 4b. Onboarding ----------------------------------------------------- */
-/* FLAG: the pasted CSS listed THREE frames named "Onboarding", but only one
-   node link was supplied, so only one slide exists. The carousel is wired for
-   more — send the other two node ids and they drop straight in. */
-const SLIDES = [
-  { dim:'Your health,', lit:'your way' }
-];
-let slide = 0;
-function paintSlides(){
-  const dots = $('#onbDots');
-  dots.innerHTML = SLIDES.map((_,i) =>
-    `<i class="${i===slide?'on':''}"></i>`).join('');
-  dots.style.display = SLIDES.length > 1 ? 'flex' : 'none';
-  const head = $('#v-onb .head');
-  head.innerHTML =
-    `<span class="dim">${SLIDES[slide].dim}</span><span class="lit">${SLIDES[slide].lit}</span>`;
-}
-$('#btnStart').onclick = () => {
-  if (slide < SLIDES.length - 1) { slide++; paintSlides(); }
-  else go('phone');
+/* ---- 4b. Onboarding backdrop animation -----------------------------------
+   Ported from the owner's Claude Design composition (onboarding-bg.jsx).
+   Three photographs, each held 1.5s then cross-faded over 1.5s, looping on a
+   9s cycle, with a slow Ken Burns drift underneath.
+
+   RESOLVED: the three frames named "Onboarding" in Figma are these three
+   BACKGROUNDS behind one screen — not three content slides with their own
+   copy. The slide-dot carousel that assumed otherwise has been removed, and
+   Get Started now goes straight to the phone screen.
+
+   Every number below comes from the composition; none are invented:
+     HOLD 1.5s, FADE 1.5s, base scale 1.03, zoom 0.08, alternate on,
+     transform-origin 50% 42%, easeInOutSine on opacity, linear on drift. */
+const ONB = {
+  HOLD:1.5, FADE:1.5,
+  zoom:0.08,            // OM_TWEAKS.zoomStrength
+  alternate:true        // OM_TWEAKS.alternateDirection
 };
+ONB.STEP  = ONB.HOLD + ONB.FADE;   // 3s  — one photo's turn
+ONB.SPAN  = ONB.FADE + ONB.HOLD + ONB.FADE;  // 4.5s a layer is on screen
+const onbLayers = [...document.querySelectorAll('#onbMedia img')];
+ONB.CYCLE = ONB.STEP * onbLayers.length;     // 9s
+
+const easeInOutSine = t => -(Math.cos(Math.PI * t) - 1) / 2;
+const mod = (v,m) => ((v % m) + m) % m;
+
+/* A pure function of time: where layer i should be at T seconds. */
+function layerState(T, i){
+  const local = mod(T - (ONB.STEP * i - ONB.FADE), ONB.CYCLE);
+  if (local >= ONB.SPAN) return { o:0, scale:1, x:0, y:0 };
+
+  let o;
+  if (local < ONB.FADE)                 o = easeInOutSine(local / ONB.FADE);
+  else if (local < ONB.FADE + ONB.HOLD) o = 1;
+  else                                  o = easeInOutSine((ONB.SPAN - local) / ONB.FADE);
+
+  const p   = local / ONB.SPAN;                     // linear drift
+  const out = ONB.alternate && i % 2 === 1;         // odd layers zoom out
+  const s   = 1.03 + (out ? ONB.zoom * (1 - p) : ONB.zoom * p);
+  const dir = i % 3;
+  const x = (dir === 0 ? -1 : dir === 1 ? 1 : 0) * ONB.zoom * 90 * (p - 0.5);
+  const y = (dir === 2 ? 1 : 0.35) * ONB.zoom * 70 * (0.5 - p);
+  return { o, scale:s, x, y };
+}
+
+let onbRAF = null, onbStart = 0;
+function paintBackdrop(T){
+  onbLayers.forEach((el,i) => {
+    const s = layerState(T, i);
+    el.style.opacity = s.o;
+    el.style.transform = `translate3d(${s.x}px, ${s.y}px, 0) scale(${s.scale})`;
+  });
+}
+function startBackdrop(){
+  stopBackdrop();
+  /* Reduced motion: hold the first photograph, no fade, no drift. */
+  if (reduced()){
+    onbLayers.forEach((el,i) => {
+      el.style.opacity = i === 0 ? 1 : 0;
+      el.style.transform = 'none';
+    });
+    return;
+  }
+  onbStart = performance.now();
+  const tick = now => {
+    paintBackdrop((now - onbStart) / 1000);
+    onbRAF = requestAnimationFrame(tick);
+  };
+  onbRAF = requestAnimationFrame(tick);
+}
+function stopBackdrop(){
+  if (onbRAF) cancelAnimationFrame(onbRAF);
+  onbRAF = null;
+}
+$('#btnStart').onclick = () => go('phone');
 
 /* ---- 4c. Phone number --------------------------------------------------- */
 /* Ten digits is the Indian mobile length, matching the +91 in the comp. */
@@ -1322,8 +1364,9 @@ function fillCol(col, items, selectedIndex, onPick){
   };
   col.scrollTop = selectedIndex * ROW;
 }
-const reduced = () =>
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function reduced(){
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 /* The numbers a unit offers, e.g. 80..250 for cm */
 function valuesFor(u){
@@ -1625,7 +1668,6 @@ Object.keys(OTP_STATES).forEach(label => {
 });
 
 /* ---- Boot --------------------------------------------------------------- */
-paintSlides();
 go('splash', {push:false});
 runSplash();
 </script>
