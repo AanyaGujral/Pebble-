@@ -994,8 +994,11 @@ const $ = (sel, root=document) => root.querySelector(sel);
 const state = {
   phone:'', otp:'', name:'',
   dob:'', gender:'', height:'', weight:'',
-  activity:'sedentary',   // Figma shows Sedentary preselected
-  goal:'lose',            // Figma shows Lose Weight preselected
+  /* Nothing preselected on either choice screen (owner, 2026-08-28) — the
+     Figma frames showed a card already highlighted, but a pre-picked answer
+     is one the person never actually gave. Both stay null until tapped. */
+  activity:null,
+  goal:null,
   targets:{ steps:8000, distance:5.5, calories:1800 }
 };
 
@@ -1559,16 +1562,22 @@ const ACTIVITY = [
   { id:'active',    t:'Active',         d:'Moderate exercise, 3-5 days a week' },
   { id:'very',      t:'Very Active',    d:'Hard exercise, 6-7 days a week' }
 ];
-/* FLAG: all four Goal descriptions are literally "Lorem ipsum" in Figma.
-   Placeholders kept verbatim rather than invented — real copy needed. */
+/* Goal descriptions. Figma had "Lorem ipsum" on all four; this is stand-in
+   copy written to the right length and voice (owner asked for something
+   generic, 2026-08-28). Swap for the real wording when it is signed off. */
 const GOALS = [
-  { id:'lose',     t:'Lose Weight',     d:'Lorem ipsum' },
-  { id:'maintain', t:'Maintain',        d:'Lorem ipsum' },
-  { id:'gain',     t:'Gain Weight',     d:'Lorem ipsum' },
-  { id:'fitness',  t:'General Fitness', d:'Lorem ipsum' }
+  { id:'lose',     t:'Lose Weight',     d:'A daily calorie target below what you burn' },
+  { id:'maintain', t:'Maintain',        d:'Hold your current weight and routine' },
+  { id:'gain',     t:'Gain Weight',     d:'A daily calorie target above what you burn' },
+  { id:'fitness',  t:'General Fitness', d:'Move and sleep better, with no weight target' }
 ];
 
-function buildCards(host, items, key){
+/* FLAG (owner, 2026-08-28): because nothing is preselected any more, Continue
+   would otherwise let someone past without answering — and the daily targets
+   are meant to be derived from these two. So the CTA stays disabled until a
+   card is tapped, matching how the phone and name screens already gate. Say
+   the word if it should be skippable instead. */
+function buildCards(host, items, key, cta){
   const el = $(host);
   el.innerHTML = '';
   items.forEach((it, i) => {
@@ -1583,12 +1592,14 @@ function buildCards(host, items, key){
       state[key] = it.id;
       [...el.children].forEach(c => c.setAttribute('aria-pressed','false'));
       b.setAttribute('aria-pressed','true');
+      $(cta).disabled = false;
     };
     el.appendChild(b);
   });
+  $(cta).disabled = state[key] === null;
 }
-buildCards('#activityCards', ACTIVITY, 'activity');
-buildCards('#goalCards',     GOALS,    'goal');
+buildCards('#activityCards', ACTIVITY, 'activity', '#btnActivity');
+buildCards('#goalCards',     GOALS,    'goal',     '#btnGoal');
 $('#btnActivity').onclick = () => go('goal');
 $('#btnGoal').onclick     = () => go('targets');
 

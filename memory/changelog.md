@@ -5,6 +5,20 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-28 (choice screens) — Activity level and Goal no longer arrive with
+  a card preselected. The Figma frames showed Sedentary and Lose Weight
+  already highlighted, but a pre-picked answer is one the person never gave,
+  so both start null and only select on tap.
+  Consequence, flagged in the file: Continue on those two screens is now
+  disabled until a card is chosen, matching how the phone and name screens
+  already gate. Without it the flow would let someone skip an answer the daily
+  targets are meant to be derived from. Easy to ungate if the owner prefers.
+  Goal descriptions: the four "Lorem ipsum" placeholders are replaced with
+  stand-in copy written to the right length and voice — "A daily calorie
+  target below what you burn", "Hold your current weight and routine", "A
+  daily calorie target above what you burn", "Move and sleep better, with no
+  weight target". Still stand-ins, not signed-off product copy.
+
 - 2026-08-28 (animation landed) — The onboarding backdrop animation is IN.
   The owner sent the Claude Design composition as a zip (the canvas link was
   never fetchable from a session — 403, and it is not an artifact URL).
