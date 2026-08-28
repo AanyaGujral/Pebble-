@@ -5,6 +5,30 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-28 (later) — Owner feedback round on the onboarding flow.
+  Logo: dropped in the supplied pebble mark SVG and used it verbatim, on both
+  the splash (96px) and the onboarding screen (48px, the size the comp
+  specifies). FLAG: its fill is #5BBCB1, which is not a token — it sits
+  between teal-300 (#76D4C3) and teal-400 (#45C7B3). Left as supplied; needs a
+  decision on whether the brand mark pins to teal-400 or #5BBCB1 becomes its
+  own token. Only the mark was supplied, so the "pebble" wordmark on the
+  splash is still live text.
+  Profile: gender is now a real dropdown (a styled menu with a check on the
+  chosen row) instead of a native <select>. Height and weight became picked
+  values rather than typed ones — they open the same bottom sheet the Workout
+  tab uses for goal setting (X / title / check), with a SECOND scroll column
+  for the unit to the right of the number column. The two columns scroll
+  independently but share one selection band, so it reads as a single
+  selector area. Units are cm/in and kg/lb; switching unit converts the value
+  (165 cm -> 65 in, 65 kg -> 143 lb) rather than keeping the raw number.
+  Fixed a real bug found in review: the picker columns were being filled while
+  the sheet was still display:none, so scrollTop was a no-op and the wheel
+  opened on its first value instead of the current one.
+  STILL BLOCKED: the onboarding animation. The Claude Design canvas link
+  (claude.ai/design/p/...) returns 403 — it is not an artifact URL and cannot
+  be fetched. No animation from it is in the build; the flow still has only
+  the 180ms cross-fade.
+
 - 2026-08-28 — Built the onboarding flow as a new `onboarding.html`
   (9 screens: Splash, Onboarding, Phone number, OTP, Name, Profile, Activity
   level, Goal, Daily targets). Recreated from the Figma file "Pebble Phase 1"

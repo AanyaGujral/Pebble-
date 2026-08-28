@@ -241,16 +241,90 @@ body{
   position:absolute;right:11px;top:50%;transform:translateY(-50%);
   width:20px;height:20px;color:var(--text-1);pointer-events:none;
 }
-/* select needs its own reset to match .field exactly. Until a choice is made
-   it shows the placeholder in text-3, like every other empty field. */
-select.field{appearance:none;cursor:pointer;color:var(--text-3)}
-select.field.filled{color:var(--text-1)}
+/* Gender, height and weight are <button>s styled as fields — the value is
+   picked, never typed — so they need the button reset that inputs get free. */
+button.field{
+  appearance:none;text-align:left;font-weight:400;
+  font-family:var(--font-text);font-size:13px;line-height:18px;
+}
 /* Right-hand icon sits inside the box, so leave room for it */
 #inDob,#inGender{padding-right:42px}
 /* Number fields draw spinner arrows on focus; the comp has none */
 .field[type=number]{-moz-appearance:textfield}
 .field[type=number]::-webkit-outer-spin-button,
 .field[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+/* --------------------------------------------------------------------------
+   GENDER DROPDOWN — anchored under the field, not a native <select>
+   -------------------------------------------------------------------------- */
+.dropdown{
+  position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:80;
+  background:var(--surface-card);border:1px solid var(--neutral-700);
+  border-radius:var(--r-field);padding:4px;
+}
+.dropdown[hidden]{display:none}
+.dropdown button{
+  all:unset;box-sizing:border-box;display:flex;align-items:center;
+  justify-content:space-between;width:100%;
+  padding:10px 12px;border-radius:8px;cursor:pointer;
+  font-family:var(--font-text);font-size:13px;line-height:18px;color:var(--text-2);
+}
+.dropdown button:hover{background:var(--surface-raised)}
+.dropdown button[aria-selected=true]{color:var(--text-1);background:var(--surface-raised)}
+.dropdown button .tk{width:16px;height:16px;opacity:0;color:var(--teal-400)}
+.dropdown button[aria-selected=true] .tk{opacity:1}
+/* The caret flips while the menu is open */
+.labelled .wrap.open .ico{transform:translateY(-50%) rotate(180deg)}
+
+/* --------------------------------------------------------------------------
+   VALUE SHEET — the Workout-tab goal-setting sheet, reused here.
+   Height and weight add a SECOND scroll column for the unit, sitting to the
+   right of the number column. The two scroll independently but share one
+   selection band, so it reads as a single selector area.
+   -------------------------------------------------------------------------- */
+.sheet-scrim{position:absolute;inset:0;z-index:75;background:rgba(7,8,12,0.6)}
+.sheet{
+  position:absolute;left:8px;right:8px;bottom:8px;z-index:80;
+  background:var(--surface-card);border-radius:24px;padding:16px 16px 24px;
+}
+.sheet[hidden],.sheet-scrim[hidden]{display:none}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sheet-head .t{font-size:17px;line-height:22px;font-weight:500;color:var(--text-1)}
+.iconbtn{
+  all:unset;width:28px;height:28px;display:grid;place-items:center;
+  cursor:pointer;color:var(--text-1);border-radius:8px;
+}
+.iconbtn:hover{background:var(--surface-raised)}
+
+/* 5 rows of 44px on show; the band sits over the middle one */
+.picker{position:relative;margin-top:16px;height:220px;display:flex}
+.picker .band{
+  position:absolute;left:0;right:0;top:88px;height:44px;
+  border-radius:var(--r-field);background:var(--surface-raised);
+  pointer-events:none;z-index:0;
+}
+.picker .col{
+  flex:1 1 0;height:100%;overflow-y:auto;position:relative;z-index:1;
+  scroll-snap-type:y mandatory;scrollbar-width:none;-ms-overflow-style:none;
+}
+.picker .col::-webkit-scrollbar{display:none}
+/* Half-height spacers top and bottom so the first and last value can reach
+   the middle band. */
+.picker .col .pad{height:88px}
+.picker .col .opt{
+  height:44px;display:flex;align-items:center;justify-content:center;
+  scroll-snap-align:center;cursor:pointer;
+  font-family:var(--font-num);font-size:15px;line-height:20px;font-weight:500;
+  color:var(--text-3);transition:color 120ms ease,font-size 120ms ease;
+}
+.picker .col .opt.on{font-size:20px;font-weight:700;color:var(--text-1)}
+/* The unit column is narrower and set in the text face, not the numeric one */
+.picker .col.units{flex:0 0 96px}
+.picker .col.units .opt{
+  font-family:var(--font-text);font-size:11px;font-weight:500;
+  letter-spacing:0.88px;text-transform:uppercase;
+}
+.picker .col.units .opt.on{font-size:13px;letter-spacing:0.5px}
 
 /* Choice cards — Activity level and Goal. 74px, stacked 86px apart. */
 .choice{
@@ -281,17 +355,16 @@ select.field.filled{color:var(--text-1)}
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   width:195.5px;height:190px;display:grid;place-items:center;
 }
-/* FLAG — placeholder art. The real logo lockup is a PNG in the Figma file
-   that this sandbox cannot download (network egress to figma.com is blocked,
-   see the notes at the end of this file). Drop the export at
-   assets/onboarding/splash-logo.png and the <img> below takes over
-   automatically; until then the wordmark renders as live text. */
-#v-splash .mark img{max-width:100%;display:block}
-#v-splash .mark .standin{text-align:center}
-#v-splash .standin .leaf{
-  width:64px;height:64px;margin:0 auto 12px;display:block;color:var(--teal-400)
-}
-#v-splash .standin .word{
+/* The mark is the owner-supplied SVG, used verbatim. FLAG: it is filled
+   #5BBCB1, which is NOT a token — it sits between teal-300 (#76D4C3) and
+   teal-400 (#45C7B3). Kept as supplied ("use it as is"); worth deciding
+   whether the brand mark should be pinned to teal-400 or #5BBCB1 added to
+   js/tokens.js as its own brand-mark token.
+   FLAG: only the mark was supplied, not the "pebble" wordmark under it, so
+   the wordmark is still live text in the brand face. */
+#v-splash .lockup{text-align:center}
+#v-splash .lockup .mk{width:96px;height:96px;margin:0 auto 14px;display:block}
+#v-splash .lockup .word{
   font-size:44px;line-height:44px;font-weight:400;letter-spacing:-1px;color:#FFF
 }
 
@@ -506,13 +579,10 @@ select.field.filled{color:var(--text-1)}
        ==================================================================== -->
   <section class="view" id="v-splash" aria-label="Splash">
     <div class="mark">
-      <!-- Real export goes here; onerror swaps in the stand-in below. -->
-      <img src="assets/onboarding/splash-logo.png" alt="Pebble"
-           onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-      <div class="standin" style="display:none">
-        <svg class="leaf" viewBox="0 0 48 48" fill="none" stroke="currentColor"
-             stroke-width="3" stroke-linecap="round" aria-hidden="true">
-          <path d="M20 42c-4-9 1-16 7-20 7-5 13-2 13 5 0 8-7 13-14 13-5 0-8-3-8-7 0-5 4-8 8-8"/>
+      <div class="lockup">
+        <!-- Owner-supplied mark, used verbatim -->
+        <svg class="mk" viewBox="0 0 48 48" fill="none" aria-label="Pebble" role="img">
+          <path d="M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z" fill="#5BBCB1"/>
         </svg>
         <div class="word">pebble</div>
       </div>
@@ -534,9 +604,9 @@ select.field.filled{color:var(--text-1)}
     </div>
     <div class="scrim"></div>
 
-    <svg class="leaf" viewBox="0 0 48 48" fill="none" stroke="currentColor"
-         stroke-width="3" stroke-linecap="round" aria-hidden="true">
-      <path d="M20 42c-4-9 1-16 7-20 7-5 13-2 13 5 0 8-7 13-14 13-5 0-8-3-8-7 0-5 4-8 8-8"/>
+    <!-- Owner-supplied mark, used verbatim, at the 48x48 the comp specifies -->
+    <svg class="leaf" viewBox="0 0 48 48" fill="none" aria-label="Pebble" role="img">
+      <path d="M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z" fill="#5BBCB1"/>
     </svg>
 
     <div class="dots" id="onbDots"></div>
@@ -669,39 +739,71 @@ select.field.filled{color:var(--text-1)}
 
     <div class="labelled" style="top:294px">
       <span class="lab">Gender</span>
-      <div class="wrap">
-        <!-- FLAG: no options list was designed. These four are a reasonable
-             default for a health app that needs the value for BMR maths —
-             confirm the real list and whether it affects calculations. -->
-        <select class="field" id="inGender" aria-label="Gender">
-          <option value="" selected disabled>Choose your gender</option>
-          <option>Female</option><option>Male</option>
-          <option>Non-binary</option><option>Prefer not to say</option>
-        </select>
-        <span class="ico" aria-hidden="true">
+      <!-- Real dropdown, not a native <select>, so it can be styled to the
+           design system and show a check on the chosen row.
+           FLAG: no options list was designed. These four are a sensible
+           default for an app that needs the value for BMR maths — confirm the
+           real list, and whether "Prefer not to say" needs a fallback for the
+           target calculations. -->
+      <div class="wrap" id="genderWrap">
+        <button class="field" id="inGender" type="button"
+                aria-haspopup="listbox" aria-expanded="false"
+                style="display:flex;align-items:center;cursor:pointer">
+          <span id="genderVal" style="color:var(--text-3)">Choose your gender</span>
+        </button>
+        <span class="ico" aria-hidden="true" style="transition:transform 140ms ease">
           <svg viewBox="0 0 256 256" fill="currentColor">
             <path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
           </svg>
         </span>
+        <div class="dropdown" id="genderMenu" role="listbox" aria-label="Gender" hidden></div>
       </div>
     </div>
 
-    <!-- FLAG: no unit affordance was designed for height or weight. Assuming
-         metric (cm / kg) because the targets screen is in KM and KCAL. If the
-         app ships ft/in and lb, these need a unit toggle. -->
+    <!-- Height and weight open the value sheet. They read as fields but are
+         buttons, because the value is picked, never typed. -->
     <div class="labelled" style="top:386px">
       <span class="lab">Height</span>
       <div class="wrap">
-        <input class="field" id="inHeight" type="number" inputmode="numeric"
-               min="80" max="250" placeholder="Enter your height" aria-label="Height in centimetres">
+        <button class="field" id="inHeight" type="button" data-sheet="height"
+                style="display:flex;align-items:center;cursor:pointer">
+          <span class="ph" style="color:var(--text-3)">Enter your height</span>
+        </button>
       </div>
     </div>
 
     <div class="labelled" style="top:478px">
       <span class="lab">Weight</span>
       <div class="wrap">
-        <input class="field" id="inWeight" type="number" inputmode="numeric"
-               min="25" max="300" placeholder="Enter your weight" aria-label="Weight in kilograms">
+        <button class="field" id="inWeight" type="button" data-sheet="weight"
+                style="display:flex;align-items:center;cursor:pointer">
+          <span class="ph" style="color:var(--text-3)">Enter your weight</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Value sheet. Shared by height and weight; the unit column only
+         appears for measures that have one. -->
+    <div class="sheet-scrim" id="sheetScrim" hidden></div>
+    <div class="sheet" id="valueSheet" hidden role="dialog" aria-modal="true"
+         aria-labelledby="sheetTitle">
+      <div class="sheet-head">
+        <button class="iconbtn" id="sheetCancel" aria-label="Cancel">
+          <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+            <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/>
+          </svg>
+        </button>
+        <span class="t" id="sheetTitle">Height</span>
+        <button class="iconbtn" id="sheetConfirm" aria-label="Confirm">
+          <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+            <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="picker" id="picker">
+        <div class="band" aria-hidden="true"></div>
+        <div class="col values" id="pickVals" role="listbox" aria-label="Value" tabindex="0"></div>
+        <div class="col units"  id="pickUnits" role="listbox" aria-label="Unit"  tabindex="0"></div>
       </div>
     </div>
 
@@ -995,10 +1097,188 @@ $('#btnName').onclick = () => go('profile');
 /* FLAG: the comp shows Continue already teal with every field empty, so no
    validation is enforced here. If any of these are required for the target
    maths, they need a disabled state and inline errors — neither is designed. */
-$('#inGender').addEventListener('change', e => {
-  state.gender = e.target.value;
-  e.target.classList.add('filled');
+
+/* Gender dropdown ---------------------------------------------------------
+   A real menu rather than a native <select>, so it matches the design system
+   and can show a check on the chosen row. */
+const GENDERS = ['Female','Male','Non-binary','Prefer not to say'];
+const gWrap = $('#genderWrap'), gMenu = $('#genderMenu'), gBtn = $('#inGender');
+
+GENDERS.forEach(g => {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.setAttribute('role','option');
+  b.setAttribute('aria-selected','false');
+  b.innerHTML = `<span>${g}</span><span class="tk">${svg(ICON.check,16)}</span>`;
+  b.onclick = () => {
+    state.gender = g;
+    $('#genderVal').textContent = g;
+    $('#genderVal').style.color = 'var(--text-1)';
+    [...gMenu.children].forEach(c => c.setAttribute('aria-selected','false'));
+    b.setAttribute('aria-selected','true');
+    closeGender();
+  };
+  gMenu.appendChild(b);
 });
+function openGender(){
+  gMenu.hidden = false; gWrap.classList.add('open');
+  gBtn.setAttribute('aria-expanded','true');
+}
+function closeGender(){
+  gMenu.hidden = true; gWrap.classList.remove('open');
+  gBtn.setAttribute('aria-expanded','false');
+}
+gBtn.onclick = e => { e.stopPropagation(); gMenu.hidden ? openGender() : closeGender(); };
+/* Click anywhere else, or press Escape, and the menu closes. */
+document.addEventListener('click', e => { if (!gWrap.contains(e.target)) closeGender(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeGender(); });
+
+/* Height / weight value sheet ---------------------------------------------
+   Same bottom sheet as the Workout tab's goal setting, with a second scroll
+   column for the unit sitting to the right of the number column. The two
+   scroll independently; one selection band spans both, so it reads as a
+   single selector area.
+
+   FLAG: switching unit CONVERTS the current value (168 cm -> 66 in) rather
+   than keeping the raw number. That is the behaviour that avoids nonsense
+   like "66 cm", but it is an assumption — confirm.
+   FLAG: ranges and whether height should offer feet+inches as a paired
+   picker (5' 6") instead of total inches are both undecided. */
+const MEASURES = {
+  height: {
+    title:'Height',
+    units:[
+      { id:'cm', label:'cm', min:80, max:250, step:1, dp:0 },
+      { id:'in', label:'in', min:30, max:98,  step:1, dp:0 }
+    ],
+    /* cm is the base unit; everything converts through it */
+    toBase:  (v,u) => u === 'cm' ? v : v * 2.54,
+    fromBase:(v,u) => u === 'cm' ? v : v / 2.54
+  },
+  weight: {
+    title:'Weight',
+    units:[
+      { id:'kg', label:'kg', min:25, max:300, step:1, dp:0 },
+      { id:'lb', label:'lb', min:55, max:660, step:1, dp:0 }
+    ],
+    toBase:  (v,u) => u === 'kg' ? v : v * 0.45359237,
+    fromBase:(v,u) => u === 'kg' ? v : v / 0.45359237
+  }
+};
+/* What the profile currently holds. null value = never set. */
+const measure = {
+  height:{ value:null, unit:'cm' },
+  weight:{ value:null, unit:'kg' }
+};
+/* Sensible starting points when the sheet opens on an untouched field. */
+const MEASURE_DEFAULT = { height:165, weight:65 };
+
+const ROW = 44;                       // one picker row, matches the CSS
+let sheetKey = null;                  // 'height' | 'weight'
+let draft = { value:null, unit:null }; // held until the check is tapped
+
+/* Build one scroll column. Returns the values it was given, so the caller
+   can map a scroll position back to a value. */
+function fillCol(col, items, selectedIndex, onPick){
+  col.innerHTML = '<div class="pad"></div>' +
+    items.map((it,i) =>
+      `<div class="opt${i===selectedIndex?' on':''}" role="option"
+            aria-selected="${i===selectedIndex}" data-i="${i}">${it}</div>`).join('') +
+    '<div class="pad"></div>';
+
+  /* Tapping a row scrolls it into the band rather than selecting silently. */
+  col.querySelectorAll('.opt').forEach(o => {
+    o.onclick = () => col.scrollTo({ top:Number(o.dataset.i)*ROW,
+                                     behavior: reduced() ? 'auto' : 'smooth' });
+  });
+
+  /* Selection follows the scroll position — whatever sits in the band wins. */
+  let raf = null;
+  col.onscroll = () => {
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      const i = Math.max(0, Math.min(items.length-1, Math.round(col.scrollTop / ROW)));
+      col.querySelectorAll('.opt').forEach((o,k) => {
+        o.classList.toggle('on', k === i);
+        o.setAttribute('aria-selected', String(k === i));
+      });
+      onPick(i);
+    });
+  };
+  col.scrollTop = selectedIndex * ROW;
+}
+const reduced = () =>
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* The numbers a unit offers, e.g. 80..250 for cm */
+function valuesFor(u){
+  const out = [];
+  for (let v = u.min; v <= u.max; v += u.step) out.push(+v.toFixed(u.dp));
+  return out;
+}
+
+function paintValueCol(){
+  const cfg  = MEASURES[sheetKey];
+  const unit = cfg.units.find(u => u.id === draft.unit);
+  const vals = valuesFor(unit);
+  /* Land on the value nearest the current draft, clamped into range. */
+  const want = Math.min(unit.max, Math.max(unit.min, draft.value));
+  const idx  = Math.max(0, Math.round((want - unit.min) / unit.step));
+  draft.value = vals[idx];
+  fillCol($('#pickVals'), vals.map(v => v.toFixed(unit.dp)), idx,
+          i => { draft.value = vals[i]; });
+}
+
+function openSheet(key){
+  sheetKey = key;
+  const cfg = MEASURES[key];
+  const cur = measure[key];
+
+  draft.unit  = cur.unit;
+  draft.value = cur.value !== null
+    ? cur.value
+    : cfg.fromBase(cfg.toBase(MEASURE_DEFAULT[key], key === 'height' ? 'cm' : 'kg'), cur.unit);
+
+  $('#sheetTitle').textContent = cfg.title;
+
+  /* The sheet has to be VISIBLE before the columns are filled — setting
+     scrollTop on a display:none element does nothing, which would open the
+     picker on its first value instead of the current one. */
+  $('#sheetScrim').hidden = false;
+  $('#valueSheet').hidden = false;
+
+  paintValueCol();
+
+  /* Unit column. Changing it converts the value, then rebuilds the numbers. */
+  const unitIdx = cfg.units.findIndex(u => u.id === draft.unit);
+  fillCol($('#pickUnits'), cfg.units.map(u => u.label), unitIdx, i => {
+    const next = cfg.units[i].id;
+    if (next === draft.unit) return;
+    const base = cfg.toBase(draft.value, draft.unit);
+    draft.unit  = next;
+    draft.value = Math.round(cfg.fromBase(base, next));
+    paintValueCol();
+  });
+}
+function closeSheet(){
+  $('#sheetScrim').hidden = true;
+  $('#valueSheet').hidden = true;
+  sheetKey = null;
+}
+document.querySelectorAll('[data-sheet]').forEach(b =>
+  b.onclick = () => openSheet(b.dataset.sheet));
+$('#sheetCancel').onclick = closeSheet;
+$('#sheetScrim').onclick  = closeSheet;
+$('#sheetConfirm').onclick = () => {
+  const cfg = MEASURES[sheetKey];
+  measure[sheetKey] = { value:draft.value, unit:draft.unit };
+  /* Mirror into the flat state object the rest of the flow reads. */
+  state[sheetKey] = `${draft.value} ${draft.unit}`;
+  const btn = $('#in' + sheetKey[0].toUpperCase() + sheetKey.slice(1));
+  btn.querySelector('.ph').textContent = `${draft.value} ${draft.unit}`;
+  btn.querySelector('.ph').style.color = 'var(--text-1)';
+  closeSheet();
+};
 /* Date of birth types as DD/MM/YYYY — the slashes are inserted as they go,
    so the field always reads back the way the comp shows it. */
 $('#inDob').addEventListener('input', e => {
@@ -1010,8 +1290,6 @@ $('#inDob').addEventListener('input', e => {
   state.dob = out;
   e.target.classList.toggle('filled', out.length > 0);
 });
-$('#inHeight').addEventListener('input', e => state.height = e.target.value);
-$('#inWeight').addEventListener('input', e => state.weight = e.target.value);
 $('#btnProfile').onclick = () => go('activity');
 
 /* ---- 4g. Activity level + Goal ------------------------------------------
