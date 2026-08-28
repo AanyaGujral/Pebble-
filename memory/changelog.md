@@ -5,6 +5,39 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-27 (later) — Homepage: the Activity monitor's first card now matches
+  the Activity tab's "Today's goals" card in `Activity Tab/Workout Tab.html`.
+  Owner request.
+
+  It turned out to be a two-line markup change, because the two cards had
+  already converged everywhere else: the three goal rows (icon, name, value,
+  goal, progress bar) were byte-identical, and `.card`, `.card-head`,
+  `.card-title` and `.card-body` are byte-identical between the two files. The
+  only real differences were structural:
+  - the homepage card had no `.card-head` — its label lived outside the card,
+    in the "Activity monitor" section head — so it now carries the same
+    in-card `<div class="card-title">Today's goals</div>` the Activity tab
+    writes;
+  - and it cancelled `.card-body`'s top margin (`style="margin-top:0"`), which
+    only existed because nothing sat above the body. Removed, so the card
+    breathes at the standard 16px like the Activity tab's does.
+  The card block is now byte-identical to the Activity tab's apart from
+  `data-cover="Activity"`, a hook only the Workout Tab's own state machine
+  reads (the artifact's state machine never did, and it isn't in this file).
+
+  DECISION, flagged: "Activity monitor" is KEPT as the section head above the
+  card, rather than being replaced by the card title. Two cards sit under that
+  head — this one and Workouts — and Workouts already carries its own in-card
+  "Workouts" title, so labelling both cards the same way is what makes the
+  section internally consistent. The section head still groups the goals card,
+  the workouts card and the Start Workout CTA, which was the owner's 2026-08-14
+  ordering. Say if the section head should go instead and the card title should
+  be the only heading there.
+
+  Verified in Chromium: no console or page errors, title renders at
+  headingH3Medium (17/22, weight 500, text-1) exactly as on the Activity tab,
+  card body back to a 16px top margin, three goal rows intact.
+
 - 2026-08-27 — Pulled the home (Health) screen out of the published "Pebble
   Home" artifact into `Home Tab/Home Tab.html` as a standalone screen, so the
   updated homepage can be merged back into the prototype, and applied the
