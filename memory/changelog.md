@@ -5,6 +5,26 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-28 (date picker + sheet corrections) — Added the date-of-birth
+  picker, matching the two-mode calendar in the owner's reference shots: a
+  month grid (SUN-SAT header, selected day as a filled teal circle, prev/next
+  month arrows), and a month+year wheel behind the month name. Tapping the
+  month label flips between the two and hides the arrows, as in the
+  reference. The wheel REUSES the .picker component the unit selector already
+  uses, so there is one scroll implementation rather than two. DOB is now
+  picked, not typed; the field still reads back DD/MM/YYYY.
+  Corrected two things the owner spotted against the Workout tab's goal
+  setter, which this sheet is supposed to copy exactly:
+    - .iconbtn is now 36x36 with a filled surface-raised CIRCLE behind the
+      cross and the tick (it had been a 28px square with hover-only fill).
+      Copied verbatim from the goal setter, incl. the surface-fill hover.
+    - the unit label no longer grows on selection. The goal setter keeps the
+      unit at a constant 11px/0.08em/uppercase and only changes its colour;
+      the picker's unit column now does the same.
+  Also fixed the month wheel rendering month NAMES in League Spartan (the
+  numeral face) — words take the text face, numbers keep the numeral face.
+  Year range is 1920..current year; flagged that no minimum age is enforced.
+
 - 2026-08-28 (decisions) — Owner settled three open flags. All three were
   "keep what is built", so no behaviour changed; the code comments were
   rewritten from "needs a decision" to "settled, do not re-raise" so the next

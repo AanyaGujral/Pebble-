@@ -61,6 +61,7 @@
   --surface-app:var(--neutral-900);      /* Figma `surface/app`  */
   --surface-card:var(--neutral-800);
   --surface-raised:var(--neutral-700);
+  --surface-fill:var(--neutral-600);     /* icon-button hover, same as index.html */
   --surface-splash:#012D46;              /* added to js/tokens.js 2026-08-28 */
 
   /* text */
@@ -289,11 +290,13 @@ button.field{
 .sheet[hidden],.sheet-scrim[hidden]{display:none}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .sheet-head .t{font-size:17px;line-height:22px;font-weight:500;color:var(--text-1)}
+/* Copied verbatim from the Workout tab's goal-setting sheet so the two read
+   as the same component — 36px filled circle behind the cross and the tick. */
 .iconbtn{
-  all:unset;width:28px;height:28px;display:grid;place-items:center;
-  cursor:pointer;color:var(--text-1);border-radius:8px;
+  width:36px;height:36px;border-radius:999px;background:var(--surface-raised);border:0;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--text-1);
 }
-.iconbtn:hover{background:var(--surface-raised)}
+.iconbtn:hover{background:var(--surface-fill)}
 
 /* 5 rows of 44px on show; the band sits over the middle one */
 .picker{position:relative;margin-top:16px;height:220px;display:flex}
@@ -317,13 +320,71 @@ button.field{
   color:var(--text-3);transition:color 120ms ease,font-size 120ms ease;
 }
 .picker .col .opt.on{font-size:20px;font-weight:700;color:var(--text-1)}
-/* The unit column is narrower and set in the text face, not the numeric one */
+/* A column of words, not numbers (the month wheel) — text face, not the
+   numeric one. Still grows on selection the way the value column does. */
+.picker .col.words .opt{font-family:var(--font-text);font-size:15px}
+.picker .col.words .opt.on{font-size:18px}
+
+/* The unit column matches the goal sheet's unit label exactly — 11px, 0.08em,
+   uppercase, text-2 when focal. It does NOT grow on selection the way the
+   number does; in the goal setter the unit is a constant-size label. */
 .picker .col.units{flex:0 0 96px}
 .picker .col.units .opt{
-  font-family:var(--font-text);font-size:11px;font-weight:500;
-  letter-spacing:0.88px;text-transform:uppercase;
+  font-family:var(--font-text);font-size:11px;line-height:16px;font-weight:500;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
 }
-.picker .col.units .opt.on{font-size:13px;letter-spacing:0.5px}
+.picker .col.units .opt.on{font-size:11px;font-weight:500;color:var(--text-2)}
+
+/* --------------------------------------------------------------------------
+   DATE PICKER — the two-mode calendar from the reference screenshots.
+   Mode 1 is a month grid; tapping the month name flips to mode 2, a
+   month + year wheel. Same sheet chrome as every other sheet, and the wheel
+   reuses the .picker component above rather than a second implementation.
+   -------------------------------------------------------------------------- */
+.cal-head{
+  margin-top:16px;display:flex;align-items:center;justify-content:space-between;
+}
+/* The month label is the mode toggle. Teal because it is the one interactive
+   thing in the row — the reference uses the platform accent for exactly this. */
+.cal-title{
+  all:unset;display:flex;align-items:center;gap:6px;cursor:pointer;
+  font-family:var(--font-text);font-size:17px;line-height:22px;font-weight:500;
+  color:var(--teal-400);
+}
+.cal-title .cv{width:14px;height:14px;transition:transform 160ms ease}
+.cal-head.wheel .cal-title .cv{transform:rotate(-90deg)}
+.cal-nav{display:flex;align-items:center;gap:16px}
+.cal-nav button{
+  all:unset;width:28px;height:28px;display:grid;place-items:center;
+  cursor:pointer;color:var(--teal-400);border-radius:999px;
+}
+.cal-nav button:hover{background:var(--surface-raised)}
+/* The arrows belong to the grid only — the wheel has no month to step. */
+.cal-head.wheel .cal-nav{visibility:hidden}
+
+.cal-week{
+  margin-top:12px;display:grid;grid-template-columns:repeat(7,1fr);
+}
+.cal-week span{
+  text-align:center;font-size:11px;line-height:16px;font-weight:500;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+}
+.cal-grid{
+  margin-top:4px;display:grid;grid-template-columns:repeat(7,1fr);
+  gap:2px 0;min-height:228px;align-content:start;
+}
+.cal-grid .d{
+  all:unset;height:36px;display:grid;place-items:center;cursor:pointer;
+  border-radius:999px;justify-self:center;width:36px;
+  font-family:var(--font-num);font-size:16px;line-height:20px;font-weight:500;
+  color:var(--text-1);
+}
+.cal-grid .d:hover{background:var(--surface-raised)}
+.cal-grid .d.sel{background:var(--teal-400);color:var(--surface-app);font-weight:700}
+.cal-grid .d.sel:hover{background:var(--teal-400)}
+.cal-grid .d.blank{visibility:hidden;pointer-events:none}
+/* The wheel and the grid occupy the same slot, one at a time */
+#dobGrid[hidden],#dobWheel[hidden]{display:none}
 
 /* Choice cards — Activity level and Goal. 74px, stacked 86px apart. */
 .choice{
@@ -712,14 +773,12 @@ button.field{
     <div class="labelled" style="top:202px">
       <span class="lab">Date of Birth</span>
       <div class="wrap">
-        <!-- FLAG: a native <input type=date> was tried first, but it renders
-             its own format from the browser locale (mm/dd/yyyy on a US
-             machine) and the comp explicitly reads DD/MM/YYYY — which is also
-             right for a +91 flow. So this is a masked text field that matches
-             the design. It needs a real date-picker sheet behind the calendar
-             icon; no such frame was supplied. -->
-        <input class="field" id="inDob" type="text" inputmode="numeric"
-               maxlength="10" placeholder="DD/MM/YYYY" aria-label="Date of birth">
+        <!-- Picked, not typed — opens the calendar sheet below. Reads back as
+             DD/MM/YYYY, as the comp shows and as a +91 flow expects. -->
+        <button class="field" id="inDob" type="button"
+                style="display:flex;align-items:center;cursor:pointer">
+          <span class="ph" style="color:var(--text-3)">DD/MM/YYYY</span>
+        </button>
         <!-- FLAG: Figma uses the Phosphor "CalendarDots" glyph. That icon is
              not in the Phosphor subset embedded in index.html and the export
              could not be downloaded here, so this is a hand-drawn stand-in at
@@ -803,6 +862,61 @@ button.field{
         <div class="band" aria-hidden="true"></div>
         <div class="col values" id="pickVals" role="listbox" aria-label="Value" tabindex="0"></div>
         <div class="col units"  id="pickUnits" role="listbox" aria-label="Unit"  tabindex="0"></div>
+      </div>
+    </div>
+
+    <!-- Date of birth. Same sheet chrome; two modes inside it. -->
+    <div class="sheet" id="dobSheet" hidden role="dialog" aria-modal="true"
+         aria-labelledby="dobTitle">
+      <div class="sheet-head">
+        <button class="iconbtn" id="dobCancel" aria-label="Cancel">
+          <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+            <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/>
+          </svg>
+        </button>
+        <span class="t" id="dobTitle">Date of Birth</span>
+        <button class="iconbtn" id="dobConfirm" aria-label="Confirm">
+          <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+            <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="cal-head" id="calHead">
+        <button class="cal-title" id="calTitle" aria-expanded="false">
+          <span id="calTitleText">August 2026</span>
+          <svg class="cv" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+            <path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+          </svg>
+        </button>
+        <div class="cal-nav">
+          <button id="calPrev" aria-label="Previous month">
+            <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+              <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
+            </svg>
+          </button>
+          <button id="calNext" aria-label="Next month">
+            <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+              <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mode 1: the month grid -->
+      <div id="dobGrid">
+        <div class="cal-week" aria-hidden="true">
+          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
+          <span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+        <div class="cal-grid" id="calGrid" role="grid" aria-label="Days"></div>
+      </div>
+
+      <!-- Mode 2: the month + year wheel, same component as the unit picker -->
+      <div class="picker" id="dobWheel" hidden>
+        <div class="band" aria-hidden="true"></div>
+        <div class="col words" id="dobMonths" role="listbox" aria-label="Month" tabindex="0"></div>
+        <div class="col" id="dobYears"  role="listbox" aria-label="Year"  tabindex="0"></div>
       </div>
     </div>
 
@@ -1269,7 +1383,8 @@ function closeSheet(){
 document.querySelectorAll('[data-sheet]').forEach(b =>
   b.onclick = () => openSheet(b.dataset.sheet));
 $('#sheetCancel').onclick = closeSheet;
-$('#sheetScrim').onclick  = closeSheet;
+/* One scrim serves both sheets, so tapping it dismisses whichever is open. */
+$('#sheetScrim').onclick  = () => { closeSheet(); closeDob(); };
 $('#sheetConfirm').onclick = () => {
   const cfg = MEASURES[sheetKey];
   measure[sheetKey] = { value:draft.value, unit:draft.unit };
@@ -1280,17 +1395,116 @@ $('#sheetConfirm').onclick = () => {
   btn.querySelector('.ph').style.color = 'var(--text-1)';
   closeSheet();
 };
-/* Date of birth types as DD/MM/YYYY — the slashes are inserted as they go,
-   so the field always reads back the way the comp shows it. */
-$('#inDob').addEventListener('input', e => {
-  const d = e.target.value.replace(/\D/g,'').slice(0,8);
-  let out = d.slice(0,2);
-  if (d.length > 2) out += '/' + d.slice(2,4);
-  if (d.length > 4) out += '/' + d.slice(4,8);
-  e.target.value = out;
-  state.dob = out;
-  e.target.classList.toggle('filled', out.length > 0);
-});
+/* Date of birth ------------------------------------------------------------
+   Two-mode calendar, matching the reference: a month grid, and a month+year
+   wheel behind the month name. The wheel is the same .picker component the
+   unit selector uses, so there is one scroll implementation, not two.
+
+   FLAG: the year range runs 1920 to this year. A date of birth can't be in
+   the future, so "today" is the newest selectable date — confirm whether
+   there should also be a minimum age. */
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+const YEAR_MIN = 1920;
+const YEAR_MAX = new Date().getFullYear();
+
+/* What the calendar is showing, and what has been picked. */
+const cal = { year:1998, month:7, day:null };   // month is 0-based
+let dobMode = 'grid';
+
+const pad2 = n => String(n).padStart(2,'0');
+const daysInMonth = (y,m) => new Date(y, m+1, 0).getDate();
+
+function paintCalTitle(){
+  $('#calTitleText').textContent = `${MONTHS[cal.month]} ${cal.year}`;
+}
+function paintGrid(){
+  const grid = $('#calGrid');
+  const first = new Date(cal.year, cal.month, 1).getDay();   // 0 = Sunday
+  const total = daysInMonth(cal.year, cal.month);
+  let html = '';
+  for (let i = 0; i < first; i++) html += '<span class="d blank"></span>';
+  for (let d = 1; d <= total; d++){
+    const sel = cal.day === d;
+    html += `<button type="button" class="d${sel?' sel':''}" data-d="${d}"
+              role="gridcell" aria-selected="${sel}">${d}</button>`;
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll('.d[data-d]').forEach(b => b.onclick = () => {
+    cal.day = Number(b.dataset.d);
+    paintGrid();
+  });
+  paintCalTitle();
+}
+
+/* Stepping months rolls the year over at the ends, and keeps the selected
+   day only if the new month actually has it. */
+function stepMonth(delta){
+  let m = cal.month + delta, y = cal.year;
+  if (m < 0){ m = 11; y--; }
+  if (m > 11){ m = 0; y++; }
+  if (y < YEAR_MIN || y > YEAR_MAX) return;
+  cal.month = m; cal.year = y;
+  if (cal.day && cal.day > daysInMonth(y,m)) cal.day = daysInMonth(y,m);
+  paintGrid();
+}
+$('#calPrev').onclick = () => stepMonth(-1);
+$('#calNext').onclick = () => stepMonth(1);
+
+/* The month name toggles between the grid and the wheel. */
+function setDobMode(mode){
+  dobMode = mode;
+  const wheel = mode === 'wheel';
+  $('#dobGrid').hidden  = wheel;
+  $('#dobWheel').hidden = !wheel;
+  $('#calHead').classList.toggle('wheel', wheel);
+  $('#calTitle').setAttribute('aria-expanded', String(wheel));
+  if (!wheel){ paintGrid(); return; }
+
+  /* Same ordering rule as the unit picker: make it visible first, then fill,
+     or scrollTop lands nowhere. */
+  const years = [];
+  for (let y = YEAR_MIN; y <= YEAR_MAX; y++) years.push(y);
+  fillCol($('#dobMonths'), MONTHS, cal.month, i => {
+    cal.month = i;
+    if (cal.day && cal.day > daysInMonth(cal.year, cal.month))
+      cal.day = daysInMonth(cal.year, cal.month);
+    paintCalTitle();
+  });
+  fillCol($('#dobYears'), years.map(String), years.indexOf(cal.year), i => {
+    cal.year = years[i];
+    if (cal.day && cal.day > daysInMonth(cal.year, cal.month))
+      cal.day = daysInMonth(cal.year, cal.month);
+    paintCalTitle();
+  });
+}
+$('#calTitle').onclick = () => setDobMode(dobMode === 'grid' ? 'wheel' : 'grid');
+
+function openDob(){
+  /* Open on the stored date, or on a sensible default for a date of birth. */
+  if (state.dob){
+    const [d,m,y] = state.dob.split('/').map(Number);
+    cal.day = d; cal.month = m-1; cal.year = y;
+  } else {
+    cal.day = 1; cal.month = 7; cal.year = 1998;
+  }
+  $('#sheetScrim').hidden = false;
+  $('#dobSheet').hidden = false;
+  setDobMode('grid');
+}
+function closeDob(){
+  $('#sheetScrim').hidden = true;
+  $('#dobSheet').hidden = true;
+}
+$('#inDob').onclick   = openDob;
+$('#dobCancel').onclick = closeDob;
+$('#dobConfirm').onclick = () => {
+  state.dob = `${pad2(cal.day)}/${pad2(cal.month+1)}/${cal.year}`;
+  const ph = $('#inDob').querySelector('.ph');
+  ph.textContent = state.dob;
+  ph.style.color = 'var(--text-1)';
+  closeDob();
+};
 $('#btnProfile').onclick = () => go('activity');
 
 /* ---- 4g. Activity level + Goal ------------------------------------------
