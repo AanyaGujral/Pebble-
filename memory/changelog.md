@@ -5,6 +5,15 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-27 (later) — Activity monitor card on the home tab now carries an
+  in-card "Today's goals" heading, from the owner's Home_Tab_1.html (a
+  one-change revision of the file from earlier today). It matches the Activity
+  tab's own goals card, and it means both cards under the "Activity monitor"
+  section head are labelled the same way — the Workouts card already had its
+  own title. "Activity monitor" stays as the section grouping over the goals
+  card, the workouts card and the Start Workout CTA. The card body's
+  margin-top:0 override came off so the header gets its normal spacing.
+
 - 2026-08-27 — Home tab updated from the owner's Home_Tab.html
   (saved at components/home-tab.html). That file is a copy of this prototype
   with the workout flow stripped out, so it was applied as a diff rather than
