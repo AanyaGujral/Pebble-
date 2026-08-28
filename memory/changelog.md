@@ -5,6 +5,37 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-28 — Built the onboarding flow as a new `onboarding.html`
+  (9 screens: Splash, Onboarding, Phone number, OTP, Name, Profile, Activity
+  level, Goal, Daily targets). Recreated from the Figma file "Pebble Phase 1"
+  (xJtDA8DxHFdb9ipr5L2s5z) by pulling all 16 supplied node ids through the
+  Figma MCP connection — real layout, copy and variables, not the frame-level
+  CSS that was copied out of Figma first (that only carried width/height/
+  background and would have produced 18 empty rectangles).
+  The 16 frames collapse to 9 screens because 6 of them are OTP states and 3
+  are Name states; both are built as one screen with real state instead of
+  separate pages. The OTP screen runs its own 30s resend countdown, invalid
+  state, resend toast and paste handling.
+  NEW FILE, deviating from "the prototype lives in index.html" — index.html is
+  178 KB and covers the signed-in app; onboarding runs before it and shares no
+  chrome. It hands off to index.html on the final Continue. Flagged in-file;
+  say the word and it folds back in.
+  Tokens: added `surface.splash` (#012D46, the splash field — the one screen
+  not on surface.app) to `js/tokens.js`. Flagged an unresolved conflict there
+  too — tokens.js has text3 = #7B819C but the Figma variable `text/text-3` is
+  #999FB9, one step lighter, and every onboarding screen uses the lighter one.
+  Onboarding follows Figma; the global token is untouched so the shipped
+  Activity/Sleep/Me screens do not shift. Needs an owner decision.
+  Assets: the splash logo and onboarding hero could not be downloaded — this
+  sandbox has no network egress to figma.com. Both are wired to
+  `assets/onboarding/` with code-drawn stand-ins showing until the files land
+  (same pattern as the Activity/Sleep backgrounds). The onboarding slot is a
+  <video> with the still as its poster, because the owner says the real
+  background is video.
+  Verified by walking the whole flow in headless Chromium: no JS errors, every
+  screen reachable, CTA enable/disable, OTP invalid vs valid, and the target
+  steppers all behave.
+
 - 2026-08-10 — Moved the named snapshot into `Activity Tab/Workout Tab.html`
   (folder layout mirrors `Sleep Tab/`). `index.html` stays the live working
   copy at the repo root. Pushed as is at the owner's request.

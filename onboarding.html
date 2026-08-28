@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pebble — onboarding flow</title>
+
+<!--
+  Pebble onboarding prototype — built 2026-08-28 from Figma "Pebble Phase 1"
+  (file xJtDA8DxHFdb9ipr5L2s5z), pulled screen-by-screen through the Figma MCP
+  connection rather than re-typed from copied CSS.
+
+  FLAG — new file, deviates from CLAUDE.md "the prototype lives in index.html".
+  index.html is already 178 KB and covers the signed-in app (Health / Activity /
+  Sleep / Me). Onboarding runs BEFORE any of that and shares none of its
+  chrome, so it lives here and hands off to index.html at the end of the flow.
+  Say the word and it folds back into index.html instead.
+
+  Source frames (16 Figma nodes -> 9 screens, because 6 of them are OTP states
+  and 3 are Name states):
+    934:5158  Splash screen      957:13360 Phone number
+    940:5067  Onboarding         937:5334  OTP (timer)
+    940:4893  OTP_resend         942:5323  OTP_resent
+    957:13563 OTP_typing         940:5201  OTP_filled
+    942:5420  OTP_invalid        942:5681  Name (empty)
+    942:5811  Name_typing        942:5757  Name (filled)
+    950:13167 Profile            957:13433 Activity level
+    957:13656 Goal               957:13731 Daily targets
+-->
+
+<!-- Webfonts, same two families and same CDN as index.html. Offline this
+     falls back to system sans and the layout still holds. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,400..700&family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ==========================================================================
+   1. TOKENS
+   --------------------------------------------------------------------------
+   Copied VERBATIM from js/tokens.js, which is the single source of truth.
+   They are inlined as CSS custom properties because this page must open by
+   double-clicking (file://), where ES-module imports are blocked. Same
+   approach as index.html — if js/tokens.js changes, re-copy the values.
+
+   Every colour below was cross-checked against the Figma library variables
+   returned by the design file. They agree, with the two exceptions flagged.
+   ========================================================================== */
+:root{
+  color-scheme:dark;
+
+  /* neutrals — 0 lightest -> 900 darkest */
+  --neutral-0:#EFF1F9;--neutral-100:#D5D9EA;--neutral-200:#B8BDD3;--neutral-300:#999FB9;
+  --neutral-400:#7B819C;--neutral-500:#5E637D;--neutral-600:#42465B;--neutral-700:#282B39;
+  --neutral-800:#0F111B;--neutral-900:#07080C;
+
+  /* teal ramp — the brand accent. Figma variable `teal/400` matches exactly. */
+  --teal-400:#45C7B3;
+
+  /* surfaces */
+  --surface-app:var(--neutral-900);      /* Figma `surface/app`  */
+  --surface-card:var(--neutral-800);
+  --surface-raised:var(--neutral-700);
+  --surface-splash:#012D46;              /* added to js/tokens.js 2026-08-28 */
+
+  /* text */
+  --text-1:var(--neutral-0);             /* Figma `text/text-1`  */
+  --text-2:var(--neutral-200);           /* Figma `text/text-2`  */
+  /* FLAG — token conflict, owner decision needed. js/tokens.js defines
+     text3 = #7B819C (neutral 400). The Figma variable `text/text-3` is
+     #999FB9 (neutral 300), one step lighter, and that is what every
+     onboarding screen uses for placeholders and card sub-labels. Using the
+     Figma value here so these screens match the design, WITHOUT touching the
+     global token (that would shift the shipped Activity/Sleep/Me screens).
+     Pick one and align both. */
+  --text-3:var(--neutral-300);
+
+  /* semantic — only the negative state appears in this flow (invalid OTP) */
+  --negative-icon:#F4604C;               /* Figma `semantic/negative/icon` */
+
+  /* lines */
+  --divider:var(--neutral-700);
+
+  /* type */
+  --font-text:'Google Sans Flex','Google Sans',sans-serif;
+  --font-num:'League Spartan',sans-serif;
+
+  /* radii, straight from the design */
+  --r-field:12px;                        /* inputs, OTP boxes, choice cards */
+  --r-pill:96px;                         /* primary CTA + toast            */
+  --r-screen:32px;
+}
+
+/* ==========================================================================
+   2. PAGE SCAFFOLD — the desk the phone sits on
+   ========================================================================== */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-height:100vh;background:var(--neutral-900);color:var(--text-1);
+  font-family:var(--font-text);
+  display:flex;align-items:flex-start;justify-content:center;
+  gap:32px;padding:32px 16px;flex-wrap:wrap;
+}
+
+/* Jump panel — sits OUTSIDE the phone so any screen or state can be
+   inspected without walking the whole flow. Not part of the product. */
+.panel{
+  position:sticky;top:32px;width:230px;
+  background:var(--surface-card);border:0.5px solid var(--neutral-700);
+  border-radius:20px;padding:16px;
+}
+.panel h2{margin:0;font-size:11px;line-height:16px;font-weight:600;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.panel .hint{margin:8px 0 12px;font-size:11px;line-height:16px;color:var(--text-3)}
+.panel .opts{display:flex;flex-direction:column;gap:2px}
+.panel button{
+  all:unset;display:block;width:100%;
+  padding:8px 10px;border-radius:10px;cursor:pointer;
+  font-family:var(--font-text);font-size:13px;line-height:18px;font-weight:500;
+  color:var(--text-2);
+}
+.panel button:hover{background:var(--surface-raised)}
+.panel button.on{background:var(--surface-raised);color:var(--text-1)}
+.panel .grp{margin-top:12px}
+
+/* ==========================================================================
+   3. PHONE MOCKUP — Android, 360x795 to match the Figma frames exactly
+   ========================================================================== */
+.phone{
+  flex:0 0 auto;border-radius:40px;background:var(--neutral-900);
+  border:2px solid var(--neutral-700);outline:6px solid var(--neutral-800);
+  padding:10px;
+}
+.screen{
+  position:relative;width:360px;height:795px;
+  border-radius:var(--r-screen);overflow:hidden;
+  background:var(--surface-app);
+}
+/* punch-hole selfie camera, same as index.html */
+.screen::before{
+  content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:12px;height:12px;border-radius:50%;
+  background:var(--neutral-900);border:2px solid var(--neutral-700);
+  z-index:60;pointer-events:none;
+}
+
+/* ==========================================================================
+   4. SHARED CHROME — status bar and back nav
+   --------------------------------------------------------------------------
+   Every frame in the Figma flow carries these two, pixel-identical, so they
+   are written once here instead of nine times.
+   ========================================================================== */
+.statusbar{
+  position:absolute;top:0;left:0;right:0;height:32px;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 12px;pointer-events:none;
+}
+/* The clock is Roboto Medium 14 in Figma — that is the Android system font,
+   not a Pebble brand font, so it is left to the platform stack. */
+.statusbar .clock{font-family:Roboto,system-ui,sans-serif;font-size:14px;
+  font-weight:500;color:#FCFEFF;letter-spacing:0.014px}
+.statusbar .icons{display:flex;align-items:center;gap:6px;color:#FCFEFF}
+.statusbar svg{display:block}
+
+/* Back nav — 54px tall, sits directly under the status bar */
+.appbar{
+  position:absolute;top:32px;left:0;right:0;height:54px;z-index:40;
+  display:flex;align-items:center;padding:5px 16px;
+}
+.appbar .back{
+  all:unset;width:24px;height:24px;display:grid;place-items:center;
+  cursor:pointer;color:var(--text-1);border-radius:8px;
+}
+.appbar .back:hover{background:var(--surface-raised)}
+
+/* ==========================================================================
+   5. SCREEN LAYOUT PRIMITIVES
+   --------------------------------------------------------------------------
+   Figma positions everything absolutely from the top of an 795px frame.
+   Those exact offsets are kept, because the whole flow is built to one
+   fixed phone size and matching the comp beats re-deriving a layout.
+   ========================================================================== */
+.view{position:absolute;inset:0;display:none}
+.view.on{display:block}
+
+/* Ambient glow. In Figma this is a layer named "sleep_tab_night_background 2"
+   — a re-tinted copy of the Sleep tab art. FLAG: the real file in
+   `Sleep Tab/sleep_tab_night_background.svg` is 2.4 MB and navy (#050C2B),
+   while these screens need a dark green-teal cast on #07080C, so it is
+   rebuilt here as token gradients. Same call the owner already approved for
+   the Activity hero (see memory/changelog.md, 2026-08-07). */
+.glow{position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(120% 55% at 88% -6%,  rgba(69,199,179,0.20) 0%, rgba(69,199,179,0.06) 42%, transparent 72%),
+    radial-gradient(90%  40% at 8%  12%,  rgba(69,199,179,0.07) 0%, transparent 68%),
+    var(--surface-app);
+}
+
+/* Title block — h2 20/26 and p2 13/18, at the Figma offsets */
+.h2{position:absolute;left:16px;right:16px;top:106px;margin:0;
+  font-size:20px;line-height:26px;font-weight:500;letter-spacing:-0.1px;
+  color:var(--text-1)}
+.sub{position:absolute;left:16px;right:16px;top:136px;margin:0;
+  font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
+
+/* Primary CTA — 52px pill, 16px inset, sitting 32px off the bottom */
+.cta{
+  all:unset;box-sizing:border-box;
+  position:absolute;left:16px;right:16px;top:711px;height:52px;
+  border-radius:var(--r-pill);cursor:pointer;
+  display:grid;place-items:center;
+  font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:500;
+  background:var(--teal-400);color:var(--surface-app);
+  transition:background 140ms ease;
+}
+/* Disabled is neutral-600 with the SAME dark label — that is what the comp
+   shows on every "not yet valid" frame. */
+.cta[disabled]{background:var(--neutral-600);cursor:not-allowed}
+
+/* Text fields — 48px, 12px radius, hairline neutral-700, focus lifts to 400 */
+.field{
+  width:100%;height:48px;border-radius:var(--r-field);
+  background:var(--surface-app);border:1px solid var(--neutral-700);
+  padding:0 15px;color:var(--text-1);
+  font-family:var(--font-text);font-size:13px;line-height:18px;
+  transition:border-color 140ms ease;
+}
+.field::placeholder{color:var(--text-3)}
+.field:focus{outline:none;border-color:var(--neutral-400)}
+
+/* Field with a small-caps label above it (Profile screen) */
+.labelled{position:absolute;left:16px;width:328px;
+  display:flex;flex-direction:column;gap:4px}
+.labelled .lab{
+  padding:0 12px;font-size:11px;line-height:16px;font-weight:500;
+  letter-spacing:0.88px;text-transform:uppercase;color:var(--text-2);
+}
+.labelled .wrap{position:relative}
+.labelled .wrap .ico{
+  position:absolute;right:11px;top:50%;transform:translateY(-50%);
+  width:20px;height:20px;color:var(--text-1);pointer-events:none;
+}
+/* select needs its own reset to match .field exactly. Until a choice is made
+   it shows the placeholder in text-3, like every other empty field. */
+select.field{appearance:none;cursor:pointer;color:var(--text-3)}
+select.field.filled{color:var(--text-1)}
+/* Right-hand icon sits inside the box, so leave room for it */
+#inDob,#inGender{padding-right:42px}
+/* Number fields draw spinner arrows on focus; the comp has none */
+.field[type=number]{-moz-appearance:textfield}
+.field[type=number]::-webkit-outer-spin-button,
+.field[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+/* Choice cards — Activity level and Goal. 74px, stacked 86px apart. */
+.choice{
+  all:unset;box-sizing:border-box;
+  position:absolute;left:16px;width:328px;height:74px;
+  border-radius:var(--r-field);cursor:pointer;
+  background:var(--surface-app);border:1px solid var(--neutral-700);
+  padding:15px;transition:background 140ms ease,border-color 140ms ease;
+}
+.choice:hover{border-color:var(--neutral-600)}
+.choice .t{display:block;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.choice .d{display:block;margin-top:2px;font-size:13px;line-height:18px;color:var(--text-3)}
+.choice .tick{
+  position:absolute;right:15px;top:50%;transform:translateY(-50%);
+  width:20px;height:20px;color:var(--text-1);opacity:0;
+  transition:opacity 140ms ease;
+}
+.choice[aria-pressed=true]{background:var(--neutral-700)}
+.choice[aria-pressed=true] .tick{opacity:1}
+
+/* ==========================================================================
+   6. SCREEN-SPECIFIC BLOCKS
+   ========================================================================== */
+
+/* ---- Splash -------------------------------------------------------------- */
+#v-splash{background:var(--surface-splash)}
+#v-splash .mark{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:195.5px;height:190px;display:grid;place-items:center;
+}
+/* FLAG — placeholder art. The real logo lockup is a PNG in the Figma file
+   that this sandbox cannot download (network egress to figma.com is blocked,
+   see the notes at the end of this file). Drop the export at
+   assets/onboarding/splash-logo.png and the <img> below takes over
+   automatically; until then the wordmark renders as live text. */
+#v-splash .mark img{max-width:100%;display:block}
+#v-splash .mark .standin{text-align:center}
+#v-splash .standin .leaf{
+  width:64px;height:64px;margin:0 auto 12px;display:block;color:var(--teal-400)
+}
+#v-splash .standin .word{
+  font-size:44px;line-height:44px;font-weight:400;letter-spacing:-1px;color:#FFF
+}
+
+/* ---- Onboarding ---------------------------------------------------------- */
+/* Media plate. The owner has said this is a VIDEO in the real build and the
+   Figma frame only carries a still, so the slot is a <video> with the still
+   as its poster. Both files are optional — the gradient stand-in shows
+   through until they are dropped in. */
+#v-onb .media{position:absolute;left:50%;transform:translateX(-50%);
+  top:-10px;width:438px;height:656px;overflow:hidden}
+#v-onb .media video,#v-onb .media img{width:100%;height:100%;object-fit:cover;display:block}
+/* Code-drawn stand-in: a dusk court, close enough in value + hue to judge the
+   scrim and type contrast against. Replaced the moment real media lands. */
+#v-onb .media .standin{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(70% 45% at 62% 22%, rgba(69,199,179,0.16) 0%, transparent 70%),
+    linear-gradient(168deg,#0B1418 0%,#12262B 38%,#0A1C24 68%,#070D10 100%);
+}
+/* Scrim, straight from the comp: transparent to #090D0E between 25% and 62% */
+#v-onb .scrim{
+  position:absolute;left:0;bottom:0;width:360px;height:668px;pointer-events:none;
+  background:linear-gradient(180deg,
+    rgba(9,13,14,0) 25.545%,
+    rgba(9,13,14,0.46) 35.743%,
+    #090D0E 62.132%);
+}
+#v-onb .leaf{position:absolute;left:24px;top:519px;width:48px;height:48px;color:var(--teal-400)}
+#v-onb .head{
+  position:absolute;left:24px;top:583px;width:303px;margin:0;
+  font-size:32px;line-height:36px;font-weight:700;letter-spacing:-0.32px;
+}
+#v-onb .head .dim{display:block;color:rgba(255,255,255,0.65)}
+#v-onb .head .lit{display:block;color:#FFF}
+/* The onboarding CTA is 316px wide and bottom-anchored, NOT the 328px pill
+   the rest of the flow uses. Kept as designed. */
+#v-onb .cta{left:50%;right:auto;transform:translateX(-50%);width:316px;top:auto;bottom:68px}
+#v-onb .legal{
+  position:absolute;left:16px;top:751px;margin:0;
+  font-size:10px;line-height:14px;letter-spacing:0.1px;color:rgba(255,255,255,0.45);
+}
+#v-onb .legal a{color:rgba(255,255,255,0.75);text-decoration:none}
+#v-onb .legal a:hover{text-decoration:underline}
+/* Slide dots — see the FLAG in the notes: Figma has three Onboarding frames
+   but only one was linked, so this carousel currently has one real slide. */
+#v-onb .dots{position:absolute;left:24px;top:497px;display:flex;gap:6px}
+#v-onb .dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3)}
+#v-onb .dots i.on{background:var(--teal-400);width:16px;border-radius:3px}
+
+/* ---- Phone number -------------------------------------------------------- */
+#v-phone .row{position:absolute;left:16px;top:174px;width:328px;
+  display:flex;align-items:center}
+/* Country code and number share one 48px box, split by a hairline at 71px */
+#v-phone .combo{
+  position:relative;display:flex;align-items:center;width:100%;height:48px;
+  border-radius:var(--r-field);background:var(--surface-app);
+  border:1px solid var(--neutral-700);overflow:hidden;
+  transition:border-color 140ms ease;
+}
+#v-phone .combo:focus-within{border-color:var(--neutral-400)}
+#v-phone .cc{
+  display:flex;align-items:center;gap:6px;
+  width:71px;height:100%;padding:0 0 0 15px;flex:0 0 71px;
+  border-right:1px solid var(--neutral-700);
+  font-size:15px;line-height:22px;color:var(--text-1);cursor:pointer;
+}
+#v-phone .cc svg{width:16px;height:15px;color:var(--text-1)}
+#v-phone .num{
+  flex:1;height:100%;border:0;background:transparent;padding:0 15px;
+  font-family:var(--font-text);font-size:15px;line-height:22px;color:var(--text-1);
+}
+#v-phone .num:focus{outline:none}
+#v-phone .num::placeholder{color:var(--text-3)}
+
+/* ---- OTP ----------------------------------------------------------------- */
+#v-otp .boxes{position:absolute;left:16px;top:192px;width:328px;
+  display:flex;align-items:center;gap:8px}
+#v-otp .boxes input{
+  flex:1 0 0;min-width:0;height:48px;border-radius:var(--r-field);
+  background:var(--surface-app);border:1px solid var(--neutral-700);
+  text-align:center;color:#FFF;
+  font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:500;
+  transition:border-color 140ms ease;
+}
+#v-otp .boxes input:focus{outline:none;border-color:var(--neutral-400)}
+/* Invalid paints every box red at once, exactly as OTP_invalid shows */
+#v-otp.invalid .boxes input{border-color:var(--negative-icon)}
+#v-otp .err{
+  position:absolute;left:16px;top:252px;margin:0;
+  font-size:11px;line-height:16px;color:var(--negative-icon);display:none;
+}
+#v-otp.invalid .err{display:block}
+/* The resend row sits at 256px normally; the invalid frame pushes it to 284px
+   to make room for the error line above it. */
+#v-otp .resend{
+  position:absolute;left:16px;top:256px;width:328px;
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:11px;line-height:16px;color:var(--text-3);
+}
+#v-otp.invalid .resend{top:284px}
+#v-otp .resend .act{all:unset;cursor:pointer;color:var(--teal-400);text-align:right}
+#v-otp .resend .act[disabled]{color:var(--text-3);cursor:default}
+
+/* Toast — blurred neutral-500 pill at the top, for "OTP resent successfully" */
+.toast{
+  position:absolute;left:16px;right:16px;top:39px;height:40px;z-index:70;
+  display:grid;place-items:center;border-radius:var(--r-pill);
+  background:rgba(94,99,125,0.6);backdrop-filter:blur(17px);
+  font-size:13px;line-height:18px;color:var(--text-1);
+  opacity:0;pointer-events:none;transition:opacity 200ms ease;
+}
+.toast.on{opacity:1}
+
+/* ---- Name ---------------------------------------------------------------- */
+#v-name .row{position:absolute;left:16px;top:174px;width:328px}
+
+/* ---- Daily targets ------------------------------------------------------- */
+.target{
+  position:absolute;left:16px;width:328px;height:74px;
+  border-radius:var(--r-field);background:var(--surface-app);
+  border:1px solid var(--neutral-700);padding:15px;
+}
+.target .t{display:block;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.target .d{display:block;margin-top:2px;font-size:13px;line-height:18px;color:var(--text-3)}
+.target .stepper{
+  position:absolute;left:183px;top:22px;
+  display:flex;align-items:center;gap:12px;
+}
+.target .stepper button{
+  all:unset;width:24px;height:24px;display:grid;place-items:center;
+  cursor:pointer;color:var(--text-1);border-radius:6px;
+}
+.target .stepper button:hover{background:var(--surface-raised)}
+.target .stepper button[disabled]{color:var(--neutral-600);cursor:not-allowed}
+.target .stepper button[disabled]:hover{background:none}
+/* Values are League Spartan Bold 24/28 — the numeric face, per numeric/num-l */
+.target .val{
+  min-width:56px;text-align:center;
+  font-family:var(--font-num);font-size:24px;line-height:28px;font-weight:700;
+  letter-spacing:-0.12px;color:var(--text-1);
+}
+
+/* ==========================================================================
+   7. MOTION
+   --------------------------------------------------------------------------
+   The flow uses one gentle cross-fade between screens and a blinking caret.
+   Both are switched off for anyone who asks for reduced motion.
+   ========================================================================== */
+.view.on{animation:fade 180ms ease both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+  .view.on{animation:none !important}
+}
+</style>
+</head>
+<body>
+
+<!-- ==========================================================================
+     JUMP PANEL — prototype scaffolding, not part of the product
+     ========================================================================== -->
+<aside class="panel">
+  <h2>Onboarding flow</h2>
+  <p class="hint">Nine screens, in order. The flow runs for real — jump in
+     anywhere to inspect a screen without walking it.</p>
+  <div class="opts" id="jump"></div>
+
+  <div class="grp">
+    <h2>OTP states</h2>
+    <p class="hint">Six Figma frames, one screen. Verify code is
+       <strong>110341</strong>; anything else shows the invalid state.</p>
+    <div class="opts" id="otpjump"></div>
+  </div>
+</aside>
+
+<!-- ==========================================================================
+     THE PHONE
+     ========================================================================== -->
+<div class="phone">
+<div class="screen" id="screen">
+
+  <!-- Status bar floats over every screen -->
+  <div class="statusbar">
+    <span class="clock">12:30</span>
+    <span class="icons">
+      <!-- cellular -->
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor" aria-hidden="true">
+        <rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="6" width="3" height="6" rx="1"/>
+        <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/>
+      </svg>
+      <!-- wifi -->
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor"
+           stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+        <path d="M1 4.2a10 10 0 0 1 14 0"/><path d="M3.6 6.9a6.3 6.3 0 0 1 8.8 0"/>
+        <path d="M6.2 9.5a2.7 2.7 0 0 1 3.6 0"/>
+      </svg>
+      <!-- battery -->
+      <svg width="24" height="12" viewBox="0 0 24 12" fill="none" aria-hidden="true">
+        <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor"/>
+        <rect x="2" y="2" width="18" height="8" rx="2" fill="currentColor"/>
+        <path d="M23 4.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </span>
+  </div>
+
+  <!-- Toast lives at screen level so any screen can raise it -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ====================================================================
+       1. SPLASH  (Figma 934:5158)
+       ==================================================================== -->
+  <section class="view" id="v-splash" aria-label="Splash">
+    <div class="mark">
+      <!-- Real export goes here; onerror swaps in the stand-in below. -->
+      <img src="assets/onboarding/splash-logo.png" alt="Pebble"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div class="standin" style="display:none">
+        <svg class="leaf" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+             stroke-width="3" stroke-linecap="round" aria-hidden="true">
+          <path d="M20 42c-4-9 1-16 7-20 7-5 13-2 13 5 0 8-7 13-14 13-5 0-8-3-8-7 0-5 4-8 8-8"/>
+        </svg>
+        <div class="word">pebble</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       2. ONBOARDING  (Figma 940:5067)
+       ==================================================================== -->
+  <section class="view" id="v-onb" aria-label="Welcome">
+    <div class="media">
+      <!-- Video first, still as poster, gradient stand-in behind both. -->
+      <div class="standin"></div>
+      <video id="onbVideo" autoplay muted loop playsinline
+             poster="assets/onboarding/onboarding-hero.png"
+             onerror="this.style.display='none'">
+        <source src="assets/onboarding/onboarding-hero.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="scrim"></div>
+
+    <svg class="leaf" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+         stroke-width="3" stroke-linecap="round" aria-hidden="true">
+      <path d="M20 42c-4-9 1-16 7-20 7-5 13-2 13 5 0 8-7 13-14 13-5 0-8-3-8-7 0-5 4-8 8-8"/>
+    </svg>
+
+    <div class="dots" id="onbDots"></div>
+
+    <h1 class="head"><span class="dim">Your health,</span><span class="lit">your way</span></h1>
+
+    <button class="cta" id="btnStart">Get Started</button>
+
+    <p class="legal">By continuing, you agree to our
+      <a href="#" onclick="return false">Terms of Service</a> &amp;
+      <a href="#" onclick="return false">Privacy Policy</a></p>
+  </section>
+
+  <!-- ====================================================================
+       3. PHONE NUMBER  (Figma 957:13360)
+       ==================================================================== -->
+  <section class="view" id="v-phone" aria-label="Phone number">
+    <div class="glow"></div>
+    <div class="appbar"><button class="back" data-back aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+        <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
+      </svg></button></div>
+
+    <h1 class="h2">Enter your phone number</h1>
+    <p class="sub">An OTP will be sent to verify this</p>
+
+    <div class="row">
+      <div class="combo">
+        <!-- FLAG: the country picker has no designed screen. It is a static
+             +91 with a caret in every frame, so tapping it does nothing yet.
+             Needs a country-list frame before it can be built. -->
+        <span class="cc" title="Country picker — not yet designed">+91
+          <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+            <path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+          </svg>
+        </span>
+        <input class="num" id="inPhone" type="tel" inputmode="numeric"
+               maxlength="10" autocomplete="tel-national" aria-label="Phone number">
+      </div>
+    </div>
+
+    <button class="cta" id="btnVerifyPhone" disabled>Verify</button>
+  </section>
+
+  <!-- ====================================================================
+       4. OTP  (Figma 937:5334 + 5 state frames)
+       ==================================================================== -->
+  <section class="view" id="v-otp" aria-label="Enter code">
+    <div class="glow"></div>
+    <div class="appbar"><button class="back" data-back aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+        <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
+      </svg></button></div>
+
+    <h1 class="h2">Enter the code</h1>
+    <p class="sub">OTP has been sent to <span style="color:var(--text-1)" id="otpTo">+91 99988 83721</span><br>Enter the OTP to continue.</p>
+
+    <div class="boxes" id="otpBoxes"></div>
+
+    <p class="err">OTP invalid</p>
+
+    <div class="resend">
+      <span>Did not receive the OTP?</span>
+      <button class="act" id="btnResend" disabled>Resend in 00:30</button>
+    </div>
+
+    <button class="cta" id="btnVerifyOtp" disabled>Verify</button>
+  </section>
+
+  <!-- ====================================================================
+       5. NAME  (Figma 942:5681 / 942:5811 / 942:5757)
+       ==================================================================== -->
+  <section class="view" id="v-name" aria-label="Your name">
+    <div class="glow"></div>
+    <div class="appbar"><button class="back" data-back aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+        <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
+      </svg></button></div>
+
+    <h1 class="h2">What should we call you?</h1>
+    <p class="sub">Enter your full name</p>
+
+    <div class="row">
+      <input class="field" id="inName" type="text" placeholder="Your name here"
+             autocomplete="name" aria-label="Full name">
+    </div>
+
+    <button class="cta" id="btnName" disabled>Continue</button>
+  </section>
+
+  <!-- ====================================================================
+       6. PROFILE  (Figma 950:13167)
+       ==================================================================== -->
+  <section class="view" id="v-profile" aria-label="About you">
+    <div class="glow"></div>
+    <div class="appbar"><button class="back" data-back aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+        <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
+      </svg></button></div>
+
+    <h1 class="h2">Let’s get to know you better</h1>
+    <p class="sub">Pebble uses these values to calculate your daily targets and personalise your recommendations</p>
+
+    <div class="labelled" style="top:202px">
+      <span class="lab">Date of Birth</span>
+      <div class="wrap">
+        <!-- FLAG: a native <input type=date> was tried first, but it renders
+             its own format from the browser locale (mm/dd/yyyy on a US
+             machine) and the comp explicitly reads DD/MM/YYYY — which is also
+             right for a +91 flow. So this is a masked text field that matches
+             the design. It needs a real date-picker sheet behind the calendar
+             icon; no such frame was supplied. -->
+        <input class="field" id="inDob" type="text" inputmode="numeric"
+               maxlength="10" placeholder="DD/MM/YYYY" aria-label="Date of birth">
+        <!-- FLAG: Figma uses the Phosphor "CalendarDots" glyph. That icon is
+             not in the Phosphor subset embedded in index.html and the export
+             could not be downloaded here, so this is a hand-drawn stand-in at
+             the same 20px box. Swap for the real glyph when available. -->
+        <span class="ico" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2.5" y="4" width="15" height="13.5" rx="2"/>
+            <path d="M6 2.5V5M14 2.5V5M2.5 8h15" stroke-linecap="round"/>
+            <circle cx="7" cy="11.5" r="0.9" fill="currentColor" stroke="none"/>
+            <circle cx="10" cy="11.5" r="0.9" fill="currentColor" stroke="none"/>
+            <circle cx="13" cy="11.5" r="0.9" fill="currentColor" stroke="none"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+
+    <div class="labelled" style="top:294px">
+      <span class="lab">Gender</span>
+      <div class="wrap">
+        <!-- FLAG: no options list was designed. These four are a reasonable
+             default for a health app that needs the value for BMR maths —
+             confirm the real list and whether it affects calculations. -->
+        <select class="field" id="inGender" aria-label="Gender">
+          <option value="" selected disabled>Choose your gender</option>
+          <option>Female</option><option>Male</option>
+          <option>Non-binary</option><option>Prefer not to say</option>
+        </select>
+        <span class="ico" aria-hidden="true">
+          <svg viewBox="0 0 256 256" fill="currentColor">
+            <path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+
+    <!-- FLAG: no unit affordance was designed for height or weight. Assuming
+         metric (cm / kg) because the targets screen is in KM and KCAL. If the
+         app ships ft/in and lb, these need a unit toggle. -->
+    <div class="labelled" style="top:386px">
+      <span class="lab">Height</span>
+      <div class="wrap">
+        <input class="field" id="inHeight" type="number" inputmode="numeric"
+               min="80" max="250" placeholder="Enter your height" aria-label="Height in centimetres">
+      </div>
+    </div>
+
+    <div class="labelled" style="top:478px">
+      <span class="lab">Weight</span>
+      <div class="wrap">
+        <input class="field" id="inWeight" type="number" inputmode="numeric"
+               min="25" max="300" placeholder="Enter your weight" aria-label="Weight in kilograms">
+      </div>
+    </div>
+
+    <button class="cta" id="btnProfile">Continue</button>
+  </section>
+
+  <!-- ====================================================================
+       7. ACTIVITY LEVEL  (Figma 957:13433)
+       ==================================================================== -->
+  <section class="view" id="v-activity" aria-label="Activity level">
+    <div class="glow"></div>
+    <div class="appbar"><button class="back" data-back aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+        <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
+      </svg></button></div>
+
+    <h1 class="h2">How active are you currently?</h1>
+    <p class="sub">This is to understand your movement based on your current lifestyle</p>
+
+    <div id="activityCards"></div>
+
+    <button class="cta" id="btnActivity">Continue</button>
+  </section>
+
+  <!-- ====================================================================
+       8. GOAL  (Figma 957:13656)
+       ==================================================================== -->
+  <section class="view" id="v-goal" aria-label="Fitness goal">
+    <div class="glow"></div>
+    <div class="appbar"><button class="back" data-back aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+        <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
+      </svg></button></div>
+
+    <h1 class="h2">What are your fitness targets?</h1>
+    <p class="sub">Pebble will optimise suggestions for you based on these targets</p>
+
+    <div id="goalCards"></div>
+
+    <button class="cta" id="btnGoal">Continue</button>
+  </section>
+
+  <!-- ====================================================================
+       9. DAILY TARGETS  (Figma 957:13731)
+       ==================================================================== -->
+  <section class="view" id="v-targets" aria-label="Daily targets">
+    <div class="glow"></div>
+    <div class="appbar"><button class="back" data-back aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+        <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
+      </svg></button></div>
+
+    <h1 class="h2">Set your daily goal</h1>
+    <p class="sub">The suggestions are calculated based on your profile. Adjust any as per your needs.</p>
+
+    <div id="targetRows"></div>
+
+    <button class="cta" id="btnDone">Continue</button>
+  </section>
+
+</div><!-- /screen -->
+</div><!-- /phone -->
+
+<script>
+/* ==========================================================================
+   FLOW LOGIC
+   --------------------------------------------------------------------------
+   Plain JavaScript, no build step. Reading order:
+     1. icons + tiny helpers
+     2. the answers the user gives  (state)
+     3. moving between screens      (go / back)
+     4. one block per screen
+   ========================================================================== */
+
+/* ---- 1. Icons ------------------------------------------------------------
+   Phosphor path data, copied from the set already embedded in index.html so
+   the two prototypes draw identical glyphs. */
+const ICON = {
+  check: 'M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z',
+  plus:  'M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z',
+  minus: 'M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128Z'
+};
+const svg = (d, size) =>
+  `<svg width="${size}" height="${size}" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="${d}"/></svg>`;
+
+const $ = (sel, root=document) => root.querySelector(sel);
+
+/* ---- 2. State — everything the flow collects ---------------------------- */
+const state = {
+  phone:'', otp:'', name:'',
+  dob:'', gender:'', height:'', weight:'',
+  activity:'sedentary',   // Figma shows Sedentary preselected
+  goal:'lose',            // Figma shows Lose Weight preselected
+  targets:{ steps:8000, distance:5.5, calories:1800 }
+};
+
+/* The code the OTP screen accepts. Taken from the OTP_filled frame, which
+   shows 1 1 0 3 4 1. Any other six digits lands on the invalid state. */
+const GOOD_OTP = '110341';
+
+/* ---- 3. Screen switching ------------------------------------------------ */
+const ORDER = ['splash','onb','phone','otp','name','profile','activity','goal','targets'];
+const TITLES = {
+  splash:'Splash', onb:'Onboarding', phone:'Phone number', otp:'OTP',
+  name:'Name', profile:'Profile', activity:'Activity level',
+  goal:'Goal', targets:'Daily targets'
+};
+let current = null;
+const history = [];
+
+function go(id, {push=true} = {}){
+  if (push && current) history.push(current);
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
+  $('#v-'+id).classList.add('on');
+  current = id;
+  syncJump();
+  if (id === 'otp') startOtpTimer();
+  /* Move focus to the first field so the screen is usable from the keyboard. */
+  const first = $('#v-'+id+' input:not([type=hidden])');
+  if (first) setTimeout(() => first.focus(), 60);
+}
+function back(){
+  const prev = history.pop();
+  if (prev) go(prev, {push:false});
+}
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = back);
+
+/* Jump panel */
+function syncJump(){
+  document.querySelectorAll('#jump button').forEach(b =>
+    b.classList.toggle('on', b.dataset.id === current));
+}
+ORDER.forEach(id => {
+  const b = document.createElement('button');
+  b.textContent = TITLES[id];
+  b.dataset.id = id;
+  b.onclick = () => go(id);
+  $('#jump').appendChild(b);
+});
+
+/* ---- 4a. Splash --------------------------------------------------------- */
+/* FLAG: the comp does not say how long the splash holds. 1.6s is a common
+   Android splash duration and reads well here — confirm the real number. */
+const SPLASH_MS = 1600;
+let splashTimer = null;
+function runSplash(){
+  clearTimeout(splashTimer);
+  splashTimer = setTimeout(() => { if (current === 'splash') go('onb'); }, SPLASH_MS);
+}
+
+/* ---- 4b. Onboarding ----------------------------------------------------- */
+/* FLAG: the pasted CSS listed THREE frames named "Onboarding", but only one
+   node link was supplied, so only one slide exists. The carousel is wired for
+   more — send the other two node ids and they drop straight in. */
+const SLIDES = [
+  { dim:'Your health,', lit:'your way' }
+];
+let slide = 0;
+function paintSlides(){
+  const dots = $('#onbDots');
+  dots.innerHTML = SLIDES.map((_,i) =>
+    `<i class="${i===slide?'on':''}"></i>`).join('');
+  dots.style.display = SLIDES.length > 1 ? 'flex' : 'none';
+  const head = $('#v-onb .head');
+  head.innerHTML =
+    `<span class="dim">${SLIDES[slide].dim}</span><span class="lit">${SLIDES[slide].lit}</span>`;
+}
+$('#btnStart').onclick = () => {
+  if (slide < SLIDES.length - 1) { slide++; paintSlides(); }
+  else go('phone');
+};
+
+/* ---- 4c. Phone number --------------------------------------------------- */
+/* Ten digits is the Indian mobile length, matching the +91 in the comp. */
+const inPhone = $('#inPhone');
+inPhone.addEventListener('input', () => {
+  inPhone.value = inPhone.value.replace(/\D/g,'').slice(0,10);
+  state.phone = inPhone.value;
+  $('#btnVerifyPhone').disabled = state.phone.length !== 10;
+});
+$('#btnVerifyPhone').onclick = () => {
+  /* Show the real number on the OTP screen, grouped like the comp. */
+  const p = state.phone;
+  $('#otpTo').textContent = p ? `+91 ${p.slice(0,5)} ${p.slice(5)}` : '+91 99988 83721';
+  resetOtp();
+  go('otp');
+};
+
+/* ---- 4d. OTP ------------------------------------------------------------ */
+const OTP_LEN = 6;
+const RESEND_SECONDS = 30;   // "Resend in 00:30" in the comp
+const boxes = [];
+const otpView = $('#v-otp');
+
+for (let i = 0; i < OTP_LEN; i++){
+  const el = document.createElement('input');
+  el.type = 'text'; el.inputMode = 'numeric'; el.maxLength = 1;
+  el.autocomplete = i === 0 ? 'one-time-code' : 'off';
+  el.setAttribute('aria-label', `Digit ${i+1}`);
+  $('#otpBoxes').appendChild(el);
+  boxes.push(el);
+
+  el.addEventListener('input', () => {
+    el.value = el.value.replace(/\D/g,'').slice(0,1);
+    otpView.classList.remove('invalid');       // clear the error as soon as they retype
+    if (el.value && i < OTP_LEN-1) boxes[i+1].focus();
+    readOtp();
+  });
+  /* Backspace on an empty box steps back a box, the way OTP fields should. */
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !el.value && i > 0){ boxes[i-1].focus(); e.preventDefault(); }
+    if (e.key === 'ArrowLeft'  && i > 0) boxes[i-1].focus();
+    if (e.key === 'ArrowRight' && i < OTP_LEN-1) boxes[i+1].focus();
+  });
+  /* Pasting the whole code into any box fills the row. */
+  el.addEventListener('paste', e => {
+    const digits = (e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,OTP_LEN);
+    if (!digits) return;
+    e.preventDefault();
+    digits.split('').forEach((d,k) => { if (boxes[k]) boxes[k].value = d; });
+    boxes[Math.min(digits.length, OTP_LEN-1)].focus();
+    readOtp();
+  });
+}
+function readOtp(){
+  state.otp = boxes.map(b => b.value).join('');
+  $('#btnVerifyOtp').disabled = state.otp.length !== OTP_LEN;
+}
+function resetOtp(){
+  boxes.forEach(b => b.value = '');
+  state.otp = '';
+  otpView.classList.remove('invalid');
+  $('#btnVerifyOtp').disabled = true;
+}
+
+/* The resend countdown. Runs down from 30s, then the label turns into a
+   tappable teal "Resend OTP" — the OTP -> OTP_resend transition. */
+let otpTick = null;
+function startOtpTimer(){
+  clearInterval(otpTick);
+  let left = RESEND_SECONDS;
+  const btn = $('#btnResend');
+  const paint = () => {
+    if (left > 0){
+      btn.disabled = true;
+      btn.textContent = `Resend in 00:${String(left).padStart(2,'0')}`;
+    } else {
+      btn.disabled = false;
+      btn.textContent = 'Resend OTP';
+      clearInterval(otpTick);
+    }
+  };
+  paint();
+  otpTick = setInterval(() => { left--; paint(); }, 1000);
+}
+$('#btnResend').onclick = () => {
+  resetOtp();
+  startOtpTimer();
+  showToast('OTP resent successfully');   // the OTP_resent frame
+  boxes[0].focus();
+};
+$('#btnVerifyOtp').onclick = () => {
+  if (state.otp === GOOD_OTP){
+    otpView.classList.remove('invalid');
+    go('name');
+  } else {
+    otpView.classList.add('invalid');     // the OTP_invalid frame
+  }
+};
+
+/* Toast — auto-hides. Duration is not specified in the comp; 2.4s is a
+   standard Android short-toast length. */
+let toastTimer = null;
+function showToast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 2400);
+}
+
+/* ---- 4e. Name ----------------------------------------------------------- */
+const inName = $('#inName');
+inName.addEventListener('input', () => {
+  state.name = inName.value.trim();
+  $('#btnName').disabled = state.name.length === 0;
+});
+$('#btnName').onclick = () => go('profile');
+
+/* ---- 4f. Profile -------------------------------------------------------- */
+/* FLAG: the comp shows Continue already teal with every field empty, so no
+   validation is enforced here. If any of these are required for the target
+   maths, they need a disabled state and inline errors — neither is designed. */
+$('#inGender').addEventListener('change', e => {
+  state.gender = e.target.value;
+  e.target.classList.add('filled');
+});
+/* Date of birth types as DD/MM/YYYY — the slashes are inserted as they go,
+   so the field always reads back the way the comp shows it. */
+$('#inDob').addEventListener('input', e => {
+  const d = e.target.value.replace(/\D/g,'').slice(0,8);
+  let out = d.slice(0,2);
+  if (d.length > 2) out += '/' + d.slice(2,4);
+  if (d.length > 4) out += '/' + d.slice(4,8);
+  e.target.value = out;
+  state.dob = out;
+  e.target.classList.toggle('filled', out.length > 0);
+});
+$('#inHeight').addEventListener('input', e => state.height = e.target.value);
+$('#inWeight').addEventListener('input', e => state.weight = e.target.value);
+$('#btnProfile').onclick = () => go('activity');
+
+/* ---- 4g. Activity level + Goal ------------------------------------------
+   Both screens are the same component: four 74px cards, 86px apart, one
+   selected at a time with a check on the right. */
+const ACTIVITY = [
+  { id:'sedentary', t:'Sedentary',     d:'Desk job, little exercise' },
+  { id:'light',     t:'Lightly Active', d:'Light exercise, 1-3 days a week' },
+  { id:'active',    t:'Active',         d:'Moderate exercise, 3-5 days a week' },
+  { id:'very',      t:'Very Active',    d:'Hard exercise, 6-7 days a week' }
+];
+/* FLAG: all four Goal descriptions are literally "Lorem ipsum" in Figma.
+   Placeholders kept verbatim rather than invented — real copy needed. */
+const GOALS = [
+  { id:'lose',     t:'Lose Weight',     d:'Lorem ipsum' },
+  { id:'maintain', t:'Maintain',        d:'Lorem ipsum' },
+  { id:'gain',     t:'Gain Weight',     d:'Lorem ipsum' },
+  { id:'fitness',  t:'General Fitness', d:'Lorem ipsum' }
+];
+
+function buildCards(host, items, key){
+  const el = $(host);
+  el.innerHTML = '';
+  items.forEach((it, i) => {
+    const b = document.createElement('button');
+    b.className = 'choice';
+    b.style.top = (201 + i*86) + 'px';
+    b.setAttribute('aria-pressed', String(state[key] === it.id));
+    b.innerHTML =
+      `<span class="t">${it.t}</span><span class="d">${it.d}</span>` +
+      `<span class="tick">${svg(ICON.check,20)}</span>`;
+    b.onclick = () => {
+      state[key] = it.id;
+      [...el.children].forEach(c => c.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true');
+    };
+    el.appendChild(b);
+  });
+}
+buildCards('#activityCards', ACTIVITY, 'activity');
+buildCards('#goalCards',     GOALS,    'goal');
+$('#btnActivity').onclick = () => go('goal');
+$('#btnGoal').onclick     = () => go('targets');
+
+/* ---- 4h. Daily targets --------------------------------------------------
+   FLAG: the comp shows the three start values (8000 / 5.5 / 1800) but not the
+   step size or the allowed range. The values below are sensible defaults —
+   confirm them, and confirm whether the suggestions should actually be
+   computed from the profile answers rather than hard-coded. */
+const TARGETS = [
+  { key:'steps',    t:'Steps',    d:'In number of steps', step:500, min:1000, max:30000, dp:0 },
+  { key:'distance', t:'Distance', d:'in KM',              step:0.5, min:0.5,  max:42,    dp:1 },
+  { key:'calories', t:'Calories', d:'in KCAL',            step:50,  min:500,  max:6000,  dp:0 }
+];
+function buildTargets(){
+  const host = $('#targetRows');
+  host.innerHTML = '';
+  TARGETS.forEach((row, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'target';
+    wrap.style.top = (201 + i*86) + 'px';
+    wrap.innerHTML =
+      `<span class="t">${row.t}</span><span class="d">${row.d}</span>
+       <div class="stepper">
+         <button data-dir="-1" aria-label="Decrease ${row.t}">${svg(ICON.minus,20)}</button>
+         <span class="val" aria-live="polite"></span>
+         <button data-dir="1" aria-label="Increase ${row.t}">${svg(ICON.plus,20)}</button>
+       </div>`;
+    host.appendChild(wrap);
+
+    const val  = $('.val', wrap);
+    const btns = wrap.querySelectorAll('.stepper button');
+    const paint = () => {
+      const v = state.targets[row.key];
+      val.textContent = v.toFixed(row.dp);
+      btns[0].disabled = v <= row.min;
+      btns[1].disabled = v >= row.max;
+    };
+    btns.forEach(b => b.onclick = () => {
+      const dir = Number(b.dataset.dir);
+      const next = +(state.targets[row.key] + dir*row.step).toFixed(row.dp);
+      state.targets[row.key] = Math.min(row.max, Math.max(row.min, next));
+      paint();
+    });
+    paint();
+  });
+}
+buildTargets();
+
+/* ---- 4i. Handoff -------------------------------------------------------- */
+/* FLAG: the flow has no designed completion screen. After the last Continue
+   the comp simply stops. Handing straight off to index.html (the signed-in
+   app) is the obvious guess — confirm whether there should be a "you're all
+   set" moment first. */
+$('#btnDone').onclick = () => {
+  showToast('Setup complete — opening Pebble');
+  setTimeout(() => { window.location.href = 'index.html'; }, 900);
+};
+
+/* ---- OTP state shortcuts, for review ------------------------------------ */
+const OTP_STATES = {
+  'Default (timer)': () => { resetOtp(); startOtpTimer(); },
+  'Typing':          () => { resetOtp(); boxes[0].focus(); },
+  'Filled':          () => { resetOtp(); GOOD_OTP.split('').forEach((d,i)=>boxes[i].value=d); readOtp(); },
+  'Invalid':         () => { resetOtp(); '110341'.split('').forEach((d,i)=>boxes[i].value=d);
+                             readOtp(); otpView.classList.add('invalid'); },
+  'Resend ready':    () => { resetOtp(); clearInterval(otpTick);
+                             const b=$('#btnResend'); b.disabled=false; b.textContent='Resend OTP'; },
+  'Resent (toast)':  () => { resetOtp(); clearInterval(otpTick);
+                             const b=$('#btnResend'); b.disabled=false; b.textContent='Resend OTP';
+                             showToast('OTP resent successfully'); }
+};
+Object.keys(OTP_STATES).forEach(label => {
+  const b = document.createElement('button');
+  b.textContent = label;
+  b.onclick = () => { if (current !== 'otp') go('otp'); OTP_STATES[label](); };
+  $('#otpjump').appendChild(b);
+});
+
+/* ---- Boot --------------------------------------------------------------- */
+paintSlides();
+go('splash', {push:false});
+runSplash();
+</script>
+
+<!--
+  ==========================================================================
+  OPEN QUESTIONS — things this build had to guess at
+  ==========================================================================
+  Repeated here so they survive outside the code comments. Each one is also
+  flagged inline at the point where the decision was made.
+
+  BLOCKED — needs files, not decisions
+   1. Splash logo PNG and the onboarding hero. This sandbox has no network
+      egress to figma.com, so the exports could not be downloaded. Both slots
+      are wired to assets/onboarding/{splash-logo.png, onboarding-hero.png,
+      onboarding-hero.mp4} and take over the moment the files are dropped in.
+   2. The onboarding background video. Named but not supplied, and the
+      sentence describing what replaces the still was cut off mid-thought.
+   3. The Phosphor "CalendarDots" glyph on the Profile screen.
+
+  MISSING SCREENS
+   4. Onboarding slides 2 and 3 — three frames exist, one node link was given.
+   5. Country picker list (the +91 control).
+   6. Gender options list.
+   7. Date-of-birth picker.
+   8. Completion / success screen after the last Continue.
+
+  MISSING CONTENT
+   9. All four Goal descriptions are "Lorem ipsum".
+
+  UNSPECIFIED BEHAVIOUR
+  10. Splash duration (using 1.6s).
+  11. Toast duration (using 2.4s).
+  12. Stepper increments and ranges on Daily targets.
+  13. Whether the suggested targets are computed from the profile answers.
+  14. Height / weight units — assumed metric, no toggle designed.
+  15. No validation or error states designed for phone, name, or profile —
+      only the OTP screen has an error state.
+
+  TOKENS
+  16. text-3 conflict: js/tokens.js says #7B819C, Figma says #999FB9.
+      Flagged in both files; onboarding follows Figma.
+  ==========================================================================
+-->
+</body>
+</html>

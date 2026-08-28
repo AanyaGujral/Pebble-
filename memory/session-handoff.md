@@ -1,5 +1,29 @@
 # Session Handoff
 
+> **2026-08-28 — read this first.** New file `onboarding.html` holds the
+> pre-login flow (Splash -> Onboarding -> Phone -> OTP -> Name -> Profile ->
+> Activity level -> Goal -> Daily targets), rebuilt from the Figma "Pebble
+> Phase 1" file through the Figma MCP connection. It is standalone, opens by
+> double-clicking, and hands off to `index.html` on the last Continue.
+> `index.html` is unchanged and is still the signed-in app.
+>
+> **Blocked on the owner — nothing else can close these:**
+>   1. Splash logo + onboarding hero (and the hero VIDEO). Could not be
+>      downloaded: this sandbox has no network egress to figma.com. Drop them
+>      at `assets/onboarding/splash-logo.png`, `onboarding-hero.png` and
+>      `onboarding-hero.mp4` and they take over automatically. This is the
+>      same wall the Activity/Sleep background PNGs hit — files need to arrive
+>      as uploads, not inline previews.
+>   2. Onboarding slides 2 and 3 — three frames exist in Figma, one node link
+>      was supplied. The carousel is already wired for more.
+>   3. Goal screen copy — all four descriptions are "Lorem ipsum" in Figma.
+>   4. `text-3` token conflict: tokens.js #7B819C vs Figma #999FB9. Flagged in
+>      both files, onboarding follows Figma, global token untouched.
+>   5. No designed screens for: country picker, gender list, DOB picker, or a
+>      completion/success screen after the final Continue.
+> The full list of 16 open questions is in a comment at the bottom of
+> `onboarding.html`.
+
 > **2026-08-10 — read this first.** `index.html` is now the MERGED source of
 > truth: it adopts the parallel session's build (metric details pages with a
 > D/W/M/Y period switcher; control panel reduced to Default + No data and

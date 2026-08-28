@@ -143,12 +143,24 @@ export const neutral = {
 
 export const surface = {
   app: '#07080C',
-  card: '#0F111B'
+  card: '#0F111B',
+  /* Splash-screen field. The only screen in the product that is not
+     surface.app — Figma "Splash screen" (node 934:5158) paints this deep
+     petrol blue behind the wordmark. Added 2026-08-28 for the onboarding
+     flow; it had no token before. */
+  splash: '#012D46'
 };
 
 export const textColor = {
   text1: '#EFF1F9',
   text2: '#B8BDD3',
+  /* FLAG (2026-08-28) — unresolved conflict, owner decision needed.
+     This file says text3 = #7B819C (neutral 400). The Figma library variable
+     `text/text-3` resolves to #999FB9 (neutral 300) — one step lighter — and
+     every onboarding screen uses that lighter value for input placeholders
+     and card sub-labels. Left as-is here so the shipped Activity/Sleep/Me
+     screens do not shift; the onboarding screens reference neutral-300
+     directly and flag it at the point of use. Pick one and align both. */
   text3: '#7B819C'
 };
 
