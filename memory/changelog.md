@@ -5,6 +5,29 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-30 — The splash is now the owner's video (assets/onboarding/
+  splash.mp4, 1080x1080 square, 4.07s, H.264+AAC). Set to the screen's full
+  360px width, so 360x360, centred on both axes; the video carries its own
+  padding around the mark, so insetting or cropping it would fight the
+  composition. The flow now leaves the splash when the video ENDS rather
+  than on the invented 1.6s timer, with a duration-based timeout as a
+  backstop in case autoplay is blocked or 'ended' never fires.
+  SCREEN COLOUR: sampled from the video at runtime rather than typed in.
+  Neither Chromium build here nor the bundled ffmpeg carries an H.264
+  decoder, so the true background could not be read at build time. Instead
+  the page draws the first frame to a canvas, reads the four extreme corners
+  (always background, since the mark sits inside a square frame) and takes
+  the per-channel median, then paints that on the splash screen. Falls back
+  to --surface-splash (#012D46) if the read throws. This is self-correcting:
+  swap the video and the colour follows.
+  Fallback: if the video cannot play, the static lockup shows instead.
+  Triggered by an error event OR by readyState still being 0 after 900ms —
+  the second case matters because a browser without the codec fires no error
+  at all, which is exactly what happens in this sandbox. Verified both
+  paths, and that the flow still advances to onboarding either way.
+  Container metadata was read by parsing the MP4 boxes directly (mvhd/tkhd),
+  since no probe tool here could open the file.
+
 - 2026-08-28 (regression fix + polish) — FIXED A REGRESSION I INTRODUCED last
   round: Get Started stopped working, and so did the slide dots. The swipe
   handler was calling setPointerCapture on the onboarding view at

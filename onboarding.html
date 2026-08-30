@@ -443,12 +443,30 @@ button.field{
    6. SCREEN-SPECIFIC BLOCKS
    ========================================================================== */
 
-/* ---- Splash -------------------------------------------------------------- */
-#v-splash{background:var(--surface-splash)}
+/* ---- Splash --------------------------------------------------------------
+   The splash is now the owner's 4s video (1080x1080, square). It is set to
+   the screen's full 360px width, which makes it 360x360, and centred both
+   ways — the video carries its own padding around the mark, so cropping or
+   insetting it would fight the composition it was made with.
+
+   The screen colour behind it starts at --surface-splash and is then
+   REPLACED at runtime by a colour sampled from the video's own first frame
+   (see sampleSplashColour below). That way the field always matches the
+   video exactly instead of relying on a value typed in here — this
+   environment has no H.264 decoder, so the true colour could not be read
+   at build time. The token stays as the fallback. */
+#v-splash{background:var(--surface-splash);transition:background 200ms ease}
+#v-splash .splashvid{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:360px;height:360px;display:block;object-fit:contain;
+  background:transparent;
+}
+/* Static lockup, shown only if the video cannot play. */
 #v-splash .mark{
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   width:195.5px;height:190px;display:grid;place-items:center;
 }
+#v-splash .mark[hidden]{display:none}
 /* The mark is the owner-supplied SVG, used verbatim.
    DECIDED (owner, 2026-08-28): its #5BBCB1 fill stays hard-coded and
    untokenised. It is NOT a token value — it sits between teal-300 (#76D4C3)
@@ -677,7 +695,11 @@ button.field{
        1. SPLASH  (Figma 934:5158)
        ==================================================================== -->
   <section class="view" id="v-splash" aria-label="Splash">
-    <div class="mark">
+    <!-- Owner's splash animation. Muted + playsinline so it can autoplay on
+         mobile; not looped, because the flow advances when it ends. -->
+    <video class="splashvid" id="splashVid" muted playsinline autoplay
+           preload="auto" src="assets/onboarding/splash.mp4"></video>
+    <div class="mark" id="splashFallback" hidden>
       <div class="lockup">
         <!-- Owner-supplied mark, used verbatim -->
         <svg class="mk" viewBox="0 0 48 48" fill="none" aria-label="Pebble" role="img">
@@ -1135,14 +1157,77 @@ ORDER.forEach(id => {
   $('#jump').appendChild(b);
 });
 
-/* ---- 4a. Splash --------------------------------------------------------- */
-/* FLAG: the comp does not say how long the splash holds. 1.6s is a common
-   Android splash duration and reads well here — confirm the real number. */
-const SPLASH_MS = 1600;
+/* ---- 4a. Splash ---------------------------------------------------------
+   The splash plays the owner's 4s video and moves on when it ends, so the
+   hold is the video's own length rather than a number invented here. */
+const splashVid = $('#splashVid');
+/* Fallback only — used if the video cannot play at all. */
+const SPLASH_FALLBACK_MS = 4100;
 let splashTimer = null;
+
+/* Take the screen colour from the video itself.
+   The video is square and the mark sits inside it, so the extreme corners
+   are always background. Reading four of them and taking the median channel
+   shrugs off any stray compression noise. Runs once, on the first frame.
+   Wrapped in try/catch: a canvas read can throw if the frame is not
+   decodable yet or the source taints the canvas, and a wrong-but-styled
+   splash beats a broken one — it just keeps the token colour. */
+let splashSampled = false;
+function sampleSplashColour(){
+  if (splashSampled) return;
+  try {
+    const w = splashVid.videoWidth, h = splashVid.videoHeight;
+    if (!w || !h) return;
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d', { willReadFrequently:true });
+    ctx.drawImage(splashVid, 0, 0);
+    const pts = [[2,2],[w-3,2],[2,h-3],[w-3,h-3]];
+    const px = pts.map(([x,y]) => ctx.getImageData(x,y,1,1).data);
+    const mid = i => {
+      const v = px.map(p => p[i]).sort((a,b) => a-b);
+      return Math.round((v[1] + v[2]) / 2);          // median of four
+    };
+    const hex = '#' + [mid(0),mid(1),mid(2)]
+      .map(n => n.toString(16).padStart(2,'0')).join('');
+    $('#v-splash').style.background = hex;
+    splashSampled = true;
+  } catch { /* keep --surface-splash */ }
+}
+splashVid.addEventListener('loadeddata', sampleSplashColour);
+splashVid.addEventListener('seeked', sampleSplashColour);
+
+/* If the video cannot play, show the static lockup instead. Two ways in:
+   an explicit error, or — the quieter case — a browser that simply never
+   decodes it and fires nothing at all, which is what happens where the
+   H.264 codec is absent. Checking readyState catches both. */
+function splashToFallback(){
+  if (splashVid.hidden) return;
+  splashVid.hidden = true;
+  $('#splashFallback').hidden = false;
+}
+splashVid.addEventListener('error', splashToFallback);
+setTimeout(() => {
+  if (splashVid.readyState < 2) splashToFallback();   // HAVE_CURRENT_DATA
+}, 900);
+
 function runSplash(){
   clearTimeout(splashTimer);
-  splashTimer = setTimeout(() => { if (current === 'splash') go('onb'); }, SPLASH_MS);
+  const leave = () => { if (current === 'splash') go('onb'); };
+
+  if (splashVid.hidden){                       // no video — use the fallback hold
+    splashTimer = setTimeout(leave, SPLASH_FALLBACK_MS);
+    return;
+  }
+  /* Restart from the top each time the splash is shown. */
+  try { splashVid.currentTime = 0; splashVid.play().catch(() => {}); } catch { /* ignore */ }
+  splashVid.onended = leave;
+  /* Belt and braces: if autoplay is blocked or 'ended' never fires, the
+     flow still moves on rather than sitting on the splash forever. */
+  const wait = (splashVid.duration && isFinite(splashVid.duration))
+    ? splashVid.duration * 1000 + 150
+    : SPLASH_FALLBACK_MS;
+  splashTimer = setTimeout(leave, wait);
 }
 
 /* ---- 4b. Onboarding backdrop animation -----------------------------------
