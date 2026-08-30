@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pebble — Button preview</title>
+
+<!--
+  Standalone preview. Open this file directly; it needs no build step.
+
+  The :root block below is a PREVIEW MIRROR of tokens.json so the file
+  renders on its own. In the app, delete it and load the real token
+  stylesheet instead — button.css consumes these names either way.
+-->
+<style>
+:root{
+  /* color.neutral.* */
+  --neutral-0:#EFF1F9;
+  --neutral-100:#D5D9EA;
+  --neutral-200:#B8BDD3;
+  --neutral-300:#999FB9;
+  --neutral-400:#7B819C;
+  --neutral-500:#5E637D;
+  --neutral-600:#42465B;
+  --neutral-700:#282B39;
+  --neutral-800:#0F111B;
+  --neutral-900:#07080C;
+
+  /* color.primitive.teal.400 */
+  --teal-400:#45C7B3;
+
+  /* color.surface.* */
+  --surface-app:var(--neutral-900);
+  --surface-card:var(--neutral-800);
+
+  /* color.text.* */
+  --text-1:var(--neutral-0);
+  --text-2:var(--neutral-200);
+  --text-3:var(--neutral-400);
+
+  /* color.metric.* */
+  --metric-readiness:var(--teal-400);
+
+  /* color.semantic.negative.* */
+  --negative-bg:#331109;
+  --negative-icon:#F4604C;
+  --negative-text:#FF9184;
+
+  /* radius.* */
+  --radius-20:20px;
+  --radius-full:999px;
+
+  /* borderWidth.* */
+  --border-thin:1px;
+
+  /* typography.* */
+  --font-text:'Google Sans Flex','Google Sans',sans-serif;
+  --weight-regular:400;
+  --weight-medium:500;
+  --weight-semibold:600;
+  --ls-tight:-0.01em;
+  --ls-normal:0;
+  --ls-wide:0.08em;
+}
+</style>
+
+<link rel="stylesheet" href="./button.css">
+
+<style>
+/* Preview harness only — not part of the component. */
+*{box-sizing:border-box}
+body{
+  margin:0;padding:40px 24px 64px;
+  background:var(--surface-app);color:var(--text-1);
+  font-family:var(--font-text);font-size:15px;line-height:22px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:32px}
+h1{margin:0;font-size:24px;line-height:30px;font-weight:var(--weight-semibold);letter-spacing:var(--ls-tight)}
+.lede{margin:0;color:var(--text-2);max-width:62ch}
+.eyebrow{
+  font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
+  letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--text-3);
+}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.card{
+  background:var(--surface-card);border-radius:var(--radius-20);
+  padding:24px;display:flex;flex-direction:column;gap:16px;
+}
+.card h2{
+  margin:0;font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
+  letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--text-3);
+}
+.card p{margin:0;font-size:13px;line-height:18px;color:var(--text-3)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.phone{
+  width:360px;max-width:100%;background:var(--surface-app);
+  border-radius:var(--radius-20);padding:24px;
+  display:flex;flex-direction:column;gap:12px;
+}
+.phone h3{margin:0 0 4px;font-size:24px;line-height:30px;font-weight:var(--weight-semibold);letter-spacing:var(--ls-tight)}
+.phone p{margin:0 0 8px;font-size:13px;line-height:18px;color:var(--text-3)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Pebble Design System</p>
+    <h1>Button</h1>
+    <p class="lede">Hover and click each button to check the opacity states. Geometry is identical across all four tiers.</p>
+  </header>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Primary · one per screen</h2>
+      <button class="btn btn--primary" type="button">Pair Now</button>
+      <button class="btn btn--primary btn--m" type="button">Pair Now</button>
+      <p>The one action the screen exists for.</p>
+    </div>
+
+    <div class="card">
+      <h2>Secondary · parallel route</h2>
+      <button class="btn btn--secondary" type="button">Enter Manually</button>
+      <button class="btn btn--secondary btn--m" type="button">Enter Manually</button>
+      <p>Only for a genuine alternative path.</p>
+    </div>
+
+    <div class="card">
+      <h2>Tertiary · way out</h2>
+      <button class="btn btn--tertiary" type="button">I'll Do It Later</button>
+      <button class="btn btn--tertiary btn--m" type="button">I'll Do It Later</button>
+      <p>Dismiss, skip, defer, cancel.</p>
+    </div>
+
+    <div class="card">
+      <h2>Destructive · tertiary shape</h2>
+      <button class="btn btn--destructive" type="button">Delete Workout</button>
+      <button class="btn btn--destructive btn--m" type="button">Delete Workout</button>
+      <p>Never a red fill.</p>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Disabled · opacity .45</h2>
+      <div class="stack">
+        <button class="btn btn--primary" type="button" disabled>Continue</button>
+        <button class="btn btn--secondary" type="button" disabled>Enter Manually</button>
+        <button class="btn btn--tertiary" type="button" disabled>Skip For Now</button>
+        <button class="btn btn--destructive" type="button" disabled>Delete Workout</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Default pair · 360px</h2>
+      <div class="phone">
+        <h3>Pair your band</h3>
+        <p>Keep it close to your phone while we connect.</p>
+        <button class="btn btn--primary" type="button">Pair Now</button>
+        <button class="btn btn--tertiary" type="button">I'll Do It Later</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Two real routes · 360px</h2>
+      <div class="phone">
+        <h3>Add your readings</h3>
+        <p>Connect a band, or type today's numbers in yourself.</p>
+        <button class="btn btn--primary" type="button">Pair Now</button>
+        <button class="btn btn--secondary" type="button">Enter Manually</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

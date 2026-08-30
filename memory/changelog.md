@@ -5,6 +5,33 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-30 (later still, 3) — Adopted the owner's Button kit. Added
+  `components/button/` (button.css, button.md, button.preview.html) and
+  `docs/Pebble-Button-Spec.pdf` to the repo, and inlined button.css VERBATIM
+  into the pairing flow (inlined, not linked, because the file must open over
+  file://). The flow no longer defines any button CSS of its own.
+  The kit has four tiers, and it re-tiers most of this flow:
+  * "I'll Do It Later" and every "Cancel" are TERTIARY (transparent, no
+    border, text-2, weight 500) — not secondary as I had them. The spec is
+    explicit: a second action that merely declines the primary is tertiary;
+    secondary is only for a genuine parallel route ("Enter Manually",
+    "Scan Code"). This flow has no such route, so it uses no secondary tier.
+  * That also fixes a rule I was breaking: "never stack two teal buttons,
+    exactly one teal element per screen." The pair screen previously had a
+    teal fill above a teal outline.
+  * "Try Again" sits in a bottom sheet, so it takes `.btn--m` (44px), the
+    height the kit provides for dense surfaces.
+  * Classes are BEM (`.btn--primary`), every button carries `type="button"`,
+    and the CTA stack gap is 12px per the spec.
+  CONFLICT, needs an owner decision: the kit's button is 52px tall, but the
+  app's existing CTAs (Start Workout, Measure All, and `--cta-height` in the
+  homepage prototype) are 48px, and the workout flow's secondary uses a 0.5px
+  hairline where the kit uses `--border-thin` (1px). This flow now follows the
+  KIT, so it is 4px taller than Start Workout. Either the kit supersedes those
+  screens and they need updating, or the kit should be reconciled to 48px.
+  Also carried over from the kit's own notes: 52/44 are off the spacing scale,
+  and there is no on-primary colour alias (neutral-900 is used directly).
+
 - 2026-08-30 (later still, 2) — Two owner tweaks to the pairing flow:
   * Button labels are TITLE CASE — "Pair Now", "I'll Do It Later",
     "Try Again" ("Cancel" is unchanged, one word). Flag: the workout flow's

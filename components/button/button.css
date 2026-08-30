@@ -1,0 +1,121 @@
+/**
+ * Pebble — Button
+ *
+ * Requires the design-system token stylesheet to be loaded first.
+ * Consumes only existing tokens; defines none of its own.
+ *
+ * Tokens used
+ *   color.metric.readiness         --metric-readiness
+ *   color.text.text-2              --text-2
+ *   color.semantic.negative.text   --negative-text
+ *   color.neutral.900              --neutral-900
+ *   radius.full                    --radius-full
+ *   borderWidth.thin               --border-thin
+ *   typography.fontFamily.text     --font-text
+ *   typography.fontWeight.*        --weight-medium, --weight-semibold
+ *   typography.letterSpacing.normal --ls-normal
+ *   spacing.24                     inline padding
+ *
+ * Known token gaps (see button.md)
+ *   · 52px / 44px heights are off the spacing scale — no token exists
+ *   · the primary label colour has no on-primary alias; neutral.900 is used directly
+ */
+
+/* ── Base ─────────────────────────────────────────────────────────
+   Geometry is identical across all four tiers. Hierarchy is carried
+   by colour alone — never by size.                                 */
+.btn {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+
+  width: 100%;
+  height: 52px;
+  padding: 0 24px;
+
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  box-shadow: none;
+
+  /* typography.text.paragraph.p1.semibold */
+  font-family: var(--font-text);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--ls-normal);
+
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+
+/* Medium — for dense rows and sheets. Not a demotion. */
+.btn--m {
+  height: 44px;
+}
+
+/* ── Tiers ─────────────────────────────────────────────────────── */
+
+/* Primary — the one action the screen exists for. One per screen. */
+.btn--primary {
+  background: var(--metric-readiness);
+  color: var(--neutral-900);
+}
+
+/* Secondary — a genuine parallel route, not a softer primary. */
+.btn--secondary {
+  background: transparent;
+  border: var(--border-thin) solid var(--metric-readiness);
+  color: var(--metric-readiness);
+}
+
+/* Tertiary — dismiss, skip, defer, cancel. */
+.btn--tertiary {
+  background: transparent;
+  border: none;
+  color: var(--text-2);
+  font-weight: var(--weight-medium);
+}
+
+/* Destructive — tertiary shape, warning label. Never a red fill. */
+.btn--destructive {
+  background: transparent;
+  border: none;
+  color: var(--negative-text);
+  font-weight: var(--weight-medium);
+}
+
+/* ── States ────────────────────────────────────────────────────────
+   Opacity only. No shrink, no glow, no scale, no new colours.
+   Scoped with :not([disabled]) so a disabled button stays flat
+   at .45 instead of compounding on hover.                          */
+.btn--primary:not([disabled]):hover      { opacity: .9; }
+.btn--primary:not([disabled]):active     { opacity: .8; }
+
+.btn--secondary:not([disabled]):hover    { opacity: .75; }
+.btn--secondary:not([disabled]):active   { opacity: .6; }
+
+.btn--tertiary:not([disabled]):hover,
+.btn--destructive:not([disabled]):hover  { opacity: .7; }
+.btn--tertiary:not([disabled]):active,
+.btn--destructive:not([disabled]):active { opacity: .55; }
+
+.btn[disabled] {
+  opacity: .45;
+  cursor: default;
+}
+
+/* Addition beyond the original spec — remove if focus is handled globally. */
+.btn:focus-visible {
+  outline: 2px solid var(--metric-readiness);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn { transition: none; }
+}

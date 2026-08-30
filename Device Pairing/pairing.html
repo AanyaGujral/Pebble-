@@ -54,6 +54,13 @@
   --accent-press:var(--teal-500);
   --on-accent:var(--neutral-900);
 
+  /* consumed by components/button/button.css */
+  --metric-readiness:var(--teal-400);
+  --negative-text:#FF9184;
+  --weight-medium:500;--weight-semibold:600;
+  --ls-normal:0;
+  --border-thin:1px;
+  --radius-full:999px;
   /* CTA + surface metrics, verbatim from the app's token block */
   --cta-height:48px;
   --radius-pill:999px;
@@ -188,30 +195,144 @@ body{
 .head .sub{margin:10px 0 0;font-size:13px;line-height:19px;font-weight:400;color:var(--text-2)}
 
 /* the CTA stack, pinned to the bottom of every screen */
-.ctas{margin-top:auto;padding-top:20px;display:flex;flex-direction:column;gap:10px;flex:0 0 auto}
+.ctas{margin-top:auto;padding-top:20px;display:flex;flex-direction:column;gap:12px;flex:0 0 auto}
 
 /* --------------------------------------------------------------------------
-   BUTTONS — the app's existing CTA pair, copied verbatim from the workout
-   flow (Homepage / start-workout prototype, #wf .btn): 48px full-width
-   pill, label at 15/22 semibold (paragraphP1Semibold) in SENTENCE CASE.
-   Primary = accent fill with a neutral-900 label. Secondary = transparent
-   with an accent hairline and accent text. Start Workout and Measure All are
-   the same button at the same height and radius.
+   BUTTON — components/button/button.css, INLINED VERBATIM (2026-08-30).
+   Do not edit here. Change the component and re-copy; this file must open
+   over file://, so it cannot <link> the stylesheet.
+
+   Tier use in this flow, per components/button/button.md:
+     Pair Now / Try Again    primary    the one action each screen exists for
+     I'll Do It Later        TERTIARY   it declines the primary, so not secondary
+     Cancel                  TERTIARY   leaving/cancelling
+   Nothing here is secondary: that tier is for a genuine parallel route
+   ("Enter Manually", "Scan Code") and this flow has none. Using it for the
+   declines would put two teal elements on one screen, which the spec
+   explicitly rules out.
    -------------------------------------------------------------------------- */
-.btn{
-  width:100%;height:var(--cta-height);
-  border:none;border-radius:var(--radius-full);cursor:pointer;font-family:inherit;
-  font-size:15px;line-height:22px;font-weight:600;
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  transition:background var(--duration-fast) ease;
+/**
+ * Pebble — Button
+ *
+ * Requires the design-system token stylesheet to be loaded first.
+ * Consumes only existing tokens; defines none of its own.
+ *
+ * Tokens used
+ *   color.metric.readiness         --metric-readiness
+ *   color.text.text-2              --text-2
+ *   color.semantic.negative.text   --negative-text
+ *   color.neutral.900              --neutral-900
+ *   radius.full                    --radius-full
+ *   borderWidth.thin               --border-thin
+ *   typography.fontFamily.text     --font-text
+ *   typography.fontWeight.*        --weight-medium, --weight-semibold
+ *   typography.letterSpacing.normal --ls-normal
+ *   spacing.24                     inline padding
+ *
+ * Known token gaps (see button.md)
+ *   · 52px / 44px heights are off the spacing scale — no token exists
+ *   · the primary label colour has no on-primary alias; neutral.900 is used directly
+ */
+
+/* ── Base ─────────────────────────────────────────────────────────
+   Geometry is identical across all four tiers. Hierarchy is carried
+   by colour alone — never by size.                                 */
+.btn {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+
+  width: 100%;
+  height: 52px;
+  padding: 0 24px;
+
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  box-shadow: none;
+
+  /* typography.text.paragraph.p1.semibold */
+  font-family: var(--font-text);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--ls-normal);
+
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 120ms ease;
 }
-.btn-primary{background:var(--accent);color:var(--on-accent)}
-.btn-primary:hover{background:var(--accent-press)}
-.btn-secondary{
-  background:transparent;color:var(--accent);
-  border:var(--border-hairline) solid var(--accent);
+
+/* Medium — for dense rows and sheets. Not a demotion. */
+.btn--m {
+  height: 44px;
 }
-.btn-secondary:hover{background:rgba(69,199,179,.10)}
+
+/* ── Tiers ─────────────────────────────────────────────────────── */
+
+/* Primary — the one action the screen exists for. One per screen. */
+.btn--primary {
+  background: var(--metric-readiness);
+  color: var(--neutral-900);
+}
+
+/* Secondary — a genuine parallel route, not a softer primary. */
+.btn--secondary {
+  background: transparent;
+  border: var(--border-thin) solid var(--metric-readiness);
+  color: var(--metric-readiness);
+}
+
+/* Tertiary — dismiss, skip, defer, cancel. */
+.btn--tertiary {
+  background: transparent;
+  border: none;
+  color: var(--text-2);
+  font-weight: var(--weight-medium);
+}
+
+/* Destructive — tertiary shape, warning label. Never a red fill. */
+.btn--destructive {
+  background: transparent;
+  border: none;
+  color: var(--negative-text);
+  font-weight: var(--weight-medium);
+}
+
+/* ── States ────────────────────────────────────────────────────────
+   Opacity only. No shrink, no glow, no scale, no new colours.
+   Scoped with :not([disabled]) so a disabled button stays flat
+   at .45 instead of compounding on hover.                          */
+.btn--primary:not([disabled]):hover      { opacity: .9; }
+.btn--primary:not([disabled]):active     { opacity: .8; }
+
+.btn--secondary:not([disabled]):hover    { opacity: .75; }
+.btn--secondary:not([disabled]):active   { opacity: .6; }
+
+.btn--tertiary:not([disabled]):hover,
+.btn--destructive:not([disabled]):hover  { opacity: .7; }
+.btn--tertiary:not([disabled]):active,
+.btn--destructive:not([disabled]):active { opacity: .55; }
+
+.btn[disabled] {
+  opacity: .45;
+  cursor: default;
+}
+
+/* Addition beyond the original spec — remove if focus is handled globally. */
+.btn:focus-visible {
+  outline: 2px solid var(--metric-readiness);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn { transition: none; }
+}
+
 
 /* --------------------------------------------------------------------------
    RING SET — the concentric filled circles with the Pebble mark in the middle.
@@ -432,8 +553,8 @@ body{
       </div>
 
       <div class="ctas">
-        <button class="btn btn-primary" data-go="search">Pair Now</button>
-        <button class="btn btn-secondary" data-later>I’ll Do It Later</button>
+        <button class="btn btn--primary" type="button" data-go="search">Pair Now</button>
+        <button class="btn btn--tertiary" type="button" data-later>I’ll Do It Later</button>
       </div>
     </section>
 
@@ -454,7 +575,7 @@ body{
       </div>
 
       <div class="ctas">
-        <button class="btn btn-secondary" data-go="pair">Cancel</button>
+        <button class="btn btn--tertiary" type="button" data-go="pair">Cancel</button>
       </div>
     </section>
 
@@ -476,7 +597,7 @@ body{
       <div class="dev-list" style="margin-top:22px" id="devList"></div>
 
       <div class="ctas">
-        <button class="btn btn-secondary" data-go="pair">Cancel</button>
+        <button class="btn btn--tertiary" type="button" data-go="pair">Cancel</button>
       </div>
     </section>
 
@@ -498,7 +619,7 @@ body{
       </div>
 
       <div class="ctas">
-        <button class="btn btn-secondary" data-go="pair">Cancel</button>
+        <button class="btn btn--tertiary" type="button" data-go="pair">Cancel</button>
       </div>
     </section>
 
@@ -531,7 +652,7 @@ body{
         <button class="iconbtn" data-sheetclose aria-label="Close"><span class="phi" data-ph="x"></span></button>
       </div>
       <div class="tips" data-tips></div>
-      <button class="btn btn-primary" data-retry>Try Again</button>
+      <button class="btn btn--primary btn--m" type="button" data-retry>Try Again</button>
     </div>
 
     <div class="toast" id="toast" hidden></div>
