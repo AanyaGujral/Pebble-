@@ -226,19 +226,27 @@ body{
   transform:translate(-50%,-50%);
 }
 /* static fills — lighter toward the centre, like the reference */
-.rings .r1{width:100%;height:100%;background:color-mix(in srgb, var(--accent) 5%, transparent);box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--accent) 14%, transparent)}
-.rings .r2{width:76%;height:76%;background:color-mix(in srgb, var(--accent) 7%, transparent);box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--accent) 16%, transparent)}
-.rings .r3{width:53%;height:53%;background:color-mix(in srgb, var(--accent) 9%, transparent);box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--accent) 18%, transparent)}
+/* Static screens (pair, devices found) draw the rings as FILLS ONLY —
+   no hairline (owner, 2026-08-30). The stroke comes back on the two
+   animated screens below, where it gives the travelling waves a defined
+   edge to read against. */
+.rings .r1{width:100%;height:100%;background:color-mix(in srgb, var(--accent) 5%, transparent)}
+.rings .r2{width:76%;height:76%;background:color-mix(in srgb, var(--accent) 7%, transparent)}
+.rings .r3{width:53%;height:53%;background:color-mix(in srgb, var(--accent) 9%, transparent)}
 .rings .core{
   width:35%;height:35%;
   background:color-mix(in srgb, var(--accent) 14%, var(--surface-app));
-  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent);
   display:flex;align-items:center;justify-content:center;color:var(--accent);
 }
 .rings .core svg{width:52%;height:52%;display:block}
 /* travelling waves — base state is invisible, so under reduced motion (where
    animations are killed) only the static rings remain and nothing is stuck
    mid-flight. */
+/* hairlines belong to the animated states only */
+.rings.searching .r1,.rings.linking .r1{box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--accent) 14%, transparent)}
+.rings.searching .r2,.rings.linking .r2{box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--accent) 16%, transparent)}
+.rings.searching .r3,.rings.linking .r3{box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--accent) 18%, transparent)}
+.rings.searching .core,.rings.linking .core{box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent)}
 .rings .wave{
   width:100%;height:100%;opacity:0;
   box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent);
@@ -424,8 +432,8 @@ body{
       </div>
 
       <div class="ctas">
-        <button class="btn btn-primary" data-go="search">Pair now</button>
-        <button class="btn btn-secondary" data-later>I’ll do it later</button>
+        <button class="btn btn-primary" data-go="search">Pair Now</button>
+        <button class="btn btn-secondary" data-later>I’ll Do It Later</button>
       </div>
     </section>
 
@@ -523,7 +531,7 @@ body{
         <button class="iconbtn" data-sheetclose aria-label="Close"><span class="phi" data-ph="x"></span></button>
       </div>
       <div class="tips" data-tips></div>
-      <button class="btn btn-primary" data-retry>Try again</button>
+      <button class="btn btn-primary" data-retry>Try Again</button>
     </div>
 
     <div class="toast" id="toast" hidden></div>

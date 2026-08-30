@@ -5,6 +5,18 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-30 (later still, 2) — Two owner tweaks to the pairing flow:
+  * Button labels are TITLE CASE — "Pair Now", "I'll Do It Later",
+    "Try Again" ("Cancel" is unchanged, one word). Flag: the workout flow's
+    own labels ("End & Save", "Discard") are ambiguous between title and
+    sentence case, so this does not contradict it, but if the system settles
+    on sentence case later this is the one place to change.
+  * Concentric rings lose their hairline stroke on the STATIC screens (pair,
+    devices found) and are fills only. The stroke stays on the two animated
+    screens (searching, connecting), where it gives the travelling waves a
+    defined edge to read against. The centre disc follows the same rule, so
+    each state is either fully strokeless or fully stroked rather than mixed.
+
 - 2026-08-30 (later still) — Real Pebble mark dropped into the pairing flow.
   The owner said they had added "pebble logo.svg" to the repo; it is not on
   any branch (nothing named *logo* exists anywhere), so that upload did not
