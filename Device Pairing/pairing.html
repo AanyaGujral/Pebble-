@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pebble — device pairing flow</title>
+
+<!--
+  DEVICE PAIRING FLOW — standalone prototype (2026-08-30).
+
+  Recreates the supplied light-theme pairing sheet in the app's CURRENT dark
+  design language (see js/tokens.js). Five screens plus one bottom sheet:
+
+    1. pair        Let's connect your device  → PAIR NOW / I'LL DO IT LATER
+    2. searching   pulsing concentric rings, Pebble mark in the middle
+    3. found       the same rings, settled + the list of devices in range
+    4. connecting  rings + rising chevrons, "Connecting to ..."
+    5. success     check mark, "Connection successful!"
+    +  not-found   bottom sheet over searching: the setup tips + TRY AGAIN
+
+  Flag (owner, 2026-08-30): the reference sheet shows a watch illustration on
+  the pair and connecting screens. The owner asked for a GENERIC flow covering
+  many devices, so all device imagery is dropped — the Pebble mark inside the
+  ring set carries those moments instead, and the rings do the talking.
+
+  Opens by double-clicking. No server, no build step.
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,400..700&family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ==========================================================================
+   1. TOKENS
+   --------------------------------------------------------------------------
+   Flag: copied VERBATIM from js/tokens.js (the single source of truth). They
+   are inlined because the page must open from file://, where ES-module
+   imports are blocked. Same approach as index.html. Re-copy if tokens change.
+   ========================================================================== */
+:root{
+  /* neutrals — 0 lightest → 900 darkest */
+  --neutral-0:#EFF1F9;--neutral-100:#D5D9EA;--neutral-200:#B8BDD3;--neutral-300:#999FB9;--neutral-400:#7B819C;
+  --neutral-500:#5E637D;--neutral-600:#42465B;--neutral-700:#282B39;--neutral-800:#0F111B;--neutral-900:#07080C;
+
+  /* teal ramp — the hue the brand accent is cut from */
+  --teal-0:#E4F9F4;--teal-100:#C1EDE4;--teal-200:#9EE0D3;--teal-300:#76D4C3;--teal-400:#45C7B3;
+  --teal-500:#31A492;--teal-600:#1D8173;--teal-700:#076155;--teal-800:#004239;--teal-900:#00261F;
+
+  /* brand accent — NEW in js/tokens.js (export const brand), added for this
+     flow. Buttons and connection states only, never chart data. */
+  --brand-accent:#45C7B3;
+  --brand-accent-pressed:#31A492;
+  --brand-accent-soft:#004239;
+  --brand-on-accent:#00261F;
+
+  /* metric aliases — used here only for the success confetti */
+  --metric-heart-rate:#E43A62;--metric-hrv:#D96F4A;--metric-calories:#F59E3B;
+  --metric-steps:#F2C64B;--metric-activity:#A6CE4E;--metric-distance:#43B476;
+  --metric-readiness:#45C7B3;--metric-sleep:#8A7CEC;--metric-skin-temp:#C873DE;
+
+  /* surfaces — elevation is lightness, never shadow */
+  --surface-app:var(--neutral-900);
+  --surface-card:var(--neutral-800);
+  --surface-raised:var(--neutral-700);
+
+  /* text */
+  --text-1:var(--neutral-0);
+  --text-2:var(--neutral-200);
+  --text-3:var(--neutral-400);
+
+  /* semantic caution quad — the dark-theme stand-in for the reference's
+     pale-yellow "how to make your device discoverable" card */
+  --caution-bg:#2E2103;--caution-fill:#6B4E0E;--caution-icon:#EFB428;--caution-text:#F5CE6F;
+
+  /* type — Google Sans Flex for words, League Spartan for every numeral */
+  --font-text:'Google Sans Flex','Google Sans',sans-serif;
+  --font-number:'Spartan','League Spartan',sans-serif;
+  --num-features:'tnum' 1,'lnum' 1;
+
+  /* radii + motion */
+  --radius-card:20px;
+  --duration-fast:120ms;
+  --duration-base:140ms;
+  --duration-slow:240ms;
+}
+
+/* ==========================================================================
+   2. PAGE SCAFFOLD — the desk the phone sits on, plus the flow panel
+   ========================================================================== */
+:root{color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-height:100vh;background:var(--neutral-900);color:var(--text-1);
+  font-family:var(--font-text);
+  display:flex;align-items:flex-start;justify-content:center;
+  gap:32px;padding:32px 16px;flex-wrap:wrap;
+}
+
+/* Panel beside the phone — jumps between stages and decides what the search
+   finds. Same idea as the control panel in index.html. */
+.panel{
+  position:sticky;top:32px;width:230px;
+  background:var(--surface-card);border:0.5px solid var(--neutral-700);
+  border-radius:var(--radius-card);padding:16px;
+}
+.panel h2{margin:0;font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.panel .hint{margin:8px 0 12px;font-size:11px;line-height:16px;color:var(--text-3)}
+.panel .opts{display:flex;flex-direction:column;gap:4px}
+.panel label{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;
+  cursor:pointer;font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);
+}
+.panel label:hover{background:var(--surface-raised)}
+.panel input{accent-color:var(--brand-accent);margin:0}
+.panel .sep{height:0.5px;background:var(--neutral-700);margin:14px 0}
+.panel .jump{
+  width:100%;text-align:left;background:none;border:0;border-radius:12px;
+  padding:9px 10px;cursor:pointer;font-family:inherit;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);
+}
+.panel .jump:hover{background:var(--surface-raised)}
+.panel .jump[aria-current="true"]{background:var(--surface-raised);color:var(--text-1)}
+
+/* ==========================================================================
+   3. PHONE MOCKUP — matches index.html: 360px screen, punch-hole camera
+   ========================================================================== */
+.phone{
+  flex:0 0 auto;border-radius:40px;background:var(--neutral-900);
+  border:2px solid var(--neutral-700);outline:6px solid var(--neutral-800);padding:10px;
+}
+.screen{
+  position:relative;width:360px;height:780px;
+  border-radius:32px;overflow:hidden;background:var(--surface-app);
+}
+.screen::before{ /* punch-hole selfie camera */
+  content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:12px;height:12px;border-radius:50%;
+  background:var(--neutral-900);border:2px solid var(--neutral-700);
+  z-index:60;pointer-events:none;
+}
+.statusbar{
+  position:absolute;top:0;left:0;right:0;height:32px;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-1);pointer-events:none;
+}
+.statusbar .batt{width:20px;height:10px;border-radius:3px;border:1px solid var(--text-2);padding:1px}
+.statusbar .batt i{display:block;width:12px;height:100%;border-radius:2px;background:var(--text-1)}
+.statusbar .right{display:flex;align-items:center;gap:6px;color:var(--text-2)}
+.gesture{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:112px;height:4px;border-radius:999px;background:var(--neutral-600);
+  z-index:60;pointer-events:none;
+}
+
+/* Phosphor icons — injected by JS into .phi placeholders (as in index.html) */
+.phi{display:inline-flex;flex:0 0 auto}
+.phi svg{width:100%;height:100%;display:block;fill:currentColor}
+
+/* ==========================================================================
+   4. SCREENS — one .view per stage, only one visible at a time
+   ========================================================================== */
+.view{
+  position:absolute;inset:0;z-index:10;
+  display:flex;flex-direction:column;
+  padding:40px 24px 28px;
+}
+.view[hidden]{display:none}
+
+/* back chevron, top-left (searching / found / connecting) */
+.topbar{height:40px;margin:0 -12px 0;display:flex;align-items:center;flex:0 0 auto}
+.backbtn{
+  width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  background:none;border:0;cursor:pointer;border-radius:999px;color:var(--text-1);
+}
+.backbtn:hover{background:var(--surface-raised)}
+
+/* headline block */
+.head{text-align:center;flex:0 0 auto}
+.head .eyebrow{margin:0 0 6px;font-size:13px;line-height:18px;font-weight:500;color:var(--text-3)}
+.head .t{margin:0;font-size:26px;line-height:32px;font-weight:500;letter-spacing:-0.01em;color:var(--text-1)}
+.head .t.sm{font-size:22px;line-height:28px}
+.head .sub{margin:10px 0 0;font-size:13px;line-height:19px;font-weight:400;color:var(--text-2)}
+
+/* the CTA stack, pinned to the bottom of every screen */
+.ctas{margin-top:auto;padding-top:20px;display:flex;flex-direction:column;gap:10px;flex:0 0 auto}
+
+/* --------------------------------------------------------------------------
+   BUTTONS — this repo had no primary/secondary CTA pattern before now, so
+   this pair is the definition. Primary = solid brand accent (the reference
+   sheet's PAIR NOW). Secondary = hairline outline, no fill (I'LL DO IT LATER,
+   CANCEL). Uppercase + 0.08em tracking matches both the reference sheet and
+   the small-label convention already used across index.html.
+   -------------------------------------------------------------------------- */
+.btn{
+  width:100%;height:52px;border:0;border-radius:16px;cursor:pointer;
+  font-family:inherit;font-size:13px;line-height:18px;font-weight:600;
+  letter-spacing:0.08em;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;
+  transition:background var(--duration-base) ease, color var(--duration-base) ease;
+}
+.btn-primary{background:var(--brand-accent);color:var(--brand-on-accent)}
+.btn-primary:hover{background:var(--brand-accent-pressed)}
+.btn-secondary{background:transparent;color:var(--text-1);box-shadow:inset 0 0 0 1px var(--neutral-600)}
+.btn-secondary:hover{background:var(--surface-card)}
+
+/* --------------------------------------------------------------------------
+   RING SET — the concentric filled circles with the Pebble mark in the middle.
+   Two layers: STATIC rings that are always there (the look from the mockup),
+   and PULSE waves that travel outward (the searching motion). --d sizes the
+   whole thing so one component serves every screen.
+   -------------------------------------------------------------------------- */
+.rings{--d:268px;position:relative;width:var(--d);height:var(--d);margin:0 auto;flex:0 0 auto}
+.rings.sm{--d:176px}
+.rings .r,.rings .wave,.rings .core{
+  position:absolute;left:50%;top:50%;border-radius:50%;
+  transform:translate(-50%,-50%);
+}
+/* static fills — lighter toward the centre, like the reference */
+.rings .r1{width:100%;height:100%;background:color-mix(in srgb, var(--brand-accent) 5%, transparent);box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--brand-accent) 14%, transparent)}
+.rings .r2{width:76%;height:76%;background:color-mix(in srgb, var(--brand-accent) 7%, transparent);box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--brand-accent) 16%, transparent)}
+.rings .r3{width:53%;height:53%;background:color-mix(in srgb, var(--brand-accent) 9%, transparent);box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--brand-accent) 18%, transparent)}
+.rings .core{
+  width:35%;height:35%;
+  background:color-mix(in srgb, var(--brand-accent) 14%, var(--surface-app));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--brand-accent) 26%, transparent);
+  display:flex;align-items:center;justify-content:center;color:var(--brand-accent);
+}
+.rings .core svg{width:52%;height:52%;display:block}
+/* travelling waves — base state is invisible, so under reduced motion (where
+   animations are killed) only the static rings remain and nothing is stuck
+   mid-flight. */
+.rings .wave{
+  width:100%;height:100%;opacity:0;
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--brand-accent) 55%, transparent);
+}
+.rings.searching .wave{animation:wave 3s cubic-bezier(.25,.6,.35,1) infinite}
+.rings.searching .wave:nth-child(2){animation-delay:1s}
+.rings.searching .wave:nth-child(3){animation-delay:2s}
+@keyframes wave{
+  0%  {transform:translate(-50%,-50%) scale(0.34);opacity:0}
+  14% {opacity:0.5}
+  100%{transform:translate(-50%,-50%) scale(1);opacity:0}
+}
+/* connecting: the whole set breathes gently instead of firing waves */
+.rings.linking .core{animation:breathe 1.8s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.06)}}
+
+/* rising chevrons under the rings on the connecting screen */
+.chevrons{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:18px;flex:0 0 auto}
+.chevrons span{width:22px;height:12px;color:var(--brand-accent);opacity:0.45}
+.chevrons span svg{width:100%;height:100%;display:block}
+.chevrons span{animation:rise 1.5s ease-in-out infinite}
+.chevrons span:nth-child(2){animation-delay:0.18s}
+.chevrons span:nth-child(3){animation-delay:0.36s}
+@keyframes rise{0%,100%{opacity:0.2;transform:translateY(3px)}50%{opacity:1;transform:translateY(-3px)}}
+
+/* --------------------------------------------------------------------------
+   TIPS CARD — the numbered "make your device discoverable" instructions.
+   Appears on the pair screen AND inside the not-found sheet (same markup).
+   -------------------------------------------------------------------------- */
+.tips{
+  /* Flag: the reference sheet uses a solid pale-yellow panel. At full strength
+     the dark-theme equivalent (--caution-bg) reads as a warning slab, which is
+     wrong for setup help — so the caution hue is cut with the card surface to
+     a warm tint and the copy sits in ordinary body colour. Only the numerals
+     keep the full caution icon colour. */
+  background:color-mix(in srgb, var(--caution-bg) 55%, var(--surface-card));
+  border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:11px;
+}
+.tip{display:flex;gap:12px;align-items:flex-start}
+.tip .n{
+  font-family:var(--font-number);font-size:12px;line-height:18px;font-weight:600;
+  font-feature-settings:var(--num-features);color:var(--caution-icon);flex:0 0 auto;width:10px;
+}
+.tip .x{font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
+/* inside the sheet the card sits on --surface-card, so it lifts one step */
+.sheet .tips{background:color-mix(in srgb, var(--caution-bg) 55%, var(--surface-raised))}
+
+/* --------------------------------------------------------------------------
+   DEVICE LIST — shown when the search turns up more than one device.
+   -------------------------------------------------------------------------- */
+.dev-list{display:flex;flex-direction:column;gap:8px;flex:0 0 auto}
+.dev-row{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  background:var(--surface-card);border:0;border-radius:16px;padding:15px 16px;
+  cursor:pointer;font-family:inherit;
+  transition:background var(--duration-base) ease;
+}
+.dev-row:hover{background:var(--surface-raised)}
+.dev-row .nm{flex:1;font-size:15px;line-height:20px;font-weight:500;color:var(--text-1)}
+.dev-row .phi{width:18px;height:18px;color:var(--text-3)}
+
+/* --------------------------------------------------------------------------
+   SUCCESS — check in a brand disc, with confetti in the metric hues.
+   -------------------------------------------------------------------------- */
+.win{position:relative;flex:0 0 auto;height:300px;display:flex;align-items:center;justify-content:center}
+.win .disc{
+  position:relative;z-index:2;width:132px;height:132px;border-radius:50%;
+  background:var(--brand-accent);color:var(--brand-on-accent);
+  display:flex;align-items:center;justify-content:center;
+  animation:pop var(--duration-slow) cubic-bezier(.2,1.3,.4,1) 1;
+}
+.win .disc::before{ /* soft halo behind the disc */
+  content:"";position:absolute;inset:-34px;border-radius:50%;z-index:-1;
+  background:color-mix(in srgb, var(--brand-accent) 9%, transparent);
+}
+.win .disc svg{width:56px;height:56px;display:block;fill:currentColor}
+@keyframes pop{0%{transform:scale(0.72)}100%{transform:scale(1)}}
+/* confetti: base state is its resting position, so reduced motion just
+   freezes a scattered, still composition rather than hiding anything */
+.win i{position:absolute;display:block;border-radius:2px;opacity:0.9;animation:drift 3.4s ease-in-out infinite}
+@keyframes drift{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-9px) rotate(14deg)}}
+
+/* toast — the "I'll do it later" acknowledgement */
+.toast{
+  position:absolute;left:24px;right:24px;bottom:96px;z-index:80;
+  background:var(--surface-raised);border-radius:14px;padding:12px 14px;
+  font-size:13px;line-height:18px;color:var(--text-1);
+  transition:opacity var(--duration-slow) ease;
+}
+.toast[hidden]{display:none}
+
+/* --------------------------------------------------------------------------
+   NOT-FOUND BOTTOM SHEET — slides up over a dimmed searching screen. Reuses
+   the .scrim + .sheet geometry already established in index.html.
+   -------------------------------------------------------------------------- */
+.scrim{position:absolute;inset:0;z-index:69;background:color-mix(in srgb, var(--neutral-900) 62%, transparent)}
+.scrim[hidden]{display:none}
+.sheet{
+  position:absolute;left:8px;right:8px;bottom:18px;z-index:70;
+  background:var(--surface-card);border-radius:24px;padding:16px 16px 24px;
+  animation:sheet-in var(--duration-slow) cubic-bezier(.2,.8,.3,1) 1;
+}
+.sheet[hidden]{display:none}
+@keyframes sheet-in{from{transform:translateY(28px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.sheet-head .t{margin:0;font-size:19px;line-height:25px;font-weight:500;color:var(--text-1)}
+.sheet-head .s{margin:6px 0 0;font-size:13px;line-height:18px;color:var(--text-2)}
+.iconbtn{
+  width:32px;height:32px;flex:0 0 auto;margin:-2px -4px 0 0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--surface-raised);border:0;border-radius:999px;cursor:pointer;color:var(--text-2);
+}
+.iconbtn:hover{color:var(--text-1)}
+.iconbtn .phi{width:14px;height:14px}
+.sheet .tips{margin-top:16px}
+.sheet .btn{margin-top:16px}
+
+/* ==========================================================================
+   5. MOTION SAFETY — hard gate: everything stops under reduced motion.
+      Every animated element above is authored so its BASE state is the
+      correct still frame, so nothing disappears or freezes mid-flight.
+   ========================================================================== */
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+
+<!-- ======================= FLOW PANEL ======================= -->
+<aside class="panel" aria-label="Prototype controls">
+  <h2>Search result</h2>
+  <p class="hint">What PAIR NOW should turn up.</p>
+  <div class="opts">
+    <label><input type="radio" name="outcome" value="many" checked> Multiple devices</label>
+    <label><input type="radio" name="outcome" value="one"> One device (auto-connect)</label>
+    <label><input type="radio" name="outcome" value="none"> Nothing found</label>
+  </div>
+  <div class="sep"></div>
+  <h2>Jump to stage</h2>
+  <p class="hint">Skips the waiting.</p>
+  <div class="opts">
+    <button class="jump" data-jump="pair">1 &nbsp;Pair</button>
+    <button class="jump" data-jump="searching">2 &nbsp;Searching</button>
+    <button class="jump" data-jump="found">3 &nbsp;Devices found</button>
+    <button class="jump" data-jump="connecting">4 &nbsp;Connecting</button>
+    <button class="jump" data-jump="success">5 &nbsp;Success</button>
+    <button class="jump" data-jump="notfound">+ &nbsp;Not found sheet</button>
+  </div>
+</aside>
+
+<!-- ======================= PHONE ======================= -->
+<div class="phone">
+  <div class="screen" id="screen">
+
+    <div class="statusbar">
+      <span>12:30</span>
+      <span class="right">
+        <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M1 11h2V8H1v3Zm4 0h2V5H5v6Zm4 0h2V2H9v9Z" fill="currentColor"/></svg>
+        <span class="batt"><i></i></span>
+      </span>
+    </div>
+
+    <!-- ---------- 1. PAIR ---------- -->
+    <section class="view" data-view="pair">
+      <div class="topbar"></div>
+
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+        <!-- No device illustration by design (owner, 2026-08-30) — the ring set
+             with the Pebble mark stands in for it and works for any device. -->
+        <div class="rings sm">
+          <div class="r r1"></div><div class="r r2"></div><div class="r r3"></div>
+          <div class="core" data-mark></div>
+        </div>
+
+        <div class="head" style="margin-top:30px">
+          <p class="eyebrow">Hey Aanya!</p>
+          <h1 class="t">Let’s connect<br>your device</h1>
+        </div>
+
+        <div class="tips" style="margin-top:28px" data-tips></div>
+      </div>
+
+      <div class="ctas">
+        <button class="btn btn-primary" data-go="search">Pair now</button>
+        <button class="btn btn-secondary" data-later>I’ll do it later</button>
+      </div>
+    </section>
+
+    <!-- ---------- 2. SEARCHING ---------- -->
+    <section class="view" data-view="searching" hidden>
+      <div class="topbar"><button class="backbtn" data-go="pair" aria-label="Back"><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button></div>
+
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+        <div class="rings searching">
+          <div class="wave"></div><div class="wave"></div><div class="wave"></div>
+          <div class="r r1"></div><div class="r r2"></div><div class="r r3"></div>
+          <div class="core" data-mark></div>
+        </div>
+        <div class="head" style="margin-top:44px">
+          <h1 class="t">Searching…</h1>
+          <p class="sub">Ensure your Pebble device is in pairing mode and<br>your phone’s Bluetooth is turned on</p>
+        </div>
+      </div>
+
+      <div class="ctas">
+        <button class="btn btn-secondary" data-go="pair">Cancel</button>
+      </div>
+    </section>
+
+    <!-- ---------- 3. DEVICES FOUND ---------- -->
+    <section class="view" data-view="found" hidden>
+      <div class="topbar"><button class="backbtn" data-go="pair" aria-label="Back"><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button></div>
+
+      <!-- rings settle: static fills stay, the waves stop travelling -->
+      <div class="rings sm" style="margin-top:4px">
+        <div class="r r1"></div><div class="r r2"></div><div class="r r3"></div>
+        <div class="core" data-mark></div>
+      </div>
+
+      <div class="head" style="margin-top:24px">
+        <h1 class="t sm">Multiple devices found</h1>
+        <p class="sub">Pick the device you’d like to pair with</p>
+      </div>
+
+      <div class="dev-list" style="margin-top:22px" id="devList"></div>
+
+      <div class="ctas">
+        <button class="btn btn-secondary" data-go="pair">Cancel</button>
+      </div>
+    </section>
+
+    <!-- ---------- 4. CONNECTING ---------- -->
+    <section class="view" data-view="connecting" hidden>
+      <div class="topbar"><button class="backbtn" data-go="pair" aria-label="Back"><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button></div>
+
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center">
+        <div class="rings linking">
+          <div class="r r1"></div><div class="r r2"></div><div class="r r3"></div>
+          <div class="core" data-mark></div>
+        </div>
+        <!-- the reference's rising chevrons, kept as the "handshake" cue -->
+        <div class="chevrons" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="head" style="margin-top:26px">
+          <h1 class="t sm">Connecting to<br><span id="connName">Pebble Prime</span>…</h1>
+          <p class="sub">Keep your phone and device close to each other</p>
+        </div>
+      </div>
+
+      <div class="ctas">
+        <button class="btn btn-secondary" data-go="pair">Cancel</button>
+      </div>
+    </section>
+
+    <!-- ---------- 5. SUCCESS ---------- -->
+    <section class="view" data-view="success" hidden>
+      <div class="topbar"></div>
+
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+        <div class="win" id="win">
+          <div class="disc"><span class="phi" data-ph="check" style="width:56px;height:56px"></span></div>
+        </div>
+        <div class="head" style="margin-top:6px">
+          <h1 class="t sm">Connection successful!</h1>
+          <p class="sub">Hold tight — we’re preparing your<br>fitness dashboard…</p>
+        </div>
+      </div>
+
+      <!-- No CTA here, matching the reference: the app moves on by itself. -->
+      <div class="ctas"></div>
+    </section>
+
+    <!-- ---------- NOT-FOUND BOTTOM SHEET ---------- -->
+    <div class="scrim" data-sheetclose hidden></div>
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+      <div class="sheet-head">
+        <div>
+          <h2 class="t" id="sheetTitle">No device found</h2>
+          <p class="s">Run through these, then search again.</p>
+        </div>
+        <button class="iconbtn" data-sheetclose aria-label="Close"><span class="phi" data-ph="x"></span></button>
+      </div>
+      <div class="tips" data-tips></div>
+      <button class="btn btn-primary" data-retry>Try again</button>
+    </div>
+
+    <div class="toast" id="toast" hidden></div>
+    <div class="gesture"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+
+/* ==========================================================================
+   ICONS — Phosphor path data, copied verbatim from @phosphor-icons/core
+   (256×256 viewBox) and injected into .phi spans. Same helper as index.html.
+   ========================================================================== */
+const PH = {
+  'caret-left':"M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z",
+  'caret-right':"M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z",
+  'x':"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z",
+  'check':"M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"
+};
+function injectIcons(){
+  $$('.phi').forEach(el => {
+    if (el.dataset.done || !PH[el.dataset.ph]) return;
+    el.innerHTML = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="'+PH[el.dataset.ph]+'"/></svg>';
+    el.dataset.done = '1';
+  });
+}
+
+/* The Pebble mark, drawn as one stroked path so it stays crisp at every size.
+   Flag: this is a code-drawn interpretation of the logo in the reference
+   image — swap in the real asset when the owner supplies the SVG. */
+const MARK = '<svg viewBox="0 0 70 70" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">'
+  + '<path d="M39 11a17 17 0 1 1 0 34a17 17 0 1 1 0-34'          /* the bowl */
+  +           'M22 28v18c0 7-3 12-8 12-3.5 0-4.5-3.5-2-5.5"/>'    /* stem + curl */
+  + '</svg>';
+$$('[data-mark]').forEach(el => { el.innerHTML = MARK; });
+
+/* Setup tips — one list, rendered into both the pair screen and the sheet, so
+   the wording can never drift between the two places it appears. */
+const TIPS = [
+  'Turn your phone’s Bluetooth on',
+  'Make sure your Pebble device is switched on',
+  'Keep your device and phone close to each other'
+];
+$$('[data-tips]').forEach(box => {
+  box.innerHTML = TIPS.map((t,i) =>
+    '<div class="tip"><span class="n">'+(i+1)+'</span><span class="x">'+t+'</span></div>'
+  ).join('');
+});
+
+/* Chevrons on the connecting screen */
+$$('.chevrons span').forEach(s => {
+  s.innerHTML = '<svg viewBox="0 0 24 14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 11L12 3l10 8"/></svg>';
+});
+
+/* Confetti on the success screen — positions are fixed (not random) so the
+   composition is the same every time, and the metric hues are the only place
+   this flow uses them. */
+const CONFETTI = [
+  [ 14,  22, 10, 3, -18, 'sleep'],      [ 52,   6,  6, 6,  12, 'calories'],
+  [ 96,  40, 12, 3,  28, 'distance'],   [ 12,  96,  5, 5,  22, 'activity'],
+  [ 14, 170,  9, 3, -30, 'hrv'],        [ 30, 238,  8, 3,  40, 'steps'],
+  [ 76, 272,  6, 6, -10, 'heart-rate'], [150, 290, 10, 3,  16, 'sleep'],
+  [232, 262,  7, 3,  36, 'calories'],   [282, 196, 12, 3, -22, 'skin-temp'],
+  [296, 110,  6, 6, -14, 'steps'],      [262,  26,  9, 3,  24, 'distance'],
+  [198,   4,  5, 5,  32, 'activity']
+];
+$('#win').insertAdjacentHTML('beforeend', CONFETTI.map(([x,y,w,h,rot,hue], i) =>
+  '<i style="left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;'
+  + 'background:var(--metric-'+hue+');transform:rotate('+rot+'deg);'
+  + 'animation-delay:'+(i*0.18).toFixed(2)+'s"></i>'
+).join(''));
+
+/* Devices the search "finds" */
+const DEVICES = ['Pebble Prime', 'Pebble Venus', 'Pebble Cosmos', 'Pebble Spark'];
+$('#devList').innerHTML = DEVICES.map(d =>
+  '<button class="dev-row" type="button" data-device="'+d+'">'
+  + '<span class="nm">'+d+'</span>'
+  + '<span class="phi" data-ph="caret-right"></span></button>'
+).join('');
+
+injectIcons();
+
+/* ==========================================================================
+   FLOW — one timer at a time, always cleared before the next stage starts so
+   a stray timer can never yank you off a screen you navigated to by hand.
+   ========================================================================== */
+const SEARCH_MS  = 3200;   // how long "Searching…" runs before it resolves
+const CONNECT_MS = 2600;   // how long the handshake takes
+
+let timer = null;
+const clear = () => { clearTimeout(timer); timer = null; };
+const outcome = () => $('input[name="outcome"]:checked').value;
+
+function closeSheet(){
+  $('#sheet').hidden = true;
+  $('.scrim').hidden = true;
+}
+
+function show(name){
+  clear();
+  closeSheet();
+  $('#toast').hidden = true;
+  $$('.view').forEach(v => { v.hidden = v.dataset.view !== name; });
+  $$('.jump').forEach(b => b.setAttribute('aria-current', String(b.dataset.jump === name)));
+}
+
+function openSheet(){
+  show('searching');                 // the sheet always sits over searching
+  $('.scrim').hidden = false;
+  $('#sheet').hidden = false;
+  $$('.jump').forEach(b => b.setAttribute('aria-current', String(b.dataset.jump === 'notfound')));
+}
+
+function search(){
+  show('searching');
+  timer = setTimeout(() => {
+    const o = outcome();
+    if (o === 'none')     openSheet();
+    else if (o === 'one') connect(DEVICES[0]);   // a lone device needs no list
+    else                  show('found');
+  }, SEARCH_MS);
+}
+
+function connect(name){
+  show('connecting');
+  $('#connName').textContent = name;
+  timer = setTimeout(() => show('success'), CONNECT_MS);
+}
+
+/* wiring */
+$$('[data-go]').forEach(b => b.addEventListener('click', () => {
+  b.dataset.go === 'search' ? search() : show(b.dataset.go);
+}));
+$$('[data-sheetclose]').forEach(b => b.addEventListener('click', () => show('pair')));
+$('[data-retry]').addEventListener('click', search);
+$$('.dev-row').forEach(b => b.addEventListener('click', () => connect(b.dataset.device)));
+
+/* "I'll do it later" — in the real app this exits onboarding into the
+   dashboard. There is no dashboard in this standalone file, so it just
+   acknowledges the choice. Flagged so it isn't mistaken for a dead button. */
+$('[data-later]').addEventListener('click', () => {
+  const t = $('#toast');
+  t.textContent = 'Skipped — you can pair any time from the Me tab.';
+  t.hidden = false;
+  clear();
+  timer = setTimeout(() => { t.hidden = true; }, 2600);
+});
+
+/* panel jumps */
+$$('.jump').forEach(b => b.addEventListener('click', () => {
+  const j = b.dataset.jump;
+  if (j === 'notfound') openSheet();
+  else if (j === 'connecting') connect(DEVICES[0]);
+  else show(j);
+}));
+
+show('pair');
+</script>
+</body>
+</html>

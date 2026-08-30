@@ -5,6 +5,39 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-30 — Built the device-pairing flow as a standalone prototype at
+  `Device Pairing/pairing.html`, recreating the owner's light-theme reference
+  sheet in the app's current dark language. Five stages — Pair, Searching,
+  Devices found, Connecting, Success — plus a "no device found" bottom sheet
+  carrying the setup tips and a TRY AGAIN primary CTA. A panel beside the
+  phone jumps between stages and picks what the search turns up (multiple /
+  one / nothing), so every state is reachable without waiting.
+  Decisions, all flagged in code comments too:
+  * Added `export const brand` to `js/tokens.js` (accent / accentPressed /
+    accentSoft / onAccent). The flow needed a primary-button fill and no such
+    token existed. Teal already appears as `metric.readiness`, but that alias
+    means "the readiness body signal" — reusing it for a button would say the
+    wrong thing, so the brand accent got its own name despite matching hex.
+  * This repo had no primary/secondary CTA pattern, so this pair defines it:
+    primary = solid brand accent (PAIR NOW, TRY AGAIN), secondary = hairline
+    outline with no fill (I'LL DO IT LATER, CANCEL). Uppercase + 0.08em
+    tracking matches both the reference and index.html's small-label idiom.
+  * No device imagery anywhere — the owner asked for a generic flow covering
+    many devices, so the ring set with the Pebble mark carries the moments
+    the reference gave to a watch illustration.
+  * The reference's pale-yellow instructions panel became a warm tint
+    (`--caution-bg` cut with the card surface) rather than a solid slab: at
+    full strength the dark-theme equivalent reads as a warning, which is
+    wrong for setup help. Numerals keep the full caution colour.
+  * The Pebble mark is a code-drawn interpretation of the logo in the
+    reference image — swap in the real asset when the owner supplies the SVG.
+  * Searching motion is rings pulsing outward from the logo. Every animated
+    element is authored so its BASE state is the correct still frame, so the
+    reduced-motion gate leaves a complete composition, not a frozen one.
+  Verified in Chromium: all five stages plus the sheet render, the full flow
+  runs end to end for all three search outcomes, and a stage jumped to by
+  hand can't be yanked away by a still-pending timer.
+
 - 2026-08-10 — Moved the named snapshot into `Activity Tab/Workout Tab.html`
   (folder layout mirrors `Sleep Tab/`). `index.html` stays the live working
   copy at the repo root. Pushed as is at the owner's request.

@@ -1,5 +1,17 @@
 # Session Handoff
 
+> **2026-08-30 — read this first.** New standalone prototype:
+> `Device Pairing/pairing.html` — the five-stage device-pairing flow (Pair →
+> Searching → Devices found → Connecting → Success) plus a "no device found"
+> bottom sheet. It is NOT wired into `index.html` yet; the owner chose to
+> iterate on it standalone first. Merging it in is the next step: it would
+> become the pre-app onboarding flow, with PAIR NOW → success landing on the
+> Activity tab. `js/tokens.js` gained `export const brand` (accent /
+> accentPressed / accentSoft / onAccent) for the primary-button fill — if you
+> re-copy tokens into any prototype, bring those across too. This flow also
+> defines the repo's first primary/secondary CTA pattern (solid accent vs.
+> hairline outline); reuse it rather than inventing another.
+
 > **2026-08-10 — read this first.** `index.html` is now the MERGED source of
 > truth: it adopts the parallel session's build (metric details pages with a
 > D/W/M/Y period switcher; control panel reduced to Default + No data and
