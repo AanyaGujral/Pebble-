@@ -5,6 +5,27 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-30 — Built the **Button** component from the approved artifact spec
+  sheet as `components/button.html` (new standalone page; nothing else in the
+  prototype touched). Four tiers on one geometry — primary (teal fill, one per
+  screen), secondary (teal outline, only for a genuine parallel route),
+  tertiary (the quiet exit) and destructive (tertiary shape, negative label,
+  never a red fill) — plus the medium 44px size, the opacity-only state table,
+  the disabled row, and do/don't pairings judged inside a 360px phone frame.
+  Three values the spec had no token for were **added to `js/tokens.js` rather
+  than hard-coded** in the component, per the tokens-first gate:
+  `surface.raised` (neutral.700 — StatTile, the charts and onboarding were all
+  redefining it locally), `textColor.onAccent` (#07080C, the label colour on a
+  filled metric colour — the export had no on-accent alias), and a new
+  `controlHeight` group (`l: 52`, `m: 44` — deliberately kept off the spacing
+  scale, since these are touch-target sizes, not layout rhythm). Flagged in
+  code and in the sheet's provenance table: the page's own chrome uses
+  JetBrains Mono and a 40px masthead, both above the app's ceilings, because
+  this is a desktop document rather than an app screen; and `:focus-visible`
+  is an addition to the brief (2px --metric-readiness, 4px offset) to be
+  dropped if focus is ever handled globally. Motion is the 120ms opacity fade
+  only, zeroed under `prefers-reduced-motion`.
+
 - 2026-08-30 — Onboarding revision round 1 (`Onboarding/onboarding.html`, new
   standalone prototype; nothing in index.html touched). Three changes off the
   review of the Figma frames: (1) the concentric arcs moved from top-right to

@@ -143,13 +143,21 @@ export const neutral = {
 
 export const surface = {
   app: '#07080C',
-  card: '#0F111B'
+  card: '#0F111B',
+  /* Raised sits one step lighter than a card (neutral[700]). It was already
+     being redefined locally by StatTile, the charts and the onboarding
+     screens; promoted into the source here so components stop inventing it. */
+  raised: '#282B39'
 };
 
 export const textColor = {
   text1: '#EFF1F9',
   text2: '#B8BDD3',
-  text3: '#7B819C'
+  text3: '#7B819C',
+  /* Label colour for text sitting ON a filled metric colour (the primary
+     button's teal fill). Added for the Button component — the export had no
+     on-accent alias, and neutral[900] was being reached for directly. */
+  onAccent: '#07080C'
 };
 
 /** Metric aliases — components should reference these, never raw hues. */
@@ -444,10 +452,18 @@ export const borderWidth = {
   thin: 1.0
 };
 
+/** Interactive control heights, in px. Deliberately NOT on the spacing scale —
+ *  these are touch-target sizes, not layout rhythm, so 52/44 don't belong in
+ *  `spacing`. Added for the Button component; inputs and rows should reuse. */
+export const controlHeight = {
+  m: 44,
+  l: 52
+};
+
 const tokens = {
   color, neutral, surface, textColor, metric, semantic,
   fontFamily, fontWeight, typeText, typeNumeric,
-  radius, spacing, borderWidth,
+  radius, spacing, borderWidth, controlHeight,
 };
 
 export default tokens;
