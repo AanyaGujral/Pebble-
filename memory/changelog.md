@@ -5,6 +5,26 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-30 (later still) — Real Pebble mark dropped into the pairing flow.
+  The owner said they had added "pebble logo.svg" to the repo; it is not on
+  any branch (nothing named *logo* exists anywhere), so that upload did not
+  land. Searching instead turned up the genuine article already committed:
+  `assets/onboarding/pebble-mark.svg` on `claude/onboarding-figma-css-8wcynq`,
+  which that branch's changelog records as the owner-SUPPLIED SVG, used
+  verbatim. Copied to `assets/pebble-mark.svg` on this branch and inlined into
+  the flow (inlining is required: the file must open over file://, and the
+  published artifact's CSP blocks external images).
+  The code-drawn stand-in and its flag are gone from both the prototype and
+  the artifact.
+  FLAG carried forward, not resolved: the supplied file hard-codes its fill as
+  #5BBCB1, which is not a token — it sits between teal-300 (#76D4C3) and
+  teal-400 (#45C7B3). The onboarding branch left it hard-coded and raised the
+  same question on 2026-08-28. Here the path takes `currentColor` instead, so
+  the mark inherits --accent (teal-400) from the ring it sits in and matches
+  the rings around it. Still needs an owner decision: does the brand mark pin
+  to teal-400, or does #5BBCB1 become its own token? Whichever way it goes,
+  this flow changes in one place.
+
 - 2026-08-30 (later) — Corrected the pairing flow against the owner's own
   prototypes (Homepage/start-workout, Workout Tab, tokenised Sleep Tab). The
   first pass invented a CTA pattern; the app already had one and I had not

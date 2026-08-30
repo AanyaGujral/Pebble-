@@ -554,13 +554,18 @@ function injectIcons(){
   });
 }
 
-/* The Pebble mark, drawn as one stroked path so it stays crisp at every size.
-   Flag: this is a code-drawn interpretation of the logo in the reference
-   image — swap in the real asset when the owner supplies the SVG. */
-const MARK = '<svg viewBox="0 0 70 70" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">'
-  + '<path d="M39 11a17 17 0 1 1 0 34a17 17 0 1 1 0-34'          /* the bowl */
-  +           'M22 28v18c0 7-3 12-8 12-3.5 0-4.5-3.5-2-5.5"/>'    /* stem + curl */
-  + '</svg>';
+/* The Pebble mark — the owner-supplied SVG, committed at assets/pebble-mark.svg
+   and inlined here verbatim. It has to be inlined rather than linked: this
+   file must open over file://, and the published artifact's CSP blocks
+   external images either way.
+   Path data is untouched. The only change is the fill: the supplied file
+   hard-codes #5BBCB1, which is NOT a token (it sits between teal-300 #76D4C3
+   and teal-400 #45C7B3). Here it takes currentColor so the mark inherits the
+   accent from the ring it sits in. FLAG (open, also raised on the onboarding
+   branch 2026-08-28): the brand mark either pins to teal-400 or #5BBCB1
+   becomes its own token — the owner has not decided yet. */
+const MARK = '<svg viewBox="0 0 48 48" aria-hidden="true">'
+  + '<path fill="currentColor" d="M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z"/></svg>';
 $$('[data-mark]').forEach(el => { el.innerHTML = MARK; });
 
 /* Setup tips — one list, rendered into both the pair screen and the sheet, so
