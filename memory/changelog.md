@@ -5,6 +5,27 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-30 — Onboarding revision round 1 (`Onboarding/onboarding.html`, new
+  standalone prototype; nothing in index.html touched). Three changes off the
+  review of the Figma frames: (1) the concentric arcs moved from top-right to
+  sit behind the logo mark at top-left so the mark and the ambient glow share
+  one origin, and the outer arc now doubles as the onboarding step indicator
+  (n of 7) — the flow had no progress cue; (2) the mark now appears on every
+  onboarding screen and the H1 is pinned to a fixed Y, so the title no longer
+  jumps ~65px between step 1 and step 2 (content flows below the subtitle
+  rather than being pinned too, so a 2–3 line subtitle can't collide with the
+  first card); (3) the disabled CTA rebuilt on --surface-raised (neutral-700,
+  the existing alias for the owner's suggested step) with a --text-3 label at
+  3.65:1, and the goal cards lifted onto --surface-card + a hairline
+  neutral-700 border so they read as surfaces. A BEFORE/AFTER switch in the
+  control panel isolates exactly these three deltas; a step slider previews
+  any of the 7 steps. Flagged in the file header: teal-300 vs teal-400 for the
+  CTA (tokens.js says primary is 400, the Figma frames are 300); --pad set to
+  20 from a measurement, not the source file; goal screen assumed to be step 7;
+  the logo path is a hand-traced placeholder. No tokens added. The three-ring
+  goal preview (each ring on its own metric token) is a PROPOSAL for the empty
+  lower half of the goal screen and is toggled off by default.
+
 - 2026-08-10 — Moved the named snapshot into `Activity Tab/Workout Tab.html`
   (folder layout mirrors `Sleep Tab/`). `index.html` stays the live working
   copy at the repo root. Pushed as is at the owner's request.

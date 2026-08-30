@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pebble — Onboarding (ring mark, header lock, control states)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,400..700&family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!--
+  PEBBLE — ONBOARDING, REVISION ROUND 1
+  =====================================
+  Three changes only, per the review. Everything else is left as drawn.
+
+    1. RING MARK AS PROGRESS.  The concentric arcs move from the top-RIGHT to
+       sit behind the logo mark at top-LEFT, so brand mark and glow share one
+       origin instead of fighting each other. The outermost arc doubles as the
+       onboarding step indicator (n of 7) — the flow had no progress cue at all.
+    2. HEADER Y LOCK.  The mark now appears on every onboarding screen, and the
+       title/subtitle block is pinned to a fixed Y. Previously the logo pushed
+       the H1 down ~65px on screen 1 only, so the title lurched between steps.
+    3. CONTROL STATES.  Disabled CTA rebuilt on --surface-raised (neutral-700)
+       with --text-3, and the goal cards lifted onto --surface-card
+       (neutral-800) + a hairline --neutral-700 border so they read as surfaces.
+
+  Use the BEFORE / AFTER switch in the panel to see only these three deltas.
+
+  DECISIONS FLAGGED (per CLAUDE.md rule 3)
+  ----------------------------------------
+  - Disabled fill: owner suggested neutral-700. index.html already aliases that
+    as --surface-raised, so this uses the ALIAS, not the raw step. Label is
+    --text-3 (#7B819C) on #282B39 = 3.65:1 — legible, clearly inactive. No new
+    token needed; nothing added to the system.
+  - CTA fill is --teal-300, matched to the Figma frames. Note tokens.js says
+    "primary at 400" — if the brand primary is meant to be --teal-400, say so
+    and it is a one-line change.
+  - Side margin measured off the Figma frames at ~16–20px; set to 20 (spacing
+    token) via --pad. Change the one variable if the file says otherwise.
+  - The goal screen is assumed to be step 7 of 7 and OTP step 2. Both are
+    data-step attributes on the screens — correct them if the order differs.
+  - LOGO MARK IS A PLACEHOLDER. Hand-traced from the PNG. Drop the real SVG
+    path into the three .mark SVGs and it takes over.
+  - The three-ring goal preview is a PROPOSAL, not part of this round. It is
+    toggled OFF by default in the panel.
+  - No primary/disabled button component exists in the system yet; .cta here is
+    new. Not added to any shared file — flag if it should be promoted.
+-->
+
+<style>
+/* ==========================================================================
+   1. TOKENS — mirrored from js/tokens.js.
+      (ES-module imports don't work over file://; the double-click requirement
+      wins, same as index.html. If tokens.js changes, re-copy these.)
+   ========================================================================== */
+:root{
+  /* raw scale steps actually used here */
+  --teal-300:#76D4C3; --teal-400:#45C7B3; --teal-700:#076155;
+  --gold-400:#F2C64B; --emerald-400:#43B476; --tangerine-400:#F59E3B;
+  --neutral-0:#EFF1F9; --neutral-200:#B8BDD3; --neutral-400:#7B819C;
+  --neutral-600:#42465B; --neutral-700:#282B39;
+  --neutral-800:#0F111B; --neutral-900:#07080C;
+
+  /* surface aliases — same names as index.html */
+  --surface-app:var(--neutral-900);
+  --surface-card:var(--neutral-800);
+  --surface-raised:var(--neutral-700);
+
+  /* text aliases */
+  --text-1:var(--neutral-0);
+  --text-2:var(--neutral-200);
+  --text-3:var(--neutral-400);
+
+  --divider:var(--neutral-700);
+
+  /* metric aliases — the goal preview uses each goal's own metric colour */
+  --metric-calories:var(--tangerine-400);
+  --metric-steps:var(--gold-400);
+  --metric-distance:var(--emerald-400);
+
+  --font-text:'Google Sans Flex','Google Sans',sans-serif;
+  --font-number:'Spartan','League Spartan',sans-serif;
+  --num-features:'tnum' 1,'lnum' 1;
+
+  --radius-card:20px;
+  --duration-base:140ms;
+  --duration-slow:240ms;
+
+  /* layout constants for the onboarding template */
+  --pad:20px;         /* screen side margin */
+  --mark:88px;        /* ring mark box */
+  --header-top:84px;  /* where the mark block starts — LOCKED across screens */
+  --title-top:188px;  /* where the H1 starts — LOCKED across screens */
+  --body-gap:24px;    /* gap between subtitle and content; content then flows */
+}
+
+/* ==========================================================================
+   2. PAGE SCAFFOLD — the desk the phones sit on, plus the control panel
+   ========================================================================== */
+:root{color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-height:100vh;background:var(--neutral-900);color:var(--text-1);
+  font-family:var(--font-text);
+  display:flex;align-items:flex-start;justify-content:center;
+  gap:32px;padding:32px 16px;flex-wrap:wrap;
+}
+
+.panel{
+  position:sticky;top:32px;width:250px;
+  background:var(--surface-card);
+  border:0.5px solid var(--neutral-700);border-radius:var(--radius-card);
+  padding:16px;
+}
+.panel h2{
+  margin:0 0 8px;font-size:11px;line-height:16px;font-weight:600;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+}
+.panel h2+h2{margin-top:20px}
+.panel .hint{margin:0 0 12px;font-size:11px;line-height:16px;color:var(--text-3)}
+.panel .opts{display:flex;flex-direction:column;gap:4px}
+.panel label{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:12px;cursor:pointer;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);
+}
+.panel label:hover{background:var(--surface-raised)}
+.panel label.on{background:var(--surface-raised);color:var(--text-1)}
+.panel input[type=radio],.panel input[type=checkbox]{accent-color:var(--teal-400);margin:0}
+.panel input[type=range]{width:100%;accent-color:var(--teal-400);margin:4px 0 0}
+.panel .rowval{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);padding:0 10px;
+}
+.panel .rowval b{font-family:var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.panel .note{
+  margin:16px 0 0;padding-top:12px;border-top:0.5px solid var(--divider);
+  font-size:11px;line-height:16px;color:var(--text-3);
+}
+
+/* ==========================================================================
+   3. PHONE MOCKUP — copied from index.html so the frame matches the app
+   ========================================================================== */
+.phone{
+  flex:0 0 auto;border-radius:40px;background:var(--neutral-900);
+  border:2px solid var(--neutral-700);outline:6px solid var(--neutral-800);
+  padding:10px;
+}
+.screen{
+  position:relative;width:360px;height:780px;
+  border-radius:32px;overflow:hidden;background:var(--surface-app);
+}
+.screen::before{ /* punch-hole selfie camera */
+  content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:12px;height:12px;border-radius:50%;
+  background:var(--neutral-900);border:2px solid var(--neutral-700);
+  z-index:60;pointer-events:none;
+}
+.statusbar{
+  position:absolute;top:0;left:0;right:0;height:32px;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-1);
+  pointer-events:none;
+}
+.statusbar .batt{width:20px;height:10px;border-radius:3px;border:1px solid var(--text-2);padding:1px}
+.statusbar .batt i{display:block;width:12px;height:100%;border-radius:2px;background:var(--text-1)}
+.statusbar .right{display:flex;align-items:center;gap:6px;color:var(--text-2)}
+.gesture{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:112px;height:4px;border-radius:999px;background:var(--neutral-600);
+  z-index:60;pointer-events:none;
+}
+
+/* ==========================================================================
+   4. ONBOARDING TEMPLATE — one shared shell, so every step lines up
+   ========================================================================== */
+.ob{position:absolute;inset:0;display:none}
+.ob.active{display:block}
+
+/* --- CHANGE 1a: the ambient glow. One light source, anchored to the ring
+       centre at top-LEFT. Replaces the top-right wash. ------------------- */
+.glow{
+  position:absolute;z-index:0;pointer-events:none;
+  width:520px;height:520px;left:-196px;top:-196px;border-radius:50%;
+  background:radial-gradient(circle,
+    rgba(69,199,179,0.16) 0%,
+    rgba(69,199,179,0.07) 38%,
+    rgba(69,199,179,0.00) 70%);
+}
+
+.back{
+  position:absolute;z-index:10;top:44px;left:calc(var(--pad) - 8px);
+  width:40px;height:40px;border:0;background:transparent;padding:0;
+  display:grid;place-items:center;color:var(--text-1);cursor:pointer;
+  border-radius:999px;
+}
+.back:hover{background:var(--surface-raised)}
+.back svg{width:24px;height:24px}
+
+/* --- CHANGE 1b + 2: ring mark, on EVERY screen, at a locked Y ---------- */
+.markwrap{
+  position:absolute;z-index:10;
+  top:var(--header-top);left:var(--pad);
+  width:var(--mark);height:var(--mark);
+}
+.markwrap svg.rings{position:absolute;inset:0;width:100%;height:100%}
+.rings .track{fill:none;stroke:var(--neutral-700);stroke-width:2}
+.rings .prog{
+  fill:none;stroke:var(--teal-400);stroke-width:2;stroke-linecap:round;
+  transform:rotate(-90deg);transform-origin:44px 44px;
+  transition:stroke-dasharray var(--duration-slow) ease;
+}
+.rings .halo1{fill:none;stroke:var(--teal-700);stroke-width:1;opacity:.85}
+.rings .halo2{fill:none;stroke:var(--neutral-700);stroke-width:1;opacity:.9}
+.mark{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:30px;height:34px;color:var(--teal-300);
+}
+
+/* --- CHANGE 2: the header block is pinned, not stacked ----------------
+   The H1 always starts at --title-top. Content flows BELOW the subtitle with
+   a fixed gap, so a two- or three-line subtitle pushes the content down
+   without ever moving the title. (Pinning the content to a fixed Y instead
+   would make long subtitles collide with the first card.) */
+.flow{
+  position:absolute;z-index:10;left:var(--pad);right:var(--pad);
+  top:var(--title-top);bottom:104px;
+  display:flex;flex-direction:column;
+}
+.head{flex:0 0 auto}
+.head h1{ /* typeText.headingH1Bold */
+  margin:0;font-size:24px;line-height:30px;font-weight:700;letter-spacing:-0.01em;color:var(--text-1);
+}
+.head p{ /* typeText.paragraphP1Regular */
+  margin:6px 0 0;font-size:15px;line-height:22px;font-weight:400;color:var(--text-2);
+}
+.head p b{font-weight:600;color:var(--text-1)}
+
+.body{
+  flex:1 1 auto;margin-top:var(--body-gap);min-height:0;
+  overflow-y:auto;overflow-x:hidden;scrollbar-width:none;
+}
+.body::-webkit-scrollbar{display:none}
+
+/* --- CHANGE 3: CTA. Enabled = teal-300. Disabled = --surface-raised. --- */
+.cta{
+  position:absolute;z-index:10;left:var(--pad);right:var(--pad);bottom:40px;
+  height:56px;border:0;border-radius:999px;cursor:pointer;
+  font-family:var(--font-text);font-size:17px;line-height:22px;font-weight:600;
+  background:var(--teal-300);color:var(--neutral-900);
+  transition:background var(--duration-base) ease,color var(--duration-base) ease;
+}
+.cta[disabled]{
+  background:var(--surface-raised);
+  color:var(--text-3);
+  cursor:not-allowed;
+}
+
+/* ---------- Screen: phone number ---------- */
+.field{
+  display:flex;align-items:stretch;gap:8px;
+}
+.cc,.tel{
+  height:56px;background:var(--surface-card);
+  border:0.5px solid var(--neutral-700);border-radius:16px;
+  color:var(--text-1);font-family:var(--font-text);font-size:15px;line-height:22px;
+}
+.cc{display:flex;align-items:center;gap:6px;padding:0 12px;flex:0 0 auto}
+.cc svg{width:16px;height:16px;color:var(--text-3)}
+.tel{flex:1;padding:0 16px;outline:0}
+.tel::placeholder{color:var(--text-3)}
+.tel:focus{border-color:var(--teal-400)}
+
+/* ---------- Screen: OTP ---------- */
+.otp{display:flex;gap:8px}
+.otp input{
+  width:100%;height:56px;text-align:center;
+  background:var(--surface-card);border:0.5px solid var(--neutral-700);border-radius:16px;
+  color:var(--text-1);font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-size:20px;line-height:24px;font-weight:700;outline:0;
+  transition:border-color var(--duration-base) ease;
+}
+.otp input:focus{border-color:var(--teal-400)}
+.resend{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:16px;font-size:13px;line-height:18px;color:var(--text-3);
+}
+.resend b{
+  font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-weight:500;color:var(--text-2);
+}
+
+/* ---------- Screen: goals ---------- */
+.goal{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:var(--surface-card);
+  border:0.5px solid var(--neutral-700);
+  border-radius:16px;padding:16px;margin-bottom:12px;
+}
+.goal:last-of-type{margin-bottom:0}
+.goal .lbl{min-width:0}
+.goal .lbl strong{ /* typeText.headingH3Semibold */
+  display:block;font-size:17px;line-height:22px;font-weight:600;color:var(--text-1);
+}
+.goal .lbl span{ /* typeText.paragraphP2Regular */
+  display:block;font-size:13px;line-height:18px;font-weight:400;color:var(--text-3);
+}
+.step{display:flex;align-items:center;gap:4px}
+.step button{
+  width:36px;height:36px;flex:0 0 auto;border:0;border-radius:999px;
+  background:var(--surface-raised);color:var(--text-1);
+  display:grid;place-items:center;cursor:pointer;
+  transition:background var(--duration-base) ease;
+}
+.step button:hover{background:var(--neutral-600)}
+.step button svg{width:18px;height:18px}
+.step .val{ /* typeNumeric.numL */
+  min-width:74px;text-align:center;
+  font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-size:24px;line-height:28px;font-weight:700;letter-spacing:-0.005em;color:var(--text-1);
+}
+
+/* ---------- PROPOSAL (off by default): three-ring goal preview ---------- */
+.preview{margin:20px 0 8px;display:none;place-items:center}
+.preview.on{display:grid}
+.preview svg{width:132px;height:132px}
+.preview .t{fill:none;stroke:var(--neutral-700);stroke-width:9;stroke-linecap:round}
+.preview .r{
+  fill:none;stroke-width:9;stroke-linecap:round;
+  transform:rotate(-90deg);transform-origin:84px 84px;
+  transition:stroke-dasharray var(--duration-slow) ease;
+}
+.preview .r.s{stroke:var(--metric-steps)}
+.preview .r.d{stroke:var(--metric-distance)}
+.preview .r.c{stroke:var(--metric-calories)}
+.preview .key{
+  display:flex;gap:16px;margin-top:12px;
+  font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;
+  text-transform:uppercase;color:var(--text-3);
+}
+.preview .key i{display:inline-block;width:8px;height:8px;border-radius:999px;margin-right:6px}
+
+/* ==========================================================================
+   5. "BEFORE" OVERRIDES — the state as drawn in Figma, for A/B only.
+      Nothing in here is a token; that is the point of the comparison.
+   ========================================================================== */
+/* the mark appeared on the phone screen only, with no rings around it */
+.proto.before #ob-otp .markwrap,
+.proto.before #ob-goal .markwrap{display:none}
+.proto.before .rings{display:none}
+/* with no rings around it the mark sat on the margin, not centred in the box */
+.proto.before .mark{left:0;transform:translate(0,-50%)}
+/* the wash came from the top-right, away from the mark */
+.proto.before .glow{
+  width:420px;height:420px;left:auto;right:-150px;top:-170px;
+  background:radial-gradient(circle,rgba(69,199,179,0.07) 0%,rgba(69,199,179,0.00) 68%);
+}
+/* …so the title floats up on the two screens without it — the lurch */
+.proto.before #ob-otp .flow,
+.proto.before #ob-goal .flow{top:132px}
+/* disabled state as drawn: a saturated slate that still reads as tappable,
+   with near-black text on it */
+.proto.before .cta[disabled]{background:#565A78;color:#15161F}
+/* cards sit within a hair of the app background */
+.proto.before .goal,
+.proto.before .cc,
+.proto.before .tel,
+.proto.before .otp input{background:#0A0B10;border-color:#1A1C26}
+.proto.before .preview{display:none}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+
+<body>
+
+<!-- ==========================================================================
+     CONTROL PANEL — same pattern as index.html: it lives outside the phone
+     ========================================================================== -->
+<div class="panel">
+  <h2>Compare</h2>
+  <p class="hint">Switches only the three changes from the review.</p>
+  <div class="opts" id="mode">
+    <label class="on"><input type="radio" name="mode" value="after" checked>After<span class="desc"></span></label>
+    <label><input type="radio" name="mode" value="before">Before (as drawn)</label>
+  </div>
+
+  <h2>Screen</h2>
+  <div class="opts" id="screen">
+    <label class="on"><input type="radio" name="screen" value="ob-phone" checked>Phone number</label>
+    <label><input type="radio" name="screen" value="ob-otp">Enter the code</label>
+    <label><input type="radio" name="screen" value="ob-goal">Set your daily goal</label>
+  </div>
+
+  <h2>Onboarding step</h2>
+  <div class="rowval"><span>Step</span><b><span id="stepNow">1</span> / 7</b></div>
+  <input type="range" id="stepRange" min="1" max="7" value="1">
+  <p class="hint" style="margin:8px 0 0">Drives the outer arc. Each screen has its own default; drag to preview any step.</p>
+
+  <h2>Proposal</h2>
+  <div class="opts" id="prev">
+    <label><input type="checkbox" id="prevToggle">Goal ring preview</label>
+  </div>
+
+  <p class="note">
+    Not part of this round — it is the answer to the empty lower half of the
+    goal screen, shown here so you can judge whether the ring motif earns its
+    place. Each ring uses its own metric token.
+  </p>
+</div>
+
+<!-- ==========================================================================
+     THE PHONE
+     ========================================================================== -->
+<div class="phone">
+  <div class="screen proto" id="proto">
+
+    <div class="statusbar">
+      <span>12:30</span>
+      <span class="right">
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none" aria-hidden="true">
+          <rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/>
+          <rect x="4.5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor"/>
+          <rect x="9" y="3" width="3" height="9" rx="1" fill="currentColor"/>
+          <rect x="13" y="0" width="3" height="12" rx="1" fill="currentColor"/>
+        </svg>
+        <svg width="14" height="12" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+          <path d="M128 196a16 16 0 1 0 16 16 16 16 0 0 0-16-16Zm100.6-92.2a148 148 0 0 0-201.2 0 12 12 0 0 0 16.2 17.7 124 124 0 0 1 168.8 0 12 12 0 0 0 16.2-17.7Zm-38 42.4a92 92 0 0 0-125.2 0 12 12 0 0 0 16.2 17.7 68 68 0 0 1 92.8 0 12 12 0 0 0 16.2-17.7Z"/>
+        </svg>
+        <span class="batt"><i></i></span>
+      </span>
+    </div>
+
+    <!-- ================= SCREEN 1 — phone number (step 1 of 7) ========== -->
+    <section class="ob active" id="ob-phone" data-step="1">
+      <div class="glow"></div>
+
+      <button class="back" aria-label="Back">
+        <svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="20"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="160 208 80 128 160 48"/>
+        </svg>
+      </button>
+
+      <!-- CHANGE 1: rings + mark, one origin, outer arc = progress -->
+      <div class="markwrap">
+        <svg class="rings" viewBox="0 0 88 88" aria-hidden="true">
+          <circle class="halo2" cx="44" cy="44" r="24"/>
+          <circle class="halo1" cx="44" cy="44" r="33"/>
+          <circle class="track" cx="44" cy="44" r="42"/>
+          <circle class="prog"  cx="44" cy="44" r="42"/>
+        </svg>
+        <!-- PLACEHOLDER MARK — swap in the real Pebble SVG path -->
+        <svg class="mark" viewBox="0 0 30 34" fill="none" stroke="currentColor"
+             stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9.5 32.5C4 26 1.5 20.5 3 15 4.8 8.2 11.2 4.5 17.2 5.6c5.6 1 9 6 8.3 11.2-.7 5-5.2 8.3-10 7.7-4-.5-6.6-3.8-6.2-7.3.3-2.9 2.8-4.9 5.5-4.6"/>
+        </svg>
+      </div>
+
+      <div class="flow">
+      <div class="head">
+        <h1>Enter your phone number</h1>
+        <p>An OTP will be sent to verify this</p>
+      </div>
+
+      <div class="body">
+        <div class="field">
+          <div class="cc">+91
+            <svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="22"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="208 96 128 176 48 96"/>
+            </svg>
+          </div>
+          <input class="tel" type="tel" inputmode="numeric" maxlength="10" placeholder="98310 00918" aria-label="Phone number">
+        </div>
+      </div>
+      </div>
+
+      <button class="cta" disabled>Verify</button>
+      <div class="gesture"></div>
+    </section>
+
+    <!-- ================= SCREEN 2 — OTP (step 2 of 7) =================== -->
+    <section class="ob" id="ob-otp" data-step="2">
+      <div class="glow"></div>
+
+      <button class="back" aria-label="Back">
+        <svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="20"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="160 208 80 128 160 48"/>
+        </svg>
+      </button>
+
+      <div class="markwrap">
+        <svg class="rings" viewBox="0 0 88 88" aria-hidden="true">
+          <circle class="halo2" cx="44" cy="44" r="24"/>
+          <circle class="halo1" cx="44" cy="44" r="33"/>
+          <circle class="track" cx="44" cy="44" r="42"/>
+          <circle class="prog"  cx="44" cy="44" r="42"/>
+        </svg>
+        <svg class="mark" viewBox="0 0 30 34" fill="none" stroke="currentColor"
+             stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9.5 32.5C4 26 1.5 20.5 3 15 4.8 8.2 11.2 4.5 17.2 5.6c5.6 1 9 6 8.3 11.2-.7 5-5.2 8.3-10 7.7-4-.5-6.6-3.8-6.2-7.3.3-2.9 2.8-4.9 5.5-4.6"/>
+        </svg>
+      </div>
+
+      <div class="flow">
+      <div class="head">
+        <h1>Enter the code</h1>
+        <p>OTP has been sent to <b>+91 98310 00918</b><br>Enter the OTP to continue.</p>
+      </div>
+
+      <div class="body">
+        <div class="otp" id="otpRow">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 1">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 2">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 3">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 4">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 5">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 6">
+        </div>
+        <div class="resend">
+          <span>Did not receive the OTP?</span>
+          <span>Resend in <b>00:22</b></span>
+        </div>
+      </div>
+      </div>
+
+      <button class="cta" id="otpCta" disabled>Verify</button>
+      <div class="gesture"></div>
+    </section>
+
+    <!-- ================= SCREEN 3 — daily goal (step 7 of 7) ============ -->
+    <section class="ob" id="ob-goal" data-step="7">
+      <div class="glow"></div>
+
+      <button class="back" aria-label="Back">
+        <svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="20"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="160 208 80 128 160 48"/>
+        </svg>
+      </button>
+
+      <div class="markwrap">
+        <svg class="rings" viewBox="0 0 88 88" aria-hidden="true">
+          <circle class="halo2" cx="44" cy="44" r="24"/>
+          <circle class="halo1" cx="44" cy="44" r="33"/>
+          <circle class="track" cx="44" cy="44" r="42"/>
+          <circle class="prog"  cx="44" cy="44" r="42"/>
+        </svg>
+        <svg class="mark" viewBox="0 0 30 34" fill="none" stroke="currentColor"
+             stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9.5 32.5C4 26 1.5 20.5 3 15 4.8 8.2 11.2 4.5 17.2 5.6c5.6 1 9 6 8.3 11.2-.7 5-5.2 8.3-10 7.7-4-.5-6.6-3.8-6.2-7.3.3-2.9 2.8-4.9 5.5-4.6"/>
+        </svg>
+      </div>
+
+      <div class="flow">
+      <div class="head">
+        <h1>Set your daily goal</h1>
+        <p>The suggestions are calculated based on your profile. Adjust any as per your needs.</p>
+      </div>
+
+      <div class="body">
+        <!-- CHANGE 3: cards on --surface-card + hairline border -->
+        <div class="goal">
+          <div class="lbl"><strong>Steps</strong><span>In number of steps</span></div>
+          <div class="step">
+            <button data-goal="steps" data-dir="-1" aria-label="Fewer steps">
+              <svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round"><line x1="40" y1="128" x2="216" y2="128"/></svg>
+            </button>
+            <span class="val" id="v-steps">8,000</span>
+            <button data-goal="steps" data-dir="1" aria-label="More steps">
+              <svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round"><line x1="40" y1="128" x2="216" y2="128"/><line x1="128" y1="40" x2="128" y2="216"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="goal">
+          <div class="lbl"><strong>Distance</strong><span>in KM</span></div>
+          <div class="step">
+            <button data-goal="dist" data-dir="-1" aria-label="Less distance">
+              <svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round"><line x1="40" y1="128" x2="216" y2="128"/></svg>
+            </button>
+            <span class="val" id="v-dist">5.5</span>
+            <button data-goal="dist" data-dir="1" aria-label="More distance">
+              <svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round"><line x1="40" y1="128" x2="216" y2="128"/><line x1="128" y1="40" x2="128" y2="216"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="goal">
+          <div class="lbl"><strong>Calories</strong><span>in KCAL</span></div>
+          <div class="step">
+            <button data-goal="cal" data-dir="-1" aria-label="Fewer calories">
+              <svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round"><line x1="40" y1="128" x2="216" y2="128"/></svg>
+            </button>
+            <span class="val" id="v-cal">1,800</span>
+            <button data-goal="cal" data-dir="1" aria-label="More calories">
+              <svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round"><line x1="40" y1="128" x2="216" y2="128"/><line x1="128" y1="40" x2="128" y2="216"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- PROPOSAL, off by default -->
+        <div class="preview" id="goalPreview">
+          <svg viewBox="0 0 168 168" aria-hidden="true">
+            <circle class="t" cx="84" cy="84" r="72"/>
+            <circle class="t" cx="84" cy="84" r="57"/>
+            <circle class="t" cx="84" cy="84" r="42"/>
+            <circle class="r s" id="ring-steps" cx="84" cy="84" r="72"/>
+            <circle class="r d" id="ring-dist"  cx="84" cy="84" r="57"/>
+            <circle class="r c" id="ring-cal"   cx="84" cy="84" r="42"/>
+          </svg>
+          <div class="key">
+            <span><i style="background:var(--metric-steps)"></i>Steps</span>
+            <span><i style="background:var(--metric-distance)"></i>Distance</span>
+            <span><i style="background:var(--metric-calories)"></i>Calories</span>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <button class="cta">Continue</button>
+      <div class="gesture"></div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   Small bits of behaviour. Nothing here is product logic — it exists so the
+   three changes can be judged in motion rather than as stills.
+   ========================================================================== */
+
+const TOTAL_STEPS = 7;                 // owner: onboarding is 7 steps incl. OTP
+const proto   = document.getElementById('proto');
+const screens = [...document.querySelectorAll('.ob')];
+const range   = document.getElementById('stepRange');
+const stepNow = document.getElementById('stepNow');
+
+/* --- the outer arc: draw n/7 of the circle ----------------------------- */
+const R = 42, C = 2 * Math.PI * R;     // circumference of the progress ring
+function paintArc(step){
+  document.querySelectorAll('.rings .prog').forEach(el=>{
+    el.style.strokeDasharray = (C * step / TOTAL_STEPS).toFixed(2) + ' ' + C.toFixed(2);
+  });
+  stepNow.textContent = step;
+}
+
+/* --- panel: radio groups get the .on highlight, same as index.html ----- */
+function wireRadios(id, onPick){
+  const box = document.getElementById(id);
+  box.addEventListener('change', e=>{
+    box.querySelectorAll('label').forEach(l=>l.classList.toggle('on', l.contains(e.target)));
+    onPick(e.target.value);
+  });
+}
+
+wireRadios('mode', v => proto.classList.toggle('before', v === 'before'));
+
+wireRadios('screen', v => {
+  screens.forEach(s => s.classList.toggle('active', s.id === v));
+  const step = +document.getElementById(v).dataset.step;   // each screen's own step
+  range.value = step;
+  paintArc(step);
+});
+
+range.addEventListener('input', () => paintArc(+range.value));
+
+/* --- OTP: move to the next box as you type, enable Verify at 6 digits --- */
+const otpInputs = [...document.querySelectorAll('#otpRow input')];
+const otpCta    = document.getElementById('otpCta');
+otpInputs.forEach((input, i) => {
+  input.addEventListener('input', () => {
+    input.value = input.value.replace(/\D/g,'').slice(0,1);
+    if (input.value && i < otpInputs.length - 1) otpInputs[i+1].focus();
+    otpCta.disabled = otpInputs.some(x => !x.value);
+  });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !input.value && i > 0) otpInputs[i-1].focus();
+  });
+});
+
+/* --- phone field: Verify stays disabled until 10 digits ---------------- */
+const tel = document.querySelector('.tel');
+tel.addEventListener('input', () => {
+  tel.value = tel.value.replace(/\D/g,'').slice(0,10);
+  tel.closest('.ob').querySelector('.cta').disabled = tel.value.length !== 10;
+});
+
+/* --- goal steppers ----------------------------------------------------- */
+const goals = {
+  steps:{ value:8000, step:500, min:2000,  max:25000, el:'v-steps', ring:'ring-steps', r:72 },
+  dist: { value:5.5,  step:0.5, min:1,     max:20,    el:'v-dist',  ring:'ring-dist',  r:57 },
+  cal:  { value:1800, step:50,  min:800,   max:4000,  el:'v-cal',   ring:'ring-cal',   r:42 }
+};
+function render(key){
+  const g = goals[key];
+  // thousands separators — the formatting convention set by StatTile
+  document.getElementById(g.el).textContent =
+    key === 'dist' ? g.value.toFixed(1) : g.value.toLocaleString('en-IN');
+  const circ = 2 * Math.PI * g.r;
+  const pct  = (g.value - g.min) / (g.max - g.min);
+  document.getElementById(g.ring).style.strokeDasharray =
+    (circ * pct).toFixed(2) + ' ' + circ.toFixed(2);
+}
+document.querySelectorAll('.step button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const g = goals[btn.dataset.goal];
+    const next = +(g.value + g.step * +btn.dataset.dir).toFixed(1);
+    g.value = Math.min(g.max, Math.max(g.min, next));
+    render(btn.dataset.goal);
+  });
+});
+
+document.getElementById('prevToggle').addEventListener('change', e => {
+  document.getElementById('goalPreview').classList.toggle('on', e.target.checked);
+});
+
+/* --- first paint ------------------------------------------------------- */
+Object.keys(goals).forEach(render);
+paintArc(1);
+</script>
+</body>
+</html>
