@@ -8,7 +8,10 @@
 > `index.html` is unchanged and is still the signed-in app.
 >
 > **Blocked on the owner — nothing else can close these:**
->   1. Goal screen copy is stand-in text, not signed-off product copy.
+>   1. The three NEW onboarding photographs. The build shows the OLD set
+>      behind the new headlines. Replace assets/onboarding/onb-1..3.jpg and
+>      they take over with no code change.
+>   2. Goal screen copy is stand-in text, not signed-off product copy.
 >   2. The "pebble" wordmark on the splash — only the mark SVG was supplied,
 >      so the wordmark is live text.
 >

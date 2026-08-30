@@ -5,6 +5,34 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-28 (badge + 3-slide onboarding) — Two owner-approved changes.
+  BRAND BADGE on every screen after onboarding (all seven form screens):
+  concentric rings with a light-teal radial gradient and the mark centred, at
+  64px. The owner's cap was 64-72px and 64 is what lets the Activity, Goal
+  and Daily targets screens still clear their four cards. It pushes content
+  down as the reference shows, so every screen below it moved +70px: title
+  106->176, subtitle 136->206, phone/name field 174->244, OTP boxes 192->262
+  (and its error/resend rows), profile fields 202/294/386/478 ->
+  272/364/456/548, and both card grids 201 -> 271. Verified by measuring:
+  zero collisions with the CTA on any of the seven screens.
+  ONBOARDING is now three slides — "Your health, your way", "Sleep. Move.
+  Recover." and "Live better, every day." Each headline rides its own
+  photograph's opacity through the same layerState() the backdrop uses, so
+  headline and image can never fall out of step. Added tappable dots and
+  pointer swipe on top of the existing auto-advance (owner's choice of all
+  three); Get Started always exits to the phone screen rather than stepping
+  the carousel. Under reduced motion the loop stops but dots and swipe still
+  reach all three slides.
+  Fixed a real bug found while testing the swipe: dragging across a
+  photograph started a native image drag, which swallowed pointerup so the
+  gesture never completed. Images are now draggable="false" and the view
+  takes pointer capture on pointerdown.
+  STILL PENDING: the three NEW photographs. The screens currently show the
+  OLD set (pickleball / cable / press) behind the new headlines — the new
+  images were only supplied as a composite screenshot, which is not a usable
+  asset. Drop three files at assets/onboarding/onb-1..3.jpg and they take
+  over with no code change.
+
 - 2026-08-28 (colour pass) — Three owner overrides of the Figma values:
   disabled CTA drops from neutral-600 to neutral-700; the selected/focus
   border on every field goes from neutral-400 to teal-400 (applies to the

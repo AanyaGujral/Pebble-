@@ -197,11 +197,39 @@ body{
     var(--surface-app);
 }
 
-/* Title block — h2 20/26 and p2 13/18, at the Figma offsets */
-.h2{position:absolute;left:16px;right:16px;top:106px;margin:0;
+
+/* --------------------------------------------------------------------------
+   BRAND BADGE — concentric rings with a light teal gradient fill, the mark
+   centred. Appears on every screen after onboarding (owner, 2026-08-28).
+   Held to 64px: the owner's cap is 64-72px, and the card screens (Activity,
+   Goal, Daily targets) only clear their four cards at the smaller end.
+   Everything below it shifts down by 70px rather than the badge overlapping
+   anything — see the --y-* offsets in the layout primitives.
+   -------------------------------------------------------------------------- */
+.brandmark{
+  position:absolute;left:16px;top:96px;width:64px;height:64px;z-index:10;
+  display:grid;place-items:center;border-radius:50%;
+  background:radial-gradient(circle at 50% 45%,
+    rgba(69,199,179,0.22) 0%,
+    rgba(69,199,179,0.10) 46%,
+    rgba(69,199,179,0.03) 72%,
+    transparent 100%);
+}
+/* the two concentric rings */
+.brandmark::before,.brandmark::after{
+  content:"";position:absolute;border-radius:50%;
+  border:1px solid rgba(69,199,179,0.14);
+}
+.brandmark::before{inset:0}
+.brandmark::after{inset:9px}
+.brandmark svg{position:relative;width:28px;height:28px}
+
+/* Title block — h2 20/26 and p2 13/18. The tops below already include the
+   70px the brand badge pushes everything down by. */
+.h2{position:absolute;left:16px;right:16px;top:176px;margin:0;
   font-size:20px;line-height:26px;font-weight:500;letter-spacing:-0.1px;
   color:var(--text-1)}
-.sub{position:absolute;left:16px;right:16px;top:136px;margin:0;
+.sub{position:absolute;left:16px;right:16px;top:206px;margin:0;
   font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
 
 /* Primary CTA — 52px pill, 16px inset, sitting 32px off the bottom */
@@ -443,6 +471,7 @@ button.field{
 #v-onb .media{position:absolute;inset:0;overflow:hidden;background:var(--surface-app)}
 #v-onb .media img{
   position:absolute;left:0;top:0;width:360px;height:795px;
+  -webkit-user-drag:none;user-select:none;
   object-fit:cover;display:block;
   transform-origin:50% 42%;      /* from the composition */
   will-change:opacity,transform;
@@ -453,10 +482,23 @@ button.field{
    headline area. If the photos are ever re-exported without that gradient,
    the scrim has to come back. */
 #v-onb .leaf{position:absolute;left:24px;top:519px;width:48px;height:48px;color:var(--teal-400)}
+/* The three headlines stack in the same place and cross-fade with their
+   photographs — the opacity comes from the same layerState() the backdrop
+   uses, so a headline is never out of step with its image. */
+#v-onb .heads{position:absolute;left:24px;top:583px;width:303px;height:80px}
 #v-onb .head{
-  position:absolute;left:24px;top:583px;width:303px;margin:0;
+  position:absolute;left:0;top:0;width:303px;margin:0;
   font-size:32px;line-height:36px;font-weight:700;letter-spacing:-0.32px;
+  will-change:opacity;
 }
+/* Slide dots. Not in the Figma frames — added because the owner asked for
+   dots and swipe alongside the auto-advance (2026-08-28). */
+#v-onb .dots{position:absolute;left:24px;top:493px;display:flex;gap:6px}
+#v-onb .dots button{
+  all:unset;width:6px;height:6px;border-radius:999px;cursor:pointer;
+  background:rgba(255,255,255,0.32);transition:width 200ms ease,background 200ms ease;
+}
+#v-onb .dots button.on{width:18px;background:var(--teal-400)}
 #v-onb .head .dim{display:block;color:rgba(255,255,255,0.65)}
 #v-onb .head .lit{display:block;color:#FFF}
 /* The onboarding CTA is 316px wide and bottom-anchored, NOT the 328px pill
@@ -470,7 +512,7 @@ button.field{
 #v-onb .legal a:hover{text-decoration:underline}
 
 /* ---- Phone number -------------------------------------------------------- */
-#v-phone .row{position:absolute;left:16px;top:174px;width:328px;
+#v-phone .row{position:absolute;left:16px;top:244px;width:328px;
   display:flex;align-items:center}
 /* Country code and number share one 48px box, split by a hairline at 71px */
 #v-phone .combo{
@@ -495,7 +537,7 @@ button.field{
 #v-phone .num::placeholder{color:var(--text-3)}
 
 /* ---- OTP ----------------------------------------------------------------- */
-#v-otp .boxes{position:absolute;left:16px;top:192px;width:328px;
+#v-otp .boxes{position:absolute;left:16px;top:262px;width:328px;
   display:flex;align-items:center;gap:8px}
 #v-otp .boxes input{
   flex:1 0 0;min-width:0;height:48px;border-radius:var(--r-field);
@@ -508,18 +550,18 @@ button.field{
 /* Invalid paints every box red at once, exactly as OTP_invalid shows */
 #v-otp.invalid .boxes input{border-color:var(--negative-icon)}
 #v-otp .err{
-  position:absolute;left:16px;top:252px;margin:0;
+  position:absolute;left:16px;top:322px;margin:0;
   font-size:11px;line-height:16px;color:var(--negative-icon);display:none;
 }
 #v-otp.invalid .err{display:block}
 /* The resend row sits at 256px normally; the invalid frame pushes it to 284px
    to make room for the error line above it. */
 #v-otp .resend{
-  position:absolute;left:16px;top:256px;width:328px;
+  position:absolute;left:16px;top:326px;width:328px;
   display:flex;align-items:center;justify-content:space-between;
   font-size:11px;line-height:16px;color:var(--text-3);
 }
-#v-otp.invalid .resend{top:284px}
+#v-otp.invalid .resend{top:354px}
 #v-otp .resend .act{all:unset;cursor:pointer;color:var(--teal-400);text-align:right}
 #v-otp .resend .act[disabled]{color:var(--text-3);cursor:default}
 
@@ -534,7 +576,7 @@ button.field{
 .toast.on{opacity:1}
 
 /* ---- Name ---------------------------------------------------------------- */
-#v-name .row{position:absolute;left:16px;top:174px;width:328px}
+#v-name .row{position:absolute;left:16px;top:244px;width:328px}
 
 /* ---- Daily targets ------------------------------------------------------- */
 .target{
@@ -651,9 +693,9 @@ button.field{
     <!-- Three cross-fading photographs, driven by the JS at the bottom.
          Scene names from the composition: Court, Cable, Press. -->
     <div class="media" id="onbMedia">
-      <img src="assets/onboarding/onb-1.jpg" alt="" data-i="0">
-      <img src="assets/onboarding/onb-2.jpg" alt="" data-i="1">
-      <img src="assets/onboarding/onb-3.jpg" alt="" data-i="2">
+      <img src="assets/onboarding/onb-1.jpg" alt="" data-i="0" draggable="false">
+      <img src="assets/onboarding/onb-2.jpg" alt="" data-i="1" draggable="false">
+      <img src="assets/onboarding/onb-3.jpg" alt="" data-i="2" draggable="false">
     </div>
 
     <!-- Owner-supplied mark, used verbatim, at the 48x48 the comp specifies -->
@@ -661,7 +703,14 @@ button.field{
       <path d="M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z" fill="#5BBCB1"/>
     </svg>
 
-    <h1 class="head"><span class="dim">Your health,</span><span class="lit">your way</span></h1>
+    <!-- One headline per photograph; each fades with its own layer. -->
+    <div class="heads" id="onbHeads">
+      <h1 class="head" data-i="0"><span class="dim">Your health,</span><span class="lit">your way</span></h1>
+      <h1 class="head" data-i="1"><span class="dim">Sleep. Move.</span><span class="lit">Recover.</span></h1>
+      <h1 class="head" data-i="2"><span class="dim">Live better,</span><span class="lit">every day.</span></h1>
+    </div>
+
+    <div class="dots" id="onbDots" role="tablist" aria-label="Slides"></div>
 
     <button class="cta" id="btnStart">Get Started</button>
 
@@ -679,6 +728,10 @@ button.field{
       <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
         <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
       </svg></button></div>
+
+    <div class="brandmark" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none"><path d="M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z" fill="#5BBCB1"/></svg>
+    </div>
 
     <h1 class="h2">Enter your phone number</h1>
     <p class="sub">An OTP will be sent to verify this</p>
@@ -711,6 +764,10 @@ button.field{
         <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
       </svg></button></div>
 
+    <div class="brandmark" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none"><path d="M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z" fill="#5BBCB1"/></svg>
+    </div>
+
     <h1 class="h2">Enter the code</h1>
     <p class="sub">OTP has been sent to <span style="color:var(--text-1)" id="otpTo">+91 99988 83721</span><br>Enter the OTP to continue.</p>
 
@@ -736,6 +793,10 @@ button.field{
         <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
       </svg></button></div>
 
+    <div class="brandmark" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none"><path d="M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z" fill="#5BBCB1"/></svg>
+    </div>
+
     <h1 class="h2">What should we call you?</h1>
     <p class="sub">Enter your full name</p>
 
@@ -757,10 +818,14 @@ button.field{
         <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
       </svg></button></div>
 
+    <div class="brandmark" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none"><path d="M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z" fill="#5BBCB1"/></svg>
+    </div>
+
     <h1 class="h2">Let’s get to know you better</h1>
     <p class="sub">Pebble uses these values to calculate your daily targets and personalise your recommendations</p>
 
-    <div class="labelled" style="top:202px">
+    <div class="labelled" style="top:272px">
       <span class="lab">Date of Birth</span>
       <div class="wrap">
         <!-- Picked, not typed — opens the calendar sheet below. Reads back as
@@ -785,7 +850,7 @@ button.field{
       </div>
     </div>
 
-    <div class="labelled" style="top:294px">
+    <div class="labelled" style="top:364px">
       <span class="lab">Gender</span>
       <!-- Real dropdown, not a native <select>, so it can be styled to the
            design system and show a check on the chosen row.
@@ -810,7 +875,7 @@ button.field{
 
     <!-- Height and weight open the value sheet. They read as fields but are
          buttons, because the value is picked, never typed. -->
-    <div class="labelled" style="top:386px">
+    <div class="labelled" style="top:456px">
       <span class="lab">Height</span>
       <div class="wrap">
         <button class="field" id="inHeight" type="button" data-sheet="height"
@@ -820,7 +885,7 @@ button.field{
       </div>
     </div>
 
-    <div class="labelled" style="top:478px">
+    <div class="labelled" style="top:548px">
       <span class="lab">Weight</span>
       <div class="wrap">
         <button class="field" id="inWeight" type="button" data-sheet="weight"
@@ -923,6 +988,10 @@ button.field{
         <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
       </svg></button></div>
 
+    <div class="brandmark" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none"><path d="M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z" fill="#5BBCB1"/></svg>
+    </div>
+
     <h1 class="h2">How active are you currently?</h1>
     <p class="sub">This is to understand your movement based on your current lifestyle</p>
 
@@ -941,6 +1010,10 @@ button.field{
         <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
       </svg></button></div>
 
+    <div class="brandmark" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none"><path d="M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z" fill="#5BBCB1"/></svg>
+    </div>
+
     <h1 class="h2">What are your fitness targets?</h1>
     <p class="sub">Pebble will optimise suggestions for you based on these targets</p>
 
@@ -958,6 +1031,10 @@ button.field{
       <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
         <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
       </svg></button></div>
+
+    <div class="brandmark" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none"><path d="M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z" fill="#5BBCB1"/></svg>
+    </div>
 
     <h1 class="h2">Set your daily goal</h1>
     <p class="sub">The suggestions are calculated based on your profile. Adjust any as per your needs.</p>
@@ -1107,22 +1184,55 @@ function layerState(T, i){
   return { o, scale:s, x, y };
 }
 
-let onbRAF = null, onbStart = 0;
+const onbHeads = [...document.querySelectorAll('#onbHeads .head')];
+const onbDots  = $('#onbDots');
+let onbRAF = null, onbStart = 0, onbShown = -1;
+
+/* Which slide is "current" — the layer nearest the middle of its hold. */
+function currentSlide(T){
+  return onbLayers.reduce((best,_,i) =>
+    layerState(T,i).o > layerState(T,best).o ? i : best, 0);
+}
+
 function paintBackdrop(T){
   onbLayers.forEach((el,i) => {
     const s = layerState(T, i);
     el.style.opacity = s.o;
     el.style.transform = `translate3d(${s.x}px, ${s.y}px, 0) scale(${s.scale})`;
+    /* The headline rides its photograph's opacity exactly. */
+    if (onbHeads[i]) onbHeads[i].style.opacity = s.o;
   });
+  const cur = currentSlide(T);
+  if (cur !== onbShown){
+    onbShown = cur;
+    [...onbDots.children].forEach((d,i) => {
+      d.classList.toggle('on', i === cur);
+      d.setAttribute('aria-selected', String(i === cur));
+    });
+  }
+}
+
+/* Jump the clock so slide i sits in the middle of its hold. Solving
+   local = FADE + HOLD/2 for T gives T = STEP*i + HOLD/2. */
+function gotoSlide(i){
+  const n = onbLayers.length;
+  const target = ONB.STEP * mod(i, n) + ONB.HOLD / 2;
+  onbStart = performance.now() - target * 1000;
+  if (reduced()){
+    /* No animation to run — just show that slide outright. */
+    onbLayers.forEach((el,k) => { el.style.opacity = k === mod(i,n) ? 1 : 0; });
+    onbHeads.forEach((el,k) => { el.style.opacity = k === mod(i,n) ? 1 : 0; });
+    onbShown = -1;
+    [...onbDots.children].forEach((d,k) => d.classList.toggle('on', k === mod(i,n)));
+  }
 }
 function startBackdrop(){
   stopBackdrop();
-  /* Reduced motion: hold the first photograph, no fade, no drift. */
+  /* Reduced motion: hold one photograph, no fade, no drift — but the dots
+     and swipe still work, so all three slides remain reachable. */
   if (reduced()){
-    onbLayers.forEach((el,i) => {
-      el.style.opacity = i === 0 ? 1 : 0;
-      el.style.transform = 'none';
-    });
+    onbLayers.forEach(el => el.style.transform = 'none');
+    gotoSlide(Math.max(0, onbShown));
     return;
   }
   onbStart = performance.now();
@@ -1136,6 +1246,46 @@ function stopBackdrop(){
   if (onbRAF) cancelAnimationFrame(onbRAF);
   onbRAF = null;
 }
+
+/* Dots — tappable, and they double as the position indicator. */
+onbLayers.forEach((_, i) => {
+  const d = document.createElement('button');
+  d.type = 'button';
+  d.setAttribute('role','tab');
+  d.setAttribute('aria-label', `Slide ${i+1}`);
+  d.onclick = () => gotoSlide(i);
+  onbDots.appendChild(d);
+});
+
+/* Swipe. Pointer events cover touch, pen and mouse-drag in one path.
+   Two things are needed to make a drag across a photograph survive:
+   the images must not be natively draggable (a native image drag eats the
+   pointerup), and the view captures the pointer so every later event in the
+   gesture is delivered here even if the finger leaves the element. */
+(() => {
+  const view = $('#v-onb');
+  let x0 = null;
+  view.addEventListener('pointerdown', e => {
+    x0 = e.clientX;
+    try { view.setPointerCapture(e.pointerId); } catch { /* capture is best-effort */ }
+  });
+  const end = e => {
+    if (x0 === null) return;
+    const dx = e.clientX - x0;
+    x0 = null;
+    if (Math.abs(dx) < 40) return;            // below this it is a tap
+    gotoSlide(onbShown + (dx < 0 ? 1 : -1));  // drag left = next
+  };
+  view.addEventListener('pointerup', end);
+  view.addEventListener('pointercancel', () => { x0 = null; });
+  /* Keyboard parity for the same movement. */
+  view.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') gotoSlide(onbShown + 1);
+    if (e.key === 'ArrowLeft')  gotoSlide(onbShown - 1);
+  });
+})();
+
+/* Get Started always leaves onboarding — it does not step the carousel. */
 $('#btnStart').onclick = () => go('phone');
 
 /* ---- 4c. Phone number --------------------------------------------------- */
@@ -1587,7 +1737,7 @@ function buildCards(host, items, key, cta){
   items.forEach((it, i) => {
     const b = document.createElement('button');
     b.className = 'choice';
-    b.style.top = (201 + i*86) + 'px';
+    b.style.top = (271 + i*86) + 'px';
     b.setAttribute('aria-pressed', String(state[key] === it.id));
     b.innerHTML =
       `<span class="t">${it.t}</span><span class="d">${it.d}</span>` +
@@ -1623,7 +1773,7 @@ function buildTargets(){
   TARGETS.forEach((row, i) => {
     const wrap = document.createElement('div');
     wrap.className = 'target';
-    wrap.style.top = (201 + i*86) + 'px';
+    wrap.style.top = (271 + i*86) + 'px';
     wrap.innerHTML =
       `<span class="t">${row.t}</span><span class="d">${row.d}</span>
        <div class="stepper">
