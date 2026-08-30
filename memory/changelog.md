@@ -5,6 +5,33 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-30 (later) — Corrected the pairing flow against the owner's own
+  prototypes (Homepage/start-workout, Workout Tab, tokenised Sleep Tab). The
+  first pass invented a CTA pattern; the app already had one and I had not
+  found it. Now taken verbatim from the workout flow's `#wf .btn`:
+  * Buttons are 48px full-width PILLS (`--cta-height` / `--radius-pill`), not
+    52px 16px-radius rectangles.
+  * Labels are SENTENCE CASE at 15/22 semibold (paragraphP1Semibold) —
+    "Pair now", "I'll do it later", "Cancel", "Try again". The uppercase +
+    0.08em tracking is the overline style and was wrong here.
+  * Primary = `--accent` (teal-400) fill with an `--on-accent` (neutral-900)
+    label, 9.6:1. Secondary = transparent with teal-400 TEXT and a teal-400
+    hairline border — previously a neutral outline with white text.
+  * Accent custom properties renamed to the system's own names
+    (`--accent` / `--accent-press` / `--on-accent`), matching Start Workout,
+    Measure All and the discard dialog.
+  * The "Let's connect your device" tips block is now a standard card —
+    `--surface-card`, `--radius-card` (20px), 16px padding — with neutral
+    numerals (text-3) and body copy (text-2). All caution/yellow colour is
+    gone, including the unused caution custom properties.
+  * `js/tokens.js`: `brand.onAccent` corrected to neutral-900 `#07080C`
+    (was teal-900), `accentPressed` renamed `accentPress`, and a new
+    `control` export records the CTA geometry (48px, 999px, sentence case).
+  Logo: searched all three prototypes plus their embedded assets — there is
+  no Pebble mark anywhere in them (all 158 "logo" matches are Phosphor icon
+  class names, and the two embedded SVGs are the Phosphor icon fonts). The
+  code-drawn mark stays, still flagged, until the real SVG is supplied.
+
 - 2026-08-30 — Built the device-pairing flow as a standalone prototype at
   `Device Pairing/pairing.html`, recreating the owner's light-theme reference
   sheet in the app's current dark language. Five stages — Pair, Searching,

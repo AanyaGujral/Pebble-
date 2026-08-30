@@ -446,22 +446,30 @@ export const borderWidth = {
 
 /**
  * Brand / interactive accent — Pebble teal.
- * Added 2026-08-30 for the device-pairing flow: that flow needed a primary
- * button fill and a "connecting" ring colour, and no such token existed.
- * Flag: teal already appears as metric.readiness, but that alias means "the
- * readiness body signal". Re-using it for a button would say the wrong thing,
- * so the brand accent gets its own name even though the hex matches today.
- * Use these for buttons, focus and connection states — never for chart data.
+ * These are the values the app's CTAs already use; the workout flow and the
+ * Start Workout / Measure All buttons spell them as the CSS custom properties
+ * --accent / --accent-press / --on-accent. Naming them here makes that trio
+ * part of the system rather than something each prototype re-declares.
+ * Flag: teal also appears as metric.readiness, but that alias means "the
+ * readiness body signal" — a button referencing it would say the wrong thing,
+ * so the accent gets its own name even though the hex matches.
+ * Use for buttons, focus and connection states — never for chart data.
  */
 export const brand = {
-  accent: '#45C7B3',        // teal[400] — primary button fill, active rings
-  accentPressed: '#31A492', // teal[500] — hover / pressed
-  accentSoft: '#004239',    // teal[800] — tinted fills sitting behind accent
-  onAccent: '#00261F'       // teal[900] — label colour on an accent fill
+  accent: '#45C7B3',       // teal[400] — primary fill, secondary text + border
+  accentPress: '#31A492',  // teal[500] — hover / pressed
+  onAccent: '#07080C'      // neutral[900] — label on an accent fill, 9.6:1
+};
+
+/** CTA geometry — one pill button, used at this size everywhere. */
+export const control = {
+  ctaHeight: 48,
+  ctaRadius: 999,
+  ctaText: 'paragraphP1Semibold'   // 15/22, weight 600, sentence case
 };
 
 const tokens = {
-  color, neutral, surface, textColor, metric, semantic, brand,
+  color, neutral, surface, textColor, metric, semantic, brand, control,
   fontFamily, fontWeight, typeText, typeNumeric,
   radius, spacing, borderWidth,
 };
