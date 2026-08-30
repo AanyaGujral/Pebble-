@@ -5,6 +5,29 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-28 (regression fix + polish) — FIXED A REGRESSION I INTRODUCED last
+  round: Get Started stopped working, and so did the slide dots. The swipe
+  handler was calling setPointerCapture on the onboarding view at
+  pointerdown, which redirects every later pointer event to the view and so
+  stops any child button from ever receiving its click. My own test had
+  asserted too weakly to catch it (it clicked dot 0 while dot 0 was already
+  active). The gesture now refuses to start on a button or link at all, and
+  only captures the pointer once the finger has travelled more than 12px, so
+  a stationary tap always reaches what is underneath. Verified this round
+  against all three: dots, swipe, and Get Started.
+  Brand badge: the 1px teal ring outlines are gone. The concentric rings are
+  now drawn as a second, denser radial wash inside the first, so they still
+  read as concentric with no hard edge anywhere.
+  Phone and OTP land with their first field already focused (200ms, after the
+  screen fade, otherwise the caret arrives while the view is still
+  transparent). Both carry inputmode="numeric", so a real device opens the
+  number keypad rather than the full keyboard.
+  STILL PENDING: the three new photographs. They arrived as inline images in
+  the conversation rather than as files, so they are visible but not
+  writable to disk. I checked the animation zip's uploads/ folder in case
+  they were already there — those are only earlier variants of the OLD set.
+  Need them as actual file uploads or a zip.
+
 - 2026-08-28 (badge + 3-slide onboarding) — Two owner-approved changes.
   BRAND BADGE on every screen after onboarding (all seven form screens):
   concentric rings with a light-teal radial gradient and the mark centred, at
