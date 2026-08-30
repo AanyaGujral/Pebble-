@@ -214,11 +214,15 @@ body{
   background:var(--teal-400);color:var(--surface-app);
   transition:background 140ms ease;
 }
-/* Disabled is neutral-600 with the SAME dark label — that is what the comp
-   shows on every "not yet valid" frame. */
-.cta[disabled]{background:var(--neutral-600);cursor:not-allowed}
+/* Disabled is neutral-700 (owner, 2026-08-28 — the Figma frames used
+   neutral-600; this is a deliberate override, one step darker). The label
+   stays the same dark surface-app colour the comp uses. */
+.cta[disabled]{background:var(--neutral-700);cursor:not-allowed}
 
-/* Text fields — 48px, 12px radius, hairline neutral-700, focus lifts to 400 */
+/* Text fields — 48px, 12px radius, hairline neutral-700. The selected/focus
+   border is teal-400 (owner, 2026-08-28); the Figma Name_typing frame used
+   neutral-400, so this is a deliberate override applied to every field,
+   the phone combo and the OTP boxes alike. */
 .field{
   width:100%;height:48px;border-radius:var(--r-field);
   background:var(--surface-app);border:1px solid var(--neutral-700);
@@ -227,7 +231,7 @@ body{
   transition:border-color 140ms ease;
 }
 .field::placeholder{color:var(--text-3)}
-.field:focus{outline:none;border-color:var(--neutral-400)}
+.field:focus{outline:none;border-color:var(--teal-400)}
 
 /* Field with a small-caps label above it (Profile screen) */
 .labelled{position:absolute;left:16px;width:328px;
@@ -475,7 +479,7 @@ button.field{
   border:1px solid var(--neutral-700);overflow:hidden;
   transition:border-color 140ms ease;
 }
-#v-phone .combo:focus-within{border-color:var(--neutral-400)}
+#v-phone .combo:focus-within{border-color:var(--teal-400)}
 #v-phone .cc{
   display:flex;align-items:center;gap:6px;
   width:71px;height:100%;padding:0 0 0 15px;flex:0 0 71px;
@@ -500,7 +504,7 @@ button.field{
   font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:500;
   transition:border-color 140ms ease;
 }
-#v-otp .boxes input:focus{outline:none;border-color:var(--neutral-400)}
+#v-otp .boxes input:focus{outline:none;border-color:var(--teal-400)}
 /* Invalid paints every box red at once, exactly as OTP_invalid shows */
 #v-otp.invalid .boxes input{border-color:var(--negative-icon)}
 #v-otp .err{
@@ -546,7 +550,7 @@ button.field{
 }
 .target .stepper button{
   all:unset;width:24px;height:24px;display:grid;place-items:center;
-  cursor:pointer;color:var(--text-1);border-radius:6px;
+  cursor:pointer;color:var(--teal-400);border-radius:6px;   /* owner, 2026-08-28 */
 }
 .target .stepper button:hover{background:var(--surface-raised)}
 .target .stepper button[disabled]{color:var(--neutral-600);cursor:not-allowed}

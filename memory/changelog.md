@@ -5,6 +5,18 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-28 (colour pass) — Three owner overrides of the Figma values:
+  disabled CTA drops from neutral-600 to neutral-700; the selected/focus
+  border on every field goes from neutral-400 to teal-400 (applies to the
+  plain fields, the phone combo and the OTP boxes alike — the Figma
+  Name_typing frame had used neutral-400); and the daily-goal +/- steppers go
+  from text-1 to teal-400. All three flagged at the point of change as
+  deliberate overrides, not drift from the comp.
+  Still pending on the same round: the concentric-circle logo badge, and the
+  onboarding's move to three images with three headlines — both waiting on
+  the owner (new photo files needed, plus a decision on which screens carry
+  the badge and whether the headlines auto-advance).
+
 - 2026-08-28 (choice screens) — Activity level and Goal no longer arrive with
   a card preselected. The Figma frames showed Sedentary and Lose Weight
   already highlighted, but a pre-picked answer is one the person never gave,
