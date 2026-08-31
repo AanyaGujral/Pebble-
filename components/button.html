@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Button · Pebble design system</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=League+Spartan:wght@500;700&display=swap">
+<style>
+/* ═══ Tokens ═══════════════════════════════════════════════════════
+   Mirrored by hand from js/tokens.js. They are copied in rather than
+   imported because ES-module imports don't work over file:// and the
+   design gate says this page must open by double-clicking. Same
+   arrangement as index.html — if js/tokens.js changes, re-copy here.
+
+   Naming drops the group prefix and keeps the leaf, matching the other
+   component sheets:
+   surface.raised → --surface-raised · semantic.negative.text → --negative-text
+   ─────────────────────────────────────────────────────────────── */
+:root{
+  color-scheme:dark;
+
+  /* neutral.* */
+  --neutral-0:#EFF1F9;
+  --neutral-100:#D5D9EA;
+  --neutral-200:#B8BDD3;
+  --neutral-300:#999FB9;
+  --neutral-400:#7B819C;
+  --neutral-500:#5E637D;
+  --neutral-600:#42465B;
+  --neutral-700:#282B39;
+  --neutral-800:#0F111B;
+  --neutral-900:#07080C;
+
+  /* color.teal.400 — the hue behind metric.readiness */
+  --teal-400:#45C7B3;
+
+  /* surface.* */
+  --surface-app:var(--neutral-900);
+  --surface-card:var(--neutral-800);
+  --surface-raised:var(--neutral-700);
+
+  /* textColor.* */
+  --text-1:var(--neutral-0);
+  --text-2:var(--neutral-200);
+  --text-3:var(--neutral-400);
+  --text-on-accent:var(--neutral-900);   /* textColor.onAccent */
+
+  /* metric.* — only the one this component uses */
+  --metric-readiness:var(--teal-400);
+
+  /* semantic.negative.* */
+  --negative-bg:#331109;
+  --negative-fill:#6E2418;
+  --negative-icon:#F4604C;
+  --negative-text:#FF9184;
+
+  /* semantic.positive.* — used by the do/don't marks on this page only */
+  --positive-bg:#0E2A1B;
+  --positive-fill:#1E5B38;
+  --positive-icon:#4ADE80;
+  --positive-text:#8AF0B0;
+
+  /* radius.* */
+  --radius-12:12px;
+  --radius-16:16px;
+  --radius-20:20px;
+  --radius-full:999px;
+
+  /* borderWidth.* */
+  --border-thin:1px;
+
+  /* controlHeight.* */
+  --control-h-m:44px;
+  --control-h-l:52px;
+
+  /* fontFamily.* */
+  --font-text:'Google Sans Flex','Google Sans',sans-serif;
+  --font-numeric:'Spartan','League Spartan',sans-serif;
+
+  /* fontWeight.* */
+  --weight-regular:400;
+  --weight-medium:500;
+  --weight-semibold:600;
+  --weight-bold:700;
+
+  /* typography letter-spacing values, lifted off typeText.* */
+  --ls-tight:-0.01em;
+  --ls-normal:0;
+  --ls-wide:0.08em;
+
+  /* Spec-sheet chrome only — the system has no mono face, so this is
+     document furniture for token paths and code, not a component value. */
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+
+/* ═══ The component ════════════════════════════════════════════════
+   Four tiers share one geometry. Hierarchy is carried entirely by
+   colour; every state is a change in opacity. No shadows, no scale.
+   ─────────────────────────────────────────────────────────────── */
+.btn{
+  -webkit-appearance:none;
+  appearance:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  width:100%;
+  height:var(--control-h-l);         /* controlHeight.l */
+  padding:0 24px;                    /* spacing.24 */
+  border:none;
+  border-radius:var(--radius-full);
+  background:transparent;
+  box-shadow:none;
+  /* typeText.paragraphP1Semibold */
+  font-family:var(--font-text);
+  font-size:15px;
+  line-height:22px;
+  font-weight:var(--weight-semibold);
+  letter-spacing:var(--ls-normal);
+  text-align:center;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:opacity 120ms ease;
+}
+/* Medium size — for dense rows and sheets. Never used to demote an action. */
+.btn--m{height:var(--control-h-m);}  /* controlHeight.m */
+
+.btn--primary{
+  background:var(--metric-readiness);
+  color:var(--text-on-accent);
+}
+.btn--secondary{
+  background:transparent;
+  border:var(--border-thin) solid var(--metric-readiness);
+  color:var(--metric-readiness);
+}
+.btn--tertiary{
+  background:transparent;
+  border:none;
+  color:var(--text-2);
+  font-weight:var(--weight-medium);  /* paragraphP1Medium */
+}
+.btn--destructive{
+  background:transparent;
+  border:none;
+  color:var(--negative-text);
+  font-weight:var(--weight-medium);  /* paragraphP1Medium */
+}
+
+/* States — opacity only, never a new colour */
+.btn--primary:not([disabled]):hover{opacity:.9;}
+.btn--primary:not([disabled]):active{opacity:.8;}
+.btn--secondary:not([disabled]):hover{opacity:.75;}
+.btn--secondary:not([disabled]):active{opacity:.6;}
+.btn--tertiary:not([disabled]):hover,
+.btn--destructive:not([disabled]):hover{opacity:.7;}
+.btn--tertiary:not([disabled]):active,
+.btn--destructive:not([disabled]):active{opacity:.55;}
+
+.btn[disabled]{opacity:.45;cursor:default;}
+
+/* Focus ring is an addition to the brief — flagged in the footnote below.
+   Drop it if focus ever gets handled globally. */
+.btn:focus-visible{outline:2px solid var(--metric-readiness);outline-offset:4px;}
+
+/* Design gate: the only motion here is the opacity fade, and it goes to
+   zero when the reader has asked for reduced motion. */
+@media (prefers-reduced-motion: reduce){
+  .btn{transition:none;}
+}
+
+/* ═══ Spec sheet — the page around the component ═══════════════════ */
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--surface-app);
+  color:var(--text-1);
+  font-family:var(--font-text);
+  font-size:15px;
+  line-height:22px;
+  font-weight:var(--weight-regular);
+  -webkit-font-smoothing:antialiased;
+}
+.page{max-width:1120px;margin:0 auto;padding:48px 24px 64px;display:flex;flex-direction:column;gap:40px;}
+
+.masthead{display:flex;flex-direction:column;gap:16px;}
+/* typeText.overlineSemibold, uppercased */
+.eyebrow{
+  font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
+  letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--text-3);
+}
+/* ⚠ Doc chrome — deliberately above the app's 24px h1 ceiling, because this
+   is a desktop document rather than an app screen. Flagged, not silent. */
+.masthead h1{
+  margin:0;font-size:40px;line-height:44px;font-weight:var(--weight-semibold);
+  letter-spacing:var(--ls-tight);color:var(--text-1);text-wrap:balance;
+}
+/* typeText.paragraphP1Regular */
+.masthead p{margin:0;max-width:62ch;color:var(--text-2);}
+
+/* Swatch rail — every colour this component touches, with its token name */
+.rail{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+.chip{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 12px 8px 8px;
+  border-radius:var(--radius-full);
+  background:var(--surface-card);
+  font-family:var(--font-mono);font-size:11px;line-height:16px;
+  color:var(--text-3);
+}
+.chip b{font-weight:var(--weight-regular);color:var(--text-2);}
+.dot{width:12px;height:12px;border-radius:var(--radius-full);flex:none;}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;}
+
+.card{
+  background:var(--surface-card);
+  border-radius:var(--radius-20);        /* radius.20 */
+  padding:24px;                          /* spacing.24 */
+  box-shadow:none;
+  display:flex;flex-direction:column;gap:16px;
+}
+.card__head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
+.card__name{font-family:var(--font-mono);font-size:13px;line-height:18px;color:var(--text-1);}
+/* typeText.overlineSemibold */
+.card__tag{
+  font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
+  letter-spacing:var(--ls-wide);text-transform:uppercase;color:var(--text-3);white-space:nowrap;
+}
+/* The usage rule for each tier — when to reach for it */
+.rule{margin:0;color:var(--text-2);max-width:46ch;}
+.rule strong{color:var(--text-1);font-weight:var(--weight-semibold);}
+
+.specs{
+  margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 16px;
+  font-family:var(--font-mono);font-size:11px;line-height:18px;color:var(--text-3);
+}
+.specs dd{margin:0;color:var(--text-2);word-break:break-word;}
+
+.stack{display:flex;flex-direction:column;gap:12px;}
+
+/* Phone-width frame, so pairings are judged at the size they ship at */
+.phone{
+  width:360px;max-width:100%;
+  background:var(--surface-app);
+  border-radius:var(--radius-20);
+  padding:24px;
+  display:flex;flex-direction:column;gap:12px;
+}
+.phone__copy{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
+/* typeText.headingH1Semibold */
+.phone__title{
+  margin:0;font-size:24px;line-height:30px;
+  font-weight:var(--weight-semibold);letter-spacing:var(--ls-tight);
+}
+/* typeText.paragraphP2Regular */
+.phone__body{margin:0;font-size:13px;line-height:18px;color:var(--text-3);}
+
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;align-items:start;}
+
+/* Do / don't verdict under each phone frame */
+.verdict{
+  display:inline-flex;align-items:center;gap:8px;margin:16px 0 0;
+  font-size:11px;line-height:16px;font-weight:var(--weight-semibold);
+  letter-spacing:var(--ls-wide);text-transform:uppercase;
+}
+.verdict--ok{color:var(--positive-text);}
+.verdict--no{color:var(--negative-text);}
+.mark{
+  width:16px;height:16px;border-radius:var(--radius-full);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:10px;line-height:14px;flex:none;
+}
+.mark--ok{background:var(--positive-bg);color:var(--positive-icon);}
+.mark--no{background:var(--negative-bg);color:var(--negative-icon);}
+
+table.t{
+  width:100%;border-collapse:collapse;
+  font-family:var(--font-mono);font-size:11px;line-height:18px;
+}
+table.t th,table.t td{text-align:left;padding:8px 16px 8px 0;vertical-align:top;}
+table.t thead th{
+  color:var(--text-3);font-family:var(--font-text);font-weight:var(--weight-semibold);
+  font-size:11px;line-height:16px;letter-spacing:var(--ls-wide);text-transform:uppercase;
+  border-bottom:var(--border-thin) solid var(--surface-raised);
+}
+table.t tbody td{color:var(--text-2);border-bottom:var(--border-thin) solid var(--surface-raised);}
+table.t tbody tr:last-child td{border-bottom:none;}
+table.t td:first-child{color:var(--text-1);}
+/* typeNumeric.numS — Spartan, tabular lining figures */
+td.num{
+  font-family:var(--font-numeric);font-size:13px;line-height:16px;
+  font-weight:var(--weight-medium);font-feature-settings:'tnum' 1,'lnum' 1;
+  color:var(--text-1);
+}
+.gap{color:var(--negative-text);}
+.scroll{overflow-x:auto;}
+
+pre.code{
+  margin:0;padding:20px;
+  background:var(--surface-app);
+  border-radius:var(--radius-12);
+  overflow-x:auto;
+  font-family:var(--font-mono);font-size:12px;line-height:20px;
+  color:var(--text-2);
+}
+pre.code .c{color:var(--text-3);}
+pre.code .s{color:var(--metric-readiness);}
+pre.code .p{color:var(--text-1);}
+
+.foot{color:var(--text-3);font-size:13px;line-height:18px;max-width:70ch;}
+.foot code{font-family:var(--font-mono);font-size:11px;color:var(--text-2);}
+.foot strong{color:var(--negative-text);font-weight:var(--weight-semibold);}
+
+@media (max-width:640px){
+  .masthead h1{font-size:24px;line-height:30px;}
+  .page{padding:32px 16px 48px;gap:24px;}
+  .card{padding:20px;}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <header class="masthead">
+    <div class="eyebrow">Pebble Design System · Component</div>
+    <h1>Button</h1>
+    <p>Four tiers, one geometry. Every button in Pebble is the same 52&nbsp;px pill; hierarchy is carried entirely by colour, and every state is a change in opacity. No shadows, no scale, no glow.</p>
+    <div class="rail">
+      <span class="chip"><span class="dot" style="background:var(--metric-readiness)"></span>--metric-readiness <b>· teal.400</b></span>
+      <span class="chip"><span class="dot" style="background:var(--negative-text)"></span>--negative-text <b>· semantic.negative.text</b></span>
+      <span class="chip"><span class="dot" style="background:var(--text-1)"></span>--text-1 <b>· neutral.0</b></span>
+      <span class="chip"><span class="dot" style="background:var(--text-2)"></span>--text-2 <b>· neutral.200</b></span>
+      <span class="chip"><span class="dot" style="background:var(--text-3)"></span>--text-3 <b>· neutral.400</b></span>
+      <span class="chip"><span class="dot" style="background:var(--surface-card)"></span>--surface-card <b>· neutral.800</b></span>
+      <span class="chip"><span class="dot" style="background:var(--surface-app);box-shadow:inset 0 0 0 1px var(--neutral-700)"></span>--surface-app <b>· neutral.900</b></span>
+    </div>
+  </header>
+
+  <!-- ── The four tiers ────────────────────────────────────── -->
+  <section class="grid">
+
+    <article class="card">
+      <div class="card__head">
+        <span class="card__name">.btn--primary</span>
+        <span class="card__tag">One per screen</span>
+      </div>
+      <button class="btn btn--primary" type="button">Pair Now</button>
+      <p class="rule">The single action the screen exists for — <strong>never two teal buttons on one screen</strong>.</p>
+      <dl class="specs">
+        <dt>bg</dt><dd>--metric-readiness</dd>
+        <dt>label</dt><dd>--text-on-accent · p1.semibold</dd>
+        <dt>border</dt><dd>none</dd>
+        <dt>hover / active</dt><dd>.9 / .8</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <div class="card__head">
+        <span class="card__name">.btn--secondary</span>
+        <span class="card__tag">Parallel route</span>
+      </div>
+      <button class="btn btn--secondary" type="button">Enter Manually</button>
+      <p class="rule">Only when the second action is a <strong>genuine alternative path</strong>, not a softer version of the primary.</p>
+      <dl class="specs">
+        <dt>bg</dt><dd>transparent</dd>
+        <dt>label</dt><dd>--metric-readiness · p1.semibold</dd>
+        <dt>border</dt><dd>--border-thin solid --metric-readiness</dd>
+        <dt>hover / active</dt><dd>.75 / .6</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <div class="card__head">
+        <span class="card__name">.btn--tertiary</span>
+        <span class="card__tag">Way out</span>
+      </div>
+      <button class="btn btn--tertiary" type="button">I'll Do It Later</button>
+      <p class="rule">Dismiss, skip, defer, cancel — the <strong>quiet exit</strong> that pairs with a primary.</p>
+      <dl class="specs">
+        <dt>bg</dt><dd>transparent</dd>
+        <dt>label</dt><dd>--text-2 · p1.medium</dd>
+        <dt>border</dt><dd>none</dd>
+        <dt>hover / active</dt><dd>.7 / .55</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <div class="card__head">
+        <span class="card__name">.btn--destructive</span>
+        <span class="card__tag">Tertiary shape</span>
+      </div>
+      <button class="btn btn--destructive" type="button">Delete Workout</button>
+      <p class="rule">Tertiary geometry with a warning label — <strong>never a red fill</strong>, which would out-shout the primary.</p>
+      <dl class="specs">
+        <dt>bg</dt><dd>transparent</dd>
+        <dt>label</dt><dd>--negative-text · p1.medium</dd>
+        <dt>border</dt><dd>none</dd>
+        <dt>hover / active</dt><dd>.7 / .55</dd>
+      </dl>
+    </article>
+
+  </section>
+
+  <!-- ── Geometry + states ─────────────────────────────────── -->
+  <section class="grid">
+
+    <article class="card">
+      <div class="card__head">
+        <span class="card__name">Geometry</span>
+        <span class="card__tag">Identical across tiers</span>
+      </div>
+      <p class="rule">Size never signals importance. <strong>Hierarchy comes from colour</strong> — the medium height exists for dense rows and sheets, not for demoting an action.</p>
+      <div class="stack">
+        <button class="btn btn--primary" type="button">Save Goal</button>
+        <button class="btn btn--primary btn--m" type="button">Save Goal</button>
+      </div>
+      <dl class="specs">
+        <dt>height</dt><dd>52px · .btn--m 44px</dd>
+        <dt>radius</dt><dd>--radius-full (999)</dd>
+        <dt>padding</dt><dd>0 24px (spacing.24)</dd>
+        <dt>width</dt><dd>100%</dd>
+        <dt>shadow</dt><dd>none</dd>
+        <dt>label</dt><dd>p1 · 15 / 22</dd>
+      </dl>
+    </article>
+
+    <article class="card">
+      <div class="card__head">
+        <span class="card__name">States</span>
+        <span class="card__tag">Opacity only</span>
+      </div>
+      <p class="rule">No shrink, no glow, no scale, no new colours. Motion is <strong>opacity 120ms ease</strong> and nothing else; it drops to zero under reduced motion.</p>
+      <div class="scroll">
+        <table class="t">
+          <thead>
+            <tr><th scope="col">Tier</th><th scope="col">Hover</th><th scope="col">Active</th><th scope="col">Disabled</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>primary</td><td class="num">0.90</td><td class="num">0.80</td><td class="num">0.45</td></tr>
+            <tr><td>secondary</td><td class="num">0.75</td><td class="num">0.60</td><td class="num">0.45</td></tr>
+            <tr><td>tertiary</td><td class="num">0.70</td><td class="num">0.55</td><td class="num">0.45</td></tr>
+            <tr><td>destructive</td><td class="num">0.70</td><td class="num">0.55</td><td class="num">0.45</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="stack">
+        <button class="btn btn--primary" type="button" disabled>Continue</button>
+        <button class="btn btn--secondary" type="button" disabled>Enter Manually</button>
+        <button class="btn btn--tertiary" type="button" disabled>Skip For Now</button>
+        <button class="btn btn--destructive" type="button" disabled>Delete Workout</button>
+      </div>
+      <dl class="specs">
+        <dt>[disabled]</dt><dd>opacity .45 · cursor default</dd>
+      </dl>
+    </article>
+
+  </section>
+
+  <!-- ── Pairing rules, judged at phone width ──────────────── -->
+  <section class="card">
+    <div class="card__head">
+      <span class="card__name">Pairing at phone width</span>
+      <span class="card__tag">360px</span>
+    </div>
+    <p class="rule">The default pair is <strong>primary + tertiary</strong>. Labels are Title Case, one to three words, and every button carries a label — <strong>no icon-only buttons</strong>.</p>
+
+    <div class="split">
+      <div>
+        <div class="phone">
+          <div class="phone__copy">
+            <p class="phone__title">Pair your band</p>
+            <p class="phone__body">Keep it close to your phone while we connect.</p>
+          </div>
+          <button class="btn btn--primary" type="button">Pair Now</button>
+          <button class="btn btn--tertiary" type="button">I'll Do It Later</button>
+        </div>
+        <p class="verdict verdict--ok"><span class="mark mark--ok">✓</span>Default pair</p>
+      </div>
+
+      <div>
+        <div class="phone">
+          <div class="phone__copy">
+            <p class="phone__title">Add your readings</p>
+            <p class="phone__body">Connect a band, or type today's numbers in yourself.</p>
+          </div>
+          <button class="btn btn--primary" type="button">Pair Now</button>
+          <button class="btn btn--secondary" type="button">Enter Manually</button>
+        </div>
+        <p class="verdict verdict--ok"><span class="mark mark--ok">✓</span>Two real routes</p>
+      </div>
+
+      <div>
+        <div class="phone">
+          <div class="phone__copy">
+            <p class="phone__title">Pair your band</p>
+            <p class="phone__body">Two teal buttons — the eye has nowhere to land.</p>
+          </div>
+          <button class="btn btn--primary" type="button">Pair Now</button>
+          <button class="btn btn--primary" type="button">Skip For Now</button>
+        </div>
+        <p class="verdict verdict--no"><span class="mark mark--no">✕</span>Never stack two teal</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Provenance: every value traced back to js/tokens.js ── -->
+  <section class="card">
+    <div class="card__head">
+      <span class="card__name">Token provenance</span>
+      <span class="card__tag">Checked against js/tokens.js</span>
+    </div>
+    <p class="rule">Every component value traced to its path in the token source. The three values this component originally had <strong>no token to point at</strong> were added to <code>js/tokens.js</code> rather than hard-coded here.</p>
+    <div class="scroll">
+      <table class="t">
+        <thead>
+          <tr><th scope="col">Property</th><th scope="col">Token path</th><th scope="col">Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>height</td><td>controlHeight.l · controlHeight.m <em>(added)</em></td><td>52 · 44</td></tr>
+          <tr><td>border-radius</td><td>radius.full</td><td>999</td></tr>
+          <tr><td>padding-inline</td><td>spacing.24</td><td>24</td></tr>
+          <tr><td>label type</td><td>typeText.paragraphP1Semibold</td><td>15 / 22 · 600</td></tr>
+          <tr><td>label type (tertiary, destructive)</td><td>typeText.paragraphP1Medium</td><td>15 / 22 · 500</td></tr>
+          <tr><td>font-family</td><td>fontFamily.text</td><td>Google Sans Flex</td></tr>
+          <tr><td>primary bg</td><td>metric.readiness → color.teal.400</td><td>#45C7B3</td></tr>
+          <tr><td>primary label</td><td>textColor.onAccent <em>(added)</em></td><td>#07080C</td></tr>
+          <tr><td>secondary border</td><td>borderWidth.thin + metric.readiness</td><td>1 · #45C7B3</td></tr>
+          <tr><td>tertiary label</td><td>textColor.text2 → neutral.200</td><td>#B8BDD3</td></tr>
+          <tr><td>destructive label</td><td>semantic.negative.text</td><td>#FF9184</td></tr>
+          <tr><td>card bg</td><td>surface.card → neutral.800</td><td>#0F111B</td></tr>
+          <tr><td>card radius</td><td>radius.20</td><td>20</td></tr>
+          <tr><td>rules, dividers</td><td>surface.raised → neutral.700 <em>(added)</em></td><td>#282B39</td></tr>
+          <tr><td>doc chrome (mono, 40px h1)</td><td class="gap">⚠ none — spec-sheet furniture, not component values</td><td>see footnote</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Copy-paste source ─────────────────────────────────── -->
+  <section class="card">
+    <div class="card__head">
+      <span class="card__name">Source</span>
+      <span class="card__tag">Plain HTML / CSS</span>
+    </div>
+    <pre class="code"><span class="c">/* Base — geometry is identical across all four tiers */</span>
+<span class="s">.btn</span> {
+  <span class="p">appearance</span>: none;
+  <span class="p">display</span>: inline-flex;
+  <span class="p">align-items</span>: center;
+  <span class="p">justify-content</span>: center;
+  <span class="p">box-sizing</span>: border-box;
+  <span class="p">width</span>: 100%;
+  <span class="p">height</span>: var(--control-h-l);            <span class="c">/* controlHeight.l — 52 */</span>
+  <span class="p">padding</span>: 0 24px;                      <span class="c">/* spacing.24 */</span>
+  <span class="p">border</span>: none;
+  <span class="p">border-radius</span>: var(--radius-full);     <span class="c">/* radius.full */</span>
+  <span class="p">background</span>: transparent;
+  <span class="p">box-shadow</span>: none;
+  <span class="c">/* typeText.paragraphP1Semibold */</span>
+  <span class="p">font-family</span>: var(--font-text);
+  <span class="p">font-size</span>: 15px;
+  <span class="p">line-height</span>: 22px;
+  <span class="p">font-weight</span>: var(--weight-semibold);
+  <span class="p">letter-spacing</span>: var(--ls-normal);
+  <span class="p">white-space</span>: nowrap;
+  <span class="p">cursor</span>: pointer;
+  <span class="p">transition</span>: opacity 120ms ease;
+}
+<span class="s">.btn--m</span> { <span class="p">height</span>: var(--control-h-m); }   <span class="c">/* controlHeight.m — 44 */</span>
+
+<span class="c">/* Tiers — colour only */</span>
+<span class="s">.btn--primary</span> {
+  <span class="p">background</span>: var(--metric-readiness);
+  <span class="p">color</span>: var(--text-on-accent);          <span class="c">/* textColor.onAccent */</span>
+}
+<span class="s">.btn--secondary</span> {
+  <span class="p">border</span>: var(--border-thin) solid var(--metric-readiness);
+  <span class="p">color</span>: var(--metric-readiness);
+}
+<span class="s">.btn--tertiary</span> {
+  <span class="p">color</span>: var(--text-2);
+  <span class="p">font-weight</span>: var(--weight-medium);      <span class="c">/* p1.medium */</span>
+}
+<span class="s">.btn--destructive</span> {
+  <span class="p">color</span>: var(--negative-text);
+  <span class="p">font-weight</span>: var(--weight-medium);      <span class="c">/* p1.medium */</span>
+}
+
+<span class="c">/* States — opacity only */</span>
+<span class="s">.btn--primary:not([disabled]):hover</span>      { <span class="p">opacity</span>: .9; }
+<span class="s">.btn--primary:not([disabled]):active</span>     { <span class="p">opacity</span>: .8; }
+<span class="s">.btn--secondary:not([disabled]):hover</span>    { <span class="p">opacity</span>: .75; }
+<span class="s">.btn--secondary:not([disabled]):active</span>   { <span class="p">opacity</span>: .6; }
+<span class="s">.btn--tertiary:not([disabled]):hover</span>,
+<span class="s">.btn--destructive:not([disabled]):hover</span>  { <span class="p">opacity</span>: .7; }
+<span class="s">.btn--tertiary:not([disabled]):active</span>,
+<span class="s">.btn--destructive:not([disabled]):active</span> { <span class="p">opacity</span>: .55; }
+<span class="s">.btn[disabled]</span> { <span class="p">opacity</span>: .45; <span class="p">cursor</span>: default; }
+
+<span class="s">.btn:focus-visible</span> { <span class="p">outline</span>: 2px solid var(--metric-readiness); <span class="p">outline-offset</span>: 4px; }
+
+<span class="s">@media (prefers-reduced-motion: reduce)</span> {
+  <span class="s">.btn</span> { <span class="p">transition</span>: none; }
+}</pre>
+    <p class="foot"><strong>Still off-system:</strong> this sheet's own chrome uses JetBrains Mono for token paths and code — the system has no mono face — and the 40&nbsp;px masthead sits above the app's 24&nbsp;px h1 ceiling, since this is a desktop document rather than an app screen. Both are document furniture, not component values. <code>:focus-visible</code> is an addition to the brief: it uses <code>--metric-readiness</code> at 2px with a 4px offset, so drop it if focus is ever handled globally.</p>
+  </section>
+
+</div>
+
+</body>
+</html>
