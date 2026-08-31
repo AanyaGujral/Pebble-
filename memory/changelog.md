@@ -5,6 +5,41 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-30 (button kit + pairing) — Three changes.
+  BUTTON: the updated component (components button spec) is inlined verbatim
+  and `.cta` is reduced to positioning only, so the flow's buttons and the
+  component can no longer drift apart. All eight CTAs are now
+  `.btn.btn--primary`; the pairing declines are `.btn--tertiary`, per the
+  component's own rule that a decline is never secondary and only one teal
+  element may sit on a screen.
+  ** CONFLICT, FLAGGED IN THE FILE ** the component defines disabled as
+  opacity .45 on the tier's own colour, so a disabled primary is now teal at
+  45% — this REPLACES the neutral-700 disabled fill the owner asked for on
+  2026-08-28. Applied because the instruction was to take the component's
+  logic; raised because it overrides an explicit earlier request. One line in
+  .cta[disabled] reverts it.
+  Also added the two tokens the component needs and js/tokens.js lacked:
+  `controlHeight` (l 52 / m 44 — deliberately off the spacing scale) and
+  `textColor.onAccent` (#07080C, the label on a filled accent).
+  DOTS: the onboarding slide dots are removed. Swipe and the auto-advance
+  stay; onbShown still tracks position for the swipe.
+  PAIRING: five stages plus a recovery sheet, ported from the owner's "Pebble
+  Pairing Flow" artifact and now running after Daily targets — Pair,
+  Searching, Found, Connecting, Success, with the not-found sheet over a
+  dimmed search. Success hands off to index.html; "I'll Do It Later" skips
+  with a toast. The search outcome (multiple / one / none) is switchable from
+  the jump panel so all three endings are reviewable.
+  Two real bugs found and fixed while wiring it:
+   1. The ambient .glow is position:absolute with an OPAQUE background, so it
+      painted over the pairing screens entirely — they lay out in normal flow,
+      unlike every other screen, whose content is absolutely positioned and so
+      paints above it by DOM order. Fixed with explicit z-index.
+   2. The pairing subtitles inherited the form screens' global
+      `.sub{position:absolute;top:206px}`, dropping the text into the middle
+      of the device list. Overridden back to static.
+  Timers are cancelled on leaving any pairing screen, so a stale one cannot
+  yank the flow forward from wherever you have navigated to.
+
 - 2026-08-30 — The splash is now the owner's video (assets/onboarding/
   splash.mp4, 1080x1080 square, 4.07s, H.264+AAC). Set to the screen's full
   360px width, so 360x360, centred on both axes; the video carries its own

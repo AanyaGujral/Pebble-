@@ -162,7 +162,11 @@ export const textColor = {
      token so the shipped Activity/Sleep/Me screens do not shift, and
      onboarding follows Figma. If you are here to reconcile them, that is a
      new decision, not a bug. */
-  text3: '#7B819C'
+  text3: '#7B819C',
+  /* Label colour on a filled accent surface (the primary button). Added
+     2026-08-30 with the Button component, which previously pointed at
+     neutral.900 directly for want of an alias. */
+  onAccent: '#07080C'
 };
 
 /** Metric aliases — components should reference these, never raw hues. */
@@ -424,6 +428,15 @@ export const typeNumeric = {
   }
 };
 
+/** Control heights. Added 2026-08-30 with the Button component: 52 and 44
+ *  are deliberately OFF the spacing scale, so they had no token to point at
+ *  and were being hard-coded. l = the standard action, m = dense rows and
+ *  sheets (never a demotion — hierarchy is colour, not size). */
+export const controlHeight = {
+  m: 44,
+  l: 52
+};
+
 export const radius = {
   '4': 4,
   '8': 8,
@@ -460,7 +473,7 @@ export const borderWidth = {
 const tokens = {
   color, neutral, surface, textColor, metric, semantic,
   fontFamily, fontWeight, typeText, typeNumeric,
-  radius, spacing, borderWidth,
+  radius, spacing, borderWidth, controlHeight,
 };
 
 export default tokens;

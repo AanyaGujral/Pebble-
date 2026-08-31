@@ -75,8 +75,17 @@
      app follows the token. Same note sits in js/tokens.js. */
   --text-3:var(--neutral-300);
 
-  /* semantic — only the negative state appears in this flow (invalid OTP) */
+  /* semantic — the negative state (invalid OTP) and the button's warning label */
   --negative-icon:#F4604C;               /* Figma `semantic/negative/icon` */
+  --negative-text:#FF9184;               /* semantic.negative.text */
+
+  /* aliases the Button component resolves through */
+  --metric-readiness:var(--teal-400);
+  --weight-medium:500;
+  --weight-semibold:600;
+  --ls-normal:0;
+  --border-thin:1px;
+  --radius-full:999px;
 
   /* lines */
   --divider:var(--neutral-700);
@@ -234,20 +243,103 @@ body{
 .sub{position:absolute;left:16px;right:16px;top:206px;margin:0;
   font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
 
-/* Primary CTA — 52px pill, 16px inset, sitting 32px off the bottom */
-.cta{
-  all:unset;box-sizing:border-box;
-  position:absolute;left:16px;right:16px;top:711px;height:52px;
-  border-radius:var(--r-pill);cursor:pointer;
-  display:grid;place-items:center;
-  font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:500;
-  background:var(--teal-400);color:var(--surface-app);
-  transition:background 140ms ease;
+/* --------------------------------------------------------------------------
+   BUTTON — components/button, INLINED VERBATIM (2026-08-30).
+   Do not edit here. Change the component and re-copy; this file has to open
+   over file://, so it cannot <link> the stylesheet.
+
+   Four tiers share one geometry: hierarchy is carried by colour alone, never
+   by size, and every state is a change in opacity — no shadow, no scale, no
+   new colours.
+
+   Tier use in this flow:
+     Continue / Verify / Get Started / Pair Now   primary
+     I'll Do It Later / Cancel                    TERTIARY, not secondary —
+       they decline the primary, and two teal elements on one screen is the
+       one thing the spec rules out. Nothing here is secondary; that tier is
+       for a genuine parallel route and this flow has none.
+   -------------------------------------------------------------------------- */
+.btn{
+  -webkit-appearance:none;
+  appearance:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+
+  width:100%;
+  height:52px;                       /* controlHeight.l */
+  padding:0 24px;                    /* spacing.24 */
+
+  border:none;
+  border-radius:var(--radius-full);
+  background:transparent;
+  box-shadow:none;
+
+  /* typeText.paragraphP1Semibold */
+  font-family:var(--font-text);
+  font-size:15px;
+  line-height:22px;
+  font-weight:var(--weight-semibold);
+  letter-spacing:var(--ls-normal);
+
+  text-align:center;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:opacity 120ms ease;
 }
-/* Disabled is neutral-700 (owner, 2026-08-28 — the Figma frames used
-   neutral-600; this is a deliberate override, one step darker). The label
-   stays the same dark surface-app colour the comp uses. */
-.cta[disabled]{background:var(--neutral-700);cursor:not-allowed}
+/* Medium — for dense rows and sheets. Not a demotion. */
+.btn--m{height:44px}               /* controlHeight.m */
+
+.btn--primary{
+  background:var(--metric-readiness);
+  color:var(--neutral-900);
+}
+.btn--secondary{
+  background:transparent;
+  border:var(--border-thin) solid var(--metric-readiness);
+  color:var(--metric-readiness);
+}
+.btn--tertiary{
+  background:transparent;
+  border:none;
+  color:var(--text-2);
+  font-weight:var(--weight-medium);
+}
+.btn--destructive{
+  background:transparent;
+  border:none;
+  color:var(--negative-text);
+  font-weight:var(--weight-medium);
+}
+
+/* States — opacity only. :not([disabled]) keeps a disabled button flat at
+   .45 instead of compounding on hover. */
+.btn--primary:not([disabled]):hover      { opacity:.9; }
+.btn--primary:not([disabled]):active     { opacity:.8; }
+.btn--secondary:not([disabled]):hover    { opacity:.75; }
+.btn--secondary:not([disabled]):active   { opacity:.6; }
+.btn--tertiary:not([disabled]):hover,
+.btn--destructive:not([disabled]):hover  { opacity:.7; }
+.btn--tertiary:not([disabled]):active,
+.btn--destructive:not([disabled]):active { opacity:.55; }
+
+/* FLAG — this REPLACES the neutral-700 disabled fill the owner asked for on
+   2026-08-28. The component defines disabled as opacity .45 on the tier's own
+   colour, so a disabled primary is now teal at 45% rather than a grey pill.
+   Applied because the instruction was to take the updated component's logic;
+   raised because it directly overrides an earlier explicit request. To go
+   back, give .cta[disabled] a neutral-700 background here. */
+.btn[disabled]{
+  opacity:.45;
+  cursor:default;
+}
+.btn:focus-visible{outline:2px solid var(--metric-readiness);outline-offset:4px}
+@media (prefers-reduced-motion:reduce){ .btn{transition:none} }
+
+/* .cta is now POSITION ONLY — every visual property comes from .btn above,
+   so the flow's buttons and the component can never drift apart. */
+.cta{position:absolute;left:16px;right:16px;top:711px}
 
 /* Text fields — 48px, 12px radius, hairline neutral-700. The selected/focus
    border is teal-400 (owner, 2026-08-28); the Figma Name_typing frame used
@@ -511,14 +603,6 @@ button.field{
   font-size:32px;line-height:36px;font-weight:700;letter-spacing:-0.32px;
   will-change:opacity;
 }
-/* Slide dots. Not in the Figma frames — added because the owner asked for
-   dots and swipe alongside the auto-advance (2026-08-28). */
-#v-onb .dots{position:absolute;left:24px;top:493px;display:flex;gap:6px}
-#v-onb .dots button{
-  all:unset;width:6px;height:6px;border-radius:999px;cursor:pointer;
-  background:rgba(255,255,255,0.32);transition:width 200ms ease,background 200ms ease;
-}
-#v-onb .dots button.on{width:18px;background:var(--teal-400)}
 #v-onb .head .dim{display:block;color:rgba(255,255,255,0.65)}
 #v-onb .head .lit{display:block;color:#FFF}
 /* The onboarding CTA is 316px wide and bottom-anchored, NOT the 328px pill
@@ -624,6 +708,145 @@ button.field{
   letter-spacing:-0.12px;color:var(--text-1);
 }
 
+
+/* ==========================================================================
+   DEVICE PAIRING — five stages plus a recovery sheet, ported from the
+   owner's "Pebble Pairing Flow" artifact (2026-08-30). It runs AFTER setup:
+   Daily targets -> Pair -> Searching -> Found -> Connecting -> Success.
+
+   These screens are centred compositions rather than the fixed-offset form
+   layout the rest of the flow uses, so they opt into flex via .pview instead
+   of inheriting the absolute positions. They also carry no brand badge —
+   the ring set already holds the mark.
+   ========================================================================== */
+.view.on.pview{display:flex;flex-direction:column;padding:40px 24px 28px}
+/* The ambient .glow is position:absolute with an OPAQUE background, so it
+   paints above any static-flow sibling. Every other screen escapes that
+   because its content is absolutely positioned too; the pairing screens lay
+   out in normal flow, so they have to be lifted over it explicitly. */
+.pview > .glow{z-index:0}
+.pview > *:not(.glow){position:relative;z-index:1}
+.pview .topbar{height:40px;margin:0 -12px 0;display:flex;align-items:center;flex:0 0 auto}
+.pview .backbtn{
+  width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  background:none;border:0;cursor:pointer;border-radius:999px;color:var(--text-1);
+}
+.pview .backbtn:hover{background:var(--surface-raised)}
+.pview .phead{text-align:center;flex:0 0 auto}
+.pview .phead .eyebrow{margin:0 0 6px;font-size:13px;line-height:18px;font-weight:500;color:var(--text-3)}
+.pview .phead .t{margin:0;font-size:26px;line-height:32px;font-weight:500;letter-spacing:-.01em;color:var(--text-1)}
+.pview .phead .t.sm{font-size:22px;line-height:28px}
+/* The form screens' global .sub is position:absolute at top:206px. These
+   subtitles sit in normal flow, so that has to be undone explicitly or the
+   text lands in the middle of whatever follows it. */
+.pview .phead .sub{
+  position:static;left:auto;right:auto;top:auto;
+  margin:10px 0 0;font-size:13px;line-height:19px;color:var(--text-2);
+}
+.pview .ctas{margin-top:auto;padding-top:20px;display:flex;flex-direction:column;gap:12px;flex:0 0 auto}
+
+/* Ring set — static fills, plus waves that travel outward on the two
+   animated screens. No device imagery: one flow serves every product, so
+   the rings carry the moments a watch illustration would have. */
+.rings{--d:268px;position:relative;width:var(--d);height:var(--d);margin:0 auto;flex:0 0 auto}
+.rings.sm{--d:176px}
+.rings .r,.rings .wave,.rings .core{position:absolute;left:50%;top:50%;border-radius:50%;transform:translate(-50%,-50%)}
+.rings .r1{width:100%;height:100%;background:color-mix(in srgb, var(--teal-400) 5%, transparent)}
+.rings .r2{width:76%;height:76%;background:color-mix(in srgb, var(--teal-400) 7%, transparent)}
+.rings .r3{width:53%;height:53%;background:color-mix(in srgb, var(--teal-400) 9%, transparent)}
+.rings .core{
+  width:35%;height:35%;
+  background:color-mix(in srgb, var(--teal-400) 14%, var(--surface-app));
+  display:flex;align-items:center;justify-content:center;color:var(--teal-400);
+}
+.rings .core svg{width:52%;height:52%;display:block}
+/* Hairlines belong to the animated states only — they give the travelling
+   waves an edge to read against. */
+.rings.searching .r1,.rings.linking .r1{box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--teal-400) 14%, transparent)}
+.rings.searching .r2,.rings.linking .r2{box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--teal-400) 16%, transparent)}
+.rings.searching .r3,.rings.linking .r3{box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--teal-400) 18%, transparent)}
+.rings.searching .core,.rings.linking .core{box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--teal-400) 26%, transparent)}
+.rings .wave{width:100%;height:100%;opacity:0;box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--teal-400) 55%, transparent)}
+.rings.searching .wave{animation:wave 3s cubic-bezier(.25,.6,.35,1) infinite}
+.rings.searching .wave:nth-child(2){animation-delay:1s}
+.rings.searching .wave:nth-child(3){animation-delay:2s}
+@keyframes wave{
+  0%{transform:translate(-50%,-50%) scale(.34);opacity:0}
+  14%{opacity:.5}
+  100%{transform:translate(-50%,-50%) scale(1);opacity:0}
+}
+.rings.linking .core{animation:breathe 1.8s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.06)}}
+
+.chevrons{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:18px;flex:0 0 auto}
+.chevrons span{width:22px;height:12px;color:var(--teal-400);opacity:.45;animation:rise 1.5s ease-in-out infinite}
+.chevrons span svg{width:100%;height:100%;display:block}
+.chevrons span:nth-child(2){animation-delay:.18s}
+.chevrons span:nth-child(3){animation-delay:.36s}
+@keyframes rise{0%,100%{opacity:.2;transform:translateY(3px)}50%{opacity:1;transform:translateY(-3px)}}
+
+/* Setup tips — the standard card, neutral throughout. No caution colour. */
+.tips{
+  background:var(--surface-card);border-radius:20px;
+  padding:16px;display:flex;flex-direction:column;gap:12px;
+}
+.tip{display:flex;gap:12px;align-items:flex-start}
+.tip .n{
+  font-family:var(--font-num);font-size:13px;line-height:18px;font-weight:500;
+  font-feature-settings:'tnum' 1,'lnum' 1;color:var(--text-3);flex:0 0 auto;width:10px;
+}
+.tip .x{font-size:13px;line-height:18px;color:var(--text-2)}
+.psheet .tips{background:var(--surface-raised)}
+
+.dev-list{display:flex;flex-direction:column;gap:8px;flex:0 0 auto}
+.dev-row{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  background:var(--surface-card);border:0;border-radius:16px;padding:15px 16px;
+  cursor:pointer;font-family:inherit;transition:background 140ms ease;
+}
+.dev-row:hover{background:var(--surface-raised)}
+.dev-row .nm{flex:1;font-size:15px;line-height:20px;font-weight:500;color:var(--text-1)}
+.dev-row svg{width:18px;height:18px;color:var(--text-3);fill:currentColor}
+
+/* Success — the disc, its halo, and confetti cut from the metric hues */
+.win{position:relative;flex:0 0 auto;height:300px;display:flex;align-items:center;justify-content:center}
+.win .disc{
+  position:relative;z-index:2;width:132px;height:132px;border-radius:50%;
+  background:var(--teal-400);color:var(--neutral-900);
+  display:flex;align-items:center;justify-content:center;
+  animation:pop 240ms cubic-bezier(.2,1.3,.4,1) 1;
+}
+.win .disc::before{
+  content:"";position:absolute;inset:-34px;border-radius:50%;z-index:-1;
+  background:color-mix(in srgb, var(--teal-400) 9%, transparent);
+}
+.win .disc svg{width:56px;height:56px;display:block;fill:currentColor}
+@keyframes pop{0%{transform:scale(.72)}100%{transform:scale(1)}}
+.win i{position:absolute;display:block;border-radius:2px;opacity:.9;animation:drift 3.4s ease-in-out infinite}
+@keyframes drift{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-9px) rotate(14deg)}}
+
+/* Recovery sheet — sits over the dimmed search screen */
+.pscrim{position:absolute;inset:0;z-index:69;background:color-mix(in srgb, var(--neutral-900) 62%, transparent)}
+.pscrim[hidden]{display:none}
+.psheet{
+  position:absolute;left:8px;right:8px;bottom:18px;z-index:70;
+  background:var(--surface-card);border-radius:24px;padding:16px 16px 24px;
+  animation:sheet-in 240ms cubic-bezier(.2,.8,.3,1) 1;
+}
+.psheet[hidden]{display:none}
+@keyframes sheet-in{from{transform:translateY(28px);opacity:0}to{transform:translateY(0);opacity:1}}
+.psheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.psheet-head .t{margin:0;font-size:19px;line-height:25px;font-weight:500;color:var(--text-1)}
+.psheet-head .s{margin:6px 0 0;font-size:13px;line-height:18px;color:var(--text-2)}
+.psheet .btn{margin-top:16px}
+
+/* The metric hues the confetti is cut from */
+:root{
+  --metric-heart-rate:#E43A62;--metric-hrv:#D96F4A;--metric-calories:#F59E3B;
+  --metric-steps:#F2C64B;--metric-activity:#A6CE4E;--metric-distance:#43B476;
+  --metric-sleep:#8A7CEC;--metric-skin-temp:#C873DE;
+}
+
 /* ==========================================================================
    7. MOTION
    --------------------------------------------------------------------------
@@ -649,6 +872,12 @@ button.field{
   <p class="hint">Nine screens, in order. The flow runs for real — jump in
      anywhere to inspect a screen without walking it.</p>
   <div class="opts" id="jump"></div>
+
+  <div class="grp">
+    <h2>Search result</h2>
+    <p class="hint">Which ending the pairing search lands on.</p>
+    <div class="opts" id="pairjump"></div>
+  </div>
 
   <div class="grp">
     <h2>OTP states</h2>
@@ -734,9 +963,7 @@ button.field{
       <h1 class="head" data-i="2"><span class="dim">Live better,</span><span class="lit">every day.</span></h1>
     </div>
 
-    <div class="dots" id="onbDots" role="tablist" aria-label="Slides"></div>
-
-    <button class="cta" id="btnStart">Get Started</button>
+    <button class="cta btn btn--primary" id="btnStart">Get Started</button>
 
     <p class="legal">By continuing, you agree to our
       <a href="#" onclick="return false">Terms of Service</a> &amp;
@@ -775,7 +1002,7 @@ button.field{
       </div>
     </div>
 
-    <button class="cta" id="btnVerifyPhone" disabled>Verify</button>
+    <button class="cta btn btn--primary" id="btnVerifyPhone" disabled>Verify</button>
   </section>
 
   <!-- ====================================================================
@@ -804,7 +1031,7 @@ button.field{
       <button class="act" id="btnResend" disabled>Resend in 00:30</button>
     </div>
 
-    <button class="cta" id="btnVerifyOtp" disabled>Verify</button>
+    <button class="cta btn btn--primary" id="btnVerifyOtp" disabled>Verify</button>
   </section>
 
   <!-- ====================================================================
@@ -829,7 +1056,7 @@ button.field{
              autocomplete="name" aria-label="Full name">
     </div>
 
-    <button class="cta" id="btnName" disabled>Continue</button>
+    <button class="cta btn btn--primary" id="btnName" disabled>Continue</button>
   </section>
 
   <!-- ====================================================================
@@ -999,7 +1226,7 @@ button.field{
       </div>
     </div>
 
-    <button class="cta" id="btnProfile">Continue</button>
+    <button class="cta btn btn--primary" id="btnProfile">Continue</button>
   </section>
 
   <!-- ====================================================================
@@ -1021,7 +1248,7 @@ button.field{
 
     <div id="activityCards"></div>
 
-    <button class="cta" id="btnActivity">Continue</button>
+    <button class="cta btn btn--primary" id="btnActivity">Continue</button>
   </section>
 
   <!-- ====================================================================
@@ -1043,7 +1270,7 @@ button.field{
 
     <div id="goalCards"></div>
 
-    <button class="cta" id="btnGoal">Continue</button>
+    <button class="cta btn btn--primary" id="btnGoal">Continue</button>
   </section>
 
   <!-- ====================================================================
@@ -1065,7 +1292,112 @@ button.field{
 
     <div id="targetRows"></div>
 
-    <button class="cta" id="btnDone">Continue</button>
+    <button class="cta btn btn--primary" id="btnDone">Continue</button>
+  </section>
+
+
+  <!-- ====================================================================
+       10-14. DEVICE PAIRING — runs after setup. Ported from the owner's
+       "Pebble Pairing Flow" artifact. No device imagery: one flow serves
+       every product, so the ring set carries the moments.
+       ==================================================================== -->
+  <section class="view pview" id="v-pair" aria-label="Connect your device">
+    <div class="glow"></div>
+    <div class="topbar"></div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <div class="rings sm"><div class="r r1"></div><div class="r r2"></div><div class="r r3"></div><div class="core" data-mark></div></div>
+      <div class="phead" style="margin-top:30px">
+        <p class="eyebrow" id="pairGreeting">Hey there!</p>
+        <h1 class="t">Let’s connect<br>your device</h1>
+      </div>
+      <div class="tips" style="margin-top:28px" data-tips></div>
+    </div>
+    <div class="ctas">
+      <button class="btn btn--primary" type="button" data-pgo="searching">Pair Now</button>
+      <!-- TERTIARY, not secondary: it declines the primary, and the spec
+           allows only one teal element per screen. -->
+      <button class="btn btn--tertiary" type="button" id="btnPairLater">I’ll Do It Later</button>
+    </div>
+  </section>
+
+  <section class="view pview" id="v-searching" aria-label="Searching">
+    <div class="glow"></div>
+    <div class="topbar"><button class="backbtn" data-pgo="pair" aria-label="Back"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg></button></div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <div class="rings searching">
+        <div class="wave"></div><div class="wave"></div><div class="wave"></div>
+        <div class="r r1"></div><div class="r r2"></div><div class="r r3"></div>
+        <div class="core" data-mark></div>
+      </div>
+      <div class="phead" style="margin-top:44px">
+        <h1 class="t">Searching…</h1>
+        <p class="sub">Ensure your Pebble device is in pairing mode and<br>your phone’s Bluetooth is turned on</p>
+      </div>
+    </div>
+    <div class="ctas"><button class="btn btn--tertiary" type="button" data-pgo="pair">Cancel</button></div>
+
+    <!-- Recovery sheet, shown over this screen when nothing is found -->
+    <div class="pscrim" id="pairScrim" hidden></div>
+    <div class="psheet" id="pairSheet" role="dialog" aria-modal="true" aria-labelledby="pairSheetTitle" hidden>
+      <div class="psheet-head">
+        <div>
+          <h2 class="t" id="pairSheetTitle">No device found</h2>
+          <p class="s">Run through these, then search again.</p>
+        </div>
+        <button class="iconbtn" id="pairSheetClose" aria-label="Close">
+          <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+            <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="tips" data-tips></div>
+      <button class="btn btn--primary btn--m" type="button" id="btnRetry">Try Again</button>
+    </div>
+  </section>
+
+  <section class="view pview" id="v-found" aria-label="Devices found">
+    <div class="glow"></div>
+    <div class="topbar"><button class="backbtn" data-pgo="pair" aria-label="Back"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg></button></div>
+    <div class="rings sm" style="margin-top:4px"><div class="r r1"></div><div class="r r2"></div>
+      <div class="r r3"></div><div class="core" data-mark></div></div>
+    <div class="phead" style="margin-top:24px">
+      <h1 class="t sm">Multiple devices found</h1>
+      <p class="sub">Pick the device you’d like to pair with</p>
+    </div>
+    <div class="dev-list" style="margin-top:22px" data-devices></div>
+    <div class="ctas"><button class="btn btn--tertiary" type="button" data-pgo="pair">Cancel</button></div>
+  </section>
+
+  <section class="view pview" id="v-connecting" aria-label="Connecting">
+    <div class="glow"></div>
+    <div class="topbar"><button class="backbtn" data-pgo="pair" aria-label="Back"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg></button></div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center">
+      <div class="rings linking"><div class="r r1"></div><div class="r r2"></div>
+        <div class="r r3"></div><div class="core" data-mark></div></div>
+      <div class="chevrons" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="phead" style="margin-top:26px">
+        <h1 class="t sm">Connecting to<br><span id="connName">Pebble Prime</span>…</h1>
+        <p class="sub">Keep your phone and device close to each other</p>
+      </div>
+    </div>
+    <div class="ctas"><button class="btn btn--tertiary" type="button" data-pgo="pair">Cancel</button></div>
+  </section>
+
+  <section class="view pview" id="v-success" aria-label="Connected">
+    <div class="glow"></div>
+    <div class="topbar"></div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <div class="win" data-win>
+        <div class="disc">
+          <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></svg>
+        </div>
+      </div>
+      <div class="phead" style="margin-top:6px">
+        <h1 class="t sm">Connection successful!</h1>
+        <p class="sub">Hold tight — we’re preparing your<br>fitness dashboard…</p>
+      </div>
+    </div>
+    <div class="ctas"></div>
   </section>
 
 </div><!-- /screen -->
@@ -1112,11 +1444,14 @@ const state = {
 const GOOD_OTP = '110341';
 
 /* ---- 3. Screen switching ------------------------------------------------ */
-const ORDER = ['splash','onb','phone','otp','name','profile','activity','goal','targets'];
+const ORDER = ['splash','onb','phone','otp','name','profile','activity','goal','targets',
+               'pair','searching','found','connecting','success'];
 const TITLES = {
   splash:'Splash', onb:'Onboarding', phone:'Phone number', otp:'OTP',
   name:'Name', profile:'Profile', activity:'Activity level',
-  goal:'Goal', targets:'Daily targets'
+  goal:'Goal', targets:'Daily targets',
+  pair:'Pair device', searching:'Searching', found:'Devices found',
+  connecting:'Connecting', success:'Connected'
 };
 let current = null;
 const history = [];
@@ -1130,6 +1465,11 @@ function go(id, {push=true} = {}){
   if (id === 'otp') startOtpTimer();
   /* The backdrop only animates while its screen is on show. */
   if (id === 'onb') startBackdrop(); else stopBackdrop();
+  /* Pairing screens carry running timers; stepping outside them cancels. */
+  if (typeof PAIR_SCREENS !== 'undefined' && !PAIR_SCREENS.includes(id)){
+    if (typeof clearPair === 'function') clearPair();
+    if (typeof closePairSheet === 'function') closePairSheet();
+  }
   /* Land with the first text field already focused, so the phone keypad is
      up and the person can start typing straight away (owner, 2026-08-28).
      Waits out the 180ms screen fade first, otherwise the caret lands while
@@ -1276,7 +1616,8 @@ function layerState(T, i){
 }
 
 const onbHeads = [...document.querySelectorAll('#onbHeads .head')];
-const onbDots  = $('#onbDots');
+/* onbShown is still tracked — swipe needs to know which slide it is leaving —
+   but there is no dot rail any more (owner removed it, 2026-08-30). */
 let onbRAF = null, onbStart = 0, onbShown = -1;
 
 /* Which slide is "current" — the layer nearest the middle of its hold. */
@@ -1293,14 +1634,7 @@ function paintBackdrop(T){
     /* The headline rides its photograph's opacity exactly. */
     if (onbHeads[i]) onbHeads[i].style.opacity = s.o;
   });
-  const cur = currentSlide(T);
-  if (cur !== onbShown){
-    onbShown = cur;
-    [...onbDots.children].forEach((d,i) => {
-      d.classList.toggle('on', i === cur);
-      d.setAttribute('aria-selected', String(i === cur));
-    });
-  }
+  onbShown = currentSlide(T);
 }
 
 /* Jump the clock so slide i sits in the middle of its hold. Solving
@@ -1313,8 +1647,7 @@ function gotoSlide(i){
     /* No animation to run — just show that slide outright. */
     onbLayers.forEach((el,k) => { el.style.opacity = k === mod(i,n) ? 1 : 0; });
     onbHeads.forEach((el,k) => { el.style.opacity = k === mod(i,n) ? 1 : 0; });
-    onbShown = -1;
-    [...onbDots.children].forEach((d,k) => d.classList.toggle('on', k === mod(i,n)));
+    onbShown = mod(i,n);
   }
 }
 function startBackdrop(){
@@ -1337,16 +1670,6 @@ function stopBackdrop(){
   if (onbRAF) cancelAnimationFrame(onbRAF);
   onbRAF = null;
 }
-
-/* Dots — tappable, and they double as the position indicator. */
-onbLayers.forEach((_, i) => {
-  const d = document.createElement('button');
-  d.type = 'button';
-  d.setAttribute('role','tab');
-  d.setAttribute('aria-label', `Slide ${i+1}`);
-  d.onclick = () => gotoSlide(i);
-  onbDots.appendChild(d);
-});
 
 /* Swipe. Pointer events cover touch, pen and mouse-drag in one path.
    Two things are needed to make a drag across a photograph survive:
@@ -1915,9 +2238,125 @@ buildTargets();
    app) is the obvious guess — confirm whether there should be a "you're all
    set" moment first. */
 $('#btnDone').onclick = () => {
-  showToast('Setup complete — opening Pebble');
-  setTimeout(() => { window.location.href = 'index.html'; }, 900);
+  /* Setup no longer ends the flow — pairing runs next (owner, 2026-08-30).
+     The greeting picks up the name collected on the Name screen. */
+  $('#pairGreeting').textContent = state.name ? `Hey ${state.name.split(' ')[0]}!` : 'Hey there!';
+  go('pair');
 };
+
+
+/* ---- 4j. Device pairing --------------------------------------------------
+   Ported from the owner's "Pebble Pairing Flow" artifact. Five stages plus a
+   recovery sheet, all driven off the same two timers as the source.
+
+   The outcome is deliberately switchable from the jump panel rather than
+   random, so any of the three endings can be reviewed on demand. */
+const TIPS = [
+  'Turn your phone’s Bluetooth on',
+  'Make sure your Pebble device is switched on',
+  'Keep your device and phone close to each other'
+];
+const DEVICES = ['Pebble Prime','Pebble Venus','Pebble Cosmos','Pebble Spark'];
+const SEARCH_MS = 3200, CONNECT_MS = 2600;
+
+/* Confetti sits clear of the disc and its halo — fixed positions, so the
+   composition is identical every time rather than randomly clustered. */
+const CONFETTI = [
+  [ 14, 22,10,3,-18,'sleep'],   [ 52,  6, 6,6, 12,'calories'],
+  [ 96, 40,12,3, 28,'distance'],[ 12, 96, 5,5, 22,'activity'],
+  [ 14,170, 9,3,-30,'hrv'],     [ 30,238, 8,3, 40,'steps'],
+  [ 76,272, 6,6,-10,'heart-rate'],[150,290,10,3,16,'sleep'],
+  [232,262, 7,3, 36,'calories'],[282,196,12,3,-22,'skin-temp'],
+  [296,110, 6,6,-14,'steps'],   [262, 26, 9,3, 24,'distance'],
+  [198,  4, 5,5, 32,'activity']
+];
+
+/* The mark inside every ring core. Same supplied SVG as the splash, but
+   taking currentColor so it inherits the accent from its ring. */
+const MARK_SVG = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="currentColor" d="'
+  + document.querySelector('#v-onb .leaf path').getAttribute('d') + '"/></svg>';
+
+document.querySelectorAll('[data-mark]').forEach(el => { el.innerHTML = MARK_SVG; });
+document.querySelectorAll('[data-tips]').forEach(box => {
+  box.innerHTML = TIPS.map((t,i) =>
+    `<div class="tip"><span class="n">${i+1}</span><span class="x">${t}</span></div>`).join('');
+});
+document.querySelectorAll('[data-devices]').forEach(box => {
+  box.innerHTML = DEVICES.map(d =>
+    `<button class="dev-row" type="button" data-device="${d}"><span class="nm">${d}</span>`
+    + `<svg viewBox="0 0 256 256" aria-hidden="true"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg>`
+    + `</button>`).join('');
+});
+document.querySelectorAll('.chevrons span').forEach(sp => {
+  sp.innerHTML = '<svg viewBox="0 0 24 14" fill="none" stroke="currentColor" stroke-width="2.6" '
+    + 'stroke-linecap="round" stroke-linejoin="round"><path d="M2 11L12 3l10 8"/></svg>';
+});
+document.querySelectorAll('[data-win]').forEach(win => {
+  win.insertAdjacentHTML('beforeend', CONFETTI.map(([x,y,w,h,rot,hue],i) =>
+    `<i style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:var(--metric-${hue});`
+    + `transform:rotate(${rot}deg);animation-delay:${(i*0.18).toFixed(2)}s"></i>`).join(''));
+});
+
+let pairTimer = null;
+const clearPair = () => { clearTimeout(pairTimer); pairTimer = null; };
+/* Which ending the search lands on. Switchable from the jump panel. */
+let pairOutcome = 'many';
+
+function closePairSheet(){
+  $('#pairSheet').hidden = true;
+  $('#pairScrim').hidden = true;
+}
+function startSearch(){
+  closePairSheet();
+  go('searching');
+  clearPair();
+  pairTimer = setTimeout(() => {
+    if (pairOutcome === 'none'){
+      /* The recovery sheet sits OVER the search screen rather than replacing
+         it, so cancelling the sheet leaves you where you were. */
+      $('#pairScrim').hidden = false;
+      $('#pairSheet').hidden = false;
+    }
+    else if (pairOutcome === 'one') startConnect(DEVICES[0]);
+    else go('found');
+  }, SEARCH_MS);
+}
+function startConnect(name){
+  closePairSheet();
+  $('#connName').textContent = name;
+  go('connecting');
+  clearPair();
+  pairTimer = setTimeout(() => {
+    go('success');
+    /* Success is the end of onboarding — hand off to the signed-in app. */
+    pairTimer = setTimeout(() => { window.location.href = 'index.html'; }, 2200);
+  }, CONNECT_MS);
+}
+
+/* One delegated handler for every pairing control. */
+document.addEventListener('click', e => {
+  const goBtn = e.target.closest('[data-pgo]');
+  if (goBtn){
+    clearPair(); closePairSheet();
+    goBtn.dataset.pgo === 'searching' ? startSearch() : go(goBtn.dataset.pgo);
+    return;
+  }
+  const dev = e.target.closest('[data-device]');
+  if (dev){ startConnect(dev.dataset.device); return; }
+});
+$('#btnRetry').onclick      = startSearch;
+$('#pairSheetClose').onclick = () => { closePairSheet(); go('pair'); };
+$('#btnPairLater').onclick  = () => {
+  /* In the app this exits into the dashboard; here it says so, so the
+     control never reads as dead. */
+  showToast('Skipped — you can pair any time from the Me tab.');
+  clearPair();
+  setTimeout(() => { window.location.href = 'index.html'; }, 1400);
+};
+
+/* Leaving any pairing screen must kill its timer, or a stale one fires
+   later and yanks the flow forward from wherever you have navigated to. */
+const PAIR_SCREENS = ['pair','searching','found','connecting','success'];
 
 /* ---- OTP state shortcuts, for review ------------------------------------ */
 const OTP_STATES = {
@@ -1938,6 +2377,19 @@ Object.keys(OTP_STATES).forEach(label => {
   b.onclick = () => { if (current !== 'otp') go('otp'); OTP_STATES[label](); };
   $('#otpjump').appendChild(b);
 });
+
+/* Pairing outcome switcher — so all three endings are reviewable. */
+[['many','Multiple devices'],['one','One device'],['none','Nothing found']]
+  .forEach(([id,label]) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.className = id === pairOutcome ? 'on' : '';
+    b.onclick = () => {
+      pairOutcome = id;
+      [...$('#pairjump').children].forEach(c => c.classList.toggle('on', c === b));
+    };
+    $('#pairjump').appendChild(b);
+  });
 
 /* ---- Boot --------------------------------------------------------------- */
 go('splash', {push:false});
