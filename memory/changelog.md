@@ -5,6 +5,23 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-30 (button overflow fix) — Fixed a regression from the button
+  refactor earlier the same day: every form-screen CTA was rendering 360px
+  wide from left:16, hanging 16px off the right edge of the screen.
+  Cause: `.btn` sets `width:100%`, and on an absolutely positioned box a
+  non-auto width makes the `right` offset ignored — so the button sized to
+  the full containing block instead of the 328px that left:16/right:16 was
+  meant to give it. When `.cta` carried its own width this could not happen;
+  reducing it to positioning only exposed it. `.cta` now sets `width:auto`
+  explicitly, with a comment saying why it is load-bearing.
+  The onboarding CTA never showed the bug because it sets an explicit 316px,
+  which is why a spot check missed it.
+  Verified by sweeping ALL 14 screens and measuring every button, field,
+  card, tile and text block against the screen bounds — zero overflow, and
+  CTA widths now read 328 on every form screen (316 on onboarding, as
+  designed). Hidden elements are excluded so the recovery sheet's Try Again
+  does not register as a false positive.
+
 - 2026-08-30 (button kit + pairing) — Three changes.
   BUTTON: the updated component (components button spec) is inlined verbatim
   and `.cta` is reduced to positioning only, so the flow's buttons and the

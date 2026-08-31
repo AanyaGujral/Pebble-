@@ -338,8 +338,14 @@ body{
 @media (prefers-reduced-motion:reduce){ .btn{transition:none} }
 
 /* .cta is now POSITION ONLY — every visual property comes from .btn above,
-   so the flow's buttons and the component can never drift apart. */
-.cta{position:absolute;left:16px;right:16px;top:711px}
+   so the flow's buttons and the component can never drift apart.
+
+   width:auto is load-bearing, not tidying. .btn sets width:100%, and on an
+   absolutely positioned box a non-auto width makes `right` ignored — so the
+   button resolved to the full 360px starting at left:16 and hung 16px off
+   the screen. Setting it back to auto lets left/right size the box to the
+   328px the layout wants. */
+.cta{position:absolute;left:16px;right:16px;top:711px;width:auto}
 
 /* Text fields — 48px, 12px radius, hairline neutral-700. The selected/focus
    border is teal-400 (owner, 2026-08-28); the Figma Name_typing frame used
