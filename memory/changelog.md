@@ -5,6 +5,37 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-30 (onboarding loop video) — The onboarding backdrop is now the
+  owner's 7s looping video (assets/onboarding/onboarding-loop.mp4, 720x1280
+  H.264, 1.65 MB), replacing the three cross-fading photographs that stood in
+  for it. This is the video flagged as missing since the very first session
+  ("the onboarding has a video in the bg"). With the footage carrying the
+  scene changes, the Ken Burns drift and the per-photo cross-fade are gone
+  with it. object-fit:cover, since the loop is 9:16 and the screen is
+  360x795 — a little is cropped off the sides, which is what a full-bleed
+  backdrop wants. onb-1.jpg is the poster, so a browser with no H.264 shows
+  a frame rather than a black rectangle.
+  The three headlines stay and now ride the VIDEO'S clock (currentTime)
+  rather than a separate timer, so the copy cannot drift from the footage
+  even if it stalls or is scrubbed.
+  FLAG: 7s over three headlines is an even 2.33s split. The composition never
+  specified per-headline timings and 7 does not divide into 3, so this is not
+  derived from cuts in the footage — if the loop has three distinct scenes,
+  send their timings and the headlines can be pinned to them.
+  Two things caught while wiring it, both fixed before commit:
+   1. onbShown disagreed with the visible headline at cross-fade boundaries
+      (floor(t/seg) names the incoming line while the outgoing one is still
+      the readable one). It is now derived from the opacities themselves.
+   2. Driving purely off currentTime froze the headlines wherever the video
+      cannot decode. There is now a wall-clock fallback, so they still rotate
+      over the poster frame.
+  Verified: headlines rotate, always sum to opacity 1 (no dip between lines),
+  onbShown always matches the most-visible line, swipe still lands correctly,
+  and Get Started still leaves the screen.
+  The three onb-*.jpg photographs are kept — onb-1 is the poster, and the
+  other two are no longer referenced but are left in place rather than
+  deleted, since the new photographs the owner mentioned may still land.
+
 - 2026-08-30 (button overflow fix) — Fixed a regression from the button
   refactor earlier the same day: every form-screen CTA was rendering 360px
   wide from left:16, hanging 16px off the right edge of the screen.

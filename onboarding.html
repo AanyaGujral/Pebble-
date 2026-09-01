@@ -587,12 +587,13 @@ button.field{
    The photos are full-bleed 360x795, NOT the 438x656 plate the static Figma
    frame used — the animation composition is the newer source. */
 #v-onb .media{position:absolute;inset:0;overflow:hidden;background:var(--surface-app)}
-#v-onb .media img{
-  position:absolute;left:0;top:0;width:360px;height:795px;
-  -webkit-user-drag:none;user-select:none;
+/* The loop is 9:16 and the screen is 360x795 (taller and narrower), so it
+   covers rather than contains — a little is cropped off the sides, which is
+   what a full-bleed backdrop wants. */
+#v-onb .media video{
+  position:absolute;left:0;top:0;width:100%;height:100%;
   object-fit:cover;display:block;
-  transform-origin:50% 42%;      /* from the composition */
-  will-change:opacity,transform;
+  -webkit-user-drag:none;user-select:none;
 }
 /* FLAG: no separate scrim element any more. The exported photos already have
    the dark gradient baked into their lower half — the composition draws them
@@ -600,9 +601,9 @@ button.field{
    headline area. If the photos are ever re-exported without that gradient,
    the scrim has to come back. */
 #v-onb .leaf{position:absolute;left:24px;top:519px;width:48px;height:48px;color:var(--teal-400)}
-/* The three headlines stack in the same place and cross-fade with their
-   photographs — the opacity comes from the same layerState() the backdrop
-   uses, so a headline is never out of step with its image. */
+/* The three headlines stack in the same place and cross-fade. Their opacity
+   is computed from the backdrop video's own currentTime, so the copy stays
+   locked to the loop even if the footage stalls or is scrubbed. */
 #v-onb .heads{position:absolute;left:24px;top:583px;width:303px;height:80px}
 #v-onb .head{
   position:absolute;left:0;top:0;width:303px;margin:0;
@@ -949,12 +950,14 @@ button.field{
        2. ONBOARDING  (Figma 940:5067)
        ==================================================================== -->
   <section class="view" id="v-onb" aria-label="Welcome">
-    <!-- Three cross-fading photographs, driven by the JS at the bottom.
-         Scene names from the composition: Court, Cable, Press. -->
+    <!-- The owner's 7s onboarding loop (720x1280). It replaces the three
+         cross-fading photographs that stood in for it. onb-1.jpg is the
+         poster, so a browser that cannot decode H.264 still shows a frame
+         rather than a black rectangle. -->
     <div class="media" id="onbMedia">
-      <img src="assets/onboarding/onb-1.jpg" alt="" data-i="0" draggable="false">
-      <img src="assets/onboarding/onb-2.jpg" alt="" data-i="1" draggable="false">
-      <img src="assets/onboarding/onb-3.jpg" alt="" data-i="2" draggable="false">
+      <video id="onbVideo" muted playsinline autoplay loop preload="auto"
+             poster="assets/onboarding/onb-1.jpg"
+             src="assets/onboarding/onboarding-loop.mp4"></video>
     </div>
 
     <!-- Owner-supplied mark, used verbatim, at the 48x48 the comp specifies -->
@@ -1576,112 +1579,115 @@ function runSplash(){
   splashTimer = setTimeout(leave, wait);
 }
 
-/* ---- 4b. Onboarding backdrop animation -----------------------------------
-   Ported from the owner's Claude Design composition (onboarding-bg.jsx).
-   Three photographs, each held 1.5s then cross-faded over 1.5s, looping on a
-   9s cycle, with a slow Ken Burns drift underneath.
+/* ---- 4b. Onboarding backdrop -------------------------------------------
+   The backdrop is the owner's 7s looping video. It replaced the three
+   cross-fading photographs that stood in for it (2026-08-30) — with the
+   video carrying the scene changes, the Ken Burns drift and the per-photo
+   cross-fade are gone with them.
 
-   RESOLVED: the three frames named "Onboarding" in Figma are these three
-   BACKGROUNDS behind one screen — not three content slides with their own
-   copy. The slide-dot carousel that assumed otherwise has been removed, and
-   Get Started now goes straight to the phone screen.
+   The three headlines remain, and now ride the VIDEO'S OWN CLOCK rather
+   than a separate timer: reading currentTime means they cannot drift out of
+   step with the footage even if it stalls, buffers or is scrubbed.
 
-   Every number below comes from the composition; none are invented:
-     HOLD 1.5s, FADE 1.5s, base scale 1.03, zoom 0.08, alternate on,
-     transform-origin 50% 42%, easeInOutSine on opacity, linear on drift. */
-const ONB = {
-  HOLD:1.5, FADE:1.5,
-  zoom:0.08,            // OM_TWEAKS.zoomStrength
-  alternate:true        // OM_TWEAKS.alternateDirection
-};
-ONB.STEP  = ONB.HOLD + ONB.FADE;   // 3s  — one photo's turn
-ONB.SPAN  = ONB.FADE + ONB.HOLD + ONB.FADE;  // 4.5s a layer is on screen
-const onbLayers = [...document.querySelectorAll('#onbMedia img')];
-ONB.CYCLE = ONB.STEP * onbLayers.length;     // 9s
+   FLAG — the loop is 7s and there are three headlines, so each gets 7/3 =
+   2.33s. The composition never specified a per-headline duration, and 7
+   does not divide evenly into 3, so this is an even split rather than
+   something derived from cuts in the footage. If the video has three
+   distinct scenes with their own timings, send those and the headlines can
+   be pinned to them instead. */
+const onbVideo = $('#onbVideo');
+const onbHeads = [...document.querySelectorAll('#onbHeads .head')];
+const HEAD_FADE = 0.5;                       // seconds of cross-fade
+let onbRAF = null, onbShown = -1, onbOffset = 0;
 
 const easeInOutSine = t => -(Math.cos(Math.PI * t) - 1) / 2;
 const mod = (v,m) => ((v % m) + m) % m;
 
-/* A pure function of time: where layer i should be at T seconds. */
-function layerState(T, i){
-  const local = mod(T - (ONB.STEP * i - ONB.FADE), ONB.CYCLE);
-  if (local >= ONB.SPAN) return { o:0, scale:1, x:0, y:0 };
+/* How long the loop runs. Falls back to the file's known 7s until metadata
+   has loaded, so the headlines are correct from the very first frame. */
+const loopLen = () =>
+  (onbVideo.duration && isFinite(onbVideo.duration) && onbVideo.duration > 0)
+    ? onbVideo.duration : 7;
 
-  let o;
-  if (local < ONB.FADE)                 o = easeInOutSine(local / ONB.FADE);
-  else if (local < ONB.FADE + ONB.HOLD) o = 1;
-  else                                  o = easeInOutSine((ONB.SPAN - local) / ONB.FADE);
-
-  const p   = local / ONB.SPAN;                     // linear drift
-  const out = ONB.alternate && i % 2 === 1;         // odd layers zoom out
-  const s   = 1.03 + (out ? ONB.zoom * (1 - p) : ONB.zoom * p);
-  const dir = i % 3;
-  const x = (dir === 0 ? -1 : dir === 1 ? 1 : 0) * ONB.zoom * 90 * (p - 0.5);
-  const y = (dir === 2 ? 1 : 0.35) * ONB.zoom * 70 * (0.5 - p);
-  return { o, scale:s, x, y };
+/* Opacity of headline i at loop-time t. Each headline holds for its segment
+   and cross-fades with its neighbour, so the opacities always sum to 1 and
+   the copy never dips to nothing between lines. */
+function headState(t, i){
+  const seg = loopLen() / onbHeads.length;
+  const u = mod(t - i * seg, loopLen());
+  if (u < HEAD_FADE)       return easeInOutSine(u / HEAD_FADE);
+  if (u < seg)             return 1;
+  if (u < seg + HEAD_FADE) return easeInOutSine(1 - (u - seg) / HEAD_FADE);
+  return 0;
 }
-
-const onbHeads = [...document.querySelectorAll('#onbHeads .head')];
-/* onbShown is still tracked — swipe needs to know which slide it is leaving —
-   but there is no dot rail any more (owner removed it, 2026-08-30). */
-let onbRAF = null, onbStart = 0, onbShown = -1;
-
-/* Which slide is "current" — the layer nearest the middle of its hold. */
-function currentSlide(T){
-  return onbLayers.reduce((best,_,i) =>
-    layerState(T,i).o > layerState(T,best).o ? i : best, 0);
-}
-
-function paintBackdrop(T){
-  onbLayers.forEach((el,i) => {
-    const s = layerState(T, i);
-    el.style.opacity = s.o;
-    el.style.transform = `translate3d(${s.x}px, ${s.y}px, 0) scale(${s.scale})`;
-    /* The headline rides its photograph's opacity exactly. */
-    if (onbHeads[i]) onbHeads[i].style.opacity = s.o;
-  });
-  onbShown = currentSlide(T);
-}
-
-/* Jump the clock so slide i sits in the middle of its hold. Solving
-   local = FADE + HOLD/2 for T gives T = STEP*i + HOLD/2. */
-function gotoSlide(i){
-  const n = onbLayers.length;
-  const target = ONB.STEP * mod(i, n) + ONB.HOLD / 2;
-  onbStart = performance.now() - target * 1000;
-  if (reduced()){
-    /* No animation to run — just show that slide outright. */
-    onbLayers.forEach((el,k) => { el.style.opacity = k === mod(i,n) ? 1 : 0; });
-    onbHeads.forEach((el,k) => { el.style.opacity = k === mod(i,n) ? 1 : 0; });
-    onbShown = mod(i,n);
+/* Whichever headline is most visible IS the current one. Deriving it from
+   the opacities rather than from floor(t/seg) keeps the two in agreement at
+   the cross-fade boundaries, where the incoming headline owns the segment
+   but the outgoing one is still the one you can read. */
+function currentHead(t){
+  let best = 0;
+  for (let i = 1; i < onbHeads.length; i++){
+    if (headState(t, i) > headState(t, best)) best = i;
   }
+  return best;
 }
+
+/* Loop-time, shifted by whatever the swipe has offset it to.
+   Normally this is the VIDEO's clock, so the copy cannot drift from the
+   footage. If the video is not actually advancing — no H.264 decoder, a
+   blocked autoplay, a stall — it falls back to a wall clock so the
+   headlines still rotate over the poster frame instead of freezing. */
+const wallStart = performance.now();
+function loopTime(){
+  const live = !onbVideo.paused && onbVideo.readyState >= 2 && onbVideo.currentTime > 0;
+  const t = live ? onbVideo.currentTime : (performance.now() - wallStart) / 1000;
+  return mod(t + onbOffset, loopLen());
+}
+
+function paintHeads(){
+  const t = loopTime();
+  onbHeads.forEach((el,i) => { el.style.opacity = headState(t, i); });
+  onbShown = currentHead(t);
+}
+
+/* Swipe moves the headline by shifting the offset a whole segment, so the
+   video keeps playing underneath rather than jumping. */
+function gotoSlide(i){
+  const n = onbHeads.length;
+  const seg = loopLen() / n;
+  const want = mod(i, n);
+  /* Land in the middle of that headline's hold. Measured against the same
+     clock loopTime() reads, so it lands correctly whether the video is
+     driving or the wall-clock fallback is. */
+  const base = mod(loopTime() - onbOffset, loopLen());
+  onbOffset = mod(want * seg + seg / 2 + HEAD_FADE / 2 - base, loopLen());
+  paintHeads();
+}
+
 function startBackdrop(){
   stopBackdrop();
-  /* Reduced motion: hold one photograph, no fade, no drift — but the dots
-     and swipe still work, so all three slides remain reachable. */
   if (reduced()){
-    onbLayers.forEach(el => el.style.transform = 'none');
-    gotoSlide(Math.max(0, onbShown));
+    /* Reduced motion: the loop is motion, so it is paused on a frame and one
+       headline is shown. Swipe still reaches the other two. */
+    try { onbVideo.pause(); } catch { /* ignore */ }
+    const i = Math.max(0, onbShown);
+    onbHeads.forEach((el,k) => { el.style.opacity = k === i ? 1 : 0; });
+    onbShown = i;
     return;
   }
-  onbStart = performance.now();
-  const tick = now => {
-    paintBackdrop((now - onbStart) / 1000);
-    onbRAF = requestAnimationFrame(tick);
-  };
+  try { onbVideo.play().catch(() => {}); } catch { /* ignore */ }
+  const tick = () => { paintHeads(); onbRAF = requestAnimationFrame(tick); };
   onbRAF = requestAnimationFrame(tick);
 }
 function stopBackdrop(){
   if (onbRAF) cancelAnimationFrame(onbRAF);
   onbRAF = null;
+  try { onbVideo.pause(); } catch { /* ignore */ }
 }
 
-/* Swipe. Pointer events cover touch, pen and mouse-drag in one path.
-   Two things are needed to make a drag across a photograph survive:
-   the images must not be natively draggable (a native image drag eats the
-   pointerup), and the view captures the pointer so every later event in the
-   gesture is delivered here even if the finger leaves the element. */
+/* Swipe moves between the three headlines. Pointer events cover touch, pen
+   and mouse-drag in one path, and the view captures the pointer once the
+   finger has travelled, so the gesture survives leaving the element. */
 (() => {
   const view = $('#v-onb');
   let x0 = null, captured = false;
