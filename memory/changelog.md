@@ -5,6 +5,20 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-01 — Pulled the "No device found" state out of
+  `Pebble Onboarding.html` into `Onboarding/no-device-found.html`, so the one
+  screen can be looked at without walking the pairing flow to reach it. Worth
+  knowing what it actually is: not its own page, but a recovery bottom sheet
+  that drops OVER the dimmed "Searching…" screen after the 3.2s search finds
+  nothing — cancelling it leaves you where you were, which is why the rings
+  are still behind the scrim. Tokens, CSS and markup are copied verbatim from
+  the flow file (no new colours or type); the flow file stays the source of
+  truth for the flow. Two flagged deviations, both because it is one screen on
+  its own: the section starts already visible, and back / Cancel / X close the
+  sheet to the plain Searching state instead of returning to the "Let's
+  connect your device" screen, which does not exist here. "Try Again" behaves
+  exactly as in the flow — search 3.2s, find nothing, sheet returns.
+
 - 2026-08-30 — Onboarding revision round 1 (`Onboarding/onboarding.html`, new
   standalone prototype; nothing in index.html touched). Three changes off the
   review of the Figma frames: (1) the concentric arcs moved from top-right to

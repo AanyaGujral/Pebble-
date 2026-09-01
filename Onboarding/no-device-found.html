@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pebble — No device found (isolated screen)</title>
+
+<!--
+  NO DEVICE FOUND — pulled out of "Pebble Onboarding.html" so the one screen
+  can be looked at on its own, without walking the pairing flow to reach it.
+
+  What this screen actually is: not a separate page. It is a recovery bottom
+  sheet that drops OVER the dimmed "Searching…" screen when the 3.2s search
+  finds nothing, so cancelling it leaves you exactly where you were. That is
+  why the searching rings are still visible behind the scrim here.
+
+  Everything below the head comment — tokens, CSS, markup — is copied
+  VERBATIM from "Pebble Onboarding.html" (sections 1-7 of its stylesheet and
+  its #v-searching section). No new colours, no new type. If the flow file
+  changes, re-copy from it; that file stays the source of truth for the flow,
+  and js/tokens.js stays the source of truth for the values.
+-->
+
+<!-- Webfonts, same two families and same CDN as index.html. Offline this
+     falls back to system sans and the layout still holds. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,400..700&family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ==========================================================================
+   1. TOKENS
+   --------------------------------------------------------------------------
+   Copied VERBATIM from js/tokens.js, which is the single source of truth.
+   They are inlined as CSS custom properties because this page must open by
+   double-clicking (file://), where ES-module imports are blocked. Same
+   approach as index.html — if js/tokens.js changes, re-copy the values.
+
+   Every colour below was cross-checked against the Figma library variables
+   returned by the design file. They agree, with the two exceptions flagged.
+   ========================================================================== */
+:root{
+  color-scheme:dark;
+
+  /* neutrals — 0 lightest -> 900 darkest */
+  --neutral-0:#EFF1F9;--neutral-100:#D5D9EA;--neutral-200:#B8BDD3;--neutral-300:#999FB9;
+  --neutral-400:#7B819C;--neutral-500:#5E637D;--neutral-600:#42465B;--neutral-700:#282B39;
+  --neutral-800:#0F111B;--neutral-900:#07080C;
+
+  /* teal ramp — the brand accent. Figma variable `teal/400` matches exactly. */
+  --teal-400:#45C7B3;
+
+  /* surfaces */
+  --surface-app:var(--neutral-900);      /* Figma `surface/app`  */
+  --surface-card:var(--neutral-800);
+  --surface-raised:var(--neutral-700);
+  --surface-fill:var(--neutral-600);     /* icon-button hover, same as index.html */
+  --surface-splash:#012D46;              /* added to js/tokens.js 2026-08-28 */
+
+  /* text */
+  --text-1:var(--neutral-0);             /* Figma `text/text-1`  */
+  --text-2:var(--neutral-200);           /* Figma `text/text-2`  */
+  /* KNOWN SPLIT (owner decided 2026-08-28 — deliberate, do not "fix").
+     js/tokens.js defines text3 = #7B819C (neutral 400). The Figma variable
+     `text/text-3` is #999FB9 (neutral 300), one step lighter, and that is
+     what every onboarding screen uses for placeholders and card sub-labels.
+     The owner chose to keep both: onboarding follows Figma, the rest of the
+     app follows the token. Same note sits in js/tokens.js. */
+  --text-3:var(--neutral-300);
+
+  /* semantic — the negative state (invalid OTP) and the button's warning label */
+  --negative-icon:#F4604C;               /* Figma `semantic/negative/icon` */
+  --negative-text:#FF9184;               /* semantic.negative.text */
+
+  /* aliases the Button component resolves through */
+  --metric-readiness:var(--teal-400);
+  --weight-medium:500;
+  --weight-semibold:600;
+  --ls-normal:0;
+  --border-thin:1px;
+  --radius-full:999px;
+
+  /* lines */
+  --divider:var(--neutral-700);
+
+  /* type */
+  --font-text:'Google Sans Flex','Google Sans',sans-serif;
+  --font-num:'League Spartan',sans-serif;
+
+  /* radii, straight from the design */
+  --r-field:12px;                        /* inputs, OTP boxes, choice cards */
+  --r-pill:96px;                         /* primary CTA + toast            */
+  --r-screen:32px;
+}
+
+/* ==========================================================================
+   2. PAGE SCAFFOLD — the desk the phone sits on
+   ========================================================================== */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-height:100vh;background:var(--neutral-900);color:var(--text-1);
+  font-family:var(--font-text);
+  display:flex;align-items:flex-start;justify-content:center;
+  gap:32px;padding:32px 16px;flex-wrap:wrap;
+}
+
+/* Jump panel — sits OUTSIDE the phone so any screen or state can be
+   inspected without walking the whole flow. Not part of the product. */
+.panel{
+  position:sticky;top:32px;width:230px;
+  background:var(--surface-card);border:0.5px solid var(--neutral-700);
+  border-radius:20px;padding:16px;
+}
+.panel h2{margin:0;font-size:11px;line-height:16px;font-weight:600;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.panel .hint{margin:8px 0 12px;font-size:11px;line-height:16px;color:var(--text-3)}
+.panel .opts{display:flex;flex-direction:column;gap:2px}
+.panel button{
+  all:unset;display:block;width:100%;
+  padding:8px 10px;border-radius:10px;cursor:pointer;
+  font-family:var(--font-text);font-size:13px;line-height:18px;font-weight:500;
+  color:var(--text-2);
+}
+.panel button:hover{background:var(--surface-raised)}
+.panel button.on{background:var(--surface-raised);color:var(--text-1)}
+.panel .grp{margin-top:12px}
+#collected:empty{display:none}
+#collected dl{margin:8px 0 0;display:grid;grid-template-columns:1fr auto;gap:4px 12px}
+#collected dt{font-size:11px;line-height:16px;color:var(--text-3)}
+#collected dd{margin:0;font-size:11px;line-height:16px;color:var(--text-1);
+  text-align:right;font-variant-numeric:tabular-nums}
+
+/* ==========================================================================
+   3. PHONE MOCKUP — Android, 360x795 to match the Figma frames exactly
+   ========================================================================== */
+.phone{
+  flex:0 0 auto;border-radius:40px;background:var(--neutral-900);
+  border:2px solid var(--neutral-700);outline:6px solid var(--neutral-800);
+  padding:10px;
+}
+.screen{
+  position:relative;width:360px;height:795px;
+  border-radius:var(--r-screen);overflow:hidden;
+  background:var(--surface-app);
+}
+/* punch-hole selfie camera, same as index.html */
+.screen::before{
+  content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:12px;height:12px;border-radius:50%;
+  background:var(--neutral-900);border:2px solid var(--neutral-700);
+  z-index:60;pointer-events:none;
+}
+
+/* ==========================================================================
+   4. SHARED CHROME — status bar and back nav
+   --------------------------------------------------------------------------
+   Every frame in the Figma flow carries these two, pixel-identical, so they
+   are written once here instead of nine times.
+   ========================================================================== */
+.statusbar{
+  position:absolute;top:0;left:0;right:0;height:32px;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 12px;pointer-events:none;
+}
+/* The clock is Roboto Medium 14 in Figma — that is the Android system font,
+   not a Pebble brand font, so it is left to the platform stack. */
+.statusbar .clock{font-family:Roboto,system-ui,sans-serif;font-size:14px;
+  font-weight:500;color:#FCFEFF;letter-spacing:0.014px}
+.statusbar .icons{display:flex;align-items:center;gap:6px;color:#FCFEFF}
+.statusbar svg{display:block}
+
+/* Back nav — 54px tall, sits directly under the status bar */
+.appbar{
+  position:absolute;top:32px;left:0;right:0;height:54px;z-index:40;
+  display:flex;align-items:center;padding:5px 16px;
+}
+.appbar .back{
+  all:unset;width:24px;height:24px;display:grid;place-items:center;
+  cursor:pointer;color:var(--text-1);border-radius:8px;
+}
+.appbar .back:hover{background:var(--surface-raised)}
+
+/* ==========================================================================
+   5. SCREEN LAYOUT PRIMITIVES
+   --------------------------------------------------------------------------
+   Figma positions everything absolutely from the top of an 795px frame.
+   Those exact offsets are kept, because the whole flow is built to one
+   fixed phone size and matching the comp beats re-deriving a layout.
+   ========================================================================== */
+.view{position:absolute;inset:0;display:none}
+.view.on{display:block}
+
+/* Ambient glow. In Figma this is a layer named "sleep_tab_night_background 2"
+   — a re-tinted copy of the Sleep tab art. FLAG: the real file in
+   `Sleep Tab/sleep_tab_night_background.svg` is 2.4 MB and navy (#050C2B),
+   while these screens need a dark green-teal cast on #07080C, so it is
+   rebuilt here as token gradients. Same call the owner already approved for
+   the Activity hero (see memory/changelog.md, 2026-08-07). */
+.glow{position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(120% 55% at 88% -6%,  rgba(69,199,179,0.20) 0%, rgba(69,199,179,0.06) 42%, transparent 72%),
+    radial-gradient(90%  40% at 8%  12%,  rgba(69,199,179,0.07) 0%, transparent 68%),
+    var(--surface-app);
+}
+
+
+/* --------------------------------------------------------------------------
+   BRAND BADGE — concentric rings with a light teal gradient fill, the mark
+   centred. Appears on every screen after onboarding (owner, 2026-08-28).
+   Held to 64px: the owner's cap is 64-72px, and the card screens (Activity,
+   Goal, Daily targets) only clear their four cards at the smaller end.
+   Everything below it shifts down by 70px rather than the badge overlapping
+   anything — see the --y-* offsets in the layout primitives.
+   -------------------------------------------------------------------------- */
+.brandmark{
+  position:absolute;left:16px;top:96px;width:64px;height:64px;z-index:10;
+  display:grid;place-items:center;border-radius:50%;
+  background:radial-gradient(circle at 50% 45%,
+    rgba(69,199,179,0.22) 0%,
+    rgba(69,199,179,0.10) 46%,
+    rgba(69,199,179,0.03) 72%,
+    transparent 100%);
+}
+/* Concentric rings, drawn as fills rather than outlines (owner,
+   2026-08-28 — the 1px teal borders are gone). The inner disc is a slightly
+   denser wash of the same teal, so the rings still read as concentric
+   without a hard edge anywhere. */
+.brandmark::before{
+  content:"";position:absolute;inset:9px;border-radius:50%;
+  background:radial-gradient(circle at 50% 45%,
+    rgba(69,199,179,0.16) 0%, rgba(69,199,179,0.06) 70%, transparent 100%);
+}
+.brandmark svg{position:relative;width:28px;height:28px}
+
+/* Title block — h2 20/26 and p2 13/18. The tops below already include the
+   70px the brand badge pushes everything down by. */
+.h2{position:absolute;left:16px;right:16px;top:176px;margin:0;
+  font-size:20px;line-height:26px;font-weight:500;letter-spacing:-0.1px;
+  color:var(--text-1)}
+.sub{position:absolute;left:16px;right:16px;top:206px;margin:0;
+  font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
+
+/* --------------------------------------------------------------------------
+   BUTTON — components/button, INLINED VERBATIM (2026-08-30).
+   Do not edit here. Change the component and re-copy; this file has to open
+   over file://, so it cannot <link> the stylesheet.
+
+   Four tiers share one geometry: hierarchy is carried by colour alone, never
+   by size, and every state is a change in opacity — no shadow, no scale, no
+   new colours.
+
+   Tier use in this flow:
+     Continue / Verify / Get Started / Pair Now   primary
+     I'll Do It Later / Cancel                    TERTIARY, not secondary —
+       they decline the primary, and two teal elements on one screen is the
+       one thing the spec rules out. Nothing here is secondary; that tier is
+       for a genuine parallel route and this flow has none.
+   -------------------------------------------------------------------------- */
+.btn{
+  -webkit-appearance:none;
+  appearance:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+
+  width:100%;
+  height:52px;                       /* controlHeight.l */
+  padding:0 24px;                    /* spacing.24 */
+
+  border:none;
+  border-radius:var(--radius-full);
+  background:transparent;
+  box-shadow:none;
+
+  /* typeText.paragraphP1Semibold */
+  font-family:var(--font-text);
+  font-size:15px;
+  line-height:22px;
+  font-weight:var(--weight-semibold);
+  letter-spacing:var(--ls-normal);
+
+  text-align:center;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:opacity 120ms ease;
+}
+/* Medium — for dense rows and sheets. Not a demotion. */
+.btn--m{height:44px}               /* controlHeight.m */
+
+.btn--primary{
+  background:var(--metric-readiness);
+  color:var(--neutral-900);
+}
+.btn--secondary{
+  background:transparent;
+  border:var(--border-thin) solid var(--metric-readiness);
+  color:var(--metric-readiness);
+}
+.btn--tertiary{
+  background:transparent;
+  border:none;
+  color:var(--text-2);
+  font-weight:var(--weight-medium);
+}
+.btn--destructive{
+  background:transparent;
+  border:none;
+  color:var(--negative-text);
+  font-weight:var(--weight-medium);
+}
+
+/* States — opacity only. :not([disabled]) keeps a disabled button flat at
+   .45 instead of compounding on hover. */
+.btn--primary:not([disabled]):hover      { opacity:.9; }
+.btn--primary:not([disabled]):active     { opacity:.8; }
+.btn--secondary:not([disabled]):hover    { opacity:.75; }
+.btn--secondary:not([disabled]):active   { opacity:.6; }
+.btn--tertiary:not([disabled]):hover,
+.btn--destructive:not([disabled]):hover  { opacity:.7; }
+.btn--tertiary:not([disabled]):active,
+.btn--destructive:not([disabled]):active { opacity:.55; }
+
+/* FLAG — this REPLACES the neutral-700 disabled fill the owner asked for on
+   2026-08-28. The component defines disabled as opacity .45 on the tier's own
+   colour, so a disabled primary is now teal at 45% rather than a grey pill.
+   Applied because the instruction was to take the updated component's logic;
+   raised because it directly overrides an earlier explicit request. To go
+   back, give .cta[disabled] a neutral-700 background here. */
+.btn[disabled]{
+  opacity:.45;
+  cursor:default;
+}
+.btn:focus-visible{outline:2px solid var(--metric-readiness);outline-offset:4px}
+@media (prefers-reduced-motion:reduce){ .btn{transition:none} }
+
+/* .cta is now POSITION ONLY — every visual property comes from .btn above,
+   so the flow's buttons and the component can never drift apart.
+
+   width:auto is load-bearing, not tidying. .btn sets width:100%, and on an
+   absolutely positioned box a non-auto width makes `right` ignored — so the
+   button resolved to the full 360px starting at left:16 and hung 16px off
+   the screen. Setting it back to auto lets left/right size the box to the
+   328px the layout wants. */
+.cta{position:absolute;left:16px;right:16px;top:711px;width:auto}
+
+/* Text fields — 48px, 12px radius, hairline neutral-700. The selected/focus
+   border is teal-400 (owner, 2026-08-28); the Figma Name_typing frame used
+   neutral-400, so this is a deliberate override applied to every field,
+   the phone combo and the OTP boxes alike. */
+.field{
+  width:100%;height:48px;border-radius:var(--r-field);
+  background:var(--surface-app);border:1px solid var(--neutral-700);
+  padding:0 15px;color:var(--text-1);
+  font-family:var(--font-text);font-size:13px;line-height:18px;
+  transition:border-color 140ms ease;
+}
+.field::placeholder{color:var(--text-3)}
+.field:focus{outline:none;border-color:var(--teal-400)}
+
+/* Field with a small-caps label above it (Profile screen) */
+.labelled{position:absolute;left:16px;width:328px;
+  display:flex;flex-direction:column;gap:4px}
+.labelled .lab{
+  padding:0 12px;font-size:11px;line-height:16px;font-weight:500;
+  letter-spacing:0.88px;text-transform:uppercase;color:var(--text-2);
+}
+.labelled .wrap{position:relative}
+.labelled .wrap .ico{
+  position:absolute;right:11px;top:50%;transform:translateY(-50%);
+  width:20px;height:20px;color:var(--text-1);pointer-events:none;
+}
+/* Gender, height and weight are <button>s styled as fields — the value is
+   picked, never typed — so they need the button reset that inputs get free. */
+button.field{
+  appearance:none;text-align:left;font-weight:400;
+  font-family:var(--font-text);font-size:13px;line-height:18px;
+}
+/* Right-hand icon sits inside the box, so leave room for it */
+#inDob,#inGender{padding-right:42px}
+/* Number fields draw spinner arrows on focus; the comp has none */
+.field[type=number]{-moz-appearance:textfield}
+.field[type=number]::-webkit-outer-spin-button,
+.field[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+/* --------------------------------------------------------------------------
+   GENDER DROPDOWN — anchored under the field, not a native <select>
+   -------------------------------------------------------------------------- */
+.dropdown{
+  position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:80;
+  background:var(--surface-card);border:1px solid var(--neutral-700);
+  border-radius:var(--r-field);padding:4px;
+}
+.dropdown[hidden]{display:none}
+.dropdown button{
+  all:unset;box-sizing:border-box;display:flex;align-items:center;
+  justify-content:space-between;width:100%;
+  padding:10px 12px;border-radius:8px;cursor:pointer;
+  font-family:var(--font-text);font-size:13px;line-height:18px;color:var(--text-2);
+}
+.dropdown button:hover{background:var(--surface-raised)}
+.dropdown button[aria-selected=true]{color:var(--text-1);background:var(--surface-raised)}
+.dropdown button .tk{width:16px;height:16px;opacity:0;color:var(--teal-400)}
+.dropdown button[aria-selected=true] .tk{opacity:1}
+/* The caret flips while the menu is open */
+.labelled .wrap.open .ico{transform:translateY(-50%) rotate(180deg)}
+
+/* --------------------------------------------------------------------------
+   VALUE SHEET — the Workout-tab goal-setting sheet, reused here.
+   Height and weight add a SECOND scroll column for the unit, sitting to the
+   right of the number column. The two scroll independently but share one
+   selection band, so it reads as a single selector area.
+   -------------------------------------------------------------------------- */
+.sheet-scrim{position:absolute;inset:0;z-index:75;background:rgba(7,8,12,0.6)}
+.sheet{
+  position:absolute;left:8px;right:8px;bottom:8px;z-index:80;
+  background:var(--surface-card);border-radius:24px;padding:16px 16px 24px;
+}
+.sheet[hidden],.sheet-scrim[hidden]{display:none}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sheet-head .t{font-size:17px;line-height:22px;font-weight:500;color:var(--text-1)}
+/* Copied verbatim from the Workout tab's goal-setting sheet so the two read
+   as the same component — 36px filled circle behind the cross and the tick. */
+.iconbtn{
+  width:36px;height:36px;border-radius:999px;background:var(--surface-raised);border:0;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--text-1);
+}
+.iconbtn:hover{background:var(--surface-fill)}
+
+/* 5 rows of 44px on show; the band sits over the middle one */
+.picker{position:relative;margin-top:16px;height:220px;display:flex}
+.picker .band{
+  position:absolute;left:0;right:0;top:88px;height:44px;
+  border-radius:var(--r-field);background:var(--surface-raised);
+  pointer-events:none;z-index:0;
+}
+.picker .col{
+  flex:1 1 0;height:100%;overflow-y:auto;position:relative;z-index:1;
+  scroll-snap-type:y mandatory;scrollbar-width:none;-ms-overflow-style:none;
+}
+.picker .col::-webkit-scrollbar{display:none}
+/* Half-height spacers top and bottom so the first and last value can reach
+   the middle band. */
+.picker .col .pad{height:88px}
+.picker .col .opt{
+  height:44px;display:flex;align-items:center;justify-content:center;
+  scroll-snap-align:center;cursor:pointer;
+  font-family:var(--font-num);font-size:15px;line-height:20px;font-weight:500;
+  color:var(--text-3);transition:color 120ms ease,font-size 120ms ease;
+}
+.picker .col .opt.on{font-size:20px;font-weight:700;color:var(--text-1)}
+/* A column of words, not numbers (the month wheel) — text face, not the
+   numeric one. Still grows on selection the way the value column does. */
+.picker .col.words .opt{font-family:var(--font-text);font-size:15px}
+.picker .col.words .opt.on{font-size:18px}
+
+/* The unit column matches the goal sheet's unit label exactly — 11px, 0.08em,
+   uppercase, text-2 when focal. It does NOT grow on selection the way the
+   number does; in the goal setter the unit is a constant-size label. */
+.picker .col.units{flex:0 0 96px}
+.picker .col.units .opt{
+  font-family:var(--font-text);font-size:11px;line-height:16px;font-weight:500;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+}
+.picker .col.units .opt.on{font-size:11px;font-weight:500;color:var(--text-2)}
+
+/* --------------------------------------------------------------------------
+   DATE PICKER — the two-mode calendar from the reference screenshots.
+   Mode 1 is a month grid; tapping the month name flips to mode 2, a
+   month + year wheel. Same sheet chrome as every other sheet, and the wheel
+   reuses the .picker component above rather than a second implementation.
+   -------------------------------------------------------------------------- */
+.cal-head{
+  margin-top:16px;display:flex;align-items:center;justify-content:space-between;
+}
+/* The month label is the mode toggle. Teal because it is the one interactive
+   thing in the row — the reference uses the platform accent for exactly this. */
+.cal-title{
+  all:unset;display:flex;align-items:center;gap:6px;cursor:pointer;
+  font-family:var(--font-text);font-size:17px;line-height:22px;font-weight:500;
+  color:var(--teal-400);
+}
+.cal-title .cv{width:14px;height:14px;transition:transform 160ms ease}
+.cal-head.wheel .cal-title .cv{transform:rotate(-90deg)}
+.cal-nav{display:flex;align-items:center;gap:16px}
+.cal-nav button{
+  all:unset;width:28px;height:28px;display:grid;place-items:center;
+  cursor:pointer;color:var(--teal-400);border-radius:999px;
+}
+.cal-nav button:hover{background:var(--surface-raised)}
+/* The arrows belong to the grid only — the wheel has no month to step. */
+.cal-head.wheel .cal-nav{visibility:hidden}
+
+.cal-week{
+  margin-top:12px;display:grid;grid-template-columns:repeat(7,1fr);
+}
+.cal-week span{
+  text-align:center;font-size:11px;line-height:16px;font-weight:500;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+}
+.cal-grid{
+  margin-top:4px;display:grid;grid-template-columns:repeat(7,1fr);
+  gap:2px 0;min-height:228px;align-content:start;
+}
+.cal-grid .d{
+  all:unset;height:36px;display:grid;place-items:center;cursor:pointer;
+  border-radius:999px;justify-self:center;width:36px;
+  font-family:var(--font-num);font-size:16px;line-height:20px;font-weight:500;
+  color:var(--text-1);
+}
+.cal-grid .d:hover{background:var(--surface-raised)}
+.cal-grid .d.sel{background:var(--teal-400);color:var(--surface-app);font-weight:700}
+.cal-grid .d.sel:hover{background:var(--teal-400)}
+.cal-grid .d.blank{visibility:hidden;pointer-events:none}
+/* The wheel and the grid occupy the same slot, one at a time */
+#dobGrid[hidden],#dobWheel[hidden]{display:none}
+
+/* Choice cards — Activity level and Goal. 74px, stacked 86px apart. */
+.choice{
+  all:unset;box-sizing:border-box;
+  position:absolute;left:16px;width:328px;height:74px;
+  border-radius:var(--r-field);cursor:pointer;
+  background:var(--surface-app);border:1px solid var(--neutral-700);
+  padding:15px;transition:background 140ms ease,border-color 140ms ease;
+}
+.choice:hover{border-color:var(--neutral-600)}
+.choice .t{display:block;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.choice .d{display:block;margin-top:2px;font-size:13px;line-height:18px;color:var(--text-3)}
+.choice .tick{
+  position:absolute;right:15px;top:50%;transform:translateY(-50%);
+  width:20px;height:20px;color:var(--text-1);opacity:0;
+  transition:opacity 140ms ease;
+}
+.choice[aria-pressed=true]{background:var(--neutral-700)}
+.choice[aria-pressed=true] .tick{opacity:1}
+
+/* ==========================================================================
+   6. SCREEN-SPECIFIC BLOCKS
+   ========================================================================== */
+
+/* ---- Splash --------------------------------------------------------------
+   The splash is now the owner's 4s video (1080x1080, square). It is set to
+   the screen's full 360px width, which makes it 360x360, and centred both
+   ways — the video carries its own padding around the mark, so cropping or
+   insetting it would fight the composition it was made with.
+
+   The screen colour behind it starts at --surface-splash and is then
+   REPLACED at runtime by a colour sampled from the video's own first frame
+   (see sampleSplashColour below). That way the field always matches the
+   video exactly instead of relying on a value typed in here — this
+   environment has no H.264 decoder, so the true colour could not be read
+   at build time. The token stays as the fallback. */
+#v-splash{background:var(--surface-splash);transition:background 200ms ease}
+#v-splash .splashvid{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:360px;height:360px;display:block;object-fit:contain;
+  background:transparent;
+}
+/* Static lockup, shown only if the video cannot play. */
+#v-splash .mark{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:195.5px;height:190px;display:grid;place-items:center;
+}
+#v-splash .mark[hidden]{display:none}
+/* The mark is the owner-supplied SVG, used verbatim.
+   DECIDED (owner, 2026-08-28): its #5BBCB1 fill stays hard-coded and
+   untokenised. It is NOT a token value — it sits between teal-300 (#76D4C3)
+   and teal-400 (#45C7B3) — and it is the one deliberate exception to the
+   tokens-only rule in this file. Do not "correct" it to teal-400.
+   STILL OPEN: only the mark was supplied, not the "pebble" wordmark under
+   it, so the wordmark is live text in the brand face. */
+#v-splash .lockup{text-align:center}
+#v-splash .lockup .mk{width:96px;height:96px;margin:0 auto 14px;display:block}
+#v-splash .lockup .word{
+  font-size:44px;line-height:44px;font-weight:400;letter-spacing:-1px;color:#FFF
+}
+
+/* ---- Onboarding ---------------------------------------------------------- */
+/* Media plate. This is the animated backdrop from the owner's Claude Design
+   file (Onboarding Animation.dc.html + onboarding-bg.jsx): three photographs
+   that cross-fade on a loop with a slow Ken Burns drift. The timing and
+   easing are reproduced exactly in the JS below; this block only positions
+   the layers.
+   The photos are full-bleed 360x795, NOT the 438x656 plate the static Figma
+   frame used — the animation composition is the newer source. */
+#v-onb .media{position:absolute;inset:0;overflow:hidden;background:var(--surface-app)}
+#v-onb .media img{
+  position:absolute;left:0;top:0;width:360px;height:795px;
+  -webkit-user-drag:none;user-select:none;
+  object-fit:cover;display:block;
+  transform-origin:50% 42%;      /* from the composition */
+  will-change:opacity,transform;
+}
+/* FLAG: no separate scrim element any more. The exported photos already have
+   the dark gradient baked into their lower half — the composition draws them
+   with no overlay, and adding the old CSS scrim on top double-darkened the
+   headline area. If the photos are ever re-exported without that gradient,
+   the scrim has to come back. */
+#v-onb .leaf{position:absolute;left:24px;top:519px;width:48px;height:48px;color:var(--teal-400)}
+/* The three headlines stack in the same place and cross-fade with their
+   photographs — the opacity comes from the same layerState() the backdrop
+   uses, so a headline is never out of step with its image. */
+#v-onb .heads{position:absolute;left:24px;top:583px;width:303px;height:80px}
+#v-onb .head{
+  position:absolute;left:0;top:0;width:303px;margin:0;
+  font-size:32px;line-height:36px;font-weight:700;letter-spacing:-0.32px;
+  will-change:opacity;
+}
+#v-onb .head .dim{display:block;color:rgba(255,255,255,0.65)}
+#v-onb .head .lit{display:block;color:#FFF}
+/* The onboarding CTA is 316px wide and bottom-anchored, NOT the 328px pill
+   the rest of the flow uses. Kept as designed. */
+#v-onb .cta{left:50%;right:auto;transform:translateX(-50%);width:316px;top:auto;bottom:68px}
+#v-onb .legal{
+  position:absolute;left:16px;top:751px;margin:0;
+  font-size:10px;line-height:14px;letter-spacing:0.1px;color:rgba(255,255,255,0.45);
+}
+#v-onb .legal a{color:rgba(255,255,255,0.75);text-decoration:none}
+#v-onb .legal a:hover{text-decoration:underline}
+
+/* ---- Phone number -------------------------------------------------------- */
+#v-phone .row{position:absolute;left:16px;top:244px;width:328px;
+  display:flex;align-items:center}
+/* Country code and number share one 48px box, split by a hairline at 71px */
+#v-phone .combo{
+  position:relative;display:flex;align-items:center;width:100%;height:48px;
+  border-radius:var(--r-field);background:var(--surface-app);
+  border:1px solid var(--neutral-700);overflow:hidden;
+  transition:border-color 140ms ease;
+}
+#v-phone .combo:focus-within{border-color:var(--teal-400)}
+#v-phone .cc{
+  display:flex;align-items:center;gap:6px;
+  width:71px;height:100%;padding:0 0 0 15px;flex:0 0 71px;
+  border-right:1px solid var(--neutral-700);
+  font-size:15px;line-height:22px;color:var(--text-1);cursor:pointer;
+}
+#v-phone .cc svg{width:16px;height:15px;color:var(--text-1)}
+#v-phone .num{
+  flex:1;height:100%;border:0;background:transparent;padding:0 15px;
+  font-family:var(--font-text);font-size:15px;line-height:22px;color:var(--text-1);
+}
+#v-phone .num:focus{outline:none}
+#v-phone .num::placeholder{color:var(--text-3)}
+
+/* ---- OTP ----------------------------------------------------------------- */
+#v-otp .boxes{position:absolute;left:16px;top:262px;width:328px;
+  display:flex;align-items:center;gap:8px}
+#v-otp .boxes input{
+  flex:1 0 0;min-width:0;height:48px;border-radius:var(--r-field);
+  background:var(--surface-app);border:1px solid var(--neutral-700);
+  text-align:center;color:#FFF;
+  font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:500;
+  transition:border-color 140ms ease;
+}
+#v-otp .boxes input:focus{outline:none;border-color:var(--teal-400)}
+/* Invalid paints every box red at once, exactly as OTP_invalid shows */
+#v-otp.invalid .boxes input{border-color:var(--negative-icon)}
+#v-otp .err{
+  position:absolute;left:16px;top:322px;margin:0;
+  font-size:11px;line-height:16px;color:var(--negative-icon);display:none;
+}
+#v-otp.invalid .err{display:block}
+/* The resend row sits at 256px normally; the invalid frame pushes it to 284px
+   to make room for the error line above it. */
+#v-otp .resend{
+  position:absolute;left:16px;top:326px;width:328px;
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:11px;line-height:16px;color:var(--text-3);
+}
+#v-otp.invalid .resend{top:354px}
+#v-otp .resend .act{all:unset;cursor:pointer;color:var(--teal-400);text-align:right}
+#v-otp .resend .act[disabled]{color:var(--text-3);cursor:default}
+
+/* Toast — blurred neutral-500 pill at the top, for "OTP resent successfully" */
+.toast{
+  position:absolute;left:16px;right:16px;top:39px;height:40px;z-index:70;
+  display:grid;place-items:center;border-radius:var(--r-pill);
+  background:rgba(94,99,125,0.6);backdrop-filter:blur(17px);
+  font-size:13px;line-height:18px;color:var(--text-1);
+  opacity:0;pointer-events:none;transition:opacity 200ms ease;
+}
+.toast.on{opacity:1}
+
+/* ---- Name ---------------------------------------------------------------- */
+#v-name .row{position:absolute;left:16px;top:244px;width:328px}
+
+/* ---- Daily targets ------------------------------------------------------- */
+.target{
+  position:absolute;left:16px;width:328px;height:74px;
+  border-radius:var(--r-field);background:var(--surface-app);
+  border:1px solid var(--neutral-700);padding:15px;
+}
+.target .t{display:block;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.target .d{display:block;margin-top:2px;font-size:13px;line-height:18px;color:var(--text-3)}
+.target .stepper{
+  position:absolute;left:183px;top:22px;
+  display:flex;align-items:center;gap:12px;
+}
+.target .stepper button{
+  all:unset;width:24px;height:24px;display:grid;place-items:center;
+  cursor:pointer;color:var(--teal-400);border-radius:6px;   /* owner, 2026-08-28 */
+}
+.target .stepper button:hover{background:var(--surface-raised)}
+.target .stepper button[disabled]{color:var(--neutral-600);cursor:not-allowed}
+.target .stepper button[disabled]:hover{background:none}
+/* Values are League Spartan Bold 24/28 — the numeric face, per numeric/num-l */
+.target .val{
+  min-width:56px;text-align:center;
+  font-family:var(--font-num);font-size:24px;line-height:28px;font-weight:700;
+  letter-spacing:-0.12px;color:var(--text-1);
+}
+
+
+/* ==========================================================================
+   DEVICE PAIRING — five stages plus a recovery sheet, ported from the
+   owner's "Pebble Pairing Flow" artifact (2026-08-30). It runs AFTER setup:
+   Daily targets -> Pair -> Searching -> Found -> Connecting -> Success.
+
+   These screens are centred compositions rather than the fixed-offset form
+   layout the rest of the flow uses, so they opt into flex via .pview instead
+   of inheriting the absolute positions. They also carry no brand badge —
+   the ring set already holds the mark.
+   ========================================================================== */
+.view.on.pview{display:flex;flex-direction:column;padding:40px 24px 28px}
+/* The ambient .glow is position:absolute with an OPAQUE background, so it
+   paints above any static-flow sibling. Every other screen escapes that
+   because its content is absolutely positioned too; the pairing screens lay
+   out in normal flow, so they have to be lifted over it explicitly. */
+.pview > .glow{z-index:0}
+.pview > *:not(.glow){position:relative;z-index:1}
+.pview .topbar{height:40px;margin:0 -12px 0;display:flex;align-items:center;flex:0 0 auto}
+.pview .backbtn{
+  width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  background:none;border:0;cursor:pointer;border-radius:999px;color:var(--text-1);
+}
+.pview .backbtn:hover{background:var(--surface-raised)}
+.pview .phead{text-align:center;flex:0 0 auto}
+.pview .phead .eyebrow{margin:0 0 6px;font-size:13px;line-height:18px;font-weight:500;color:var(--text-3)}
+.pview .phead .t{margin:0;font-size:26px;line-height:32px;font-weight:500;letter-spacing:-.01em;color:var(--text-1)}
+.pview .phead .t.sm{font-size:22px;line-height:28px}
+/* The form screens' global .sub is position:absolute at top:206px. These
+   subtitles sit in normal flow, so that has to be undone explicitly or the
+   text lands in the middle of whatever follows it. */
+.pview .phead .sub{
+  position:static;left:auto;right:auto;top:auto;
+  margin:10px 0 0;font-size:13px;line-height:19px;color:var(--text-2);
+}
+.pview .ctas{margin-top:auto;padding-top:20px;display:flex;flex-direction:column;gap:12px;flex:0 0 auto}
+
+/* Ring set — static fills, plus waves that travel outward on the two
+   animated screens. No device imagery: one flow serves every product, so
+   the rings carry the moments a watch illustration would have. */
+.rings{--d:268px;position:relative;width:var(--d);height:var(--d);margin:0 auto;flex:0 0 auto}
+.rings.sm{--d:176px}
+.rings .r,.rings .wave,.rings .core{position:absolute;left:50%;top:50%;border-radius:50%;transform:translate(-50%,-50%)}
+.rings .r1{width:100%;height:100%;background:color-mix(in srgb, var(--teal-400) 5%, transparent)}
+.rings .r2{width:76%;height:76%;background:color-mix(in srgb, var(--teal-400) 7%, transparent)}
+.rings .r3{width:53%;height:53%;background:color-mix(in srgb, var(--teal-400) 9%, transparent)}
+.rings .core{
+  width:35%;height:35%;
+  background:color-mix(in srgb, var(--teal-400) 14%, var(--surface-app));
+  display:flex;align-items:center;justify-content:center;color:var(--teal-400);
+}
+.rings .core svg{width:52%;height:52%;display:block}
+/* Hairlines belong to the animated states only — they give the travelling
+   waves an edge to read against. */
+.rings.searching .r1,.rings.linking .r1{box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--teal-400) 14%, transparent)}
+.rings.searching .r2,.rings.linking .r2{box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--teal-400) 16%, transparent)}
+.rings.searching .r3,.rings.linking .r3{box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--teal-400) 18%, transparent)}
+.rings.searching .core,.rings.linking .core{box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--teal-400) 26%, transparent)}
+.rings .wave{width:100%;height:100%;opacity:0;box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--teal-400) 55%, transparent)}
+.rings.searching .wave{animation:wave 3s cubic-bezier(.25,.6,.35,1) infinite}
+.rings.searching .wave:nth-child(2){animation-delay:1s}
+.rings.searching .wave:nth-child(3){animation-delay:2s}
+@keyframes wave{
+  0%{transform:translate(-50%,-50%) scale(.34);opacity:0}
+  14%{opacity:.5}
+  100%{transform:translate(-50%,-50%) scale(1);opacity:0}
+}
+.rings.linking .core{animation:breathe 1.8s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.06)}}
+
+.chevrons{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:18px;flex:0 0 auto}
+.chevrons span{width:22px;height:12px;color:var(--teal-400);opacity:.45;animation:rise 1.5s ease-in-out infinite}
+.chevrons span svg{width:100%;height:100%;display:block}
+.chevrons span:nth-child(2){animation-delay:.18s}
+.chevrons span:nth-child(3){animation-delay:.36s}
+@keyframes rise{0%,100%{opacity:.2;transform:translateY(3px)}50%{opacity:1;transform:translateY(-3px)}}
+
+/* Setup tips — the standard card, neutral throughout. No caution colour. */
+.tips{
+  background:var(--surface-card);border-radius:20px;
+  padding:16px;display:flex;flex-direction:column;gap:12px;
+}
+.tip{display:flex;gap:12px;align-items:flex-start}
+.tip .n{
+  font-family:var(--font-num);font-size:13px;line-height:18px;font-weight:500;
+  font-feature-settings:'tnum' 1,'lnum' 1;color:var(--text-3);flex:0 0 auto;width:10px;
+}
+.tip .x{font-size:13px;line-height:18px;color:var(--text-2)}
+.psheet .tips{background:var(--surface-raised)}
+
+.dev-list{display:flex;flex-direction:column;gap:8px;flex:0 0 auto}
+.dev-row{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  background:var(--surface-card);border:0;border-radius:16px;padding:15px 16px;
+  cursor:pointer;font-family:inherit;transition:background 140ms ease;
+}
+.dev-row:hover{background:var(--surface-raised)}
+.dev-row .nm{flex:1;font-size:15px;line-height:20px;font-weight:500;color:var(--text-1)}
+.dev-row svg{width:18px;height:18px;color:var(--text-3);fill:currentColor}
+
+/* Success — the disc, its halo, and confetti cut from the metric hues */
+.win{position:relative;flex:0 0 auto;height:300px;display:flex;align-items:center;justify-content:center}
+.win .disc{
+  position:relative;z-index:2;width:132px;height:132px;border-radius:50%;
+  background:var(--teal-400);color:var(--neutral-900);
+  display:flex;align-items:center;justify-content:center;
+  animation:pop 240ms cubic-bezier(.2,1.3,.4,1) 1;
+}
+.win .disc::before{
+  content:"";position:absolute;inset:-34px;border-radius:50%;z-index:-1;
+  background:color-mix(in srgb, var(--teal-400) 9%, transparent);
+}
+.win .disc svg{width:56px;height:56px;display:block;fill:currentColor}
+@keyframes pop{0%{transform:scale(.72)}100%{transform:scale(1)}}
+.win i{position:absolute;display:block;border-radius:2px;opacity:.9;animation:drift 3.4s ease-in-out infinite}
+@keyframes drift{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-9px) rotate(14deg)}}
+
+/* Recovery sheet — sits over the dimmed search screen */
+.pscrim{position:absolute;inset:0;z-index:69;background:color-mix(in srgb, var(--neutral-900) 62%, transparent)}
+.pscrim[hidden]{display:none}
+.psheet{
+  position:absolute;left:8px;right:8px;bottom:18px;z-index:70;
+  background:var(--surface-card);border-radius:24px;padding:16px 16px 24px;
+  animation:sheet-in 240ms cubic-bezier(.2,.8,.3,1) 1;
+}
+.psheet[hidden]{display:none}
+@keyframes sheet-in{from{transform:translateY(28px);opacity:0}to{transform:translateY(0);opacity:1}}
+.psheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.psheet-head .t{margin:0;font-size:19px;line-height:25px;font-weight:500;color:var(--text-1)}
+.psheet-head .s{margin:6px 0 0;font-size:13px;line-height:18px;color:var(--text-2)}
+.psheet .btn{margin-top:16px}
+
+/* The metric hues the confetti is cut from */
+:root{
+  --metric-heart-rate:#E43A62;--metric-hrv:#D96F4A;--metric-calories:#F59E3B;
+  --metric-steps:#F2C64B;--metric-activity:#A6CE4E;--metric-distance:#43B476;
+  --metric-sleep:#8A7CEC;--metric-skin-temp:#C873DE;
+}
+
+/* ==========================================================================
+   7. MOTION
+   --------------------------------------------------------------------------
+   The flow uses one gentle cross-fade between screens and a blinking caret.
+   Both are switched off for anyone who asks for reduced motion.
+   ========================================================================== */
+.view.on{animation:fade 180ms ease both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+  .view.on{animation:none !important}
+}
+</style>
+
+<body>
+
+<!-- ==========================================================================
+     THE PHONE — same 360x795 Android mockup the flow uses
+     ========================================================================== -->
+<div class="phone">
+<div class="screen" id="screen">
+
+  <div class="statusbar">
+    <span class="clock">12:30</span>
+    <span class="icons">
+      <!-- cellular -->
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor" aria-hidden="true">
+        <rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="6" width="3" height="6" rx="1"/>
+        <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/>
+      </svg>
+      <!-- wifi -->
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor"
+           stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+        <path d="M1 4.2a10 10 0 0 1 14 0"/><path d="M3.6 6.9a6.3 6.3 0 0 1 8.8 0"/>
+        <path d="M6.2 9.5a2.7 2.7 0 0 1 3.6 0"/>
+      </svg>
+      <!-- battery -->
+      <svg width="24" height="12" viewBox="0 0 24 12" fill="none" aria-hidden="true">
+        <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor"/>
+        <rect x="2" y="2" width="18" height="8" rx="2" fill="currentColor"/>
+        <path d="M23 4.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </span>
+  </div>
+
+  <!-- ====================================================================
+       SEARCHING + the "No device found" recovery sheet
+       Copied verbatim from #v-searching in "Pebble Onboarding.html". Two
+       differences, both so the screen shows itself the moment you open it:
+         - the section carries `on`, because there is no flow to switch it in
+         - the scrim and sheet have no `hidden`, because this IS the state
+       ==================================================================== -->
+  <section class="view pview on" id="v-searching" aria-label="Searching">
+    <div class="glow"></div>
+    <div class="topbar"><button class="backbtn" data-pgo="pair" aria-label="Back"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></svg></button></div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <div class="rings searching">
+        <div class="wave"></div><div class="wave"></div><div class="wave"></div>
+        <div class="r r1"></div><div class="r r2"></div><div class="r r3"></div>
+        <div class="core" data-mark></div>
+      </div>
+      <div class="phead" style="margin-top:44px">
+        <h1 class="t">Searching…</h1>
+        <p class="sub">Ensure your Pebble device is in pairing mode and<br>your phone’s Bluetooth is turned on</p>
+      </div>
+    </div>
+    <div class="ctas"><button class="btn btn--tertiary" type="button" data-pgo="pair">Cancel</button></div>
+
+    <!-- Recovery sheet, shown over this screen when nothing is found -->
+    <div class="pscrim" id="pairScrim"></div>
+    <div class="psheet" id="pairSheet" role="dialog" aria-modal="true" aria-labelledby="pairSheetTitle">
+      <div class="psheet-head">
+        <div>
+          <h2 class="t" id="pairSheetTitle">No device found</h2>
+          <p class="s">Run through these, then search again.</p>
+        </div>
+        <button class="iconbtn" id="pairSheetClose" aria-label="Close">
+          <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+            <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="tips" data-tips></div>
+      <button class="btn btn--primary btn--m" type="button" id="btnRetry">Try Again</button>
+    </div>
+  </section>
+
+</div><!-- /screen -->
+</div><!-- /phone -->
+
+<script>
+/* ==========================================================================
+   Just enough script to make this one screen real. All of it is lifted from
+   the pairing section of "Pebble Onboarding.html".
+   ========================================================================== */
+
+/* The three setup tips, verbatim from the flow's TIPS array. They appear in
+   the sheet AND on the pair screen, so the flow renders them from one list —
+   kept as a list here too, so the two files stay easy to compare. */
+const TIPS = [
+  'Turn your phone\u2019s Bluetooth on',
+  'Make sure your Pebble device is switched on',
+  'Keep your device and phone close to each other'
+];
+document.querySelectorAll('[data-tips]').forEach(box => {
+  box.innerHTML = TIPS.map((t,i) =>
+    `<div class="tip"><span class="n">${i+1}</span><span class="x">${t}</span></div>`).join('');
+});
+
+/* The Pebble mark that sits in the middle of the rings. In the flow this is
+   read off the welcome screen's SVG; there is no welcome screen here, so the
+   same owner-supplied path is inlined. */
+const MARK_SVG = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="currentColor" d="M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z"/></svg>';
+document.querySelectorAll('[data-mark]').forEach(el => { el.innerHTML = MARK_SVG; });
+
+/* --- Controls -------------------------------------------------------------
+   FLAG — deviation from the flow, because this page is one screen on its own:
+   in "Pebble Onboarding.html" the back arrow, Cancel and the sheet's X all
+   return to the "Let's connect your device" screen. That screen does not
+   exist here, so instead they close the sheet and leave the plain Searching
+   state visible — which is the thing behind the sheet anyway. "Try Again"
+   behaves exactly as it does in the flow: search for 3.2s, find nothing,
+   sheet returns.
+   -------------------------------------------------------------------------- */
+const SEARCH_MS = 3200;                       /* same timer as the flow */
+const scrim = document.getElementById('pairScrim');
+const sheet = document.getElementById('pairSheet');
+let timer = null;
+
+function showSheet(){ scrim.hidden = false; sheet.hidden = false; }
+function hideSheet(){ scrim.hidden = true;  sheet.hidden = true;  }
+
+document.getElementById('btnRetry').onclick = () => {
+  hideSheet();
+  clearTimeout(timer);
+  timer = setTimeout(showSheet, SEARCH_MS);   /* nothing found, again */
+};
+document.getElementById('pairSheetClose').onclick = hideSheet;
+document.querySelectorAll('[data-pgo]').forEach(b => {
+  b.onclick = () => { clearTimeout(timer); hideSheet(); };
+});
+</script>
+</body>
+</html>
