@@ -5,6 +5,35 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-30 (chunking + scrim) — Two changes to the onboarding screen.
+  TEXT CHUNKED TO THE FOOTAGE. The headlines were on an even 7/3 = 2.33s
+  split, which I had flagged as not derived from the video. The cuts are not
+  readable from the file — I parsed the container and its keyframes sit on a
+  flat 1s GOP, i.e. encoder cadence, not content — and there is no H.264
+  decoder in this environment to look at frames. So the page now finds them
+  itself: detectCuts() steps the loop at 10fps, draws each frame into a
+  32x57 canvas and compares luma against the previous one, taking the two
+  largest jumps as the cuts. Downscaling that far is what makes it reliable
+  — it discards grain and micro-motion and leaves the gross composition
+  shift a cut produces. A 4x-median floor means a single-shot loop is left
+  on even thirds rather than cutting on noise. Headline spans are now
+  measured per-chunk rather than assumed equal, so the chunks can differ in
+  length. Runs once in the background; the screen never waits on it.
+  ** I COULD NOT VERIFY THE DETECTION HERE ** — no codec, so it returns null
+  and the even-thirds fallback is what actually ran in my tests. That
+  fallback is verified; the detection is not. Needs an eye on a real browser.
+  GRADIENT SCRIM. Added back over the bottom of the onboarding screen so the
+  mark, headline, CTA and legal line stay legible over the footage: a linear
+  ramp from the bottom edge up to the mark, which sits at top:519 on a 795
+  screen, so it spans the bottom 276px and is fully transparent where the
+  mark begins. Built from --surface-app through color-mix rather than a
+  literal, so it stays on-token. The photo backdrop had needed no scrim
+  because the exports had one baked in; the video does not.
+  Also dropped the video's poster. onb-1.jpg was serving as it, but that is a
+  frame from the OLD backdrop — it flashed unrelated footage before the loop
+  painted, and carried its own baked gradient which double-darkened under the
+  new scrim. The video's own first frame is the correct poster.
+
 - 2026-08-30 (onboarding loop video) — The onboarding backdrop is now the
   owner's 7s looping video (assets/onboarding/onboarding-loop.mp4, 720x1280
   H.264, 1.65 MB), replacing the three cross-fading photographs that stood in

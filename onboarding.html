@@ -595,16 +595,29 @@ button.field{
   object-fit:cover;display:block;
   -webkit-user-drag:none;user-select:none;
 }
-/* FLAG: no separate scrim element any more. The exported photos already have
-   the dark gradient baked into their lower half — the composition draws them
-   with no overlay, and adding the old CSS scrim on top double-darkened the
-   headline area. If the photos are ever re-exported without that gradient,
-   the scrim has to come back. */
-#v-onb .leaf{position:absolute;left:24px;top:519px;width:48px;height:48px;color:var(--teal-400)}
+/* Gradient scrim, so the mark, headline, CTA and legal line stay legible
+   over whatever the footage is doing underneath (owner, 2026-08-30).
+   It runs from the bottom edge up to the mark — the mark sits at top:519 on
+   a 795 screen, so the ramp is the bottom 276px, fully transparent where the
+   mark begins. The photo backdrop needed no scrim because the exports had
+   one baked in; the video does not, so it comes back here as CSS.
+   Built from --surface-app via color-mix rather than a literal, so it stays
+   on-token. */
+#v-onb .scrim{
+  position:absolute;left:0;right:0;bottom:0;height:276px;
+  pointer-events:none;z-index:1;
+  background:linear-gradient(180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--surface-app) 30%, transparent) 28%,
+    color-mix(in srgb, var(--surface-app) 68%, transparent) 55%,
+    color-mix(in srgb, var(--surface-app) 92%, transparent) 80%,
+    var(--surface-app) 100%);
+}
+#v-onb .leaf{position:absolute;left:24px;top:519px;width:48px;height:48px;color:var(--teal-400);z-index:2}
 /* The three headlines stack in the same place and cross-fade. Their opacity
    is computed from the backdrop video's own currentTime, so the copy stays
    locked to the loop even if the footage stalls or is scrubbed. */
-#v-onb .heads{position:absolute;left:24px;top:583px;width:303px;height:80px}
+#v-onb .heads{position:absolute;left:24px;top:583px;width:303px;height:80px;z-index:2}
 #v-onb .head{
   position:absolute;left:0;top:0;width:303px;margin:0;
   font-size:32px;line-height:36px;font-weight:700;letter-spacing:-0.32px;
@@ -614,9 +627,9 @@ button.field{
 #v-onb .head .lit{display:block;color:#FFF}
 /* The onboarding CTA is 316px wide and bottom-anchored, NOT the 328px pill
    the rest of the flow uses. Kept as designed. */
-#v-onb .cta{left:50%;right:auto;transform:translateX(-50%);width:316px;top:auto;bottom:68px}
+#v-onb .cta{left:50%;right:auto;transform:translateX(-50%);width:316px;top:auto;bottom:68px;z-index:2}
 #v-onb .legal{
-  position:absolute;left:16px;top:751px;margin:0;
+  position:absolute;left:16px;top:751px;margin:0;z-index:2;
   font-size:10px;line-height:14px;letter-spacing:0.1px;color:rgba(255,255,255,0.45);
 }
 #v-onb .legal a{color:rgba(255,255,255,0.75);text-decoration:none}
@@ -950,15 +963,19 @@ button.field{
        2. ONBOARDING  (Figma 940:5067)
        ==================================================================== -->
   <section class="view" id="v-onb" aria-label="Welcome">
-    <!-- The owner's 7s onboarding loop (720x1280). It replaces the three
-         cross-fading photographs that stood in for it. onb-1.jpg is the
-         poster, so a browser that cannot decode H.264 still shows a frame
-         rather than a black rectangle. -->
+    <!-- The owner's 7s onboarding loop (720x1280), replacing the three
+         cross-fading photographs that stood in for it.
+         Deliberately NO poster: onb-1.jpg was serving as one, but it is a
+         frame from the OLD backdrop and carries its own baked-in gradient,
+         so it both flashed unrelated footage before the loop painted and
+         double-darkened under the new scrim. The video's own first frame is
+         the right poster; behind it the plate is surface-app, so there is
+         never a white flash. -->
     <div class="media" id="onbMedia">
       <video id="onbVideo" muted playsinline autoplay loop preload="auto"
-             poster="assets/onboarding/onb-1.jpg"
              src="assets/onboarding/onboarding-loop.mp4"></video>
     </div>
+    <div class="scrim" aria-hidden="true"></div>
 
     <!-- Owner-supplied mark, used verbatim, at the 48x48 the comp specifies -->
     <svg class="leaf" viewBox="0 0 48 48" fill="none" aria-label="Pebble" role="img">
@@ -1589,12 +1606,14 @@ function runSplash(){
    than a separate timer: reading currentTime means they cannot drift out of
    step with the footage even if it stalls, buffers or is scrubbed.
 
-   FLAG — the loop is 7s and there are three headlines, so each gets 7/3 =
-   2.33s. The composition never specified a per-headline duration, and 7
-   does not divide evenly into 3, so this is an even split rather than
-   something derived from cuts in the footage. If the video has three
-   distinct scenes with their own timings, send those and the headlines can
-   be pinned to them instead. */
+   The headlines are CHUNKED TO THE FOOTAGE (owner, 2026-08-30). Where the
+   scenes cut is not knowable from the file's metadata — the container's
+   keyframes sit on a flat 1s GOP, which is encoder cadence rather than
+   cuts — so the page finds them itself: it samples the loop into a small
+   canvas, measures how much each frame differs from the one before, and
+   takes the largest jumps as the cuts. Two cuts for three headlines.
+   See detectCuts() below. Until that finishes, and if it cannot run at all,
+   the headlines fall back to even thirds so the screen never waits on it. */
 const onbVideo = $('#onbVideo');
 const onbHeads = [...document.querySelectorAll('#onbHeads .head')];
 const HEAD_FADE = 0.5;                       // seconds of cross-fade
@@ -1609,15 +1628,26 @@ const loopLen = () =>
   (onbVideo.duration && isFinite(onbVideo.duration) && onbVideo.duration > 0)
     ? onbVideo.duration : 7;
 
-/* Opacity of headline i at loop-time t. Each headline holds for its segment
+/* Where each headline starts, in loop-time. Even thirds until detectCuts()
+   replaces them with the real scene boundaries. */
+let headStarts = onbHeads.map((_,i) => (7 / onbHeads.length) * i);
+
+/* How long headline i holds — its own start to the next one's. Chunks are
+   no longer equal, so this is measured rather than assumed. */
+function headSpan(i){
+  const L = loopLen(), n = onbHeads.length;
+  return mod(headStarts[(i + 1) % n] - headStarts[i], L) || L / n;
+}
+
+/* Opacity of headline i at loop-time t. Each headline holds for its chunk
    and cross-fades with its neighbour, so the opacities always sum to 1 and
    the copy never dips to nothing between lines. */
 function headState(t, i){
-  const seg = loopLen() / onbHeads.length;
-  const u = mod(t - i * seg, loopLen());
-  if (u < HEAD_FADE)       return easeInOutSine(u / HEAD_FADE);
-  if (u < seg)             return 1;
-  if (u < seg + HEAD_FADE) return easeInOutSine(1 - (u - seg) / HEAD_FADE);
+  const span = headSpan(i);
+  const u = mod(t - headStarts[i], loopLen());
+  if (u < HEAD_FADE)        return easeInOutSine(u / HEAD_FADE);
+  if (u < span)             return 1;
+  if (u < span + HEAD_FADE) return easeInOutSine(1 - (u - span) / HEAD_FADE);
   return 0;
 }
 /* Whichever headline is most visible IS the current one. Deriving it from
@@ -1654,15 +1684,120 @@ function paintHeads(){
    video keeps playing underneath rather than jumping. */
 function gotoSlide(i){
   const n = onbHeads.length;
-  const seg = loopLen() / n;
   const want = mod(i, n);
+  const seg = headSpan(want);
   /* Land in the middle of that headline's hold. Measured against the same
      clock loopTime() reads, so it lands correctly whether the video is
      driving or the wall-clock fallback is. */
   const base = mod(loopTime() - onbOffset, loopLen());
-  onbOffset = mod(want * seg + seg / 2 + HEAD_FADE / 2 - base, loopLen());
+  onbOffset = mod(headStarts[want] + seg / 2 + HEAD_FADE / 2 - base, loopLen());
   paintHeads();
 }
+
+/* Find where the loop cuts between scenes.
+   The file cannot tell us: its keyframes are a flat 1s GOP, so they mark
+   encoder cadence, not content. Instead we step through the video at 10fps,
+   draw each frame into a 32x57 canvas and compare it to the previous one.
+   A cut is a large, sudden jump in mean pixel difference; a camera move
+   inside one scene is a small, sustained one. Taking the (n-1) biggest
+   jumps gives the boundaries for n headlines.
+
+   Downscaling to 32px wide is what makes this both fast and reliable —
+   it throws away the grain and micro-motion that would otherwise register
+   as change, and leaves the gross composition shift a cut produces.
+
+   Runs once, in the background, and never blocks the screen: the headlines
+   are already running on even thirds and simply switch over when this
+   returns. Everything is wrapped, because a canvas read throws on a tainted
+   source (a file:// video is opaque in some browsers) and a wrong-but-
+   running screen beats a broken one. */
+async function detectCuts(){
+  const n = onbHeads.length;
+  if (n < 2) return null;
+  const L = loopLen();
+  if (!L || !isFinite(L)) return null;
+
+  const W = 32, H = 57, STEP = 0.1;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d', { willReadFrequently:true });
+
+  const seek = t => new Promise((res, rej) => {
+    const ok = () => { cleanup(); res(); };
+    const no = () => { cleanup(); rej(new Error('seek failed')); };
+    const cleanup = () => {
+      onbVideo.removeEventListener('seeked', ok);
+      onbVideo.removeEventListener('error', no);
+      clearTimeout(bail);
+    };
+    const bail = setTimeout(no, 2000);
+    onbVideo.addEventListener('seeked', ok, { once:true });
+    onbVideo.addEventListener('error', no, { once:true });
+    onbVideo.currentTime = t;
+  });
+
+  const wasPaused = onbVideo.paused;
+  const resume = onbVideo.currentTime;
+  const diffs = [];
+  let prev = null;
+
+  try {
+    onbVideo.pause();
+    for (let t = 0; t < L; t += STEP){
+      await seek(t);
+      ctx.drawImage(onbVideo, 0, 0, W, H);
+      const px = ctx.getImageData(0, 0, W, H).data;
+      if (prev){
+        let sum = 0;
+        for (let k = 0; k < px.length; k += 4){
+          /* Luma only — a cut changes brightness structure, and ignoring
+             chroma keeps a colour-grade shift from reading as a cut. */
+          const a = 0.299*px[k]   + 0.587*px[k+1]   + 0.114*px[k+2];
+          const b = 0.299*prev[k] + 0.587*prev[k+1] + 0.114*prev[k+2];
+          sum += Math.abs(a - b);
+        }
+        diffs.push({ t, d: sum / (px.length / 4) });
+      }
+      prev = px;
+    }
+  } catch {
+    return null;                       /* tainted canvas, or seeking blocked */
+  } finally {
+    try {
+      onbVideo.currentTime = resume;
+      if (!wasPaused) onbVideo.play().catch(() => {});
+    } catch { /* ignore */ }
+  }
+
+  if (diffs.length < n) return null;
+
+  /* Take the (n-1) largest jumps, but only ones that genuinely stand out —
+     4x the median rules out a loop that is one continuous shot, where the
+     biggest "jump" is just noise and even thirds are the honest answer. */
+  const sorted = [...diffs].sort((a,b) => a.d - b.d);
+  const median = sorted[Math.floor(sorted.length / 2)].d;
+  const peaks = [...diffs].sort((a,b) => b.d - a.d)
+    .filter(x => x.d > Math.max(median * 4, 2))
+    .slice(0, n - 1)
+    .sort((a,b) => a.t - b.t);
+
+  if (peaks.length < n - 1) return null;
+  return [0, ...peaks.map(p => p.t)];
+}
+
+/* Kick detection off once the video can actually be read, then adopt the
+   result. Failure is silent and simply leaves the even thirds in place. */
+let cutsTried = false;
+function tryDetectCuts(){
+  if (cutsTried || onbVideo.readyState < 2) return;
+  cutsTried = true;
+  detectCuts().then(cuts => {
+    if (!cuts) return;
+    headStarts = cuts;
+    console.info('[onboarding] headlines chunked to scene cuts at', cuts);
+  }).catch(() => {});
+}
+onbVideo.addEventListener('loadeddata', tryDetectCuts);
 
 function startBackdrop(){
   stopBackdrop();
@@ -1675,6 +1810,7 @@ function startBackdrop(){
     onbShown = i;
     return;
   }
+  tryDetectCuts();
   try { onbVideo.play().catch(() => {}); } catch { /* ignore */ }
   const tick = () => { paintHeads(); onbRAF = requestAnimationFrame(tick); };
   onbRAF = requestAnimationFrame(tick);
@@ -2416,15 +2552,10 @@ runSplash();
   where the decision was made.
 
   BLOCKED — needs files, not decisions
-   1. The three NEW onboarding photographs (man stretching / woman with
-      phone / couple cycling). They have only ever arrived as inline images
-      in chat, which cannot be written to disk, so the screens still show the
-      OLD set (pickleball / cable / press) behind the new headlines. Drop
-      three files over assets/onboarding/onb-1..3.jpg — no code change
-      needed. Owner's intended mapping: onb-1 stretching, onb-2 woman with
-      phone, onb-3 cycling.
-   2. The "pebble" wordmark. Only the mark SVG was supplied, so the wordmark
+   1. The "pebble" wordmark. Only the mark SVG was supplied, so the wordmark
       on the splash fallback is live text in the brand face.
+      (The three onboarding photographs are no longer needed — the owner's
+      7s loop video replaced that backdrop entirely on 2026-08-30.)
    3. The Phosphor "CalendarDots" glyph — the Profile calendar icon is a
       hand-drawn stand-in at the same 20px box.
 
@@ -2449,8 +2580,10 @@ runSplash();
       only the OTP screen has an error state.
   13. Gender options list — the four in use are a default. Also undecided
       what "Prefer not to say" should fall back to for the target maths.
-  14. Slide dots on onboarding are not in any comp; added because the owner
-      asked for dots and swipe alongside the auto-advance.
+  14. Headline chunking is derived at runtime from scene cuts detected in
+      the loop (see detectCuts). Nobody has confirmed the detected cuts are
+      the intended ones — if they read wrong, send the timings and they can
+      be hard-coded instead.
 
   ==========================================================================
   SETTLED — do not re-raise these
