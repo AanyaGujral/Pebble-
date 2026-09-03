@@ -8,6 +8,12 @@
 > double-clicking; the panel on the left switches the device slot, the
 > dormant-band count and the confirm sheet.
 >
+> **Shareable link:** https://claude.ai/code/artifact/68bad1b7-40af-42f8-863c-1dcc1b0a6b4a
+> That page is GENERATED, not edited: run `python3 "Me Tab/build-artifact.py"`
+> to re-derive `Me Tab/me-tab-artifact.html` from the prototype, then
+> republish it to the same URL. The generated file is git-ignored on purpose,
+> so `Me Tab/Me Tab.html` stays the only place the tab is edited.
+>
 > **Awaiting owner review.** Do not start slice 2 (device card across
 > T1–T10, the pairing CTA in context, S03, S04) until slice 1 is approved —
 > §7 of the spec makes the slices gated on purpose.

@@ -47,6 +47,13 @@
   Not merged into index.html: the standalone is the review surface first,
   same as the Activity and Sleep tabs were.
 
+  Also published the prototype as a shareable page so it can be reviewed in a
+  browser without cloning: https://claude.ai/code/artifact/68bad1b7-40af-42f8-863c-1dcc1b0a6b4a
+  It is DERIVED, never hand-edited — `Me Tab/build-artifact.py` strips the
+  document wrapper the host supplies, adds a masthead for anyone opening the
+  link cold, and adds narrow-screen handling. The generated HTML is
+  git-ignored so the prototype cannot drift from the page.
+
 A running log of what changed and why. Add a new line at the top after each
 meaningful change. Format: `[date] — what changed — why/notes`
 
