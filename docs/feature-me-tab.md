@@ -406,3 +406,68 @@ code comment and ask.
 *Rev 3 — 2026-09-02. Supersedes rev 1 (8 group headers) and rev 2 (4 group
 headers). Step 2 will add UI: layout, spacing, type sizes and per-screen
 component specs.*
+
+---
+
+## Addendum A — S01 Profile, build decisions (2026-09-03)
+
+Rev 3 above is unchanged and still the source of truth for structure. This
+addendum records what was decided when S01 was actually built, so the next
+session does not re-open settled questions. Built in `Me Tab/Me Tab.html`
+alongside the slice-1 tab shell.
+
+### Decided by the owner
+
+| Question | Decision |
+|----------|----------|
+| Shape | **Full inner page** (`p-profile`), content in `.group` card surfaces. Not a card that expands on the tab. |
+| Editing | **Per-field sheets, batched into one Save.** A sheet returns a *draft*; nothing reaches the account until "Save changes". |
+| Fields | Date of birth, gender, height, weight · name + avatar · activity level + fitness goal. |
+| Daily targets | **Not on this page.** They are S05 Goal Setting, which already has its own row in break 2 and its own screen in onboarding and the Activity tab. |
+| Phone | **Read-only**, shown with a Verified chip and no chevron. |
+
+### How the states fall out
+
+There are two copies of the profile: `saved` (what the account holds) and
+`drafted` (what you are looking at). Every §6 state is a comparison of the two —
+this is why the batched model was chosen over save-on-confirm.
+
+| State | Trigger |
+|-------|---------|
+| `view` | nothing differs — **no save bar at all** |
+| `editing` | any field differs; changed rows show the value in the accent plus a dot, so a batched save can be audited before it commits |
+| `validation-error` | empty or over-long name, or a future date of birth; row shows the reason, Save is disabled (not hidden) |
+| `saving` | rows and the avatar badge go inert; the button shows a spinner |
+| `save-failed / offline` | a negative banner above the save bar; **the draft is kept**, so retry costs nothing |
+| `unsaved-changes exit guard` | back or Discard with a difference → the §5.6 confirm sheet |
+| `no-avatar` | initials monogram, never a stock silhouette |
+| `incomplete` | any of the four body metrics unset → caution banner naming which ones and what they cost; those rows read "Add" in caution, never blank |
+
+### Additions not in rev 3, flagged rather than assumed
+
+- **Age and BMI** in the hero, both derived and never typed. BMI reads an em
+  dash the moment height or weight is missing, which is what makes the
+  incomplete state legible. Recalculates off the *draft*, so you see the
+  consequence of a change before committing it. Cut BMI if unwanted — age
+  alone still works.
+- **Avatar** is a real file picker (`<input type=file>` → data URL), because
+  nothing in onboarding collects a photo. The review panel's "Photo" option
+  is a code-drawn stand-in in token colours; no photograph has been supplied.
+- The three sheet bodies — wheel, calendar, choice list — are **ported from
+  `Onboarding/onboarding.html`**, not rewritten, so the control you met at
+  setup is the control you meet here.
+
+### Still open — ask before resolving
+
+- [ ] **No route to change a phone number anywhere in the app.** Read-only
+      honours §6 literally, but the number is now unchangeable. Either an
+      S15 change-number page that owns the OTP, or this row reusing
+      onboarding's OTP component.
+- [ ] **Minimum age.** The calendar refuses a future date; nothing enforces a
+      floor. Carried over from onboarding, still unanswered.
+- [ ] **Unit ownership.** The height/weight wheel has its own unit column, as
+      onboarding does. S11 Units & Format owns the app-wide default and should
+      propagate into it — wire that when S11 is built.
+- [ ] **Goal Setting overlap.** S05 sets daily targets from these values. If
+      a profile change should re-derive the targets, that is a cross-screen
+      behaviour neither spec covers yet.

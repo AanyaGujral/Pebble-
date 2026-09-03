@@ -5,6 +5,37 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-03 (later) — Built **S01 Profile** into `Me Tab/Me Tab.html`, the
+  first of the Me tab's fourteen inner pages, alongside the slice-1 tab shell
+  that was previously artifact-only (the file is now in the repo, so the
+  prototype has a source of truth on disk again). Everything onboarding
+  collects is editable here except the daily targets, which stay with S05 Goal
+  Setting rather than getting a second door. Owner's four calls, recorded in
+  `docs/feature-me-tab.md` Addendum A: full inner page over an expanding card;
+  per-field sheets batched into ONE Save; fields = the four body metrics +
+  name and avatar + activity level and fitness goal; phone read-only.
+  The page keeps two copies of the profile — `saved` and `drafted` — and every
+  §6 state falls out of comparing them, which is what buys the exit guard,
+  the disabled-not-hidden Save, and changed rows that mark themselves in the
+  accent so a batched save can be audited before it commits. The wheel,
+  calendar and choice sheets are PORTED from `Onboarding/onboarding.html`
+  rather than rewritten. Added, flagged, not assumed: age and BMI in the hero
+  (derived, recalculating off the draft so you see a change's consequence
+  before saving; BMI reads an em dash when height or weight is missing, which
+  is what makes the "incomplete" state legible) and a real file-picker avatar,
+  since nothing in onboarding collects a photo. Three bugs found by driving
+  the file in a real browser rather than by reading it: `scroll-snap-align`
+  was snapping every wheel to its column top, which the script read as row 2
+  — height opened in inches, not centimetres (fixed with `scroll-padding-top`
+  matching the pad height); the choice cards' title and description were
+  inline spans and ran together on one line; the avatar photo sat beside the
+  initials instead of covering them. No new tokens — the stand-in avatar reads
+  its three colours out of `:root` at run time because a data: URI cannot
+  resolve a custom property. Still open and raised, not decided: there is now
+  NO route to change a phone number anywhere in the app; minimum age; whether
+  S11 Units & Format should own the wheel's unit; whether a profile change
+  should re-derive S05's targets.
+
 - 2026-09-03 — Wrote `docs/feature-family-ranking.md` (rev 1, UX proposed): a
   restructure of the legacy Family Ranking flow into **Friends**. Diagnosed the
   two legacy screens (duplicated you-row, ranks assigned to zeroed data,
