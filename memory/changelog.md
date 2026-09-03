@@ -5,6 +5,38 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-03 (rev 4) — Owner feedback round on the Family ranking flow, all
+  eleven items, in `Friends/friends.html`:
+  **1** the sticky you-card is scoped to the ranking page — it was leaking onto
+  Home because backing out hid the page without telling the card — and with the
+  list back it behaves as §4.2 always described: it docks only while your own
+  row is scrolled out of view, and tapping it returns you to the row.
+  **2** the Home card is titled "Family ranking" (the page it opens takes the
+  same name) and the "Today" chip came off its head.
+  **3** the card now sits after the Start Workout button, not before it.
+  **4** the "1,866 steps behind" closing line came off the Home card; the
+  sentence survives on the ranking page's you-card. Card body re-measured to
+  140px so all six states still share one footprint.
+  **5** the Today / 7 days segmented control came out — the ranking is today's,
+  and the status line now names the period ("Today · 4 of 4 synced").
+  **6** podium *and* full list: the list carries everyone with a figure, in
+  order, you included and highlighted, with the podium reading as its top.
+  **7** the podium carries medal colour — gold / silver / bronze as
+  `--medal-1/2/3`, keyed to rank so a 1-2-2 tie shows two silvers and no
+  bronze. Recorded as the colour doctrine's one sanctioned exception.
+  **8** button labels are Title Case, matching `components/button.html`
+  ("Share Your Code", "See How It Works", "Remove Friend"); "Enter a friend's
+  code" became "Enter Code" rather than title-casing an article. Card, page and
+  sheet titles stay sentence case, which is also the app's convention.
+  **9** the sleep score came off the friend profile — duration only.
+  **10** the "Compared with you" card came off; the rank you arrived from is
+  still in the identity line. The 7.6 compare component stays in the gallery.
+  **11** the calendar ring now *means* something: that day's steps against that
+  person's daily goal, said in the sheet under the title, read from the same
+  `dayData()` the cards read — so picking a date drives the whole profile and
+  the ring can never disagree with the figures under it. Still generated data,
+  but stable per person per date; flagged for the real history read.
+
 - 2026-09-03 (later) — Friends flow rev 3, built into `Friends/friends.html`
   from the owner's rev-2 file and published as an artifact for review. Five
   owner corrections: (1) **colour used intentionally from the design system** —

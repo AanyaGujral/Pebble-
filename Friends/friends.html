@@ -68,7 +68,20 @@
   --crimson-400:#E43A62;--tangerine-400:#F59E3B;--gold-400:#F2C64B;
   --emerald-400:#43B476;--teal-400:#45C7B3;--teal-500:#31A492;
   --sky-400:#58A8DF;--violet-400:#8A7CEC;--lime-400:#A6CE4E;
+  --terracotta-400:#D96F4A;
   --gold-100:#F9E8BE;
+
+  /* Podium medals (owner, 2026-09-03). The doctrine below says a rank is not
+     a hue; this is the one place the owner has taken the exception, and it is
+     an exception with a reason — gold / silver / bronze is not a colour scheme
+     invented here, it is a convention every reader of a podium already knows.
+     Named as medals rather than reused metric aliases, so nobody later reads
+     the leader's plinth as "steps": the first is drawn from color.gold, but
+     it arrives through its own name. Keyed to RANK, not position, so a 1-2-2
+     tie shows one gold and two silvers and no bronze at all. */
+  --medal-1:var(--gold-400);
+  --medal-2:var(--neutral-200);
+  --medal-3:var(--terracotta-400);
 
   /* surfaces — elevation is lightness, never shadow */
   --surface-app:var(--neutral-900);
@@ -152,8 +165,11 @@
 
   /* The one measurement this flow adds: the Friends card's body height.
      Hard rule 9 — the card is the same height in all six of its states, so
-     nothing below it on Home moves. Three rows (28px avatar + 6px gap +
-     6px bar) at 12px gaps, plus the closing gap line. */
+     nothing below it on Home moves. Sized to the TALLEST state, not the
+     commonest: three 28px rows at 12px gaps come to 108, but the solo state
+     (figure + line + button) needs 140, so 140 is the card and the ranked
+     rows centre in it. Measured, not guessed — every state was checked
+     against this number after the closing gap line came off on 2026-09-03. */
   --friends-body-h:140px;
 }
 
@@ -316,8 +332,9 @@ body{
   position:absolute;inset:0;z-index:30;background:var(--surface-app);
   overflow-y:auto;scrollbar-width:none;padding-bottom:96px;
 }
-/* the leaderboard reserves room for the floating nav AND the you-bar pill */
-#p-friends{padding-bottom:196px}
+/* the ranking reserves room for the floating nav, and enough beyond it that
+   the you-card can dock over empty space rather than over the last row */
+#p-friends{padding-bottom:150px}
 .subpage::-webkit-scrollbar{display:none}
 .subpage[hidden]{display:none}
 .sub-head{padding:40px var(--gutter) 0;display:flex;align-items:center;gap:4px}
@@ -364,9 +381,14 @@ body{
 /* ── 7.5 Period control ────────────────────────────────────────────────────
    The .seg4 pill from the metric detail pages, at two segments instead of
    four. Pinned under the header: hard rule 3, the period never scrolls away. */
+/* The state line pins under the header, so the period stays on screen while
+   the list scrolls (hard rule 3) — it is what names the period now that the
+   segmented control has gone. The 32px top padding clears the phone's status
+   bar, which floats over the page: without it the pinned line docks straight
+   onto the clock. */
 .period-wrap{
   position:sticky;top:0;z-index:12;background:var(--surface-app);
-  padding:12px var(--gutter) 8px;
+  padding:32px var(--gutter) 8px;
 }
 .seg{display:flex;gap:4px;padding:4px;border-radius:var(--radius-pill);background:var(--surface-card)}
 .seg button{
@@ -474,25 +496,32 @@ body{
 .pod .stepglyph{width:14px;height:14px}
 /* the plinth — height carries the placing, the numeral names it */
 .pod .plinth{
-  width:100%;border-radius:var(--radius-16) var(--radius-16) 0 0;
+  width:100%;margin-top:2px;border-radius:var(--radius-16) var(--radius-16) 0 0;
   background:var(--surface-card);
   display:flex;align-items:flex-start;justify-content:center;padding-top:8px;
   font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3);
 }
-/* first place: the tallest plinth, one elevation step brighter, numeral in
-   --text-1. Rev 2 painted it --metric-steps gold, which spent the steps hue
-   on a rank (doctrine rule 2) and left the actual step figures above it
-   competing with their own plinth. */
-.pod[data-place="1"] .plinth{
-  height:56px;background:var(--surface-raised);color:var(--text-1);
+/* Medal colour (owner, 2026-09-03) — see --medal-1/2/3 in the token block for
+   why this is the doctrine's one sanctioned exception. Three restrained uses
+   per tile: a ring on the chip, the plinth numeral, and a tint plus a top edge
+   on the plinth, so the colour frames the figure instead of shouting over it.
+   Height still carries the placing; the medal carries the reading. */
+.pod[data-medal] .av{box-shadow:0 0 0 2px var(--medal)}
+.pod[data-medal] .plinth{
+  color:var(--medal);
+  background:color-mix(in srgb, var(--medal) 14%, var(--surface-card));
+  box-shadow:inset 0 2px 0 0 var(--medal);
 }
+.pod[data-medal="1"]{--medal:var(--medal-1)}
+.pod[data-medal="2"]{--medal:var(--medal-2)}
+.pod[data-medal="3"]{--medal:var(--medal-3)}
+.pod[data-place="1"] .plinth{height:56px}
 .pod[data-place="2"] .plinth{height:42px}
 .pod[data-place="3"] .plinth{height:32px}
 .pod[data-place="1"] .av{width:56px;height:56px;font:600 20px/26px var(--font-text)}
-/* you, on the podium */
+/* you, on the podium: the name goes semibold. No second ring — the medal ring
+   is already on the chip, and two rings on one avatar say nothing twice. */
 .pod[data-you] .nm{font-weight:var(--weight-semibold)}
-/* you, marked by a ring in text-1 — identity, not readiness (doctrine 2) */
-.pod[data-you] .av{box-shadow:0 0 0 2px var(--text-1)}
 /* an empty plinth — fewer than three people have a figure */
 .pod[data-empty]{cursor:default;opacity:var(--state-inactive)}
 .pod[data-empty] .av{background:var(--surface-card);color:var(--text-3)}
@@ -569,7 +598,7 @@ body{
    One instance, six states, one height. --friends-body-h is the whole point:
    friends, none or one, nothing below this card on Home moves. */
 .friends-card .card-body{height:var(--friends-body-h);display:flex;flex-direction:column;overflow:hidden}
-.fc-rows{display:flex;flex-direction:column;gap:12px}
+.fc-rows{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px}
 .fcrow{
   display:grid;grid-template-columns:16px 28px 1fr auto;align-items:center;column-gap:8px;
 }
@@ -580,19 +609,15 @@ body{
 .fcrow .val{grid-area:1/4/2/5;justify-self:end;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .fcrow .num{font:700 15px/20px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
 .fcrow[data-row="you"] .nm{font-weight:var(--weight-semibold)}
-/* the closing line — always the nearest actionable gap, never a total */
-.fc-gap{
-  margin-top:auto;padding-top:12px;
-  font:500 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features);
-}
-.fc-gap b{font-family:var(--font-number);font-weight:var(--weight-bold);color:var(--text-1)}
+/* (the closing gap line came off the Home card on 2026-09-03 — the sentence
+   now lives only on the ranking page's you-card, styled as .youcard .gap) */
 /* the CTA that occupies the same slot when there is no circle, and the
    centred message states — same footprint, hard rule 9 */
 .fc-slot{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:12px;text-align:center;padding:0 8px;
 }
-.fc-slot .msg{font:400 13px/18px var(--font-text);color:var(--text-3);max-width:220px}
+.fc-slot .msg{font:400 13px/18px var(--font-text);color:var(--text-3);max-width:248px}
 .fc-slot .big{font:700 24px/28px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
 .fc-slot .btn{max-width:200px}
 
@@ -689,17 +714,13 @@ body{
 .learn-code .lbl{font:600 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
 
 /* ── 7.10 · the sticky you-card ──────────────────────────────────────────
-   Rev 2 (owner, 2026-09-03): always present, in the same card language as
-   the rows above it, rather than the rev-1 bar that appeared only when your
-   row scrolled away.
-
-   This is how it keeps hard rule 1 honest. You are NOT rendered in the
-   scrolling list at all — this card IS your row, so there is exactly one of
-   you in the list region no matter where you rank. If you place top three
-   you also appear on the podium; that is a placing being celebrated, not a
-   second list row, and the two read differently on purpose.
-   It carries the gap sentence, so the one thing always on screen is the one
-   thing you came to find out. */
+   Rev 3 (owner, 2026-09-03): a scroll affordance on the ranking page, in the
+   same card language as the rows above it. It docks only while your own row
+   is out of view and vanishes when the row is on screen, so there is never
+   both a card and a row (hard rule 1). It never appears on Home.
+   It carries the gap sentence, so while your row is away the one thing on
+   screen is the one thing you came to find out. Tapping it returns you to
+   your row. */
 .youcard{
   position:absolute;left:16px;right:16px;bottom:88px;z-index:56;
   padding:10px 12px;border-radius:var(--radius-16);
@@ -758,6 +779,7 @@ body{
 .cal-grab span{width:36px;height:4px;border-radius:var(--radius-pill);background:var(--surface-fill)}
 .cal-head{flex:0 0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .cal-head .t{font:500 20px/26px var(--font-text);letter-spacing:-.005em;color:var(--text-1)}
+.cal-sub{margin-top:2px;font:400 11px/16px var(--font-text);color:var(--text-3)}
 .iconbtn{width:36px;height:36px;border-radius:var(--radius-pill);background:var(--surface-raised);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--text-1)}
 .iconbtn .phi{width:16px;height:16px}
 .cal-week{flex:0 0 auto;padding:0 16px 8px;display:grid;grid-template-columns:repeat(7,1fr);border-bottom:var(--border-hairline) solid var(--surface-raised)}
@@ -882,16 +904,33 @@ body{
           </div>
         </div>
 
-        <!-- ══ THE FRIENDS CARD ══ 7.4. One instance, six states, one height. -->
+        <button class="btn btn--primary" style="height:var(--cta-height);margin-top:4px">Start Workout</button>
+
+        <!-- ══ THE FAMILY RANKING CARD ══ 7.4. One instance, six states, one
+             height (hard rule 9 — nothing below it moves between states).
+
+             Owner, 2026-09-03, three calls recorded here rather than argued:
+             · It sits AFTER Start Workout, not before it. §4.1 put it above on
+               the "your data first" principle; the owner wants the section to
+               end on other people, so the workout CTA keeps its place as the
+               last thing you act on in your own data.
+             · It is called "Family ranking", not "Friends". FLAG: the page it
+               opens is renamed with it, but body copy still says friends,
+               because you join by swapping a code with anyone. If the
+               vocabulary should be family end-to-end that is a string sweep —
+               say so and it is one pass.
+             · No period chip in the head. With only one period left (item 5)
+               the figures are today's, and Home already carries "Today, Sep 3"
+               at the top of the screen. FLAG: this is the one place the flow
+               now leans on inherited context instead of stating the period
+               itself (hard rule 3); it holds only while Today is the only
+               period. Bring the chip back the day a second one lands. -->
         <div class="card friends-card" id="friends-card" data-tap="friends">
           <div class="card-head">
-            <div class="card-title">Friends</div>
-            <span class="subnote" id="fc-period">Today</span>
+            <div class="card-title">Family ranking</div>
           </div>
           <div class="card-body" id="fc-body"></div>
         </div>
-
-        <button class="btn btn--primary" style="height:var(--cta-height);margin-top:4px">Start Workout</button>
         <div style="height:8px"></div>
       </div>
     </section>
@@ -906,7 +945,10 @@ body{
     <div class="subpage" id="p-friends" hidden>
       <div class="sub-head">
         <button class="backbtn" data-back><span class="phi" data-ph="caret-left"></span></button>
-        <div class="t">Friends</div>
+        <!-- the page the Home card opens takes the card's name (owner,
+             2026-09-03). A card and its destination with two different names
+             is how the legacy build ended up feeling like two apps. -->
+        <div class="t">Family ranking</div>
         <!-- Two actions on the right, share and join (owner, 2026-09-03).
              They are the two ways into the same mutual link: give your code,
              or use someone else's.
@@ -919,15 +961,18 @@ body{
              buttons carry an aria-label and both destinations name themselves
              in their first line. Raised in §9. -->
         <button class="act" data-sheet="share" aria-label="Share your code"><span class="phi" data-ph="arrow-circle-up" data-weight="fill"></span></button>
-        <button class="act" data-open="p-join" aria-label="Enter a friend's code"><span class="phi" data-ph="plus"></span></button>
+        <button class="act" data-open="p-join" aria-label="Enter a code"><span class="phi" data-ph="plus"></span></button>
         <button class="act" data-open="p-circle" style="margin-right:-12px" aria-label="Your friends"><span class="phi" data-ph="dots-three-vertical"></span></button>
       </div>
 
+      <!-- The Today / 7 days segmented control came out (owner, 2026-09-03):
+           the ranking is today's, and a two-segment switcher where one segment
+           is the whole feature is a control that only ever says the same
+           thing. The period has not gone quiet with it — the status line
+           states it, so hard rule 3 still holds and every figure on the screen
+           is qualified. The .seg component stays in the gallery; put it back
+           the day a second period exists. -->
       <div class="period-wrap">
-        <div class="seg" id="lb-seg">
-          <button data-period="today" class="active">Today</button>
-          <button data-period="week">7 days</button>
-        </div>
         <div class="statusline" id="lb-status"></div>
       </div>
 
@@ -989,7 +1034,12 @@ body{
     <div class="cal-sheet" id="cal-sheet" hidden>
       <div class="cal-grab"><span></span></div>
       <div class="cal-head">
-        <div class="t" id="cal-who">Rashmi&rsquo;s history</div>
+        <!-- the ring is steps against that person's daily goal — said here,
+             once, rather than left as a mark you have to guess at -->
+        <div>
+          <div class="t" id="cal-who">Rashmi&rsquo;s history</div>
+          <div class="cal-sub">Each ring is that day&rsquo;s steps against their goal</div>
+        </div>
         <button class="iconbtn" data-close="cal"><span class="phi" data-ph="x"></span></button>
       </div>
       <div class="cal-week"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
@@ -1011,19 +1061,18 @@ body{
     <div class="sheet" id="menu-sheet" hidden>
       <div class="sheet-grab"><span></span></div>
       <div class="sheet-body">
-        <button class="btn btn--tertiary btn--m" style="justify-content:flex-start;padding:0 8px">Mute cheers from <span id="mute-name">Rashmi</span></button>
-        <button class="btn btn--destructive btn--m" style="justify-content:flex-start;padding:0 8px" data-confirm="remove">Remove friend</button>
+        <button class="btn btn--tertiary btn--m" style="justify-content:flex-start;padding:0 8px">Mute Cheers From <span id="mute-name">Rashmi</span></button>
+        <button class="btn btn--destructive btn--m" style="justify-content:flex-start;padding:0 8px" data-confirm="remove">Remove Friend</button>
         <button class="btn btn--tertiary btn--m" style="justify-content:flex-start;padding:0 8px">Report</button>
       </div>
     </div>
   </div>
 
-  <!-- 7.10 · the sticky you-card. Always present on the leaderboard, and the
-       ONLY place you appear in the list region — you are not rendered in the
-       scrolling list at all. It lives on the screen rather than inside the
+  <!-- 7.10 · the sticky you-card. Lives on the screen rather than inside the
        scrolling page, so it docks above the nav pill instead of scrolling
-       away with the content. -->
-  <div class="youcard" id="youcard" hidden>
+       away with the content — and it is shown only while the ranking page is
+       open AND your own row is scrolled out of view (see syncYouCard). -->
+  <div class="youcard" id="youcard" data-tap="youcard" hidden>
     <span class="rank" id="yc-rank">4</span>
     <span class="av">A</span>
     <span class="nm">You</span>
@@ -1218,7 +1267,6 @@ function renderGoals(){ $('#goals').innerHTML = goalRows(Object.assign({},PEOPLE
 /* ═══ 7.4 · THE FRIENDS CARD — one instance, six states, ONE height ═══════ */
 function renderFriendsCard(){
   const M=model(), body=$('#fc-body');
-  $('#fc-period').textContent = S.period==='today' ? 'Today' : '7 days';
 
   if(M.loading){                                     /* F1 */
     body.innerHTML='<div class="fc-rows">'+[0,1,2].map(function(){
@@ -1235,7 +1283,7 @@ function renderFriendsCard(){
       +'<p class="msg">Swap codes with friends and family to compare your steps.</p>'
       /* secondary, not primary: Start Workout is Home's one teal action and
          the button spec forbids two on a screen. */
-      +'<button class="btn btn--secondary btn--m" data-tap="friends">See how it works</button></div>';
+      +'<button class="btn btn--secondary btn--m" data-tap="friends">See How It Works</button></div>';
     return;
   }
   const R=ranked(M.list);
@@ -1247,7 +1295,7 @@ function renderFriendsCard(){
   if(M.solo){                                        /* F3 */
     body.innerHTML='<div class="fc-slot"><span class="big">'+n(R.has[0].val)+'</span>'
       +'<p class="msg">'+(S.period==='today'?'steps today':'steps over 7 days')+'. Share your code to compare.</p>'
-      +'<button class="btn btn--secondary btn--m" data-sheet="share">Share your code</button></div>';
+      +'<button class="btn btn--secondary btn--m" data-sheet="share">Share Your Code</button></div>';
     return;
   }
 
@@ -1259,7 +1307,11 @@ function renderFriendsCard(){
   let k=1; while(pick.length<3 && k<R.has.length){ push(R.has[k]); k++; }
   pick.sort((a,b)=>a.rank-b.rank);
 
-  const g=gapAbove(R.has);
+  /* Owner, 2026-09-03: no gap line under your row on Home. The card is the
+     three rows and nothing else — the "1,866 steps behind Rashmi" sentence
+     lives on the leaderboard's you-card, where you have somewhere to go with
+     it. FLAG: that line was §4.1's stated reason to come back to the card;
+     losing it makes the card a status read rather than a nudge. */
   body.innerHTML='<div class="fc-rows">'+pick.map(function(m){
       return '<div class="fcrow" data-row="'+(m.you?'you':'ranked')+'">'
         +'<span class="rank">'+m.rank+'</span>'+avatar(m,'sm')
@@ -1270,11 +1322,7 @@ function renderFriendsCard(){
         +'<span class="val">'
         +'<span class="phi stepglyph" data-ph="footprints" data-weight="fill"></span>'
         +'<span class="num">'+n(m.val)+'</span></span></div>';
-    }).join('')+'</div>'
-    +'<div class="fc-gap">'+(g
-        ? (g.lead ? 'You&rsquo;re leading by <b>'+n(g.by)+'</b> steps'
-                  : '<b>'+n(g.by)+'</b> steps behind '+g.who)
-        : 'You have nothing synced for this period')+'</div>';
+    }).join('')+'</div>';
 }
 
 /* ═══ S02 · LEADERBOARD ═══════════════════════════════════════════════════
@@ -1306,7 +1354,8 @@ function renderPodium(top){
       +'<span class="av">&mdash;</span><span class="nm">&nbsp;</span>'
       +'<span class="val"><span class="num">&mdash;</span></span>'
       +'<span class="plinth">'+place+'</span></div>';
-    return '<button class="pod" data-place="'+place+'"'+(m.you?' data-you':'')
+    return '<button class="pod" data-place="'+place+'" data-medal="'+Math.min(m.rank,3)+'"'
+      +(m.you?' data-you':'')
       +(m.you?' data-tap="mine"':' data-tap="friend" data-id="'+m.id+'"')+'>'
       +avatar(m)+'<span class="nm">'+(m.you?'You':m.name)+'</span>'
       +figure(m.val)+'<span class="plinth">'+m.rank+'</span></button>';
@@ -1315,10 +1364,6 @@ function renderPodium(top){
 
 function renderLeaderboard(){
   const M=model(), mount=$('#lb-mount'), foot=$('#lb-foot'), status=$('#lb-status'), yc=$('#youcard');
-  $$('#lb-seg button').forEach(function(b){
-    b.classList.toggle('active', b.dataset.period===S.period);
-    b.disabled = M.offline;                          /* last-known is one period only */
-  });
 
   /* 7.11 · first use. No links yet, so teach the model before asking for
      anything. There is no group to join and none to create — a code makes a
@@ -1343,8 +1388,8 @@ function renderLeaderboard(){
       +'<div class="learn-code"><span class="lbl">Your code</span>'
       +'<div class="codebox"><span>K7M4Q2</span></div></div>'
       +'<div style="display:flex;flex-direction:column;gap:8px;padding-bottom:8px">'
-      +'<button class="btn btn--primary" data-sheet="share">Share your code</button>'
-      +'<button class="btn btn--tertiary" data-open="p-join">Enter a friend&rsquo;s code</button></div>'
+      +'<button class="btn btn--primary" data-sheet="share">Share Your Code</button>'
+      +'<button class="btn btn--tertiary" data-open="p-join">Enter Code</button></div>'
       +'</div>';
     injectIcons(mount); return;
   }
@@ -1363,8 +1408,7 @@ function renderLeaderboard(){
   status.className='statusline'+(M.offline?' stale':'');
   status.innerHTML = M.offline
     ? ico('arrows-clockwise','fill')+'Offline &mdash; showing last known figures'
-    : R.has.length+' of '+M.list.length+' synced &middot; '
-      +(S.period==='today' ? 'updated 14:20' : 'Aug 28 &ndash; Sep 3');
+    : 'Today &middot; '+R.has.length+' of '+M.list.length+' synced &middot; updated 14:20';
 
   let html='';
   if(!R.has.length){
@@ -1373,35 +1417,40 @@ function renderLeaderboard(){
       +'<p>No one on your leaderboard has a figure for '+(S.period==='today'?'today':'this period')
       +'. Ranks appear as bands sync.</p></div>';
   } else {
-    const top = R.has.slice(0,3);
-    html += renderPodium(top);
-    /* the list picks up where the podium stops — by position, so a tie can
-       never strand someone between the two — and never contains you: the
-       sticky card below is your row (hard rule 1, rev 2) */
-    const rest = R.has.slice(top.length).filter(m=>!m.you);
-    if(rest.length){
-      html += '<div style="padding-top:8px">'+rest.map(function(m){
-        return '<div class="lbrow" data-row="'+(m.stale?'stale':'ranked')+'" data-tap="friend" data-id="'+m.id+'">'
+    html += renderPodium(R.has.slice(0,3));
+    /* Owner, 2026-09-03: the podium stays AND the full list comes back.
+       Rev 2 started the list at rank 4 so nobody appeared twice, which on a
+       four-person board left a podium and an empty screen. The podium is now
+       read as a summary of the top of the list — the same relationship a
+       chart has with the table under it — and the list carries everyone with
+       a figure, in order, you included and highlighted.
+       Hard rule 1 (you appear exactly once) is kept by the sticky you-card
+       becoming what §4.2 always described: a scroll affordance that docks
+       only while your row is off-screen, never a second row. */
+    html += '<div class="lb-break">Ranking</div>'
+      + R.has.map(function(m){
+        return '<div class="lbrow" data-row="'+(m.stale?'stale':'ranked')+'"'
+          +(m.you?' data-you':'')
+          +(m.you?' data-tap="mine"':' data-tap="friend" data-id="'+m.id+'"')+'>'
           +'<span class="rank">'+m.rank+'</span>'+avatar(m)
-          +'<span class="who"><span class="nm">'+m.name+'</span></span>'
+          +'<span class="who"><span class="nm">'+(m.you?'You':m.name)+'</span></span>'
           +figure(m.val)+cheerBtn(m)
           +(m.stale?'<span class="why">last synced '+(m.sync||'earlier')+'</span>':'')+'</div>';
-      }).join('')+'</div>';
-    }
+      }).join('');
   }
 
-  /* the Not synced break — no rank numerals, no positions (hard rule 2).
-     You appear here only through the sticky card, never as a row. */
-  const none = R.none.filter(m=>!m.you);
+  /* the Not synced break — no rank numerals, no positions (hard rule 2) */
+  const none = R.none;
   if(none.length){
     html += '<div class="lb-break">Not synced</div>'
       + none.map(function(m){
           const why = m.noband ? 'hasn&rsquo;t set up a band'
                     : m.since ? 'last synced '+m.since
                     : 'nothing recorded yet';
-          return '<div class="lbrow" data-row="nosync" data-tap="friend" data-id="'+m.id+'">'
+          return '<div class="lbrow" data-row="nosync"'+(m.you?' data-you':'')
+            +(m.you?' data-tap="mine"':' data-tap="friend" data-id="'+m.id+'"')+'>'
             +'<span class="rank"></span>'+avatar(m)
-            +'<span class="who"><span class="nm">'+m.name+'</span></span>'
+            +'<span class="who"><span class="nm">'+(m.you?'You':m.name)+'</span></span>'
             +figure(null,true)+cheerBtn(m)+'<span class="why">'+why+'</span></div>';
         }).join('');
   }
@@ -1409,15 +1458,38 @@ function renderLeaderboard(){
 
   /* one primary action per screen */
   foot.innerHTML = M.solo
-    ? '<button class="btn btn--primary" data-sheet="share">Share your code</button>'
-    : '<button class="btn btn--secondary" data-sheet="share">Share your code</button>';
+    ? '<button class="btn btn--primary" data-sheet="share">Share Your Code</button>'
+    : '<button class="btn btn--secondary" data-sheet="share">Share Your Code</button>';
 
   injectIcons(mount); injectIcons(foot);
   renderYouCard();
 }
 
-/* 7.10 · the sticky you-card — always on, and the only place you appear in
-   the list region. No scroll listener: there is nothing to react to. */
+/* 7.10 · the sticky you-card.
+   Owner, 2026-09-03: it lives INSIDE the ranking page and nowhere else — it
+   was leaking onto Home, because backing out of the leaderboard hid the page
+   without telling the card. Two fixes: every route out of the page now calls
+   syncYouCard(), and the card asks the page whether it should be there rather
+   than assuming.
+   With the full list back (item 6) it is what §4.2 always described: a scroll
+   affordance that docks only while your own row is scrolled out of view, and
+   disappears the moment the row is visible. It is never a second row. */
+function youRowVisible(){
+  const page=$('#p-friends'), row=$('#lb-mount .lbrow[data-you]');
+  if(!row) return false;
+  const p=page.getBoundingClientRect(), r=row.getBoundingClientRect();
+  /* the nav pill and the card itself sit over the bottom ~150px of the page,
+     so a row hidden behind them is not visible for this purpose */
+  return r.bottom > p.top + 60 && r.top < p.bottom - 150;
+}
+function syncYouCard(){
+  const yc=$('#youcard'), M=model();
+  if(M.nocircle || M.loading || $('#p-friends').hidden || youRowVisible()){
+    yc.hidden=true; return;
+  }
+  const R=ranked(M.list);
+  yc.hidden = !(R.has.find(m=>m.you) || R.none.find(m=>m.you));
+}
 function renderYouCard(){
   const yc=$('#youcard'), M=model();
   if(M.nocircle || M.loading || $('#p-friends').hidden){ yc.hidden=true; return; }
@@ -1433,49 +1505,99 @@ function renderYouCard(){
                    : '<b>'+n(g.by)+'</b> steps behind '+g.who)
          : 'The only figure so far');
   injectIcons(yc);
+  syncYouCard();
 }
+/* the page scrolls, not the window — listen where the scrolling happens */
+$('#p-friends').addEventListener('scroll', syncYouCard, {passive:true});
 
 /* ═══ S03 · FRIEND PROFILE — Home's cards, Home's order, read-only ════════
    What is deliberately NOT on this page: the title "My Homepage", a
    background setter, an email address, a share icon, any goal control.
    Hard rules 5 and 6, and items 9, 10 and 12 of §1.                        */
+/* ── What the calendar ring means, and where a day's figures come from ────
+   Owner, 2026-09-03: "what is being shown in the circle fill of the calendar
+   dates?" Nothing was — it was a placeholder pattern. It has a meaning now:
+
+     the ring is that day's STEPS against THAT PERSON'S DAILY GOAL.
+
+   Which is the same reading the Activity and Sleep tabs give their own
+   calendars, and the same figure this whole feature ranks people on. A day
+   the band recorded nothing draws the empty track and nothing else. The
+   sheet says so under the title, so the mark is never a mystery.
+
+   The history behind it is generated — this prototype has no history store —
+   but generated ONCE per person per date from a stable hash, so a date always
+   shows the same numbers, the ring agrees with the cards under it, and today
+   always equals the figure on the ranking.
+   FLAG (§9): replace dayData() with the real history read in the build, and
+   settle first whether a friend's page may show dates from before you swapped
+   codes — that is still an open privacy question, not a data question. */
+function hash(str){
+  let h=2166136261;
+  for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); }
+  return h>>>0;
+}
+function dayData(p, mi, d){
+  if(mi===CAL_TODAY.mi && d===CAL_TODAY.d){
+    return (p.val==null && p.m.hr==null) ? null
+      : {steps:p.val, dist:p.m.dist, kcal:p.m.kcal, hr:p.m.hr, spo2:p.m.spo2, sleep:p.m.sleep};
+  }
+  if(p.noband) return null;
+  const h=hash(p.id+'|'+mi+'|'+d);
+  if(h%9===0) return null;                         /* a day the band wasn't worn */
+  const goal=p.goal||10000, steps=Math.round(goal*(0.34+((h>>3)%78)/100)/10)*10;
+  return {
+    steps: steps,
+    dist:  Math.round(steps/140)/10,
+    kcal:  Math.round(steps/17.5),
+    hr:    62+((h>>7)%22),
+    spo2:  95+((h>>11)%5),
+    sleep: (5+((h>>13)%4))+'h '+String((h>>17)%60).padStart(2,'0')+'m'
+  };
+}
+function friendOf(){
+  const M=model();
+  return M.list.find(m=>m.id===S.friend) || M.list.find(m=>!m.you) || null;
+}
+
 function renderFriend(){
   const M=model(), R=ranked(M.list);
-  const p = M.list.find(m=>m.id===S.friend) || M.list.find(m=>!m.you);
+  const p = friendOf();
   if(!p) return;
+  const isToday = S.date.mi===CAL_TODAY.mi && S.date.d===CAL_TODAY.d;
+  const when    = dateLabel(S.date.mi, S.date.d).replace('Today, ','');
+  /* the identity line names the weekday ("Thu, Aug 27" — it answers "which
+     day am I looking at"); a card subnote only qualifies the figure beside
+     it, so it takes the short form and stays on one line */
+  const shortWhen = MONTH_SHORT[S.date.mi]+' '+S.date.d;
+  const day     = dayData(p, S.date.mi, S.date.d);
   $('#fr-title').textContent = p.name;
   $('#mute-name').textContent = p.name;
   $('#cal-who').innerHTML = p.name+'&rsquo;s history';
 
-  const me = R.has.find(m=>m.you);
-  const rk = (p.val!=null && p.rank)
-    ? '#'+p.rank+' '+(S.period==='today'?'today':'this week')+' &middot; '+n(p.val)+' steps'
-    : 'Not ranked '+(S.period==='today'?'today':'this period');
+  /* the identity block answers the ranking you arrived from — but only for
+     today, because a rank is a thing today has and an earlier date does not */
+  const rk = isToday
+    ? ((p.val!=null && p.rank) ? '#'+p.rank+' today &middot; '+n(p.val)+' steps'
+                              : 'Not ranked today')
+    : (day ? when+' &middot; '+n(day.steps)+' steps' : when+' &middot; nothing recorded');
   const sy = p.noband ? 'No band paired'
+           : !isToday ? ''
            : p.sync   ? 'Synced '+p.sync
            : p.since  ? 'Last synced '+p.since : 'Never synced';
 
   let html = '<div class="ident">'+avatar(p,'lg')
     +'<span class="txt"><span class="nm">'+p.name+'</span>'
-    +'<span class="rk">'+rk+'</span><span class="sy">'+sy+'</span></span></div>';
+    +'<span class="rk">'+rk+'</span>'
+    +(sy?'<span class="sy">'+sy+'</span>':'')+'</span></span></div>';
 
-  /* 7.6 · the compare strip. The reason this page exists — you arrived from
-     a ranking, so the page opens by answering the ranking. */
-  if(p.val!=null && me){
-    const max=Math.max(p.val,me.val), d=p.val-me.val;
-    const say = d>0 ? '<b>'+n(d)+'</b> steps ahead of you'
-              : d<0 ? '<b>'+n(-d)+'</b> steps behind you' : 'Level with you';
-    html += '<div class="card"><div class="card-head"><div class="card-title">Compared with you</div>'
-      +'<span class="subnote">'+(S.period==='today'?'Today':'7 days')+'</span></div>'
-      +'<div class="card-body compare">'
-      +'<div class="cmprow"><span class="who">'+p.name+'</span>'
-      +'<span class="val"><span class="num">'+n(p.val)+'</span><span class="unit">steps</span></span>'
-      +bar(p.val,max)+'</div>'
-      +'<div class="cmprow"><span class="who">You</span>'
-      +'<span class="val"><span class="num">'+n(me.val)+'</span><span class="unit">steps</span></span>'
-      +bar(me.val,max,'color-mix(in srgb, var(--metric-steps) 42%, var(--surface-fill))')+'</div>'
-      +'<div class="cmp-say">'+say+'</div></div></div>';
-  }
+  /* The "Compared with you" card came out (owner, 2026-09-03). §4.3 called it
+     the reason this page exists; the owner's read is that the ranking already
+     said it — you arrived from a screen that placed you both — and repeating
+     it as the first card made the profile argue with the page before it
+     instead of showing the person's day. The identity line still carries the
+     rank you came from. The 7.6 compare component stays in the gallery.
+     FLAG: if a comparison is wanted back, it belongs as one line, not a card. */
 
   /* The date control is NOT here any more. Rev 2 put it in the page body as
      a full-width card — a control the rest of the app has never rendered as a
@@ -1484,28 +1606,31 @@ function renderFriend(){
      Activity and Sleep carry, directly under the page title (see #p-friend in
      the markup). Same control, same place, same month-scroll sheet behind it. */
 
-  if(p.noband || (p.val==null && p.m.hr==null)){
+  if(!day){
     /* 7.8 · friend-has-no-band / nothing recorded — an empty state, not a
        page of blank cards showing "--" twice (item 12) */
     html += '<div class="empty"><span class="chip40">'+ico('watch','fill')+'</span>'
       +'<h3>'+(p.noband?'No band yet':'Nothing recorded')+'</h3>'
       +'<p>'+(p.noband
-          ? p.name+' is on your leaderboard but hasn&rsquo;t paired a band, so there&rsquo;s nothing to show.'
-          : p.name+' has no data for this day. Try an earlier date.')+'</p></div>';
+          ? p.name+' is on your ranking but hasn&rsquo;t paired a band, so there&rsquo;s nothing to show.'
+          : p.name+' recorded nothing on '+when+'. Pick another date from the dropdown &mdash; '
+            +'days with a filled ring have data.')+'</p></div>';
   } else {
-    /* Home's Activity card, read-only */
-    html += '<div class="card" data-readonly><div class="card-head"><div class="card-title">Activity</div></div>'
-      +'<div class="card-body">'+goalRows(p)+'</div></div>';
+    /* Home's Activity card, read-only, showing the selected day */
+    const view={val:day.steps, goal:p.goal, m:{dist:day.dist, kcal:day.kcal}};
+    html += '<div class="card" data-readonly><div class="card-head"><div class="card-title">Activity</div>'
+      +'<span class="subnote" style="color:var(--text-3)">'+(isToday?'today':shortWhen)+'</span></div>'
+      +'<div class="card-body">'+goalRows(view)+'</div></div>';
     /* Home's Health monitor metrics, read-only, in Home's order.
        Owner, 2026-09-03: a friend's page shows heart rate and blood oxygen
        only. Stress and skin temperature came off — they were the two figures
        on the legacy page that nobody had asked to share, and the disclosure
        copy in §4.3 (activity, heart rate, sleep, blood oxygen) never covered
        them. Dropping them makes the sheet's promise and the page agree. */
-    const tiles=[['Heart rate',p.m.hr,'bpm','var(--metric-heart-rate)'],
-                 ['Blood oxygen',p.m.spo2,'%','var(--metric-spo2)']];
+    const tiles=[['Heart rate',day.hr,'bpm','var(--metric-heart-rate)'],
+                 ['Blood oxygen',day.spo2,'%','var(--metric-spo2)']];
     html += '<div class="card"><div class="card-head"><div class="card-title">Health monitor</div>'
-      +'<span class="subnote" style="color:var(--text-3)">avg today</span></div>'
+      +'<span class="subnote" style="color:var(--text-3)">'+(isToday?'avg today':'avg on '+shortWhen)+'</span></div>'
       +'<div class="card-body metricgrid">'
       + tiles.map(function(t){
           return '<div class="mtile"'+(t[1]==null?' data-nodata':'')+'>'
@@ -1514,15 +1639,17 @@ function renderFriend(){
             +(t[2]&&t[1]!=null?'<span class="unit">'+t[2]+'</span>':'')+'</span></div>';
         }).join('')+'</div></div>';
     /* Sleep last, as on Home */
+    /* Duration only — the sleep score came off (owner, 2026-09-03). It is a
+       Pebble-computed judgement of how someone slept, and a ranking page is
+       not where another person's sleep gets scored. Duration is the figure
+       the disclosure promises; the score was extra. */
     html += '<div class="card"><div class="card-head"><div class="card-title">Sleep</div>'
-      +'<span class="subnote" style="color:var(--text-3)">last night</span></div>'
+      +'<span class="subnote" style="color:var(--text-3)">'+(isToday?'last night':'night of '+shortWhen)+'</span></div>'
       +'<div class="card-body" style="display:flex;align-items:center;gap:8px">'
       +'<span class="dot" style="width:8px;height:8px;border-radius:50%;flex:0 0 auto;'
       +'background:var(--metric-sleep)"></span>'
       +'<span style="font:700 24px/28px var(--font-number);font-feature-settings:var(--num-features)">'
-      +(p.m.sleep||'&mdash;')+'</span>'
-      +(p.m.sleepScore?'<span class="subnote" style="color:var(--text-3)">score '+p.m.sleepScore+'</span>':'')
-      +'</div></div>';
+      +(day.sleep||'&mdash;')+'</span></div></div>';
   }
 
   /* the page's one primary action */
@@ -1540,7 +1667,7 @@ function renderFriend(){
 function renderCircle(){
   const M=model(), rows=M.list.filter(m=>!m.you);
   $('#circle-body').innerHTML =
-    '<div class="card"><div class="card-head"><div class="card-title">Friends</div>'
+    '<div class="card"><div class="card-head"><div class="card-title">People</div>'
     /* FLAG (§9): whether there is a cap at all is unresolved. Under the link
        model there is no group to be full, so a cap would be a limit on how
        many people may hold a working code — a different question. */
@@ -1558,7 +1685,7 @@ function renderCircle(){
     +'<div class="card"><div class="card-head"><div class="card-title">Your code</div></div>'
     +'<div class="card-body"><div class="codebox"><span>K7M4Q2</span></div>'
     +'<div class="btnrow" style="margin-top:12px"><button class="btn btn--secondary btn--m">Share</button>'
-    +'<button class="btn btn--tertiary btn--m">Rotate code</button></div>'
+    +'<button class="btn btn--tertiary btn--m">Rotate Code</button></div>'
     /* §9: a permanent code that grants health-data access can never be
        un-shared, so rev 1 assumes it rotates. Confirm the lifetime. */
     +'<p class="sheet-sub" style="margin-top:8px;color:var(--text-3);font:400 11px/16px var(--font-text)">'
@@ -1592,7 +1719,7 @@ function openSheet(kind, arg){
       +'<button class="btn btn--tertiary btn--m">Copy</button></div>'
       +'<hr class="sheet-rule">'
       +'<span class="sheet-label">Have a code?</span>'
-      +'<button class="btn btn--tertiary btn--m" data-open="p-join">Enter a friend&rsquo;s code</button>';
+      +'<button class="btn btn--tertiary btn--m" data-open="p-join">Enter Code</button>';
   }
   if(kind==='remove'){
     const who=(PEOPLE[arg]||{}).name||'this person';
@@ -1621,11 +1748,13 @@ const CAL_MONTHS=[['August 2026',31,5],['September 2026',30,1]];  /* [name, days
 const CAL_TODAY={mi:1,d:3};
 const MONTH_SHORT=['Aug','Sep'], DAY_SHORT=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
-/* a stable stand-in for "how much of the goal that day met" — the real build
-   reads history. Deterministic so the calendar does not reshuffle on reopen. */
+/* the ring's fill: that day's steps as a share of this person's daily goal,
+   read from the same dayData() the cards below read, so the calendar and the
+   page can never disagree. No data that day → 0, which draws the track alone. */
 function dayFill(mi,d){
-  const v=(d*37+mi*11)%100;
-  return d%7===0 ? 0 : 35+Math.round(v*0.62);          /* every 7th day: nothing recorded */
+  const p=friendOf(); if(!p) return 0;
+  const day=dayData(p,mi,d); if(!day || day.steps==null) return 0;
+  return Math.max(4, Math.min(100, Math.round(day.steps/(p.goal||10000)*100)));
 }
 function dateLabel(mi,d){
   if(mi===CAL_TODAY.mi && d===CAL_TODAY.d) return 'Today, '+MONTH_SHORT[mi]+' '+d;
@@ -1758,8 +1887,8 @@ $('#fstates').innerHTML = FSTATES.map(function(f){
     +(f[0]===S.f?' checked':'')+'><span>'+f[0]+' &middot; '+f[1]+'<span class="desc">'+f[2]+'</span></span></label>';
 }).join('');
 $('#screens').innerHTML = [
-  ['page-home','Home','The Friends card in place, at the end of Activity monitor.'],
-  ['p-friends','Leaderboard','S02 — podium, list from 4th, sticky you-card.'],
+  ['page-home','Home','The Family ranking card, after the Start Workout button.'],
+  ['p-friends','Ranking','S02 — podium, full list, sticky you-card while your row is away.'],
   ['p-friend','Friend profile','S03 — Home&rsquo;s cards, read-only.'],
   ['p-circle','Your friends','S06 — remove is mutual, and there is nothing to leave.'],
   ['page-gallery','Components','Every state from §7, for review.']
@@ -1818,21 +1947,22 @@ document.addEventListener('click', function(e){
   if(confirmEl){ openSheet(confirmEl.dataset.confirm, confirmEl.dataset.id); return; }
 
   if(t.closest('[data-close]')){ closeSheets(); $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true; return; }
-  if(t.closest('[data-back]')){ t.closest('.subpage').hidden=true; return; }
+  if(t.closest('[data-back]')){ t.closest('.subpage').hidden=true; syncYouCard(); return; }
   if(t.closest('[data-cal]')){ $('#cal-sheet').hidden=false; $('#cal-scrim').hidden=false; renderCal(); return; }
 
   /* picking a day: the dropdown's label follows the selection and the sheet
      closes, exactly as it does on Home, Activity and Sleep.
-     FLAG (§9): this prototype carries one day of figures per person, so an
-     earlier date moves the label and the ring selection but not the cards
-     below. Wire it to real history in the build — and decide first whether a
-     friend's page may show a date from before you swapped codes (§9,
-     "does a removed member lose historical access?"). */
+     The cards follow the selection: see dayData() for where an earlier day's
+     figures come from and what still has to be replaced with a real history
+     read. The open privacy question stands either way — whether a friend's
+     page may show a date from before you swapped codes (§9, "does a removed
+     member lose historical access?"). */
   const dayEl=t.closest('.cal-day[data-day]');
   if(dayEl){
     const parts=dayEl.dataset.day.split('-');
     S.date={mi:+parts[0], d:+parts[1]};
     $('#p-friend [data-datelabel]').textContent = dateLabel(S.date.mi, S.date.d);
+    renderFriend();                      /* the cards follow the date now */
     renderCal();
     $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true;
     return;
@@ -1843,7 +1973,19 @@ document.addEventListener('click', function(e){
   if(rowEl){
     const kind=rowEl.dataset.tap;
     if(kind==='friends'){ showScreen('p-friends'); return; }
-    if(kind==='friend'){ S.friend=rowEl.dataset.id; renderFriend(); showScreen('p-friend'); return; }
+    /* tapping the you-card takes you to your row, per §4.2 */
+    if(kind==='youcard'){
+      const row=$('#lb-mount .lbrow[data-you]');
+      if(row) row.scrollIntoView({block:'center', behavior:
+        matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto':'smooth'});
+      return;
+    }
+    if(kind==='friend'){
+      S.friend=rowEl.dataset.id;
+      S.date={mi:CAL_TODAY.mi, d:CAL_TODAY.d};      /* every profile opens on today */
+      $('#p-friend [data-datelabel]').textContent = dateLabel(S.date.mi, S.date.d);
+      renderFriend(); renderCal(); showScreen('p-friend'); return;
+    }
     /* hard rule 7 — your own row never opens a second copy of your own data.
        In the real build this routes to the Activity tab at the selected
        period. Here it says so rather than pretending to navigate.
