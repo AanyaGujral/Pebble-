@@ -1,5 +1,29 @@
 # Session Handoff
 
+> **2026-09-03 — read this first if you are working on the Me tab.** The Me-tab
+> prototype now lives in the repo at `Me Tab/me-tab.html` (it had only ever
+> existed as a published artifact). It holds slice 1 — the tab shell and all
+> six §5 components with every state — plus two inner pages: **S01 Profile**
+> and **S10 Firmware Update**, the latter in all twelve of its states with a
+> working download → install → restart sequence. Everything is switchable from
+> the review panel beside the phone. The artifact and the file are the same
+> content: edit the file, then republish it to the SAME artifact URL
+> (68bad1b7-40af-42f8-863c-1dcc1b0a6b4a) rather than creating a new one.
+>
+> **Next on the Me tab**, in the spec's own order: slice 2 (the ten tab states
+> T1–T10, the pairing CTA in anger, S03 Device detail, S04 Connect the other
+> band), then slice 3 (S11 Units, S12 Apple Health, S13 FAQs, S14 About),
+> then slice 4 (S05–S09 — and these should be checked against S10's error
+> vocabulary, since S10 was built out of order and got there first).
+>
+> **Still waiting on the owner** — every one of these is flagged in code, not
+> silently decided: the §8 open items (Sign out, delete account, Cycle, Edit
+> Cards, language + screen timeout, whether history survives an unbind,
+> whether FAQ articles are bundled or fetched, where the user lands after a
+> band switch); whether the phone number needs a change route at all (S01
+> currently has none); and the device product renders + avatar photograph,
+> which have still never arrived as files.
+
 > **2026-08-10 — read this first.** `index.html` is now the MERGED source of
 > truth: it adopts the parallel session's build (metric details pages with a
 > D/W/M/Y period switcher; control panel reduced to Default + No data and

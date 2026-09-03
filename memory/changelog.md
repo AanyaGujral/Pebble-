@@ -1,5 +1,33 @@
 # Changelog
 
+- 2026-09-03 (later) — **S10 Firmware Update built** — the Me tab's second
+  inner page, and the first band row that navigates. Twelve states, all
+  switchable from the review panel: `up-to-date`, `update-available`
+  (release notes, download size, release date, how long it takes, and a
+  pre-flight checklist), `downloading` (cancellable — nothing has reached the
+  band yet), `installing` (locked: the back button is gone and the action bar
+  is empty, because leaving is the thing that breaks a band), `complete`,
+  `failed`, `battery-too-low` (blocked with a disabled Update now and the
+  band's real 12%), `connection-lost-mid-flash`, `offline` (says the band is
+  unaffected — Bluetooth is local), plus `needs-band` and `reconnect`.
+  "Update now" runs the real sequence — download → install → restart — with a
+  progress ring, a three-step tracker, and a live byte count; when it lands,
+  the installed version moves up and the tab's badge dot clears itself.
+  Three additions beyond §6, each flagged at its definition: a `checking`
+  state (the up-to-date page offers "Check for updates", and a button with no
+  visible result is a button nobody trusts), the `reconnect` variant (§5.5
+  and T4 both require it on every band page), and the three-step tracker so a
+  stall says WHERE it stalled rather than just "failed". §5.3's `updating`
+  card state is now driven from this page, so break 1 shows the install too
+  and the tab cannot claim the band is idle while it is being flashed. Also
+  flagged: §7 holds S10 back to slice 5 — building it now means S05–S09 must
+  be checked against its error vocabulary rather than the reverse.
+
+- 2026-09-03 (later) — The Me-tab prototype is now IN THE REPO at
+  `Me Tab/me-tab.html`. It had only ever existed as a published artifact (the
+  script that generated it never landed), so the repo had no copy at all. One
+  file serves both: it opens by double-clicking and publishes as-is.
+
 A running log of what changed and why. Add a new line at the top after each
 meaningful change. Format: `[date] — what changed — why/notes`
 
