@@ -5,6 +5,29 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-03 (rev 5) — Ranking page tidy-up, four owner notes:
+  the **"Ranking" break label came off** the list (the page is the ranking; a
+  heading repeating the page title is a caption on a caption — "Not synced"
+  stays, because it says something its rows do not);
+  the **gap between "Family ranking" and "Today · 4 of 4 synced" closed** —
+  it was 32px of top padding that existed only to keep the pinned state line
+  clear of the phone's floating status bar, so the line is no longer pinned
+  (with no control up there, it is a state read and scrolls like every other
+  one in the app; flagged for when a period control returns);
+  **row alignment fixed** — the cheer control stacked its count under the
+  heart, making every row with a cheer 46px against a 40px row and leaving
+  cheerless rows (yours) shorter than their neighbours, so the count now sits
+  beside the heart with the hearts on one vertical line, rows carry a 60px
+  min-height, and the rank numeral, figure and name centre against the avatar
+  whether or not the row has a caption;
+  **the top three carry the podium's medals into the list** — numeral in the
+  medal colour, medal ring on the chip, keyed to rank so a tie colours two
+  silvers and no bronze;
+  and **the self card is docked at the bottom of the ranking page again**,
+  always, not only while your row is off-screen (flagged: with the full list
+  back you now read twice — the fix, if that grates, is to drop your row from
+  the list, not to hide the card).
+
 - 2026-09-03 (rev 4) — Owner feedback round on the Family ranking flow, all
   eleven items, in `Friends/friends.html`:
   **1** the sticky you-card is scoped to the ranking page — it was leaking onto
