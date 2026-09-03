@@ -5,6 +5,42 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-03 — Wrote `docs/feature-family-ranking.md` (rev 1, UX proposed): a
+  restructure of the legacy Family Ranking flow into **Friends**. Diagnosed the
+  two legacy screens (duplicated you-row, ranks assigned to zeroed data,
+  unitless figures with no period, ambiguous heart, decorative hero, a friend's
+  profile that is your own page complete with "My Homepage" and a
+  background-setter). Core move: stop building a parallel app — the entry point
+  becomes a fixed-footprint card on Home at the end of the Activity monitor
+  section, the friend profile becomes Home's own metric cards in read-only mode
+  in Home's order, and the join code reuses the onboarding OTP component. Adds
+  eleven hard rules (you appear once; never rank absent data; period always on
+  screen; every figure carries a unit; no self-affordances on someone else's
+  page; the leaderboard never opens a second copy of your own data), six
+  screens, nine combinable F-states, eight components, a four-slice build order
+  and a flagged cross-surface dependency (Home's cards need a read-only mode).
+  Owner decisions recorded: entry point = Home, sharing scope = all metrics as
+  today. That scope makes the invite/join disclosure copy load-bearing, so it is
+  specified as a requirement and raised in §9 rather than left to build time.
+  Reverses the rev-3 Me-tab cut of Family Ranking by relocating the feature to
+  Home, not by restoring the Me-tab row — `docs/feature-me-tab.md` is unchanged
+  and still correct. Spec only; no code written.
+
+- 2026-09-02 — Me tab UX spec approved and written to
+  `docs/feature-me-tab.md` (rev 3). Structure: flat list, no group headers,
+  five silent card breaks; device card leads the tab (image, name, status,
+  battery) with the pairing CTA taking its slot when unpaired. Hard rule:
+  only the *connected* band exposes band functions, so no device pickers
+  anywhere — a second paired band is dormant. 12 nav rows, 5 toggles,
+  14 inner pages (S01–S14), 10 tab-level state modifiers (T1–T10), 6
+  shared components. Low battery prompt made non-optional (locked on, with
+  a reason) — battery discoverability is the device card's job, the prompt's
+  job is catching a dying band outside the app. Cut: Family Ranking,
+  add-mobile promo (mobile is mandatory at onboarding), One-Key Measurement,
+  Developer row, separate Temperature Unit row, Notifications page.
+  Flagged as open, not decided: Sign out, Privacy Policy + delete account,
+  Cycle, Edit Cards, and the legacy System Setting's language/screen rows.
+
 - 2026-08-30 — Onboarding revision round 1 (`Onboarding/onboarding.html`, new
   standalone prototype; nothing in index.html touched). Three changes off the
   review of the Figma frames: (1) the concentric arcs moved from top-right to

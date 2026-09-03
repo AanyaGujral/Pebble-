@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Friends (was Family Ranking) · Pebble prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@500;600;700&display=swap">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   FRIENDS — the social flow, built to docs/feature-family-ranking.md rev 1.
+   Six screens: Home card · leaderboard · friend profile · add-people sheet ·
+   join · circle members. Plus a component gallery for review.
+
+   Everything here is assembled from patterns that already exist in the app:
+     .card / .card-head / .card-title  — Homepage prototype
+     .gbar                             — Today's goals bars
+     .listrow / .chev                  — workouts + settings rows
+     .seg4                             — the D/W/M/Y period switcher
+     40px chip + 20px glyph            — the Workouts card
+     .cal-sheet month scroll           — Activity / Sleep tabs
+     .otp boxes                        — Onboarding/onboarding.html
+     .sheet / confirm sheet            — Me tab pattern
+   Nothing in this file invents a component the app already has.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══ 1. TOKENS ════════════════════════════════════════════════════════════
+   Mirrored by hand from js/tokens.js — copied in rather than imported
+   because ES-module imports don't work over file:// and the design gate
+   says this page must open by double-clicking. Same arrangement as
+   index.html and components/button.html: if js/tokens.js changes,
+   re-copy the values here.
+   ─────────────────────────────────────────────────────────────────────── */
+:root{
+  color-scheme:dark;
+
+  /* neutral.* */
+  --neutral-0:#EFF1F9;--neutral-100:#D5D9EA;--neutral-200:#B8BDD3;
+  --neutral-300:#999FB9;--neutral-400:#7B819C;--neutral-500:#5E637D;
+  --neutral-600:#42465B;--neutral-700:#282B39;--neutral-800:#0F111B;
+  --neutral-900:#07080C;
+
+  /* the hues behind the metric aliases this file uses, at step 400 */
+  --crimson-400:#E43A62;--tangerine-400:#F59E3B;--gold-400:#F2C64B;
+  --emerald-400:#43B476;--teal-400:#45C7B3;--teal-500:#31A492;
+  --sky-400:#58A8DF;--violet-400:#8A7CEC;--orchid-400:#C873DE;
+
+  /* surfaces — elevation is lightness, never shadow */
+  --surface-app:var(--neutral-900);
+  --surface-card:var(--neutral-800);
+  --surface-raised:var(--neutral-700);
+  --surface-fill:var(--neutral-600);
+
+  /* text */
+  --text-1:var(--neutral-0);
+  --text-2:var(--neutral-200);
+  --text-3:var(--neutral-400);
+  --text-on-accent:var(--neutral-900);
+
+  /* lines */
+  --divider:var(--neutral-700);
+
+  /* metric aliases — one hue per body signal, always step 400 */
+  --metric-heart-rate:var(--crimson-400);
+  --metric-calories:var(--tangerine-400);
+  --metric-steps:var(--gold-400);
+  --metric-distance:var(--emerald-400);
+  --metric-activity:#A6CE4E;                 /* color.lime.400 */
+  --metric-readiness:var(--teal-400);
+  --metric-spo2:var(--sky-400);
+  --metric-sleep:var(--violet-400);
+  --metric-skin-temp:var(--orchid-400);
+  /* metric.stress shares emerald-400 with metric.distance — the owner's
+     deliberate choice (2026-08-27), already flagged in the Homepage file.
+     Stress and Distance never appear side by side on a Friends surface
+     either, so the same reasoning holds here. */
+  --metric-stress:var(--emerald-400);
+
+  /* semantic quads — glyphs and badges only, never bars or fills */
+  --positive-bg:#0E2A1B;--positive-fill:#1E5B38;--positive-icon:#4ADE80;--positive-text:#8AF0B0;
+  --negative-bg:#331109;--negative-fill:#6E2418;--negative-icon:#F4604C;--negative-text:#FF9184;
+  --caution-bg:#2E2103;--caution-fill:#6B4E0E;--caution-icon:#EFB428;--caution-text:#F5CE6F;
+  --neutral-bg:var(--neutral-700);--neutral-fill:var(--neutral-600);
+  --neutral-icon:var(--neutral-300);--neutral-text:var(--neutral-200);
+
+  /* type */
+  --font-text:'Google Sans Flex','Google Sans',sans-serif;
+  --font-number:'Spartan','League Spartan',sans-serif;
+  --num-features:'tnum' 1,'lnum' 1;
+  --weight-regular:400;--weight-medium:500;--weight-semibold:600;--weight-bold:700;
+
+  /* radii, spacing, motion */
+  --radius-card:20px;--radius-pill:999px;--radius-sheet:28px;--radius-row:16px;
+  --radius-8:8px;--radius-12:12px;--radius-16:16px;--radius-24:24px;
+  --space-2:2px;--space-4:4px;--space-8:8px;--space-12:12px;
+  --space-16:16px;--space-20:20px;--space-24:24px;--space-32:32px;
+  --border-hairline:0.5px;--border-thin:1px;
+  --gutter:16px;
+  --cta-height:48px;
+  --control-h-m:44px;--control-h-l:52px;
+  --duration-fast:120ms;--duration-base:140ms;
+  --ease-standard:ease;
+  --state-inactive:0.45;
+
+  /* The one measurement this flow adds: the Friends card's body height.
+     Hard rule 9 — the card is the same height in all six of its states, so
+     nothing below it on Home moves. Three rows (28px avatar + 6px gap +
+     6px bar) at 12px gaps, plus the closing gap line. */
+  --friends-body-h:176px;
+}
+
+/* ═══ 2. DESK — the page the phone sits on, plus the control panel ═════════ */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-height:100vh;background:var(--neutral-900);color:var(--text-1);
+  font-family:var(--font-text);
+  display:flex;align-items:flex-start;justify-content:center;
+  gap:32px;padding:32px 16px;flex-wrap:wrap;
+}
+.panel{
+  position:sticky;top:32px;width:252px;background:var(--surface-card);
+  border:var(--border-hairline) solid var(--neutral-700);
+  border-radius:var(--radius-card);padding:16px;
+}
+.panel h2{margin:0;font:600 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.panel h2+h2{margin-top:20px}
+.panel .hint{margin:8px 0 12px;font:400 11px/16px var(--font-text);color:var(--text-3)}
+.panel .opts{display:flex;flex-direction:column;gap:4px}
+.panel label{
+  display:flex;align-items:flex-start;gap:10px;padding:9px 10px;
+  border-radius:var(--radius-12);cursor:pointer;
+  font:500 13px/18px var(--font-text);color:var(--text-2);
+}
+.panel label:hover{background:var(--surface-raised)}
+.panel label.on{background:var(--surface-raised);color:var(--text-1)}
+.panel input{accent-color:var(--metric-readiness);margin:3px 0 0}
+.panel .desc{display:block;font:400 10px/14px var(--font-text);color:var(--text-3)}
+.panel .rule{margin:16px 0;border:0;border-top:var(--border-hairline) solid var(--neutral-700)}
+
+/* ═══ 3. PHONE — Android, 360px screen, punch-hole camera ══════════════════ */
+.phone{
+  flex:0 0 auto;border-radius:40px;background:var(--neutral-900);
+  border:2px solid var(--neutral-700);outline:6px solid var(--neutral-800);padding:10px;
+}
+.screen{
+  position:relative;width:360px;height:780px;border-radius:32px;overflow:hidden;
+  background:var(--surface-app);display:flex;flex-direction:column;
+}
+.screen::before{
+  content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:12px;height:12px;border-radius:50%;background:var(--neutral-900);
+  border:2px solid var(--neutral-700);z-index:60;pointer-events:none;
+}
+.statusbar{
+  position:absolute;top:0;left:0;right:0;height:32px;z-index:62;
+  display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  font:500 13px/18px var(--font-text);color:var(--text-1);pointer-events:none;
+}
+.statusbar .batt{width:20px;height:10px;border-radius:3px;border:1px solid var(--text-2);padding:1px}
+.statusbar .batt i{display:block;width:12px;height:100%;border-radius:2px;background:var(--text-1)}
+.statusbar .right{display:flex;align-items:center;gap:6px;color:var(--text-2)}
+.pages{flex:1;overflow:hidden;position:relative}
+.page{
+  position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:none;
+  scrollbar-width:none;padding-bottom:96px;
+}
+.page::-webkit-scrollbar{display:none}
+.page.active{display:block}
+.gesture{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:112px;height:4px;border-radius:var(--radius-pill);background:var(--neutral-600);
+  z-index:60;pointer-events:none;
+}
+
+/* bottom nav — the owner's pebblenav component, 328×60 pill */
+.pebble-nav{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:20px;z-index:55;
+  display:flex;align-items:center;gap:4px;width:328px;height:60px;padding:0 14px;
+  border-radius:var(--radius-pill);
+  background:color-mix(in srgb, var(--neutral-800) 80%, transparent);
+  -webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px);
+  box-shadow:0 8px 24px color-mix(in srgb, var(--neutral-900) 48%, transparent),
+             0 2px 6px color-mix(in srgb, var(--neutral-900) 32%, transparent);
+}
+.pebble-tab{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  width:72px;height:60px;padding:10px 0;border:0;background:none;
+  border-radius:var(--radius-pill);font-family:inherit;cursor:default;
+}
+.pebble-tab .icon{display:block;width:24px;height:24px;color:var(--neutral-300)}
+.pebble-tab .label{font:400 10px/14px var(--font-text);letter-spacing:.01em;color:var(--neutral-300)}
+.pebble-tab[aria-current="page"] .icon{color:var(--neutral-0)}
+.pebble-tab[aria-current="page"] .label{color:var(--neutral-100)}
+
+/* ═══ 4. SHARED SCREEN PIECES — lifted from the Homepage prototype ═════════ */
+.screen-head{padding:44px 16px 0;display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:20}
+.screen-title{font:500 24px/30px var(--font-text);letter-spacing:-.01em;color:var(--text-1)}
+.screen-title.greet{font:500 20px/26px var(--font-text);letter-spacing:-.005em}
+.date-btn{
+  margin:4px 0 0 -10px;display:flex;align-items:center;gap:6px;background:none;border:0;
+  padding:6px 10px;border-radius:14px;cursor:pointer;font-family:inherit;
+  font:500 13px/18px var(--font-text);color:var(--text-2);
+}
+.date-btn:hover{background:color-mix(in srgb, var(--neutral-0) 8%, transparent)}
+.caret{width:6px;height:6px;border-right:1.2px solid var(--text-3);border-bottom:1.2px solid var(--text-3);transform:rotate(45deg);margin-bottom:3px;display:inline-block}
+.chev{width:6px;height:6px;border-right:1.2px solid var(--text-3);border-bottom:1.2px solid var(--text-3);transform:rotate(-45deg);display:inline-block;flex:0 0 auto}
+.phi{display:inline-flex;flex:0 0 auto}
+.phi svg{width:100%;height:100%;display:block;fill:currentColor}
+
+.card{background:var(--surface-card);border-radius:var(--radius-card);padding:16px;position:relative}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.card-title{font:500 17px/22px var(--font-text);color:var(--text-1);white-space:nowrap}
+.card-body{margin-top:16px}
+.subnote,.wo-meta{font:500 11px/16px var(--font-text);color:var(--text-2);white-space:nowrap;font-feature-settings:var(--num-features)}
+.sec{padding:0 var(--gutter);margin-top:20px;display:flex;flex-direction:column;gap:12px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:0 0 4px}
+.sec-head h2{margin:0;font:500 17px/22px var(--font-text);color:var(--text-1)}
+
+/* Today's goals rows + the bar every relative bar in this flow reuses */
+.goalrow{display:grid;grid-template-columns:20px 1fr auto;align-items:center;column-gap:8px;row-gap:8px}
+.goalrow+.goalrow{margin-top:16px}
+.goalrow .gicon{width:20px;height:20px}
+.goalrow .gname{font:500 15px/22px var(--font-text);color:var(--text-2)}
+.goalrow .gval{justify-self:end;display:flex;align-items:baseline;gap:4px;white-space:nowrap}
+.goalrow .gnum{font-family:var(--font-number);font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.goalrow .ggoal{font:400 11px/16px var(--font-text);color:var(--text-3)}
+.gbar{grid-column:1/-1;display:block;height:8px;border-radius:var(--radius-pill);background:var(--surface-raised);box-shadow:inset 0 0 0 .5px var(--neutral-500);overflow:hidden}
+.gbar i{display:block;height:100%;border-radius:var(--radius-pill);transition:width var(--duration-base) var(--ease-standard)}
+
+/* list rows — workouts, members, settings */
+.listrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:var(--border-hairline) solid var(--divider)}
+.listrow .lft{display:flex;align-items:center;gap:8px;min-width:0}
+.listrow .txt{display:grid;gap:2px;min-width:0}
+.listrow .t1{font:500 13px/18px var(--font-text);color:var(--text-1)}
+.listrow .t2{font:500 11px/16px var(--font-text);color:var(--text-3)}
+.listrow .rgt{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.listrow .rnum{font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-2)}
+
+/* the 40px chip / 20px glyph convention from the Workouts card */
+.chip40{width:40px;height:40px;border-radius:var(--radius-pill);background:var(--neutral-bg);display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--neutral-100);overflow:hidden}
+.chip40 .phi{width:20px;height:20px}
+
+/* buttons — components/button.html, four tiers, one geometry */
+.btn{
+  -webkit-appearance:none;appearance:none;display:inline-flex;align-items:center;
+  justify-content:center;box-sizing:border-box;width:100%;height:var(--control-h-l);
+  padding:0 24px;border:none;border-radius:var(--radius-pill);background:transparent;
+  font:600 15px/22px var(--font-text);text-align:center;white-space:nowrap;cursor:pointer;
+  transition:opacity var(--duration-fast) var(--ease-standard);
+}
+.btn--m{height:var(--control-h-m)}
+.btn--primary{background:var(--metric-readiness);color:var(--text-on-accent)}
+.btn--secondary{background:transparent;border:var(--border-thin) solid var(--metric-readiness);color:var(--metric-readiness)}
+.btn--tertiary{background:transparent;color:var(--text-2);font-weight:var(--weight-medium)}
+.btn--destructive{background:transparent;color:var(--negative-text);font-weight:var(--weight-medium)}
+.btn--primary:not([disabled]):hover{opacity:.9}
+.btn--primary:not([disabled]):active{opacity:.8}
+.btn--secondary:not([disabled]):hover{opacity:.75}
+.btn--secondary:not([disabled]):active{opacity:.6}
+.btn--tertiary:not([disabled]):hover,.btn--destructive:not([disabled]):hover{opacity:.7}
+.btn--tertiary:not([disabled]):active,.btn--destructive:not([disabled]):active{opacity:.55}
+.btn[disabled]{opacity:var(--state-inactive);cursor:default}
+.btnrow{display:flex;gap:8px}
+
+/* sub-pages slide over the tab content */
+.subpage{
+  position:absolute;inset:0;z-index:30;background:var(--surface-app);
+  overflow-y:auto;scrollbar-width:none;padding-bottom:96px;
+}
+/* the leaderboard reserves room for the floating nav AND the you-bar pill */
+#p-friends{padding-bottom:164px}
+.subpage::-webkit-scrollbar{display:none}
+.subpage[hidden]{display:none}
+.sub-head{padding:40px var(--gutter) 0;display:flex;align-items:center;gap:4px}
+.sub-head .backbtn{
+  width:40px;height:40px;margin-left:-12px;display:flex;align-items:center;justify-content:center;
+  background:none;border:0;cursor:pointer;border-radius:var(--radius-pill);color:var(--text-1);
+}
+.sub-head .backbtn .phi{width:20px;height:20px}
+.sub-head .backbtn:hover{background:var(--surface-raised)}
+.sub-head .t{font:500 20px/26px var(--font-text);letter-spacing:-.005em;color:var(--text-1);flex:1;min-width:0}
+.sub-head .act{
+  width:40px;height:40px;margin-right:-8px;display:flex;align-items:center;justify-content:center;
+  background:none;border:0;cursor:pointer;border-radius:var(--radius-pill);color:var(--text-1);
+}
+.sub-head .act .phi{width:20px;height:20px}
+.sub-head .act:hover{background:var(--surface-raised)}
+.sub-body{padding:16px var(--gutter) 0;display:flex;flex-direction:column;gap:12px}
+
+/* scrim + bottom sheet — the Me tab pattern */
+.scrim{position:absolute;inset:0;z-index:69;background:color-mix(in srgb, var(--neutral-900) 62%, transparent)}
+.scrim[hidden],.sheet[hidden]{display:none}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;z-index:70;background:var(--surface-card);
+  border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;padding:8px 16px 20px;
+}
+.sheet-grab{padding:0 0 8px;display:flex;justify-content:center}
+.sheet-grab span{width:36px;height:4px;border-radius:var(--radius-pill);background:var(--surface-fill)}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0 12px}
+.sheet-head .t{font:500 20px/26px var(--font-text);letter-spacing:-.005em}
+.sheet-x{width:36px;height:36px;border-radius:var(--radius-pill);background:var(--surface-raised);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-1)}
+.sheet-x .phi{width:16px;height:16px}
+.sheet-body{display:flex;flex-direction:column;gap:12px}
+.sheet-rule{margin:4px 0;border:0;border-top:var(--border-hairline) solid var(--divider)}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. THE FRIENDS COMPONENTS — §7 of the spec. Eight components, every state.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 7.5 Period control ────────────────────────────────────────────────────
+   The .seg4 pill from the metric detail pages, at two segments instead of
+   four. Pinned under the header: hard rule 3, the period never scrolls away. */
+.period-wrap{
+  position:sticky;top:0;z-index:12;background:var(--surface-app);
+  padding:12px var(--gutter) 8px;
+}
+.seg{display:flex;gap:4px;padding:4px;border-radius:var(--radius-pill);background:var(--surface-card)}
+.seg button{
+  flex:1;height:36px;border:0;border-radius:var(--radius-pill);background:none;cursor:pointer;
+  font:600 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-2);
+  transition:background var(--duration-fast) var(--ease-standard);
+}
+.seg button:hover{color:var(--text-1)}
+.seg button.active{background:var(--surface-raised);color:var(--text-1)}
+.seg button[disabled]{opacity:var(--state-inactive);cursor:default}
+/* the honest state line — "3 of 5 synced · updated 14:20" */
+.statusline{
+  margin-top:8px;display:flex;align-items:center;gap:6px;
+  font:500 11px/16px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features);
+}
+.statusline .phi{width:12px;height:12px;color:var(--text-3)}
+.statusline.stale{color:var(--caution-text)}
+.statusline.stale .phi{color:var(--caution-icon)}
+
+/* ── 7.1 Leaderboard row + 7.2 relative bar ───────────────────────────────
+   Anatomy left → right: rank numeral · 40px avatar chip · name over the
+   relative bar · figure + unit · cheer control. The bar is the .gbar fill
+   from Today's goals, scaled to the leader (7.2), which is what makes five
+   numbers read as a ranking rather than five numbers. */
+.lb{display:flex;flex-direction:column}
+.lbrow{
+  display:grid;grid-template-columns:18px 40px 1fr auto 44px;
+  align-items:center;column-gap:10px;row-gap:6px;
+  padding:12px 8px;border-radius:var(--radius-16);
+  border:var(--border-thin) solid transparent;
+  transition:background var(--duration-fast) var(--ease-standard),opacity var(--duration-fast) var(--ease-standard);
+}
+/* Every cell names its column. Grid places definite-row items before
+   auto-placed ones, so leaving any of these implicit lets the cheer button
+   claim column 3 and drop the name on top of the figure. */
+.lbrow .rank{
+  grid-area:1/1/3/2;justify-self:center;align-self:center;
+  font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3);
+}
+.lbrow .av{grid-area:1/2/3/3;align-self:center}
+.lbrow .who{grid-area:1/3/2/4;min-width:0;display:flex;align-items:baseline;gap:6px}
+.lbrow .nm{font:500 15px/22px var(--font-text);color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lbrow .val{grid-area:1/4/2/5;justify-self:end;display:flex;align-items:baseline;gap:4px;white-space:nowrap}
+.lbrow .num{font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+/* hard rule 4 — every figure carries a unit */
+.lbrow .unit{font:500 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.lbrow .bar{grid-area:2/3/3/5}
+.lbrow .cheer{grid-area:1/5/3/6;align-self:center}
+.lbrow .why{grid-area:3/3/4/6;font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
+/* a not-synced row has no bar, so its reason line moves up a row */
+.lbrow[data-row="nosync"] .why{grid-area:2/3/3/6}
+
+/* state: you — the only highlight on the list, and there is only ever one
+   row carrying it (hard rule 1). It is an identity flag, not a data state,
+   so it composes with ranked / stale / not-synced: in F5 your row is in the
+   Not synced break and must still be findable as yours. */
+.lbrow[data-you]{background:var(--surface-raised)}
+.lbrow[data-you] .nm{font-weight:var(--weight-semibold)}
+/* state: not-synced — no rank numeral, em-dash figure, reason underneath.
+   Hard rule 2: this row has no position, so it gets no number. */
+.lbrow[data-row="nosync"] .nm{color:var(--text-2)}
+.lbrow[data-row="nosync"] .num{color:var(--text-3);font-weight:var(--weight-medium)}
+/* state: stale — last-known figure, marked, still ranked */
+.lbrow[data-row="stale"] .num{color:var(--text-2)}
+.lbrow[data-row="stale"] .why{color:var(--caution-text)}
+/* state: pressed — opacity only, per the button spec */
+.lbrow[data-tap]{cursor:pointer}
+.lbrow[data-tap]:active{opacity:.7}
+/* state: skeleton */
+.lbrow[data-row="skeleton"] .sk{display:block;height:12px;border-radius:var(--radius-pill);background:var(--surface-raised)}
+.lbrow[data-row="skeleton"] .sk.w1{width:96px}
+.lbrow[data-row="skeleton"] .sk.w2{width:52px;justify-self:end}
+.lbrow[data-row="skeleton"] .av{background:var(--surface-raised)}
+
+/* break label between the ranked list and the not-synced group */
+.lb-break{
+  padding:16px 8px 4px;
+  font:600 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);
+}
+
+/* avatar — initial letter on --surface-raised when there is no photo, in the
+   40px chip the Workouts card established. Fixes the legacy screen's
+   indistinguishable "Ankit" / "ankitkaushik" rows. */
+.av{
+  width:40px;height:40px;border-radius:var(--radius-pill);background:var(--surface-fill);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  font:600 15px/22px var(--font-text);color:var(--text-1);text-transform:uppercase;
+}
+.av.sm{width:28px;height:28px;font:600 11px/16px var(--font-text)}
+.av.lg{width:56px;height:56px;font:600 20px/26px var(--font-text)}
+.av[data-hue="1"]{background:color-mix(in srgb, var(--metric-readiness) 26%, var(--surface-fill))}
+.av[data-hue="2"]{background:color-mix(in srgb, var(--metric-sleep) 26%, var(--surface-fill))}
+.av[data-hue="3"]{background:color-mix(in srgb, var(--metric-distance) 26%, var(--surface-fill))}
+.av[data-hue="4"]{background:color-mix(in srgb, var(--metric-calories) 26%, var(--surface-fill))}
+.av[data-hue="5"]{background:color-mix(in srgb, var(--metric-spo2) 26%, var(--surface-fill))}
+
+/* ── 7.3 Cheer control ────────────────────────────────────────────────────
+   An action with states, not a counter (hard rule 8). The legacy heart was
+   both at once and neither.
+
+   FLAG: a coloured filled heart wants --metric-heart-rate, but the metric
+   aliases are for body signals, not social glyphs — and a red heart next to
+   a heart-rate card would read as a metric. Rev 1 is monochrome. If the team
+   wants colour here, add a --social-cheer alias to js/tokens.js first rather
+   than borrowing the heart-rate hue. Raised in §9 of the spec. */
+.cheer{
+  width:44px;padding:2px 0;border:0;background:none;cursor:pointer;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  border-radius:var(--radius-12);
+  transition:opacity var(--duration-fast) var(--ease-standard);
+}
+.cheer .ico{
+  width:32px;height:32px;border-radius:var(--radius-pill);display:flex;align-items:center;justify-content:center;
+  color:var(--text-3);background:transparent;
+  transition:background var(--duration-fast) var(--ease-standard),color var(--duration-fast) var(--ease-standard);
+}
+.cheer .ico .phi{width:18px;height:18px}
+.cheer .n{font:500 10px/12px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3)}
+.cheer:active{opacity:.7}
+.cheer .fillheart{display:none}
+/* done */
+.cheer[data-cheer="done"] .ico{background:var(--surface-raised);color:var(--text-1)}
+.cheer[data-cheer="done"] .lineheart{display:none}
+.cheer[data-cheer="done"] .fillheart{display:block}
+.cheer[data-cheer="done"] .n{color:var(--text-1)}
+/* pending — optimistic, rolls back on failure. Nothing that writes to the
+   server may look settled while the write is in flight. */
+.cheer[data-cheer="pending"] .ico{background:var(--surface-raised);color:var(--text-2)}
+.cheer[data-cheer="pending"]{opacity:.7}
+.cheer[data-cheer="pending"] .n{color:var(--text-3)}
+/* failed — reverted, with the reason inline on the row */
+.cheer[data-cheer="failed"] .ico{color:var(--negative-icon)}
+/* at-limit — non-interactive, reason on tap */
+.cheer[data-cheer="limit"]{opacity:var(--state-inactive);cursor:default}
+/* queued — offline; the cheer is held, not lost */
+.cheer[data-cheer="queued"] .ico{background:var(--surface-raised);color:var(--caution-icon)}
+@media (prefers-reduced-motion:reduce){
+  .cheer,.cheer .ico,.gbar i,.lbrow,.seg button{transition:none}
+}
+
+/* ── 7.4 Friends card (Home) ──────────────────────────────────────────────
+   One instance, six states, one height. --friends-body-h is the whole point:
+   circle, no circle or solo, nothing below this card on Home moves. */
+.friends-card .card-body{min-height:var(--friends-body-h);display:flex;flex-direction:column}
+.fc-rows{display:flex;flex-direction:column;gap:12px}
+.fcrow{
+  display:grid;grid-template-columns:16px 28px 1fr auto;align-items:center;
+  column-gap:8px;row-gap:6px;
+}
+.fcrow .rank{grid-area:1/1/3/2;justify-self:center;align-self:center;font:500 11px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3)}
+.fcrow .av{grid-area:1/2/3/3;align-self:center}
+.fcrow .nm{grid-area:1/3/2/4;font:500 13px/18px var(--font-text);color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fcrow .val{grid-area:1/4/2/5;justify-self:end;display:flex;align-items:baseline;gap:4px;white-space:nowrap}
+.fcrow .num{font:700 15px/20px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.fcrow .unit{font:500 10px/14px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.fcrow .bar{grid-area:2/3/3/5;height:6px}
+.fcrow[data-row="you"] .nm{font-weight:var(--weight-semibold)}
+/* the closing line — always the nearest actionable gap, never a total */
+.fc-gap{
+  margin-top:auto;padding-top:12px;
+  font:500 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features);
+}
+.fc-gap b{font-family:var(--font-number);font-weight:var(--weight-bold);color:var(--text-1)}
+/* the CTA that occupies the same slot when there is no circle, and the
+   centred message states — same footprint, hard rule 9 */
+.fc-slot{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;text-align:center;padding:0 8px;
+}
+.fc-slot .msg{font:400 13px/18px var(--font-text);color:var(--text-3);max-width:220px}
+.fc-slot .big{font:700 24px/28px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.fc-slot .btn{max-width:200px}
+
+/* ── 7.6 Compare strip (friend profile) ───────────────────────────────────
+   Two bars and one sentence. The sentence is the component; the bars
+   illustrate it. This is why the profile page exists — the legacy one
+   arrived from a ranking and never mentioned it. */
+.compare{display:flex;flex-direction:column;gap:10px}
+.cmprow{display:grid;grid-template-columns:1fr auto;align-items:baseline;column-gap:8px;row-gap:6px}
+.cmprow .who{font:500 13px/18px var(--font-text);color:var(--text-2)}
+.cmprow .val{display:flex;align-items:baseline;gap:4px}
+.cmprow .num{font:700 15px/20px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.cmprow .unit{font:500 10px/14px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.cmprow .bar{grid-column:1/-1;height:8px}
+.cmp-say{
+  margin-top:4px;font:500 13px/18px var(--font-text);color:var(--text-1);font-feature-settings:var(--num-features);
+}
+.cmp-say[data-dir="behind"]{color:var(--text-1)}
+
+/* ── 7.7 Code sheet — invite + join ───────────────────────────────────────
+   The disclosure is not decoration. Rev 1 shares every metric, so a
+   six-character code hands over resting heart rate and sleep. §4.3 of the
+   spec makes this copy a requirement, not a nicety. */
+.disclose{
+  display:flex;gap:10px;padding:12px;border-radius:var(--radius-row);
+  background:var(--caution-bg);
+}
+.disclose .phi{width:16px;height:16px;color:var(--caution-icon);flex:0 0 auto;margin-top:1px}
+.disclose p{margin:0;font:400 11px/16px var(--font-text);color:var(--caution-text)}
+.disclose p b{font-weight:var(--weight-semibold)}
+.codebox{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:16px;border-radius:var(--radius-row);background:var(--surface-raised);
+}
+.codebox span{
+  font:700 24px/28px var(--font-number);font-feature-settings:var(--num-features);
+  letter-spacing:.12em;color:var(--text-1);
+}
+.sheet-label{font:600 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.sheet-sub{font:400 13px/18px var(--font-text);color:var(--text-2);margin:0}
+
+/* OTP boxes — the onboarding component, reused not rebuilt */
+.otp{display:flex;gap:8px;justify-content:space-between}
+.otp input{
+  width:100%;height:56px;min-width:0;text-align:center;
+  background:var(--surface-card);border:var(--border-thin) solid var(--surface-fill);
+  border-radius:var(--radius-12);color:var(--text-1);
+  font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);
+  text-transform:uppercase;outline:none;
+}
+.otp input:focus{border-color:var(--metric-readiness)}
+.otp[data-otp="error"] input{border-color:var(--negative-icon)}
+.inline-err{display:flex;align-items:center;gap:6px;font:500 11px/16px var(--font-text);color:var(--negative-text)}
+.inline-err .phi{width:14px;height:14px;color:var(--negative-icon)}
+/* the resolved-circle preview — you see whose circle before you confirm */
+.resolved{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--radius-row);background:var(--surface-card)}
+.resolved .txt{min-width:0}
+.resolved .t1{font:500 15px/22px var(--font-text);color:var(--text-1)}
+.resolved .t2{font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
+
+/* ── 7.8 Empty / member-required state ───────────────────────────────────
+   Same shape as the Me tab's band-required empty state. One component,
+   four variants — not a second empty-state system. */
+.empty{
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;
+  padding:40px 24px;
+}
+.empty .chip40{width:56px;height:56px;background:var(--surface-card)}
+.empty .chip40 .phi{width:24px;height:24px;color:var(--text-3)}
+.empty h3{margin:0;font:500 17px/22px var(--font-text);color:var(--text-1)}
+.empty p{margin:0;font:400 13px/18px var(--font-text);color:var(--text-3);max-width:248px}
+.empty .btn{max-width:232px;margin-top:4px}
+
+/* ── the sticky you-bar ──────────────────────────────────────────────────
+   A SCROLL AFFORDANCE, not a second row. It exists only while your row is
+   off-screen and disappears the moment it is visible again. The legacy
+   screen's duplicate "you" row is item 1 in §1 of the spec; this is the
+   only thing in the flow allowed to look like one. */
+.youbar{
+  position:absolute;left:16px;right:16px;bottom:88px;z-index:56;
+  padding:10px 14px;border-radius:var(--radius-pill);
+  background:color-mix(in srgb, var(--surface-card) 92%, transparent);
+  -webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px);
+  border:var(--border-hairline) solid var(--surface-fill);
+  box-shadow:0 8px 24px color-mix(in srgb, var(--neutral-900) 48%, transparent);
+  display:grid;grid-template-columns:18px 28px 1fr auto;align-items:center;column-gap:10px;
+  cursor:pointer;
+}
+.youbar[hidden]{display:none}
+.youbar .rank{font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3);justify-self:center}
+.youbar .nm{font:600 13px/18px var(--font-text);color:var(--text-1)}
+.youbar .gap{font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
+.youbar .val{justify-self:end;display:flex;align-items:baseline;gap:4px}
+.youbar .num{font:700 15px/20px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.youbar .unit{font:500 10px/14px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+
+/* ── friend profile pieces ──────────────────────────────────────────────── */
+.ident{display:flex;align-items:center;gap:12px;padding:4px 0 0}
+.ident .txt{min-width:0;display:grid;gap:2px}
+.ident .nm{font:500 20px/26px var(--font-text);letter-spacing:-.005em;color:var(--text-1)}
+/* the rank you arrived from — restated, so the page knows where you came
+   from (item 13 in §1) */
+.ident .rk{margin-top:2px;font:500 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
+.ident .sy{margin-top:2px;font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
+/* NOTE what is deliberately absent here: no email (item 10), no
+   "Touch to set background" (item 9), no share icon, no edit control.
+   Hard rule 6 — a control that writes to your account does not render on a
+   page about another person. */
+
+/* read-only metric cards: Home's cards, Home's order, their data.
+   The [data-readonly] flag is what the real build needs on Home's own
+   components — see the cross-surface dependency in §8 of the spec. */
+.card[data-readonly] .goalrow .ggoal{color:var(--text-3)}
+.metricgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mtile{background:var(--surface-raised);border-radius:var(--radius-16);padding:12px}
+.mtile .top{display:flex;align-items:center;gap:8px}
+.mtile .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.mtile .lbl{font:500 11px/16px var(--font-text);color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtile .fig{margin-top:8px;display:flex;align-items:baseline;gap:4px}
+.mtile .num{font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.mtile .unit{font:500 10px/14px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.mtile[data-nodata] .num{color:var(--text-3)}
+
+/* the month-scroll calendar, ported from the Activity / Sleep tabs — not
+   the clipped 7-day strip the legacy profile used (item 11) */
+.cal-sheet{
+  position:absolute;left:0;right:0;top:120px;bottom:0;z-index:70;
+  background:var(--surface-card);border-radius:var(--radius-24) var(--radius-24) 0 0;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.cal-sheet[hidden]{display:none}
+.cal-grab{padding:8px 0 0;display:flex;justify-content:center;flex:0 0 auto}
+.cal-grab span{width:36px;height:4px;border-radius:var(--radius-pill);background:var(--surface-fill)}
+.cal-head{flex:0 0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cal-head .t{font:500 20px/26px var(--font-text);letter-spacing:-.005em;color:var(--text-1)}
+.iconbtn{width:36px;height:36px;border-radius:var(--radius-pill);background:var(--surface-raised);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--text-1)}
+.iconbtn .phi{width:16px;height:16px}
+.cal-week{flex:0 0 auto;padding:0 16px 8px;display:grid;grid-template-columns:repeat(7,1fr);border-bottom:var(--border-hairline) solid var(--surface-raised)}
+.cal-week span{text-align:center;font:500 11px/16px var(--font-text);color:var(--text-3)}
+.cal-scroll{flex:1;min-height:0;overflow-y:auto;padding:0 16px 40px;scrollbar-width:none}
+.cal-scroll::-webkit-scrollbar{display:none}
+.cal-month{padding-top:24px}
+.cal-month .mt{text-align:center;font:500 17px/22px var(--font-text);color:var(--text-1)}
+.cal-grid{margin-top:16px;display:grid;grid-template-columns:repeat(7,1fr);row-gap:16px;column-gap:2px}
+.cal-day{width:100%;min-height:44px;background:none;border:0;padding:0;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px}
+.cal-day .dn{font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.cal-day .dd{width:4px;height:4px;border-radius:50%;background:var(--metric-steps)}
+.cal-day .dd.none{background:var(--surface-fill)}
+.cal-day.sel .dn{color:var(--text-on-accent);background:var(--metric-readiness);border-radius:var(--radius-pill);width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.cal-day.future{opacity:.35;cursor:default}
+/* the legend the legacy strip's mystery dots never had */
+.cal-legend{flex:0 0 auto;padding:8px 16px 16px;display:flex;gap:16px;justify-content:center}
+.cal-legend i{display:flex;align-items:center;gap:6px;font:400 11px/16px var(--font-text);color:var(--text-3);font-style:normal}
+.cal-legend i b{width:4px;height:4px;border-radius:50%;background:var(--metric-steps)}
+.cal-legend i b.none{background:var(--surface-fill)}
+
+/* ── the gallery page (review aid, not a shipping screen) ───────────────── */
+.gal{padding:44px 16px 100px;display:flex;flex-direction:column;gap:20px}
+.gal h3{margin:0;font:600 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.gal .grp{background:var(--surface-card);border-radius:var(--radius-card);padding:8px}
+.gal .cap{padding:6px 8px 2px;font:400 10px/14px var(--font-text);color:var(--text-3)}
+</style>
+</head>
+<body>
+
+<!-- ═══ CONTROL PANEL — §6 of the spec. Nine combinable state modifiers. ═══ -->
+<aside class="panel">
+  <h2>State</h2>
+  <p class="hint">The nine F-states from §6 of the spec. They are modifiers, not
+     layouts &mdash; F7 offline combines with any of the others in the real build.</p>
+  <div class="opts" id="fstates"></div>
+
+  <hr class="rule">
+  <h2>Screen</h2>
+  <div class="opts" id="screens"></div>
+
+  <hr class="rule">
+  <h2>Reference</h2>
+  <p class="hint" style="margin-bottom:0">
+    docs/feature-family-ranking.md &mdash; rev 1.<br>
+    Hard rules proven here: one you-row (1), no ranks on absent data (2),
+    period always visible (3), units on every figure (4), Home's cards
+    read-only on a friend's page (5), no self-affordances there (6), your own
+    row never opens a second copy of you (7), cheer has states (8), fixed
+    card footprint (9).
+  </p>
+</aside>
+
+<!-- ═══ PHONE ═══════════════════════════════════════════════════════════════ -->
+<div class="phone">
+<div class="screen" id="screen">
+
+  <div class="statusbar">
+    <span>14:20</span>
+    <span class="right">
+      <span style="font-size:11px">LTE</span>
+      <span class="batt"><i></i></span>
+    </span>
+  </div>
+
+  <div class="pages">
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         HOME — the entry point. §4.1: the Friends card joins the Activity
+         monitor section AFTER Workouts and BEFORE Start Workout. Home runs
+         you → your data → your day → other people, so nothing about someone
+         else outranks your own numbers.
+         FLAG (§9): placement is a product call. If engagement wants the
+         social surface higher, it moves above Today's goals — decide once.
+         ───────────────────────────────────────────────────────────────── -->
+    <section class="page active" id="page-home">
+      <div class="screen-head">
+        <div>
+          <div class="screen-title greet">Good afternoon, Aanya</div>
+          <button class="date-btn">Today, Sep 3 <span class="caret"></span></button>
+        </div>
+      </div>
+
+      <!-- the three scores, abbreviated from the Home prototype for context -->
+      <div class="sec" style="margin-top:12px">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;gap:8px" id="rings"></div>
+        </div>
+      </div>
+
+      <!-- Activity monitor -->
+      <div class="sec">
+        <div class="sec-head">
+          <h2>Activity monitor</h2>
+          <span class="subnote">64 active mins</span>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div class="card-title">Today&rsquo;s goals</div></div>
+          <div class="card-body" id="goals"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Workouts</div>
+            <span class="wo-meta">2 workouts &middot; 1h 17m</span>
+          </div>
+          <div class="card-body" style="margin-top:8px">
+            <div class="listrow" style="border-top:0">
+              <div class="lft">
+                <span class="chip40"><span class="phi" data-ph="person-simple-run" data-weight="fill"></span></span>
+                <span class="txt"><span class="t1">Morning run</span><span class="t2">7:12 &ndash; 7:44 AM &middot; 4.3 km</span></span>
+              </div>
+              <div class="rgt"><span class="rnum">32 min</span><span class="chev"></span></div>
+            </div>
+            <div class="listrow">
+              <div class="lft">
+                <span class="chip40"><span class="phi" data-ph="barbell" data-weight="fill"></span></span>
+                <span class="txt"><span class="t1">Strength training</span><span class="t2">10:15 &ndash; 11:00 AM &middot; 6 exercises</span></span>
+              </div>
+              <div class="rgt"><span class="rnum">45 min</span><span class="chev"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ THE FRIENDS CARD ══ 7.4. One instance, six states, one height. -->
+        <div class="card friends-card" id="friends-card" data-tap="friends">
+          <div class="card-head">
+            <div class="card-title">Friends</div>
+            <span class="subnote" id="fc-period">Today</span>
+          </div>
+          <div class="card-body" id="fc-body"></div>
+        </div>
+
+        <button class="btn btn--primary" style="height:var(--cta-height);margin-top:4px">Start Workout</button>
+        <div style="height:8px"></div>
+      </div>
+    </section>
+
+    <!-- component gallery — a review aid, reachable from the panel only -->
+    <section class="page" id="page-gallery"><div class="gal" id="gal"></div></section>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         S02 · LEADERBOARD. No photographic hero (item 5): the standard
+         inner-page header, then the period control pinned under it.
+         ───────────────────────────────────────────────────────────────── -->
+    <div class="subpage" id="p-friends" hidden>
+      <div class="sub-head">
+        <button class="backbtn" data-back><span class="phi" data-ph="caret-left"></span></button>
+        <div class="t">Friends</div>
+        <!-- ONE action, not two near-identical icons (item 6). It opens the
+             single add-people sheet, which holds both invite and join. -->
+        <button class="act" data-sheet="add"><span class="phi" data-ph="plus"></span></button>
+        <button class="act" data-open="p-circle" style="margin-right:-12px"><span class="phi" data-ph="dots-three-vertical"></span></button>
+      </div>
+
+      <div class="period-wrap">
+        <div class="seg" id="lb-seg">
+          <button data-period="today" class="active">Today</button>
+          <button data-period="week">7 days</button>
+        </div>
+        <div class="statusline" id="lb-status"></div>
+      </div>
+
+      <div style="padding:0 8px" id="lb-mount"></div>
+
+      <div style="padding:16px var(--gutter) 24px" id="lb-foot"></div>
+
+      <!-- 7.x · the sticky you-bar. Scroll affordance only. -->
+      <div class="youbar" id="youbar" hidden>
+        <span class="rank" id="yb-rank">4</span>
+        <span class="av sm" data-hue="1">A</span>
+        <span style="display:grid;gap:1px;min-width:0"><span class="nm">You</span><span class="gap" id="yb-gap"></span></span>
+        <span class="val"><span class="num" id="yb-num">7,240</span><span class="unit">steps</span></span>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────────────
+         S03 · FRIEND PROFILE. Home's cards, Home's order, read-only.
+         Absent by design: "My Homepage" as the title, the background setter,
+         the email address, the share icon. Items 9, 10 and hard rule 6.
+         ───────────────────────────────────────────────────────────────── -->
+    <div class="subpage" id="p-friend" hidden>
+      <div class="sub-head">
+        <button class="backbtn" data-back><span class="phi" data-ph="caret-left"></span></button>
+        <div class="t" id="fr-title">Rashmi</div>
+        <button class="act" data-menu="friend"><span class="phi" data-ph="dots-three-vertical"></span></button>
+      </div>
+      <div class="sub-body" id="fr-body"></div>
+    </div>
+
+    <!-- S05 · JOIN — the onboarding OTP component, reused. -->
+    <div class="subpage" id="p-join" hidden>
+      <div class="sub-head">
+        <button class="backbtn" data-back><span class="phi" data-ph="caret-left"></span></button>
+        <div class="t">Join a circle</div>
+      </div>
+      <div class="sub-body">
+        <p class="sheet-sub">Enter the six-character code someone shared with you.</p>
+        <div class="otp" id="otp">
+          <input maxlength="1" aria-label="1"><input maxlength="1" aria-label="2"><input maxlength="1" aria-label="3">
+          <input maxlength="1" aria-label="4"><input maxlength="1" aria-label="5"><input maxlength="1" aria-label="6">
+        </div>
+        <div id="join-state"></div>
+      </div>
+    </div>
+
+    <!-- S06 · CIRCLE MEMBERS -->
+    <div class="subpage" id="p-circle" hidden>
+      <div class="sub-head">
+        <button class="backbtn" data-back><span class="phi" data-ph="caret-left"></span></button>
+        <div class="t">Your circle</div>
+      </div>
+      <div class="sub-body" id="circle-body"></div>
+    </div>
+
+    <!-- the month-scroll calendar, shared with the Activity / Sleep tabs -->
+    <div class="scrim" id="cal-scrim" hidden data-close="cal"></div>
+    <div class="cal-sheet" id="cal-sheet" hidden>
+      <div class="cal-grab"><span></span></div>
+      <div class="cal-head">
+        <div class="t" id="cal-who">Rashmi&rsquo;s history</div>
+        <button class="iconbtn" data-close="cal"><span class="phi" data-ph="x"></span></button>
+      </div>
+      <div class="cal-week"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+      <div class="cal-scroll" id="cal-scroll"></div>
+      <div class="cal-legend">
+        <i><b></b> data synced</i>
+        <i><b class="none"></b> nothing recorded</i>
+      </div>
+    </div>
+
+    <!-- S04 · ADD PEOPLE + the confirm sheet -->
+    <div class="scrim" id="scrim" hidden data-close="sheet"></div>
+    <div class="sheet" id="sheet" hidden>
+      <div class="sheet-grab"><span></span></div>
+      <div class="sheet-head">
+        <div class="t" id="sheet-title">Add people</div>
+        <button class="sheet-x" data-close="sheet"><span class="phi" data-ph="x"></span></button>
+      </div>
+      <div class="sheet-body" id="sheet-body"></div>
+    </div>
+
+    <!-- friend overflow menu -->
+    <div class="sheet" id="menu-sheet" hidden>
+      <div class="sheet-grab"><span></span></div>
+      <div class="sheet-body">
+        <button class="btn btn--tertiary btn--m" style="justify-content:flex-start;padding:0 8px">Mute cheers from <span id="mute-name">Rashmi</span></button>
+        <button class="btn btn--destructive btn--m" style="justify-content:flex-start;padding:0 8px" data-confirm="remove">Remove from circle</button>
+        <button class="btn btn--tertiary btn--m" style="justify-content:flex-start;padding:0 8px">Report</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="pebble-nav">
+    <button class="pebble-tab" aria-current="page"><span class="icon phi" data-ph="house" data-weight="fill"></span><span class="label">Health</span></button>
+    <button class="pebble-tab"><span class="icon phi" data-ph="sneaker-move"></span><span class="label">Activity</span></button>
+    <button class="pebble-tab"><span class="icon phi" data-ph="moon"></span><span class="label">Sleep</span></button>
+    <button class="pebble-tab"><span class="icon phi" data-ph="user"></span><span class="label">Me</span></button>
+  </nav>
+  <div class="gesture"></div>
+</div>
+</div>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   FRIENDS — behaviour. Everything renders from one model, so the nine
+   F-states are data rather than nine hand-written layouts (§6 of the spec).
+   ═══════════════════════════════════════════════════════════════════════════ */
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const n  = v => v.toLocaleString('en-US');
+
+/* ── Phosphor icons ───────────────────────────────────────────────────────
+   Path data copied verbatim from the Homepage prototype's PH object, which
+   took it from @phosphor-icons/core (256×256 viewBox). Subset only. */
+const PH = {"regular":{"caret-left":"M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z","caret-right":"M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z","caret-down":"M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z","plus":"M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z","x":"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z","check":"M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z","dots-three-vertical":"M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128ZM128,72a12,12,0,1,0-12-12A12,12,0,0,0,128,72Zm0,112a12,12,0,1,0,12,12A12,12,0,0,0,128,184Z","user":"M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"},"fill":{"heart":"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z","footprints":"M216.06,192v12A36,36,0,0,1,144,204V192a8,8,0,0,1,8-8h56A8,8,0,0,1,216.06,192ZM104,160h-56a8,8,0,0,0-8,8v12A36,36,0,0,0,112,180V168A8,8,0,0,0,104,160ZM76,16C64.36,16,53.07,26.31,44.2,45c-13.93,29.38-18.56,73,.29,96a8,8,0,0,0,6.2,2.93h50.55a8,8,0,0,0,6.2-2.93c18.85-23,14.22-66.65.29-96C98.85,26.31,87.57,16,76,16Zm78.8,152h50.55a8,8,0,0,0,6.2-2.93c18.85-23,14.22-66.65.29-96C202.93,50.31,191.64,40,180,40s-22.89,10.31-31.77,29c-13.93,29.38-18.56,73,.29,96A8,8,0,0,0,154.76,168Z","fire":"M143.38,17.85a8,8,0,0,0-12.63,3.41l-22,60.41L84.59,58.26a8,8,0,0,0-11.93.89C51,87.53,40,116.08,40,144a88,88,0,0,0,176,0C216,84.55,165.21,36,143.38,17.85Zm40.51,135.49a57.6,57.6,0,0,1-46.56,46.55A7.65,7.65,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z","map-pin":"M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z","moon":"M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z","person-simple-run":"M120,56a32,32,0,1,1,32,32A32,32,0,0,1,120,56Zm103.28,74.08a8,8,0,0,0-10.6-4c-.25.12-26.71,10.72-72.18-20.19-52.29-35.54-88-7.77-89.51-6.57a8,8,0,1,0,10,12.48c.26-.21,25.12-19.5,64.07,3.27-4.25,13.35-12.76,31.82-25.25,47-18.56,22.48-41.11,32.56-67,30A8,8,0,0,0,31.2,208a92.29,92.29,0,0,0,9.34.47c27.38,0,52-12.38,71.63-36.18.57-.69,1.14-1.4,1.69-2.1C133.31,175.29,168,190.3,168,232a8,8,0,0,0,16,0c0-24.65-10.08-45.35-29.15-59.86a104.29,104.29,0,0,0-31.31-15.81A169.31,169.31,0,0,0,139,124c26.14,16.09,46.84,20,60.69,20,12.18,0,19.06-3,19.67-3.28A8,8,0,0,0,223.28,130.08Z","barbell":"M200,64V192a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V136H104v56a16,16,0,0,1-16,16H72a16,16,0,0,1-16-16V64A16,16,0,0,1,72,48H88a16,16,0,0,1,16,16v56h48V64a16,16,0,0,1,16-16h16A16,16,0,0,1,200,64ZM36,72H32A16,16,0,0,0,16,88v32H8.27A8.18,8.18,0,0,0,0,127.47,8,8,0,0,0,8,136h8v32a16,16,0,0,0,16,16h4a4,4,0,0,0,4-4V76A4,4,0,0,0,36,72Zm220,55.47a8.18,8.18,0,0,0-8.25-7.47H240V88a16,16,0,0,0-16-16h-4a4,4,0,0,0-4,4V180a4,4,0,0,0,4,4h4a16,16,0,0,0,16-16V136h8A8,8,0,0,0,256,127.47Z","user":"M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z","house":"M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z","sneaker-move":"M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z","watch":"M175.3,63.53l-6.24-34.38A16,16,0,0,0,153.32,16H102.68A16,16,0,0,0,86.94,29.15L80.7,63.53a79.9,79.9,0,0,0,0,128.94l6.24,34.38A16,16,0,0,0,102.68,240h50.64a16,16,0,0,0,15.74-13.15l6.24-34.38a79.9,79.9,0,0,0,0-128.94ZM102.68,32h50.64l3.91,21.55a79.75,79.75,0,0,0-58.46,0Zm50.64,192H102.68l-3.91-21.55a79.75,79.75,0,0,0,58.46,0ZM168,136H128a8,8,0,0,1-8-8V88a8,8,0,0,1,16,0v32h32a8,8,0,0,1,0,16Z","arrows-clockwise":"M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1-5.66-13.66L180.65,72a79.48,79.48,0,0,0-54.72-22.09h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27,96,96,0,0,1,192,60.7l18.36-18.36A8,8,0,0,1,224,48ZM186.41,183.29A80,80,0,0,1,75.35,184l18.31-18.31A8,8,0,0,0,88,152H40a8,8,0,0,0-8,8v48a8,8,0,0,0,13.66,5.66L64,195.3a95.42,95.42,0,0,0,66,26.76h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z","info":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-4,48a12,12,0,1,1-12,12A12,12,0,0,1,124,72Zm12,112a16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40a8,8,0,0,1,0,16Z","target":"M221.87,83.16A104.1,104.1,0,1,1,195.67,49l22.67-22.68a8,8,0,0,1,11.32,11.32L167.6,99.71h0l-37.71,37.71-23.95,23.95a40,40,0,0,0,62-35.67,8,8,0,1,1,16-.9,56,56,0,0,1-95.5,42.79h0a56,56,0,0,1,73.13-84.43L184.3,60.39a87.88,87.88,0,1,0,23.13,29.67,8,8,0,0,1,14.44-6.9Z","thermometer":"M212,56a28,28,0,1,0,28,28A28,28,0,0,0,212,56Zm0,40a12,12,0,1,1,12-12A12,12,0,0,1,212,96Zm-60,50.08V40a32,32,0,0,0-64,0V146.08a56,56,0,1,0,64,0ZM136,104H104V40a16,16,0,0,1,32,0Z","bed":"M216,72H32V48a8,8,0,0,0-16,0V208a8,8,0,0,0,16,0V176H240v32a8,8,0,0,0,16,0V112A40,40,0,0,0,216,72ZM32,88h72v72H32Z"}};
+/* The one glyph the app did not already carry: the REGULAR-weight heart, for
+   the cheer control's idle state (the app only had the fill).
+   FLAG: transcribed from @phosphor-icons/core rather than copied from a file
+   already in this repo — verify against the package before shipping. */
+PH.regular.heart = 'M178,32c-20.65,0-38.73,8.88-50,23.89C116.73,40.88,98.65,32,78,32A62.07,62.07,0,0,0,16,94c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,220.66,240,164,240,94A62.07,62.07,0,0,0,178,32ZM128,206.8C109.74,196.16,32,147.69,32,94A46.06,46.06,0,0,1,78,48c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,147.61,146.24,196.15,128,206.8Z';
+
+function injectIcons(root=document){
+  $$('.phi',root).forEach(el=>{
+    if(el.dataset.done) return;
+    const w = el.dataset.weight==='fill' ? 'fill':'regular';
+    const d = (PH[w]||{})[el.dataset.ph];
+    if(!d) return;
+    el.innerHTML = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="'+d+'"/></svg>';
+    el.dataset.done='1';
+  });
+}
+const ico=(name,w='regular')=>'<span class="phi" data-ph="'+name+'"'+(w==='fill'?' data-weight="fill"':'')+'></span>';
+
+/* ── Sample circle ───────────────────────────────────────────────────────
+   Aanya's own figure (7,240 steps) is the same number Home's Today's goals
+   card shows, so the two surfaces agree — the legacy build had no such
+   relationship because the leaderboard was effectively a separate app.
+   Deliberately in this data: a TIE (Rashmi and Ankit both on 9,106 today) so
+   the shared-rank rule gets exercised, and two members with nothing synced so
+   hard rule 2 can be seen working. */
+const PEOPLE = {
+  me:     {id:'me',    name:'You',          initial:'A', hue:1, you:true,
+           today:7240,  week:58110, sync:'14:18', goal:10000,
+           m:{dist:5.1, kcal:420, hr:71, spo2:98, stress:34, temp:36.4, sleep:'7h 04m', sleepScore:78}},
+  koms:   {id:'koms',  name:'Koms',         initial:'K', hue:2,
+           today:12480, week:78300, sync:'14:12', goal:12000,
+           m:{dist:8.9, kcal:684, hr:76, spo2:97, stress:41, temp:36.6, sleep:'6h 48m', sleepScore:71}},
+  rashmi: {id:'rashmi',name:'Rashmi',       initial:'R', hue:3,
+           today:9106,  week:61420, sync:'14:06', goal:10000,
+           m:{dist:6.4, kcal:512, hr:72, spo2:98, stress:28, temp:36.5, sleep:'7h 12m', sleepScore:84}},
+  ankit:  {id:'ankit', name:'Ankit',        initial:'A', hue:4,
+           today:9106,  week:66980, sync:'13:58', goal:8000,
+           m:{dist:6.5, kcal:498, hr:80, spo2:96, stress:52, temp:null, sleep:'5h 51m', sleepScore:58}},
+  shash:  {id:'shash', name:'Shashank',     initial:'S', hue:5,
+           today:null,  week:42110, sync:null, since:'Tue', goal:10000,
+           m:{dist:null,kcal:null,hr:null,spo2:null,stress:null,temp:null,sleep:null,sleepScore:null}},
+  meera:  {id:'meera', name:'Meera',        initial:'M', hue:3,
+           today:10420, week:69850, sync:'14:15', goal:10000,
+           m:{dist:7.3, kcal:560, hr:69, spo2:99, stress:22, temp:36.3, sleep:'7h 48m', sleepScore:89}},
+  dev:    {id:'dev',   name:'Dev',          initial:'D', hue:5,
+           today:4180,  week:31240, sync:'12:40', goal:8000,
+           m:{dist:2.9, kcal:238, hr:74, spo2:97, stress:47, temp:36.7, sleep:'6h 02m', sleepScore:64}},
+  akaush: {id:'akaush',name:'ankitkaushik', initial:'A', hue:2,
+           today:null,  week:null,  sync:null, noband:true, goal:null,
+           m:{dist:null,kcal:null,hr:null,spo2:null,stress:null,temp:null,sleep:null,sleepScore:null}}
+};
+
+/* ── State ───────────────────────────────────────────────────────────────
+   §6. Each F-state is a shape of the model, not a separate screen. */
+const FSTATES = [
+  ['F4','Populated',         'Baseline — four members, everyone synced.'],
+  ['F6','Partial sync',      'The dominant secondary state: two members have nothing for today. Build it early.'],
+  ['F5','Nobody synced',     'No figure anywhere. Hard rule 2 — five zeroes are not a ranking.'],
+  ['F3','Solo',              'A circle of one. Nothing to rank; invite is promoted to primary.'],
+  ['F2','No circle',         'The CTA takes the card slot, at the same footprint.'],
+  ['F1','First load',        'Circle unresolved — skeleton rows, no ranks, period control already live.'],
+  ['F7','Offline',           'Last-known figures, marked stale, ranks not recomputed. Cheers queue.'],
+  ['F8','Your band offline', 'Your own figure is stale — still ranked, on last-known.'],
+  ['F9','Friend has no band','A member who never paired sits in Not synced permanently.']
+];
+let S = {f:'F4', period:'today', friend:'rashmi', cheers:{koms:2, rashmi:4, ankit:1}, cheered:{}};
+
+function model(){
+  const f=S.f, p=S.period;
+  const clone = id => JSON.parse(JSON.stringify(PEOPLE[id]));
+  let ids;
+  if(f==='F2')                    ids=[];
+  else if(f==='F3')               ids=['me'];
+  else if(f==='F6'||f==='F9')     ids=['me','koms','rashmi','ankit','meera','dev','shash','akaush'];
+  else                            ids=['me','koms','rashmi','ankit'];
+
+  const list = ids.map(clone);
+  list.forEach(m=>{
+    m.val = p==='today' ? m.today : m.week;
+    if(f==='F5') m.val=null;                          // nobody synced
+    if(f==='F7') m.stale=true;                        // whole board is last-known
+    if(f==='F8' && m.you) m.stale=true;               // your band offline
+    if(f==='F9' && m.id==='akaush'){ m.noband=true; m.val=null; }
+  });
+  return {f, p, list, offline:f==='F7', loading:f==='F1', nocircle:f==='F2', solo:f==='F3'};
+}
+
+/* Ranking. Ties share a rank and the next rank skips (1,2,2,4).
+   A member with no figure for the period is NEVER given a position. */
+function ranked(list){
+  const has = list.filter(m=>m.val!=null).sort((a,b)=>b.val-a.val);
+  let last=null, lastRank=0;
+  has.forEach((m,i)=>{
+    if(m.val===last){ m.rank=lastRank; }
+    else { m.rank=i+1; lastRank=m.rank; last=m.val; }
+  });
+  return {has, none:list.filter(m=>m.val==null), leader:has[0]||null};
+}
+
+/* The nearest actionable gap — the person directly above you. Never a total.
+   FLAG: with a tie directly above you this names whichever of the two sorts
+   first. Honest, but arbitrary between equals — flagged, not decided (§9). */
+function gapAbove(has){
+  const i = has.findIndex(m=>m.you);
+  if(i<0) return null;
+  if(i===0){
+    const nxt=has[1];
+    return nxt ? {lead:true, by:has[0].val-nxt.val, who:nxt.name} : null;
+  }
+  return {lead:false, by:has[i-1].val-has[i].val, who:has[i-1].name};
+}
+
+/* 7.2 · the relative bar — .gbar from Today's goals, scaled to the leader */
+function bar(val, max, hue='var(--metric-steps)'){
+  const pct = (val && max) ? Math.max(3, Math.round(val/max*100)) : 0;
+  return '<span class="gbar bar"><i style="width:'+pct+'%;background:'+hue+'"></i></span>';
+}
+const avatar=(m,size='')=>'<span class="av '+size+'" data-hue="'+m.hue+'">'+m.initial+'</span>';
+
+/* 7.3 · the cheer control — an action with states, not a counter */
+function cheerBtn(m){
+  if(m.you) return '<span></span>';                  /* you cannot cheer yourself */
+  let st = S.cheered[m.id] || 'idle';
+  if(S.f==='F7' && st==='done') st='queued';
+  return '<button class="cheer" data-cheer="'+st+'" data-cheerid="'+m.id+'" aria-label="Cheer '+m.name+'">'
+    +'<span class="ico"><span class="phi lineheart" data-ph="heart"></span>'
+    +'<span class="phi fillheart" data-ph="heart" data-weight="fill"></span></span>'
+    +'<span class="n">'+(S.cheers[m.id]||0)+'</span></button>';
+}
+
+/* ═══ HOME — rings + goals, abbreviated from the Home prototype for context ═ */
+function renderRings(){
+  const data=[['Sleep',78,'var(--metric-sleep)'],['Readiness',73,'var(--metric-readiness)'],['Activity',68,'var(--metric-activity)']];
+  $('#rings').innerHTML = data.map(function(d){
+    const lbl=d[0], v=d[1], c=d[2], r=22, C=2*Math.PI*r, off=C*(1-v/100);
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">'
+      +'<svg width="56" height="56" viewBox="0 0 56 56" style="transform:rotate(-90deg)">'
+      +'<circle cx="28" cy="28" r="'+r+'" fill="none" stroke="var(--surface-raised)" stroke-width="5"/>'
+      +'<circle cx="28" cy="28" r="'+r+'" fill="none" stroke="'+c+'" stroke-width="5" stroke-linecap="round"'
+      +' stroke-dasharray="'+C+'" stroke-dashoffset="'+off+'"/></svg>'
+      +'<span style="font:700 17px/22px var(--font-number);font-feature-settings:var(--num-features)">'+v+'</span>'
+      +'<span style="font:500 11px/16px var(--font-text);color:var(--text-3)">'+lbl+'</span></div>';
+  }).join('');
+}
+function goalRows(p){
+  const rows=[['footprints','Steps', p.val!=null?n(p.val):'—', p.goal?'/ '+n(p.goal):'', p.val, p.goal, 'var(--metric-steps)'],
+              ['map-pin','Distance', p.m.dist!=null?p.m.dist:'—', '/ 8 km', p.m.dist, 8, 'var(--metric-distance)'],
+              ['fire','Calories', p.m.kcal!=null?n(p.m.kcal):'—', '/ 600 kcal', p.m.kcal, 600, 'var(--metric-calories)']];
+  return rows.map(function(r){
+    return '<div class="goalrow"><span class="phi gicon" data-ph="'+r[0]+'" data-weight="fill" style="color:'+r[6]+'"></span>'
+      +'<span class="gname">'+r[1]+'</span>'
+      +'<span class="gval"><span class="gnum">'+r[2]+'</span><span class="ggoal">'+r[3]+'</span></span>'
+      +bar(r[4],r[5],r[6])+'</div>';
+  }).join('');
+}
+function renderGoals(){ $('#goals').innerHTML = goalRows(Object.assign({},PEOPLE.me,{val:PEOPLE.me.today})); }
+
+/* ═══ 7.4 · THE FRIENDS CARD — one instance, six states, ONE height ═══════ */
+function renderFriendsCard(){
+  const M=model(), body=$('#fc-body');
+  $('#fc-period').textContent = S.period==='today' ? 'Today' : '7 days';
+
+  if(M.loading){                                     /* F1 */
+    body.innerHTML='<div class="fc-rows">'+[0,1,2].map(function(){
+      return '<div class="fcrow" data-row="skeleton"><span class="rank"></span>'
+      +'<span class="av sm" style="background:var(--surface-raised);color:transparent">.</span>'
+      +'<span style="display:block;height:10px;width:96px;border-radius:999px;background:var(--surface-raised)"></span>'
+      +'<span style="display:block;height:10px;width:44px;border-radius:999px;background:var(--surface-raised);justify-self:end"></span>'
+      +bar(0,1)+'</div>';
+    }).join('')+'</div>';
+    return;
+  }
+  if(M.nocircle){                                    /* F2 — CTA in the card's slot */
+    body.innerHTML='<div class="fc-slot">'
+      +'<p class="msg">Compare your steps with friends and family. Invite someone, or join with a code.</p>'
+      /* secondary, not primary: Start Workout is Home's one teal action and
+         the button spec forbids two on a screen. */
+      +'<button class="btn btn--secondary btn--m" data-sheet="add">Add people</button></div>';
+    return;
+  }
+  const R=ranked(M.list);
+  if(!R.has.length){                                 /* F5 — nothing to rank */
+    body.innerHTML='<div class="fc-slot"><span class="big">—</span>'
+      +'<p class="msg">Nothing to rank yet. Figures appear as your circle&rsquo;s bands sync.</p></div>';
+    return;
+  }
+  if(M.solo){                                        /* F3 */
+    body.innerHTML='<div class="fc-slot"><span class="big">'+n(R.has[0].val)+'</span>'
+      +'<p class="msg">'+(S.period==='today'?'steps today':'steps over 7 days')+'. Invite someone to compare with.</p>'
+      +'<button class="btn btn--secondary btn--m" data-sheet="add">Invite someone</button></div>';
+    return;
+  }
+
+  /* at most three rows: the leader, the person directly above you, and you */
+  const me=R.has.find(m=>m.you), pick=[];
+  const push=m=>{ if(m && pick.indexOf(m)<0) pick.push(m); };
+  push(R.leader);
+  if(me){ const i=R.has.indexOf(me); if(i>0) push(R.has[i-1]); push(me); }
+  let k=1; while(pick.length<3 && k<R.has.length){ push(R.has[k]); k++; }
+  pick.sort((a,b)=>a.rank-b.rank);
+
+  const g=gapAbove(R.has);
+  body.innerHTML='<div class="fc-rows">'+pick.map(function(m){
+      return '<div class="fcrow" data-row="'+(m.you?'you':'ranked')+'">'
+        +'<span class="rank">'+m.rank+'</span>'+avatar(m,'sm')
+        +'<span class="nm">'+m.name+'</span>'
+        +'<span class="val"><span class="num">'+n(m.val)+'</span><span class="unit">steps</span></span>'
+        +bar(m.val,R.leader.val)+'</div>';
+    }).join('')+'</div>'
+    +'<div class="fc-gap">'+(g
+        ? (g.lead ? 'You&rsquo;re leading by <b>'+n(g.by)+'</b> steps'
+                  : '<b>'+n(g.by)+'</b> steps behind '+g.who)
+        : 'You have nothing synced for this period')+'</div>';
+}
+
+/* ═══ S02 · LEADERBOARD ═══════════════════════════════════════════════════ */
+function renderLeaderboard(){
+  const M=model(), mount=$('#lb-mount'), foot=$('#lb-foot'), status=$('#lb-status');
+  $$('#lb-seg button').forEach(function(b){
+    b.classList.toggle('active', b.dataset.period===S.period);
+    b.disabled = M.offline;                          /* last-known is one period only */
+  });
+
+  if(M.nocircle){                                    /* 7.8 · no-circle variant */
+    status.innerHTML=''; foot.innerHTML=''; $('#youbar').hidden=true;
+    mount.innerHTML='<div class="empty"><span class="chip40">'+ico('user','fill')+'</span>'
+      +'<h3>No circle yet</h3>'
+      +'<p>A circle ranks everyone&rsquo;s steps side by side and lets you open each other&rsquo;s day. Invite someone, or join with a code.</p>'
+      +'<button class="btn btn--primary" data-sheet="add">Add people</button></div>';
+    injectIcons(mount); return;
+  }
+  if(M.loading){                                     /* F1 */
+    status.textContent='Loading your circle…'; foot.innerHTML=''; $('#youbar').hidden=true;
+    mount.innerHTML=[0,1,2,3].map(function(){
+      return '<div class="lbrow" data-row="skeleton"><span class="rank"></span>'
+      +'<span class="av" style="background:var(--surface-raised);color:transparent">.</span>'
+      +'<span class="sk w1"></span><span class="sk w2"></span>'+bar(0,1)+'<span></span></div>';
+    }).join('');
+    return;
+  }
+
+  const R=ranked(M.list);
+  status.className='statusline'+(M.offline?' stale':'');
+  status.innerHTML = M.offline
+    ? ico('arrows-clockwise','fill')+'Offline &mdash; showing last known figures'
+    : R.has.length+' of '+M.list.length+' synced &middot; '
+      +(S.period==='today' ? 'updated 14:20' : 'Aug 28 &ndash; Sep 3');
+
+  let html='';
+  if(R.has.length){
+    html += R.has.map(function(m){
+      const st = m.stale ? 'stale' : 'ranked';
+      /* hard rule 7 — your own row does not open a second copy of you; it
+         routes to the Activity tab at the selected period. */
+      const tap = m.you ? ' data-tap="mine"' : ' data-tap="friend" data-id="'+m.id+'"';
+      return '<div class="lbrow" data-row="'+st+'"'+(m.you?' data-you':'')+tap+'>'
+        +'<span class="rank">'+m.rank+'</span>'+avatar(m)
+        +'<span class="who"><span class="nm">'+m.name+'</span></span>'
+        +'<span class="val"><span class="num">'+n(m.val)+'</span><span class="unit">steps</span></span>'
+        +cheerBtn(m)+bar(m.val,R.leader.val)
+        +(m.stale?'<span class="why">last synced '+(m.sync||'earlier')+'</span>':'')+'</div>';
+    }).join('');
+  } else {
+    html += '<div class="empty"><span class="chip40">'+ico('footprints','fill')+'</span>'
+      +'<h3>Nothing to rank yet</h3>'
+      +'<p>No one in your circle has a figure for '+(S.period==='today'?'today':'this period')
+      +'. Ranks appear as bands sync.</p></div>';
+  }
+  /* the Not synced break — no rank numerals, no positions (hard rule 2) */
+  if(R.none.length){
+    html += '<div class="lb-break">Not synced</div>'
+      + R.none.map(function(m){
+          const why = m.noband ? 'hasn&rsquo;t set up a band'
+                    : m.since ? 'last synced '+m.since
+                    : 'nothing recorded yet';
+          return '<div class="lbrow" data-row="nosync"'+(m.you?' data-you':' data-tap="friend" data-id="'+m.id+'"')+'>'
+            +'<span class="rank"></span>'+avatar(m)
+            +'<span class="who"><span class="nm">'+m.name+'</span></span>'
+            +'<span class="val"><span class="num">&mdash;</span></span>'
+            +cheerBtn(m)+'<span class="why">'+why+'</span></div>';
+        }).join('');
+  }
+  mount.innerHTML=html;
+
+  /* one primary action per screen — primary only when it is the whole point */
+  foot.innerHTML = M.solo
+    ? '<button class="btn btn--primary" data-sheet="add">Invite someone</button>'
+    : '<button class="btn btn--secondary" data-sheet="add">Invite someone</button>';
+
+  injectIcons(mount); injectIcons(foot);
+  syncYouBar();
+}
+
+/* The sticky you-bar is shown ONLY while your row is off-screen. It is a
+   scroll affordance, never a second row — hard rule 1, and the fix for the
+   legacy screen's duplicated pinned row. */
+function syncYouBar(){
+  const page=$('#p-friends'), yb=$('#youbar'), row=$('.lbrow[data-you]',page);
+  if(!row || page.hidden){ yb.hidden=true; return; }
+  const pr=page.getBoundingClientRect(), rr=row.getBoundingClientRect();
+  const visible = rr.bottom > pr.top+72 && rr.top < pr.bottom-64;
+  yb.hidden = visible;
+  if(!visible){
+    const R=ranked(model().list), me=R.has.find(m=>m.you), g=gapAbove(R.has);
+    if(!me){ yb.hidden=true; return; }
+    $('#yb-rank').textContent=me.rank;
+    $('#yb-num').textContent=n(me.val);
+    $('#yb-gap').innerHTML = g ? (g.lead?'leading by '+n(g.by):n(g.by)+' behind '+g.who) : '';
+  }
+}
+
+/* ═══ S03 · FRIEND PROFILE — Home's cards, Home's order, read-only ════════
+   What is deliberately NOT on this page: the title "My Homepage", a
+   background setter, an email address, a share icon, any goal control.
+   Hard rules 5 and 6, and items 9, 10 and 12 of §1.                        */
+function renderFriend(){
+  const M=model(), R=ranked(M.list);
+  const p = M.list.find(m=>m.id===S.friend) || M.list.find(m=>!m.you);
+  if(!p) return;
+  $('#fr-title').textContent = p.name;
+  $('#mute-name').textContent = p.name;
+  $('#cal-who').innerHTML = p.name+'&rsquo;s history';
+
+  const me = R.has.find(m=>m.you);
+  const rk = (p.val!=null && p.rank)
+    ? '#'+p.rank+' '+(S.period==='today'?'today':'this week')+' &middot; '+n(p.val)+' steps'
+    : 'Not ranked '+(S.period==='today'?'today':'this period');
+  const sy = p.noband ? 'No band paired'
+           : p.sync   ? 'Synced '+p.sync
+           : p.since  ? 'Last synced '+p.since : 'Never synced';
+
+  let html = '<div class="ident">'+avatar(p,'lg')
+    +'<span class="txt"><span class="nm">'+p.name+'</span>'
+    +'<span class="rk">'+rk+'</span><span class="sy">'+sy+'</span></span></div>';
+
+  /* 7.6 · the compare strip. The reason this page exists — you arrived from
+     a ranking, so the page opens by answering the ranking. */
+  if(p.val!=null && me){
+    const max=Math.max(p.val,me.val), d=p.val-me.val;
+    const say = d>0 ? '<b>'+n(d)+'</b> steps ahead of you'
+              : d<0 ? '<b>'+n(-d)+'</b> steps behind you' : 'Level with you';
+    html += '<div class="card"><div class="card-head"><div class="card-title">Compared with you</div>'
+      +'<span class="subnote">'+(S.period==='today'?'Today':'7 days')+'</span></div>'
+      +'<div class="card-body compare">'
+      +'<div class="cmprow"><span class="who">'+p.name+'</span>'
+      +'<span class="val"><span class="num">'+n(p.val)+'</span><span class="unit">steps</span></span>'
+      +bar(p.val,max)+'</div>'
+      +'<div class="cmprow"><span class="who">You</span>'
+      +'<span class="val"><span class="num">'+n(me.val)+'</span><span class="unit">steps</span></span>'
+      +bar(me.val,max,'var(--text-3)')+'</div>'
+      +'<div class="cmp-say">'+say+'</div></div></div>';
+  }
+
+  /* the date control — the month-scroll calendar the other tabs already use,
+     not the clipped 7-day strip of the legacy page (item 11) */
+  html += '<button class="card" data-cal style="text-align:left;border:0;cursor:pointer;font-family:inherit;'
+    +'display:flex;align-items:center;justify-content:space-between;gap:8px">'
+    +'<span><span style="font:500 15px/22px var(--font-text);color:var(--text-1)">Today, Sep 3</span><br>'
+    +'<span class="subnote" style="color:var(--text-3)">Tap to see earlier days</span></span>'
+    +'<span class="chev"></span></button>';
+
+  if(p.noband || (p.val==null && p.m.hr==null)){
+    /* 7.8 · friend-has-no-band / nothing recorded — an empty state, not a
+       page of blank cards showing "--" twice (item 12) */
+    html += '<div class="empty"><span class="chip40">'+ico('watch','fill')+'</span>'
+      +'<h3>'+(p.noband?'No band yet':'Nothing recorded')+'</h3>'
+      +'<p>'+(p.noband
+          ? p.name+' has joined your circle but hasn&rsquo;t paired a band, so there&rsquo;s nothing to show.'
+          : p.name+' has no data for this day. Try an earlier date.')+'</p></div>';
+  } else {
+    /* Home's Activity card, read-only */
+    html += '<div class="card" data-readonly><div class="card-head"><div class="card-title">Activity</div></div>'
+      +'<div class="card-body">'+goalRows(p)+'</div></div>';
+    /* Home's Health monitor metrics, read-only, in Home's order */
+    const tiles=[['Heart rate',p.m.hr,'bpm','var(--metric-heart-rate)'],
+                 ['Blood oxygen',p.m.spo2,'%','var(--metric-spo2)'],
+                 ['Stress',p.m.stress,'','var(--metric-stress)'],
+                 ['Skin temp',p.m.temp,'&deg;C','var(--metric-skin-temp)']];
+    html += '<div class="card"><div class="card-head"><div class="card-title">Health monitor</div>'
+      +'<span class="subnote" style="color:var(--text-3)">avg today</span></div>'
+      +'<div class="card-body metricgrid">'
+      + tiles.map(function(t){
+          return '<div class="mtile"'+(t[1]==null?' data-nodata':'')+'>'
+            +'<span class="top"><span class="dot" style="background:'+t[3]+'"></span><span class="lbl">'+t[0]+'</span></span>'
+            +'<span class="fig"><span class="num">'+(t[1]==null?'&mdash;':t[1])+'</span>'
+            +(t[2]&&t[1]!=null?'<span class="unit">'+t[2]+'</span>':'')+'</span></div>';
+        }).join('')+'</div></div>';
+    /* Sleep last, as on Home */
+    html += '<div class="card"><div class="card-head"><div class="card-title">Sleep</div>'
+      +'<span class="subnote" style="color:var(--text-3)">last night</span></div>'
+      +'<div class="card-body" style="display:flex;align-items:baseline;gap:12px">'
+      +'<span style="font:700 24px/28px var(--font-number);font-feature-settings:var(--num-features)">'
+      +(p.m.sleep||'&mdash;')+'</span>'
+      +(p.m.sleepScore?'<span class="subnote" style="color:var(--text-3)">score '+p.m.sleepScore+'</span>':'')
+      +'</div></div>';
+  }
+
+  /* the page's one primary action */
+  html += '<div style="padding:4px 0 8px">'
+    + (S.cheered[p.id]==='done'
+        ? '<button class="btn btn--secondary" disabled>Cheered</button>'
+        : '<button class="btn btn--primary" data-cheerid="'+p.id+'">Cheer '+p.name+'</button>')
+    + '</div>';
+
+  $('#fr-body').innerHTML = html;
+  injectIcons($('#fr-body'));
+}
+
+/* ═══ S06 · CIRCLE MEMBERS ════════════════════════════════════════════════ */
+function renderCircle(){
+  const M=model(), rows=[M.list.find(m=>m.you)].concat(M.list.filter(m=>!m.you)).filter(Boolean);
+  $('#circle-body').innerHTML =
+    '<div class="card"><div class="card-head"><div class="card-title">Members</div>'
+    /* FLAG (§9): the member cap is unresolved. "of 8" is a placeholder — it
+       decides whether + disappears at the cap and whether S05 needs a
+       circle-full state. */
+    +'<span class="subnote">'+M.list.length+' of 8</span></div><div class="card-body" style="margin-top:8px">'
+    + rows.map(function(m,i){
+        return '<div class="listrow"'+(i===0?' style="border-top:0"':'')+'>'
+          +'<span class="lft">'+avatar(m)+'<span class="txt"><span class="t1">'+m.name+(m.you?' (you)':'')+'</span>'
+          +'<span class="t2">'+(m.noband?'no band paired':m.sync?'synced '+m.sync:m.since?'last synced '+m.since:'never synced')+'</span></span></span>'
+          +(m.you?'':'<span class="rgt"><button class="btn btn--tertiary btn--m" style="width:auto;padding:0 8px;font-size:13px" data-confirm="remove" data-id="'+m.id+'">Remove</button></span>')
+          +'</div>';
+      }).join('')
+    +'</div></div>'
+    +'<div class="card"><div class="card-head"><div class="card-title">Your code</div></div>'
+    +'<div class="card-body"><div class="codebox"><span>K7M4Q2</span></div>'
+    +'<div class="btnrow" style="margin-top:12px"><button class="btn btn--secondary btn--m">Share</button>'
+    +'<button class="btn btn--tertiary btn--m">Rotate code</button></div>'
+    /* §9: a permanent code that grants health-data access can never be
+       un-shared, so rev 1 assumes it rotates. Confirm the lifetime. */
+    +'<p class="sheet-sub" style="margin-top:8px;color:var(--text-3);font:400 11px/16px var(--font-text)">'
+    +'Rotating stops the old code working. People already in your circle stay.</p></div></div>'
+    +'<button class="btn btn--destructive" data-confirm="leave">Leave circle</button>';
+  injectIcons($('#circle-body'));
+}
+
+/* ═══ 7.7 · S04 ADD PEOPLE + the confirm sheets ═══════════════════════════ */
+const DISCLOSURE = 'They&rsquo;ll be able to see your <b>activity, heart rate, sleep and blood oxygen</b> '
+  + '&mdash; for any day, not just today.';
+
+function openSheet(kind, arg){
+  const t=$('#sheet-title'), b=$('#sheet-body');
+  if(kind==='add'){
+    t.textContent='Add people';
+    b.innerHTML =
+      '<span class="sheet-label">Invite someone to your circle</span>'
+      /* The disclosure is a requirement, not copy garnish. Rev 1 shares
+         every metric, so this sheet is the only place a person learns what
+         a code hands over — §4.3 and the first privacy item in §9. */
+      +'<div class="disclose">'+ico('info','fill')+'<p>'+DISCLOSURE+'</p></div>'
+      +'<div class="codebox"><span>K7M4Q2</span></div>'
+      +'<div class="btnrow"><button class="btn btn--primary btn--m">Share</button>'
+      +'<button class="btn btn--secondary btn--m">Copy</button></div>'
+      +'<hr class="sheet-rule">'
+      +'<span class="sheet-label">Have a code?</span>'
+      +'<button class="btn btn--tertiary btn--m" data-open="p-join">Join a circle</button>';
+  }
+  if(kind==='remove'){
+    const who=(PEOPLE[arg]||{}).name||'this person';
+    t.textContent='Remove '+who+'?';
+    b.innerHTML='<p class="sheet-sub">'+who+' leaves your circle. You stop seeing each other&rsquo;s '
+      +'figures and days, and your cheers disappear from each other&rsquo;s rows. '
+      +'They aren&rsquo;t told, and they can rejoin with your code.</p>'
+      /* §9: whether a removed member loses access to days already seen is
+         unresolved — this copy will change when it is answered. */
+      +'<button class="btn btn--destructive" data-close="sheet">Remove '+who+'</button>'
+      +'<button class="btn btn--tertiary" data-close="sheet">Keep in circle</button>';
+  }
+  if(kind==='leave'){
+    t.textContent='Leave this circle?';
+    b.innerHTML='<p class="sheet-sub">You stop seeing everyone&rsquo;s figures and they stop seeing yours '
+      +'&mdash; including days already recorded. Your own history stays in Pebble. '
+      +'Rejoining needs a new code from someone still in the circle.</p>'
+      +'<button class="btn btn--destructive" data-close="sheet">Leave circle</button>'
+      +'<button class="btn btn--tertiary" data-close="sheet">Stay</button>';
+  }
+  $('#scrim').hidden=false; $('#sheet').hidden=false; injectIcons($('#sheet'));
+}
+function closeSheets(){
+  $('#scrim').hidden=true; $('#sheet').hidden=true; $('#menu-sheet').hidden=true;
+}
+
+/* ═══ the month-scroll calendar, shared with the Activity / Sleep tabs ═════ */
+function renderCal(){
+  const months=[['August 2026',31,5],['September 2026',30,1]];   /* [name, days, firstDow 0=Mon] */
+  const today=3, cur=1;
+  $('#cal-scroll').innerHTML = months.map(function(mo,mi){
+    let cells='';
+    for(let i=0;i<mo[2];i++) cells+='<span></span>';
+    for(let d=1;d<=mo[1];d++){
+      const future = mi===cur && d>today;
+      const has = !future && (d%7!==0);                  /* sample sync pattern */
+      cells += '<button class="cal-day'+(future?' future':'')+(mi===cur&&d===today?' sel':'')+'">'
+        +'<span class="dn">'+d+'</span>'
+        +(future?'':'<span class="dd'+(has?'':' none')+'"></span>')+'</button>';
+    }
+    return '<div class="cal-month"><div class="mt">'+mo[0]+'</div><div class="cal-grid">'+cells+'</div></div>';
+  }).join('');
+  const sc=$('#cal-scroll'); sc.scrollTop=sc.scrollHeight;
+}
+
+/* ═══ the component gallery — a review aid, not a shipping screen ═════════ */
+function renderGallery(){
+  const m=PEOPLE.rashmi, mv=Object.assign({},m,{val:m.today,rank:2});
+  const row=(state,extra,label)=>
+    '<div class="cap">'+label+'</div><div class="lbrow" data-row="'+(state==='you'?'ranked':state)+'"'+(state==='you'?' data-you':'')+'>'
+    +'<span class="rank">'+(state==='nosync'||state==='skeleton'?'':'2')+'</span>'+avatar(mv)
+    +'<span class="who"><span class="nm">'+(state==='skeleton'?'':(state==='you'?'You':'Rashmi'))+'</span></span>'
+    +'<span class="val"><span class="num">'+(state==='nosync'?'&mdash;':n(mv.val))+'</span>'
+    +(state==='nosync'?'':'<span class="unit">steps</span>')+'</span>'
+    +'<button class="cheer" data-cheer="idle"><span class="ico"><span class="phi lineheart" data-ph="heart"></span>'
+    +'<span class="phi fillheart" data-ph="heart" data-weight="fill"></span></span><span class="n">4</span></button>'
+    +(state==='nosync'?'':bar(mv.val,12480))+(extra||'')+'</div>';
+
+  const cheer=(st,label)=>'<div style="display:flex;flex-direction:column;align-items:center;gap:4px">'
+    +'<button class="cheer" data-cheer="'+st+'"><span class="ico">'
+    +'<span class="phi lineheart" data-ph="heart"></span>'
+    +'<span class="phi fillheart" data-ph="heart" data-weight="fill"></span></span>'
+    +'<span class="n">4</span></button>'
+    +'<span style="font:400 10px/14px var(--font-text);color:var(--text-3)">'+label+'</span></div>';
+
+  $('#gal').innerHTML =
+    '<h3>7.1 Leaderboard row</h3><div class="grp">'
+      + row('ranked','','ranked')
+      + row('you','','you — the only highlight, and there is only ever one')
+      + row('stale','<span class="why">last synced 09:40</span>','stale — last known, still ranked')
+      + row('nosync','<span class="why">hasn&rsquo;t set up a band</span>','not synced — no numeral, no position')
+      + '<div class="cap">skeleton</div><div class="lbrow" data-row="skeleton"><span class="rank"></span>'
+      + '<span class="av" style="background:var(--surface-raised);color:transparent">.</span>'
+      + '<span class="sk w1"></span><span class="sk w2"></span>'+bar(0,1)+'<span></span></div>'
+    + '</div>'
+
+    + '<h3>7.3 Cheer control</h3><div class="grp" style="display:flex;gap:8px;justify-content:space-around;padding:16px 8px">'
+      + cheer('idle','idle') + cheer('pending','pending') + cheer('done','done')
+      + cheer('failed','failed') + cheer('limit','at limit') + cheer('queued','queued')
+    + '</div>'
+
+    + '<h3>7.2 Relative bar</h3><div class="grp" style="padding:16px">'
+      + '<div style="display:flex;flex-direction:column;gap:12px">'
+      + bar(12480,12480) + bar(9106,12480) + bar(7240,12480) + bar(0,12480) + '</div></div>'
+
+    + '<h3>7.5 Period control</h3><div class="grp" style="padding:12px">'
+      + '<div class="seg"><button class="active">Today</button><button>7 days</button></div>'
+      + '<div class="cap">offline — last known is one period only</div>'
+      + '<div class="seg"><button class="active" disabled>Today</button><button disabled>7 days</button></div>'
+      + '<div class="statusline stale" style="padding:0 4px">'+ico('arrows-clockwise','fill')
+      + 'Offline &mdash; showing last known figures</div>'
+    + '</div>'
+
+    + '<h3>7.6 Compare strip</h3><div class="grp" style="padding:16px"><div class="compare">'
+      + '<div class="cmprow"><span class="who">Rashmi</span><span class="val"><span class="num">9,106</span>'
+      + '<span class="unit">steps</span></span>'+bar(9106,9106)+'</div>'
+      + '<div class="cmprow"><span class="who">You</span><span class="val"><span class="num">7,240</span>'
+      + '<span class="unit">steps</span></span>'+bar(7240,9106,'var(--text-3)')+'</div>'
+      + '<div class="cmp-say"><b>1,866</b> steps ahead of you</div></div></div>'
+
+    + '<h3>7.7 Disclosure — required, not decoration</h3><div class="grp" style="padding:12px">'
+      + '<div class="disclose">'+ico('info','fill')+'<p>'+DISCLOSURE+'</p></div></div>'
+
+    + '<h3>Avatars — 40px chip, initial fallback</h3><div class="grp" style="display:flex;gap:8px;padding:16px;justify-content:center">'
+      + [PEOPLE.me,PEOPLE.koms,PEOPLE.rashmi,PEOPLE.ankit,PEOPLE.shash].map(p=>avatar(p)).join('')
+    + '</div>';
+  injectIcons($('#gal'));
+}
+
+/* ═══ RENDER + NAVIGATION ═════════════════════════════════════════════════ */
+function renderAll(){
+  renderRings(); renderGoals(); renderFriendsCard();
+  renderLeaderboard(); renderFriend(); renderCircle(); renderCal(); renderGallery();
+  injectIcons();
+}
+
+/* control panel */
+$('#fstates').innerHTML = FSTATES.map(function(f){
+  return '<label'+(f[0]===S.f?' class="on"':'')+'><input type="radio" name="f" value="'+f[0]+'"'
+    +(f[0]===S.f?' checked':'')+'><span>'+f[0]+' &middot; '+f[1]+'<span class="desc">'+f[2]+'</span></span></label>';
+}).join('');
+$('#screens').innerHTML = [
+  ['page-home','Home','The Friends card in place, at the end of Activity monitor.'],
+  ['p-friends','Leaderboard','S02.'],
+  ['p-friend','Friend profile','S03 — Home&rsquo;s cards, read-only.'],
+  ['p-circle','Circle members','S06.'],
+  ['page-gallery','Components','Every state from §7, for review.']
+].map(function(s,i){
+  return '<label'+(i===0?' class="on"':'')+'><input type="radio" name="scr" value="'+s[0]+'"'
+    +(i===0?' checked':'')+'><span>'+s[1]+'<span class="desc">'+s[2]+'</span></span></label>';
+}).join('');
+
+$$('#fstates input').forEach(function(r){
+  r.addEventListener('change',function(){
+    S.f=r.value; S.cheered={};
+    $$('#fstates label').forEach(l=>l.classList.toggle('on', l.contains(r)));
+    renderAll(); syncYouBar();
+  });
+});
+function showScreen(id){
+  $$('.subpage').forEach(s=>s.hidden=true);
+  $$('.page').forEach(p=>p.classList.remove('active'));
+  closeSheets(); $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true;
+  if(id.indexOf('page-')===0){ $('#'+id).classList.add('active'); }
+  else { $('#page-home').classList.add('active'); $('#'+id).hidden=false; $('#'+id).scrollTop=0; }
+  syncYouBar();
+}
+$$('#screens input').forEach(function(r){
+  r.addEventListener('change',function(){
+    $$('#screens label').forEach(l=>l.classList.toggle('on', l.contains(r)));
+    showScreen(r.value);
+  });
+});
+
+/* taps */
+document.addEventListener('click', function(e){
+  const t=e.target;
+
+  const cheerBtnEl=t.closest('.cheer,[data-cheerid]');
+  if(cheerBtnEl && cheerBtnEl.dataset.cheerid){
+    const id=cheerBtnEl.dataset.cheerid;
+    if(cheerBtnEl.dataset.cheer==='limit' || S.cheered[id]==='done'){ return; }
+    /* optimistic: pending first, settle after the write. Nothing that writes
+       to the server may look settled while the write is in flight (7.3). */
+    S.cheered[id]='pending'; renderLeaderboard(); renderFriend(); injectIcons();
+    setTimeout(function(){
+      S.cheered[id]='done'; S.cheers[id]=(S.cheers[id]||0)+1;
+      renderLeaderboard(); renderFriend(); injectIcons();
+    }, 520);
+    e.stopPropagation(); return;
+  }
+
+  const openEl=t.closest('[data-open]');
+  if(openEl){ showScreen(openEl.dataset.open); closeSheets(); return; }
+
+  const sheetEl=t.closest('[data-sheet]');
+  if(sheetEl){ openSheet(sheetEl.dataset.sheet); return; }
+
+  const confirmEl=t.closest('[data-confirm]');
+  if(confirmEl){ openSheet(confirmEl.dataset.confirm, confirmEl.dataset.id); return; }
+
+  if(t.closest('[data-close]')){ closeSheets(); $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true; return; }
+  if(t.closest('[data-back]')){ t.closest('.subpage').hidden=true; return; }
+  if(t.closest('[data-cal]')){ $('#cal-sheet').hidden=false; $('#cal-scrim').hidden=false; renderCal(); return; }
+  if(t.closest('[data-menu]')){ $('#scrim').hidden=false; $('#menu-sheet').hidden=false; return; }
+
+  const rowEl=t.closest('[data-tap]');
+  if(rowEl){
+    const kind=rowEl.dataset.tap;
+    if(kind==='friends'){ showScreen('p-friends'); return; }
+    if(kind==='friend'){ S.friend=rowEl.dataset.id; renderFriend(); showScreen('p-friend'); return; }
+    /* hard rule 7 — your own row never opens a second copy of your own data.
+       In the real build this routes to the Activity tab at the selected
+       period. Here it says so rather than pretending to navigate.
+       FLAG (§9): confirm that back from there returns to the leaderboard. */
+    if(kind==='mine'){
+      const s=$('#lb-status');
+      s.classList.add('stale');
+      s.innerHTML=ico('arrows-clockwise','fill')+'Your own row opens the Activity tab &mdash; not a second profile';
+      injectIcons(s);
+      setTimeout(renderLeaderboard, 1900);
+      return;
+    }
+  }
+});
+
+/* S05 join — OTP behaviour lifted from the onboarding component */
+const otp=$$('#otp input');
+otp.forEach(function(inp,i){
+  inp.addEventListener('input',function(){
+    inp.value=inp.value.replace(/[^a-z0-9]/gi,'').toUpperCase();
+    if(inp.value && i<otp.length-1) otp[i+1].focus();
+    const code=otp.map(x=>x.value).join('');
+    const st=$('#join-state'), box=$('#otp');
+    if(code.length<6){ st.innerHTML=''; box.dataset.otp=''; return; }
+    if(code==='K7M4Q2'){                       /* your own code */
+      box.dataset.otp='error';
+      st.innerHTML='<div class="inline-err">'+ico('info','fill')+'That&rsquo;s your own code.</div>';
+    } else if(code[0]==='X'){                  /* demo: X… is an expired code */
+      box.dataset.otp='error';
+      st.innerHTML='<div class="inline-err">'+ico('info','fill')+'This code has expired. Ask for a new one.</div>';
+    } else {
+      /* resolved — you see whose circle, and what joining shares, BEFORE
+         confirming. The sixth character is never the commit (§4.4). */
+      box.dataset.otp='';
+      st.innerHTML='<div class="resolved">'+avatar(PEOPLE.koms)
+        +'<span class="txt"><span class="t1">Koms&rsquo;s circle</span>'
+        +'<span class="t2">5 people &middot; Koms, Rashmi, Ankit, Meera, Dev</span></span></div>'
+        +'<div class="disclose" style="margin-top:12px">'+ico('info','fill')
+        +'<p>Everyone in this circle will be able to see your <b>activity, heart rate, sleep and blood oxygen</b> '
+        +'&mdash; for any day, not just today.</p></div>'
+        +'<button class="btn btn--primary" style="margin-top:12px">Join Koms&rsquo;s circle</button>'
+        +'<button class="btn btn--tertiary" data-back>Cancel</button>';
+    }
+    injectIcons(st);
+  });
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Backspace' && !inp.value && i>0) otp[i-1].focus();
+  });
+});
+
+renderAll();
+showScreen('page-home');
+</script>
+</body>
+</html>
