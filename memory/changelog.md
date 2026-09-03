@@ -5,6 +5,30 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-03 (later) — Friends flow rev 3, built into `Friends/friends.html`
+  from the owner's rev-2 file and published as an artifact for review. Five
+  owner corrections: (1) **colour used intentionally from the design system** —
+  a doctrine is now stated in the token block and applied throughout: a metric
+  hue means that metric is on screen, rank and identity are carried by
+  elevation and text tier, the semantic quads are for state only. That removed
+  the gold steps glyph, the gold first-place plinth, the five metric-alias
+  avatar tints and the teal ring on your own podium tile, and put both compare
+  bars in the steps hue (yours at lower emphasis) since both are steps.
+  (2) The **steps glyph now leads each figure in `--text-3`** instead of
+  trailing it in gold, so numerals in a column end on the same pixel — the
+  Friends card on Home was the screen that showed the problem. (3) The friend
+  profile's **date control is the app's `.date-btn` dropdown under the page
+  title**, the same one Home / Activity / Sleep carry, not the full-width card
+  rev 2 put in the page body; picking a day moves the label and the calendar
+  selection (flagged: the prototype holds one day of data per person, so the
+  cards below do not change yet). (4) **Stress and skin temperature came off
+  the friend profile** — the page now shows exactly what the invite and join
+  sheets promise: activity (steps · distance · calories), heart rate, blood
+  oxygen, sleep duration. Their aliases came out of the token mirror with them.
+  (5) The **month calendar uses the app's day cell** — numeral over a 28px
+  progress ring in the steps hue, selected day in gold.100 — replacing the dot
+  and the legend that existed to explain the dot.
+
 - 2026-09-03 — Wrote `docs/feature-family-ranking.md` (rev 1, UX proposed): a
   restructure of the legacy Family Ranking flow into **Friends**. Diagnosed the
   two legacy screens (duplicated you-row, ranks assigned to zeroed data,

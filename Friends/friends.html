@@ -11,7 +11,7 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    FRIENDS — the social flow, built to docs/feature-family-ranking.md rev 1.
    Six screens: Home card · leaderboard · friend profile · add-people sheet ·
-   join · circle members. Plus a component gallery for review.
+   join · your friends list. Plus a component gallery for review.
 
    Everything here is assembled from patterns that already exist in the app:
      .card / .card-head / .card-title  — Homepage prototype
@@ -23,6 +23,27 @@
      .otp boxes                        — Onboarding/onboarding.html
      .sheet / confirm sheet            — Me tab pattern
    Nothing in this file invents a component the app already has.
+
+   ── REV 3 (owner feedback, 2026-09-03) ───────────────────────────────────
+   Five changes, all of them corrections rather than additions:
+
+   1. COLOUR, used intentionally from the design system. A doctrine is stated
+      in the token block below and applied throughout: a metric hue means that
+      metric is being shown; rank and identity are carried by elevation and
+      text tier; the semantic quads are for state only. That took the gold off
+      the steps unit glyph and the first-place plinth, took the five borrowed
+      metric tints off the avatars, and took the teal ring off your podium
+      tile.
+   2. THE STEPS GLYPH now leads each figure in --text-3 instead of trailing it
+      in gold, so the numerals in a column end on the same pixel.
+   3. THE FRIEND PROFILE'S DATE CONTROL is the app's .date-btn dropdown under
+      the page title — the same control Home, Activity and Sleep carry — not
+      the full-width card rev 2 dropped into the page body.
+   4. STRESS AND SKIN TEMPERATURE came off the friend profile. The page shows
+      what the invite and join sheets promise and nothing more: activity
+      (steps · distance · calories), heart rate, blood oxygen, sleep.
+   5. THE MONTH CALENDAR uses the app's day cell — a numeral over a 28px
+      progress ring — instead of a dot and a legend explaining the dot.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ═══ 1. TOKENS ════════════════════════════════════════════════════════════
@@ -41,10 +62,13 @@
   --neutral-600:#42465B;--neutral-700:#282B39;--neutral-800:#0F111B;
   --neutral-900:#07080C;
 
-  /* the hues behind the metric aliases this file uses, at step 400 */
+  /* the hues behind the metric aliases this file uses, at step 400, plus the
+     one 100-step the month calendar needs for its selected day (the Activity
+     and Sleep tabs colour the selected date with their metric's 100 step). */
   --crimson-400:#E43A62;--tangerine-400:#F59E3B;--gold-400:#F2C64B;
   --emerald-400:#43B476;--teal-400:#45C7B3;--teal-500:#31A492;
-  --sky-400:#58A8DF;--violet-400:#8A7CEC;--orchid-400:#C873DE;
+  --sky-400:#58A8DF;--violet-400:#8A7CEC;--lime-400:#A6CE4E;
+  --gold-100:#F9E8BE;
 
   /* surfaces — elevation is lightness, never shadow */
   --surface-app:var(--neutral-900);
@@ -61,21 +85,44 @@
   /* lines */
   --divider:var(--neutral-700);
 
-  /* metric aliases — one hue per body signal, always step 400 */
+  /* ── COLOUR DOCTRINE for this flow (owner, 2026-09-03: "use colours
+     intentionally from the design system"). Three rules, applied throughout,
+     and the reason several things below went monochrome:
+
+       1. A metric hue means THAT metric is being shown. Steps gold on a steps
+          bar, crimson on a heart rate, violet on sleep. Nothing else earns a
+          hue — not a rank, not a person, not a unit glyph.
+       2. Rank, identity and hierarchy are carried by ELEVATION and TEXT TIER
+          (--surface-card / --surface-raised / --text-1..3), never by colour.
+          Dark UI reads elevation cleanly; a coloured podium just competes
+          with the figures it is meant to frame.
+       3. The semantic quads (caution / negative) are for STATE only — stale,
+          failed, queued, destructive, and the privacy disclosure. They never
+          appear as decoration.
+
+     What that removed from the previous revision: the gold steps glyph beside
+     every figure (a unit, not a plot), the gold first-place plinth (a rank),
+     the five metric-alias avatar tints (identity), and the teal ring on your
+     own podium tile.
+     FLAG (§9): if the team wants per-person avatar colour, add an identity
+     ramp to js/tokens.js first — do not borrow metric aliases for people.
+     ─────────────────────────────────────────────────────────────────────── */
+
+  /* metric aliases — one hue per body signal, always step 400.
+     Only the four metrics this flow actually renders are declared: steps,
+     distance and calories on the Activity card, heart rate and blood oxygen
+     on the Health card, sleep on the Sleep card, plus readiness/activity for
+     Home's three rings. Stress and skin temperature came off the friend
+     profile (owner, 2026-09-03) so their aliases are gone with them rather
+     than left sitting unused. */
   --metric-heart-rate:var(--crimson-400);
   --metric-calories:var(--tangerine-400);
   --metric-steps:var(--gold-400);
   --metric-distance:var(--emerald-400);
-  --metric-activity:#A6CE4E;                 /* color.lime.400 */
+  --metric-activity:var(--lime-400);
   --metric-readiness:var(--teal-400);
   --metric-spo2:var(--sky-400);
   --metric-sleep:var(--violet-400);
-  --metric-skin-temp:var(--orchid-400);
-  /* metric.stress shares emerald-400 with metric.distance — the owner's
-     deliberate choice (2026-08-27), already flagged in the Homepage file.
-     Stress and Distance never appear side by side on a Friends surface
-     either, so the same reasoning holds here. */
-  --metric-stress:var(--emerald-400);
 
   /* semantic quads — glyphs and badges only, never bars or fills */
   --positive-bg:#0E2A1B;--positive-fill:#1E5B38;--positive-icon:#4ADE80;--positive-text:#8AF0B0;
@@ -107,7 +154,7 @@
      Hard rule 9 — the card is the same height in all six of its states, so
      nothing below it on Home moves. Three rows (28px avatar + 6px gap +
      6px bar) at 12px gaps, plus the closing gap line. */
-  --friends-body-h:176px;
+  --friends-body-h:140px;
 }
 
 /* ═══ 2. DESK — the page the phone sits on, plus the control panel ═════════ */
@@ -270,7 +317,7 @@ body{
   overflow-y:auto;scrollbar-width:none;padding-bottom:96px;
 }
 /* the leaderboard reserves room for the floating nav AND the you-bar pill */
-#p-friends{padding-bottom:164px}
+#p-friends{padding-bottom:196px}
 .subpage::-webkit-scrollbar{display:none}
 .subpage[hidden]{display:none}
 .sub-head{padding:40px var(--gutter) 0;display:flex;align-items:center;gap:4px}
@@ -288,13 +335,18 @@ body{
 .sub-head .act .phi{width:20px;height:20px}
 .sub-head .act:hover{background:var(--surface-raised)}
 .sub-body{padding:16px var(--gutter) 0;display:flex;flex-direction:column;gap:12px}
+/* the date dropdown's row on an inner page. 36px of left padding puts the
+   label on the same optical line as the title above it, since .date-btn
+   carries the app's -10px pull and the back button is 40px wide. */
+.sub-date{padding:2px var(--gutter) 0 calc(var(--gutter) + 20px)}
+.sub-date .date-btn{margin-top:0}
 
 /* scrim + bottom sheet — the Me tab pattern */
 .scrim{position:absolute;inset:0;z-index:69;background:color-mix(in srgb, var(--neutral-900) 62%, transparent)}
 .scrim[hidden],.sheet[hidden]{display:none}
 .sheet{
   position:absolute;left:0;right:0;bottom:0;z-index:70;background:var(--surface-card);
-  border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;padding:8px 16px 20px;
+  border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;padding:8px 16px 28px;
 }
 .sheet-grab{padding:0 0 8px;display:flex;justify-content:center}
 .sheet-grab span{width:36px;height:4px;border-radius:var(--radius-pill);background:var(--surface-fill)}
@@ -334,43 +386,51 @@ body{
 .statusline.stale{color:var(--caution-text)}
 .statusline.stale .phi{color:var(--caution-icon)}
 
-/* ── 7.1 Leaderboard row + 7.2 relative bar ───────────────────────────────
-   Anatomy left → right: rank numeral · 40px avatar chip · name over the
-   relative bar · figure + unit · cheer control. The bar is the .gbar fill
-   from Today's goals, scaled to the leader (7.2), which is what makes five
-   numbers read as a ranking rather than five numbers. */
-.lb{display:flex;flex-direction:column}
+/* ── 7.1 Leaderboard row ──────────────────────────────────────────────────
+   Anatomy left → right: rank numeral · 40px avatar chip · name · figure with
+   the steps glyph · cheer control. One line.
+
+   Rev 2 drops the relative bar (owner, 2026-09-03). The podium above now
+   carries the "who is ahead" reading that the bars were doing, and the rows
+   below it are a list to scan rather than a chart to compare — five bars all
+   at ~70% of the leader told you less than five numbers do.
+   The steps glyph at the right end is the unit: hard rule 4 asks every figure
+   to carry one, as a word or as a glyph, never bare. */
 .lbrow{
   display:grid;grid-template-columns:18px 40px 1fr auto 44px;
-  align-items:center;column-gap:10px;row-gap:6px;
-  padding:12px 8px;border-radius:var(--radius-16);
-  border:var(--border-thin) solid transparent;
+  align-items:center;column-gap:10px;row-gap:2px;
+  padding:10px 8px;border-radius:var(--radius-16);
   transition:background var(--duration-fast) var(--ease-standard),opacity var(--duration-fast) var(--ease-standard);
 }
 /* Every cell names its column. Grid places definite-row items before
    auto-placed ones, so leaving any of these implicit lets the cheer button
    claim column 3 and drop the name on top of the figure. */
 .lbrow .rank{
-  grid-area:1/1/3/2;justify-self:center;align-self:center;
+  grid-area:1/1/2/2;justify-self:center;
   font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3);
 }
 .lbrow .av{grid-area:1/2/3/3;align-self:center}
 .lbrow .who{grid-area:1/3/2/4;min-width:0;display:flex;align-items:baseline;gap:6px}
 .lbrow .nm{font:500 15px/22px var(--font-text);color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lbrow .val{grid-area:1/4/2/5;justify-self:end;display:flex;align-items:baseline;gap:4px;white-space:nowrap}
+.lbrow .val{grid-area:1/4/2/5;justify-self:end;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .lbrow .num{font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
-/* hard rule 4 — every figure carries a unit */
-.lbrow .unit{font:500 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
-.lbrow .bar{grid-area:2/3/3/5}
 .lbrow .cheer{grid-area:1/5/3/6;align-self:center}
-.lbrow .why{grid-area:3/3/4/6;font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
-/* a not-synced row has no bar, so its reason line moves up a row */
-.lbrow[data-row="nosync"] .why{grid-area:2/3/3/6}
+.lbrow .why{grid-area:2/3/3/5;font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
 
-/* state: you — the only highlight on the list, and there is only ever one
-   row carrying it (hard rule 1). It is an identity flag, not a data state,
-   so it composes with ranked / stale / not-synced: in F5 your row is in the
-   Not synced break and must still be findable as yours. */
+/* the steps glyph — the UNIT on every figure, so it sits in --text-3 with
+   the other secondary text. Rev 2 had it in --metric-steps gold, which read
+   as a highlight on the one part of the figure that carries no information
+   (doctrine rule 1: the hue belongs on a steps plot, not on the word
+   "steps"). It also LEADS the numeral now rather than trailing it: with the
+   glyph on the right the digits could never line up down a column, because
+   every figure pushed the glyph out by its own width. Glyph first, numerals
+   flush right, the column reads as a ranking. */
+.stepglyph{width:14px;height:14px;color:var(--text-3);flex:0 0 auto}
+.stepglyph.dim{opacity:.5}
+
+/* state: you — used on the podium and the sticky card. Rev 2 keeps you OUT
+   of the scrolling list entirely (see .youcard), so a highlighted row in the
+   list can only ever be a podium tile. */
 .lbrow[data-you]{background:var(--surface-raised)}
 .lbrow[data-you] .nm{font-weight:var(--weight-semibold)}
 /* state: not-synced — no rank numeral, em-dash figure, reason underneath.
@@ -389,6 +449,54 @@ body{
 .lbrow[data-row="skeleton"] .sk.w2{width:52px;justify-self:end}
 .lbrow[data-row="skeleton"] .av{background:var(--surface-raised)}
 
+/* ── 7.9 · the podium ─────────────────────────────────────────────────────
+   Ranks 1–3, and the reason the top of this screen is worth looking at —
+   it replaces the legacy build's decorative photo hero, which took a third
+   of the viewport and said nothing.
+   First place is centre and tallest; the plinths carry the numeral. The list
+   below starts at rank 4, so nobody appears both on the podium and in it. */
+.podium{
+  display:grid;grid-template-columns:repeat(3,1fr);align-items:end;gap:8px;
+  padding:8px var(--gutter) 4px;
+}
+.pod{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:none;border:0;padding:0;font-family:inherit;cursor:pointer;
+  transition:opacity var(--duration-fast) var(--ease-standard);
+}
+.pod:active{opacity:.7}
+.pod .nm{
+  font:500 13px/18px var(--font-text);color:var(--text-1);
+  max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.pod .val{display:flex;align-items:center;gap:4px}
+.pod .num{font:700 17px/22px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.pod .stepglyph{width:14px;height:14px}
+/* the plinth — height carries the placing, the numeral names it */
+.pod .plinth{
+  width:100%;border-radius:var(--radius-16) var(--radius-16) 0 0;
+  background:var(--surface-card);
+  display:flex;align-items:flex-start;justify-content:center;padding-top:8px;
+  font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3);
+}
+/* first place: the tallest plinth, one elevation step brighter, numeral in
+   --text-1. Rev 2 painted it --metric-steps gold, which spent the steps hue
+   on a rank (doctrine rule 2) and left the actual step figures above it
+   competing with their own plinth. */
+.pod[data-place="1"] .plinth{
+  height:56px;background:var(--surface-raised);color:var(--text-1);
+}
+.pod[data-place="2"] .plinth{height:42px}
+.pod[data-place="3"] .plinth{height:32px}
+.pod[data-place="1"] .av{width:56px;height:56px;font:600 20px/26px var(--font-text)}
+/* you, on the podium */
+.pod[data-you] .nm{font-weight:var(--weight-semibold)}
+/* you, marked by a ring in text-1 — identity, not readiness (doctrine 2) */
+.pod[data-you] .av{box-shadow:0 0 0 2px var(--text-1)}
+/* an empty plinth — fewer than three people have a figure */
+.pod[data-empty]{cursor:default;opacity:var(--state-inactive)}
+.pod[data-empty] .av{background:var(--surface-card);color:var(--text-3)}
+
 /* break label between the ranked list and the not-synced group */
 .lb-break{
   padding:16px 8px 4px;
@@ -405,11 +513,13 @@ body{
 }
 .av.sm{width:28px;height:28px;font:600 11px/16px var(--font-text)}
 .av.lg{width:56px;height:56px;font:600 20px/26px var(--font-text)}
-.av[data-hue="1"]{background:color-mix(in srgb, var(--metric-readiness) 26%, var(--surface-fill))}
-.av[data-hue="2"]{background:color-mix(in srgb, var(--metric-sleep) 26%, var(--surface-fill))}
-.av[data-hue="3"]{background:color-mix(in srgb, var(--metric-distance) 26%, var(--surface-fill))}
-.av[data-hue="4"]{background:color-mix(in srgb, var(--metric-calories) 26%, var(--surface-fill))}
-.av[data-hue="5"]{background:color-mix(in srgb, var(--metric-spo2) 26%, var(--surface-fill))}
+/* One chip, one colour: --surface-fill with the initial in --text-1.
+   Rev 2 tinted each person with a different metric alias — readiness for you,
+   sleep for Koms, distance for Rashmi — so the leaderboard taught that green
+   meant something about a person's distance. It did not. People are told
+   apart by their initial and their name; the design system has no identity
+   ramp, and metric aliases are not one (doctrine rule 1, and the FLAG in the
+   token block). */
 
 /* ── 7.3 Cheer control ────────────────────────────────────────────────────
    An action with states, not a counter (hard rule 8). The legacy heart was
@@ -457,20 +567,18 @@ body{
 
 /* ── 7.4 Friends card (Home) ──────────────────────────────────────────────
    One instance, six states, one height. --friends-body-h is the whole point:
-   circle, no circle or solo, nothing below this card on Home moves. */
-.friends-card .card-body{min-height:var(--friends-body-h);display:flex;flex-direction:column}
+   friends, none or one, nothing below this card on Home moves. */
+.friends-card .card-body{height:var(--friends-body-h);display:flex;flex-direction:column;overflow:hidden}
 .fc-rows{display:flex;flex-direction:column;gap:12px}
 .fcrow{
-  display:grid;grid-template-columns:16px 28px 1fr auto;align-items:center;
-  column-gap:8px;row-gap:6px;
+  display:grid;grid-template-columns:16px 28px 1fr auto;align-items:center;column-gap:8px;
 }
-.fcrow .rank{grid-area:1/1/3/2;justify-self:center;align-self:center;font:500 11px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3)}
-.fcrow .av{grid-area:1/2/3/3;align-self:center}
+.fcrow .rank{grid-area:1/1/2/2;justify-self:center;align-self:center;font:500 11px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3)}
+.fcrow .av{grid-area:1/2/2/3;align-self:center}
+.fcrow .stepglyph{width:14px;height:14px}
 .fcrow .nm{grid-area:1/3/2/4;font:500 13px/18px var(--font-text);color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fcrow .val{grid-area:1/4/2/5;justify-self:end;display:flex;align-items:baseline;gap:4px;white-space:nowrap}
+.fcrow .val{grid-area:1/4/2/5;justify-self:end;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .fcrow .num{font:700 15px/20px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
-.fcrow .unit{font:500 10px/14px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
-.fcrow .bar{grid-area:2/3/3/5;height:6px}
 .fcrow[data-row="you"] .nm{font-weight:var(--weight-semibold)}
 /* the closing line — always the nearest actionable gap, never a total */
 .fc-gap{
@@ -541,7 +649,7 @@ body{
 .inline-err .phi{width:14px;height:14px;color:var(--negative-icon)}
 /* the resolved-circle preview — you see whose circle before you confirm */
 .resolved{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--radius-row);background:var(--surface-card)}
-.resolved .txt{min-width:0}
+.resolved .txt{min-width:0;display:grid;gap:2px}
 .resolved .t1{font:500 15px/22px var(--font-text);color:var(--text-1)}
 .resolved .t2{font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
 
@@ -558,28 +666,58 @@ body{
 .empty p{margin:0;font:400 13px/18px var(--font-text);color:var(--text-3);max-width:248px}
 .empty .btn{max-width:232px;margin-top:4px}
 
-/* ── the sticky you-bar ──────────────────────────────────────────────────
-   A SCROLL AFFORDANCE, not a second row. It exists only while your row is
-   off-screen and disappears the moment it is visible again. The legacy
-   screen's duplicate "you" row is item 1 in §1 of the spec; this is the
-   only thing in the flow allowed to look like one. */
-.youbar{
+/* ── 7.11 · first use — the educational empty state ───────────────────────
+   Nobody has used this feature before, and the model is not guessable: no
+   group is created, a code creates a mutual link. So this screen teaches
+   the model before it asks for anything, and shows the user's own code in
+   the open so sharing is one tap rather than a hunt through a sheet. */
+.learn{padding:24px var(--gutter) 0;display:flex;flex-direction:column;gap:20px}
+.learn-head h2{margin:0;font:500 24px/30px var(--font-text);letter-spacing:-.01em;color:var(--text-1)}
+.learn-head p{margin:8px 0 0;font:400 15px/22px var(--font-text);color:var(--text-2)}
+.learn-steps{display:flex;flex-direction:column;gap:16px}
+.lstep{display:grid;grid-template-columns:28px 1fr;column-gap:12px;align-items:start}
+.lstep .n{
+  width:28px;height:28px;border-radius:var(--radius-pill);
+  background:var(--surface-raised);color:var(--text-2);
+  display:flex;align-items:center;justify-content:center;
+  font:700 13px/16px var(--font-number);font-feature-settings:var(--num-features);
+}
+.lstep .t{font:400 13px/18px var(--font-text);color:var(--text-2)}
+.lstep .t b{color:var(--text-1);font-weight:var(--weight-semibold)}
+/* the code, in the open — not buried behind the share action */
+.learn-code{display:flex;flex-direction:column;gap:8px}
+.learn-code .lbl{font:600 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+
+/* ── 7.10 · the sticky you-card ──────────────────────────────────────────
+   Rev 2 (owner, 2026-09-03): always present, in the same card language as
+   the rows above it, rather than the rev-1 bar that appeared only when your
+   row scrolled away.
+
+   This is how it keeps hard rule 1 honest. You are NOT rendered in the
+   scrolling list at all — this card IS your row, so there is exactly one of
+   you in the list region no matter where you rank. If you place top three
+   you also appear on the podium; that is a placing being celebrated, not a
+   second list row, and the two read differently on purpose.
+   It carries the gap sentence, so the one thing always on screen is the one
+   thing you came to find out. */
+.youcard{
   position:absolute;left:16px;right:16px;bottom:88px;z-index:56;
-  padding:10px 14px;border-radius:var(--radius-pill);
-  background:color-mix(in srgb, var(--surface-card) 92%, transparent);
+  padding:10px 12px;border-radius:var(--radius-16);
+  background:color-mix(in srgb, var(--surface-raised) 94%, transparent);
   -webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px);
   border:var(--border-hairline) solid var(--surface-fill);
-  box-shadow:0 8px 24px color-mix(in srgb, var(--neutral-900) 48%, transparent);
-  display:grid;grid-template-columns:18px 28px 1fr auto;align-items:center;column-gap:10px;
-  cursor:pointer;
+  box-shadow:0 8px 24px color-mix(in srgb, var(--neutral-900) 52%, transparent);
+  display:grid;grid-template-columns:18px 40px 1fr auto;align-items:center;
+  column-gap:10px;row-gap:2px;
 }
-.youbar[hidden]{display:none}
-.youbar .rank{font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3);justify-self:center}
-.youbar .nm{font:600 13px/18px var(--font-text);color:var(--text-1)}
-.youbar .gap{font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
-.youbar .val{justify-self:end;display:flex;align-items:baseline;gap:4px}
-.youbar .num{font:700 15px/20px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
-.youbar .unit{font:500 10px/14px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.youcard[hidden]{display:none}
+.youcard .rank{grid-area:1/1/2/2;justify-self:center;font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3)}
+.youcard .av{grid-area:1/2/3/3;align-self:center}
+.youcard .nm{grid-area:1/3/2/4;font:600 15px/22px var(--font-text);color:var(--text-1)}
+.youcard .val{grid-area:1/4/2/5;justify-self:end;display:flex;align-items:center;gap:6px}
+.youcard .num{font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.youcard .gap{grid-area:2/3/3/5;font:500 11px/16px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
+.youcard .gap b{font-family:var(--font-number);font-weight:var(--weight-bold);color:var(--text-1)}
 
 /* ── friend profile pieces ──────────────────────────────────────────────── */
 .ident{display:flex;align-items:center;gap:12px;padding:4px 0 0}
@@ -631,15 +769,14 @@ body{
 .cal-grid{margin-top:16px;display:grid;grid-template-columns:repeat(7,1fr);row-gap:16px;column-gap:2px}
 .cal-day{width:100%;min-height:44px;background:none;border:0;padding:0;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px}
 .cal-day .dn{font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
-.cal-day .dd{width:4px;height:4px;border-radius:50%;background:var(--metric-steps)}
-.cal-day .dd.none{background:var(--surface-fill)}
-.cal-day.sel .dn{color:var(--text-on-accent);background:var(--metric-readiness);border-radius:var(--radius-pill);width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+/* Each day is a numeral over a 28px progress ring — the same day cell the
+   Activity and Sleep tabs draw, at the same radius and stroke, with the hue
+   set by what the page ranks (steps). Rev 2 used a 4px dot plus a legend
+   explaining it; the app already had a day cell that needs no legend, and it
+   says how much of the goal was met rather than only that something synced.
+   The selected day takes the 100-step of the same hue, as the tabs do. */
+.cal-day.sel .dn{color:var(--gold-100)}
 .cal-day.future{opacity:.35;cursor:default}
-/* the legend the legacy strip's mystery dots never had */
-.cal-legend{flex:0 0 auto;padding:8px 16px 16px;display:flex;gap:16px;justify-content:center}
-.cal-legend i{display:flex;align-items:center;gap:6px;font:400 11px/16px var(--font-text);color:var(--text-3);font-style:normal}
-.cal-legend i b{width:4px;height:4px;border-radius:50%;background:var(--metric-steps)}
-.cal-legend i b.none{background:var(--surface-fill)}
 
 /* ── the gallery page (review aid, not a shipping screen) ───────────────── */
 .gal{padding:44px 16px 100px;display:flex;flex-direction:column;gap:20px}
@@ -770,10 +907,20 @@ body{
       <div class="sub-head">
         <button class="backbtn" data-back><span class="phi" data-ph="caret-left"></span></button>
         <div class="t">Friends</div>
-        <!-- ONE action, not two near-identical icons (item 6). It opens the
-             single add-people sheet, which holds both invite and join. -->
-        <button class="act" data-sheet="add"><span class="phi" data-ph="plus"></span></button>
-        <button class="act" data-open="p-circle" style="margin-right:-12px"><span class="phi" data-ph="dots-three-vertical"></span></button>
+        <!-- Two actions on the right, share and join (owner, 2026-09-03).
+             They are the two ways into the same mutual link: give your code,
+             or use someone else's.
+             FLAG: the app's Phosphor set has no `share-network` or `sign-in`,
+             which are the two glyphs this pair actually wants. arrow-circle-up
+             and plus are the closest it carries, and the pairing is weaker
+             than it should be — a person cannot tell from the icons alone
+             which one hands out a code and which one takes one. Add the two
+             real glyphs to the icon set and swap them in; until then both
+             buttons carry an aria-label and both destinations name themselves
+             in their first line. Raised in §9. -->
+        <button class="act" data-sheet="share" aria-label="Share your code"><span class="phi" data-ph="arrow-circle-up" data-weight="fill"></span></button>
+        <button class="act" data-open="p-join" aria-label="Enter a friend's code"><span class="phi" data-ph="plus"></span></button>
+        <button class="act" data-open="p-circle" style="margin-right:-12px" aria-label="Your friends"><span class="phi" data-ph="dots-three-vertical"></span></button>
       </div>
 
       <div class="period-wrap">
@@ -788,13 +935,6 @@ body{
 
       <div style="padding:16px var(--gutter) 24px" id="lb-foot"></div>
 
-      <!-- 7.x · the sticky you-bar. Scroll affordance only. -->
-      <div class="youbar" id="youbar" hidden>
-        <span class="rank" id="yb-rank">4</span>
-        <span class="av sm" data-hue="1">A</span>
-        <span style="display:grid;gap:1px;min-width:0"><span class="nm">You</span><span class="gap" id="yb-gap"></span></span>
-        <span class="val"><span class="num" id="yb-num">7,240</span><span class="unit">steps</span></span>
-      </div>
     </div>
 
     <!-- ─────────────────────────────────────────────────────────────────────
@@ -808,6 +948,13 @@ body{
         <div class="t" id="fr-title">Rashmi</div>
         <button class="act" data-menu="friend"><span class="phi" data-ph="dots-three-vertical"></span></button>
       </div>
+      <!-- the date dropdown, sitting under the title the way it sits under
+           "Good morning, Aanya" on Home and under "Activity" / "Sleep" on
+           their tabs: .date-btn + .caret, opening the month-scroll sheet.
+           Indented to clear the back button so it lines up with the title. -->
+      <div class="sub-date">
+        <button class="date-btn" data-cal><span data-datelabel>Today, Sep 3</span><span class="caret"></span></button>
+      </div>
       <div class="sub-body" id="fr-body"></div>
     </div>
 
@@ -815,10 +962,11 @@ body{
     <div class="subpage" id="p-join" hidden>
       <div class="sub-head">
         <button class="backbtn" data-back><span class="phi" data-ph="caret-left"></span></button>
-        <div class="t">Join a circle</div>
+        <div class="t">Enter a code</div>
       </div>
       <div class="sub-body">
-        <p class="sheet-sub">Enter the six-character code someone shared with you.</p>
+        <p class="sheet-sub">Enter the six-character code a friend shared with you. You&rsquo;ll each
+           appear on the other&rsquo;s leaderboard.</p>
         <div class="otp" id="otp">
           <input maxlength="1" aria-label="1"><input maxlength="1" aria-label="2"><input maxlength="1" aria-label="3">
           <input maxlength="1" aria-label="4"><input maxlength="1" aria-label="5"><input maxlength="1" aria-label="6">
@@ -831,7 +979,7 @@ body{
     <div class="subpage" id="p-circle" hidden>
       <div class="sub-head">
         <button class="backbtn" data-back><span class="phi" data-ph="caret-left"></span></button>
-        <div class="t">Your circle</div>
+        <div class="t">Your friends</div>
       </div>
       <div class="sub-body" id="circle-body"></div>
     </div>
@@ -846,10 +994,6 @@ body{
       </div>
       <div class="cal-week"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
       <div class="cal-scroll" id="cal-scroll"></div>
-      <div class="cal-legend">
-        <i><b></b> data synced</i>
-        <i><b class="none"></b> nothing recorded</i>
-      </div>
     </div>
 
     <!-- S04 · ADD PEOPLE + the confirm sheet -->
@@ -868,10 +1012,23 @@ body{
       <div class="sheet-grab"><span></span></div>
       <div class="sheet-body">
         <button class="btn btn--tertiary btn--m" style="justify-content:flex-start;padding:0 8px">Mute cheers from <span id="mute-name">Rashmi</span></button>
-        <button class="btn btn--destructive btn--m" style="justify-content:flex-start;padding:0 8px" data-confirm="remove">Remove from circle</button>
+        <button class="btn btn--destructive btn--m" style="justify-content:flex-start;padding:0 8px" data-confirm="remove">Remove friend</button>
         <button class="btn btn--tertiary btn--m" style="justify-content:flex-start;padding:0 8px">Report</button>
       </div>
     </div>
+  </div>
+
+  <!-- 7.10 · the sticky you-card. Always present on the leaderboard, and the
+       ONLY place you appear in the list region — you are not rendered in the
+       scrolling list at all. It lives on the screen rather than inside the
+       scrolling page, so it docks above the nav pill instead of scrolling
+       away with the content. -->
+  <div class="youcard" id="youcard" hidden>
+    <span class="rank" id="yc-rank">4</span>
+    <span class="av">A</span>
+    <span class="nm">You</span>
+    <span class="val"><span class="phi stepglyph" data-ph="footprints" data-weight="fill"></span><span class="num" id="yc-num">7,240</span></span>
+    <span class="gap" id="yc-gap"></span>
   </div>
 
   <nav class="pebble-nav">
@@ -922,30 +1079,30 @@ const ico=(name,w='regular')=>'<span class="phi" data-ph="'+name+'"'+(w==='fill'
    the shared-rank rule gets exercised, and two members with nothing synced so
    hard rule 2 can be seen working. */
 const PEOPLE = {
-  me:     {id:'me',    name:'You',          initial:'A', hue:1, you:true,
+  me:     {id:'me',    name:'You',          initial:'A', you:true,
            today:7240,  week:58110, sync:'14:18', goal:10000,
-           m:{dist:5.1, kcal:420, hr:71, spo2:98, stress:34, temp:36.4, sleep:'7h 04m', sleepScore:78}},
-  koms:   {id:'koms',  name:'Koms',         initial:'K', hue:2,
+           m:{dist:5.1, kcal:420, hr:71, spo2:98, sleep:'7h 04m', sleepScore:78}},
+  koms:   {id:'koms',  name:'Koms',         initial:'K',
            today:12480, week:78300, sync:'14:12', goal:12000,
-           m:{dist:8.9, kcal:684, hr:76, spo2:97, stress:41, temp:36.6, sleep:'6h 48m', sleepScore:71}},
-  rashmi: {id:'rashmi',name:'Rashmi',       initial:'R', hue:3,
+           m:{dist:8.9, kcal:684, hr:76, spo2:97, sleep:'6h 48m', sleepScore:71}},
+  rashmi: {id:'rashmi',name:'Rashmi',       initial:'R',
            today:9106,  week:61420, sync:'14:06', goal:10000,
-           m:{dist:6.4, kcal:512, hr:72, spo2:98, stress:28, temp:36.5, sleep:'7h 12m', sleepScore:84}},
-  ankit:  {id:'ankit', name:'Ankit',        initial:'A', hue:4,
+           m:{dist:6.4, kcal:512, hr:72, spo2:98, sleep:'7h 12m', sleepScore:84}},
+  ankit:  {id:'ankit', name:'Ankit',        initial:'A',
            today:9106,  week:66980, sync:'13:58', goal:8000,
-           m:{dist:6.5, kcal:498, hr:80, spo2:96, stress:52, temp:null, sleep:'5h 51m', sleepScore:58}},
-  shash:  {id:'shash', name:'Shashank',     initial:'S', hue:5,
+           m:{dist:6.5, kcal:498, hr:80, spo2:96, sleep:'5h 51m', sleepScore:58}},
+  shash:  {id:'shash', name:'Shashank',     initial:'S',
            today:null,  week:42110, sync:null, since:'Tue', goal:10000,
-           m:{dist:null,kcal:null,hr:null,spo2:null,stress:null,temp:null,sleep:null,sleepScore:null}},
-  meera:  {id:'meera', name:'Meera',        initial:'M', hue:3,
+           m:{dist:null,kcal:null,hr:null,spo2:null,sleep:null,sleepScore:null}},
+  meera:  {id:'meera', name:'Meera',        initial:'M',
            today:10420, week:69850, sync:'14:15', goal:10000,
-           m:{dist:7.3, kcal:560, hr:69, spo2:99, stress:22, temp:36.3, sleep:'7h 48m', sleepScore:89}},
-  dev:    {id:'dev',   name:'Dev',          initial:'D', hue:5,
+           m:{dist:7.3, kcal:560, hr:69, spo2:99, sleep:'7h 48m', sleepScore:89}},
+  dev:    {id:'dev',   name:'Dev',          initial:'D',
            today:4180,  week:31240, sync:'12:40', goal:8000,
-           m:{dist:2.9, kcal:238, hr:74, spo2:97, stress:47, temp:36.7, sleep:'6h 02m', sleepScore:64}},
-  akaush: {id:'akaush',name:'ankitkaushik', initial:'A', hue:2,
+           m:{dist:2.9, kcal:238, hr:74, spo2:97, sleep:'6h 02m', sleepScore:64}},
+  akaush: {id:'akaush',name:'ankitkaushik', initial:'A',
            today:null,  week:null,  sync:null, noband:true, goal:null,
-           m:{dist:null,kcal:null,hr:null,spo2:null,stress:null,temp:null,sleep:null,sleepScore:null}}
+           m:{dist:null,kcal:null,hr:null,spo2:null,sleep:null,sleepScore:null}}
 };
 
 /* ── State ───────────────────────────────────────────────────────────────
@@ -954,14 +1111,17 @@ const FSTATES = [
   ['F4','Populated',         'Baseline — four members, everyone synced.'],
   ['F6','Partial sync',      'The dominant secondary state: two members have nothing for today. Build it early.'],
   ['F5','Nobody synced',     'No figure anywhere. Hard rule 2 — five zeroes are not a ranking.'],
-  ['F3','Solo',              'A circle of one. Nothing to rank; invite is promoted to primary.'],
-  ['F2','No circle',         'The CTA takes the card slot, at the same footprint.'],
-  ['F1','First load',        'Circle unresolved — skeleton rows, no ranks, period control already live.'],
+  ['F3','Solo',              'One friend, nothing synced on their side. Nothing to place; sharing is promoted.'],
+  ['F2','First use',         'No friends yet. The educational state, and the CTA in the card slot at the same footprint.'],
+  ['F1','First load',        'Leaderboard unresolved — skeleton rows, no ranks, period control already live.'],
   ['F7','Offline',           'Last-known figures, marked stale, ranks not recomputed. Cheers queue.'],
   ['F8','Your band offline', 'Your own figure is stale — still ranked, on last-known.'],
   ['F9','Friend has no band','A member who never paired sits in Not synced permanently.']
 ];
-let S = {f:'F4', period:'today', friend:'rashmi', cheers:{koms:2, rashmi:4, ankit:1}, cheered:{}};
+/* S.date is the day the friend profile's dropdown is pointing at — {month
+   index into CAL_MONTHS, day}. It starts on today, Thu 3 September 2026. */
+let S = {f:'F4', period:'today', friend:'rashmi', date:{mi:1,d:3},
+         cheers:{koms:2, rashmi:4, ankit:1}, cheered:{}};
 
 function model(){
   const f=S.f, p=S.period;
@@ -1013,7 +1173,9 @@ function bar(val, max, hue='var(--metric-steps)'){
   const pct = (val && max) ? Math.max(3, Math.round(val/max*100)) : 0;
   return '<span class="gbar bar"><i style="width:'+pct+'%;background:'+hue+'"></i></span>';
 }
-const avatar=(m,size='')=>'<span class="av '+size+'" data-hue="'+m.hue+'">'+m.initial+'</span>';
+/* one chip, one tint — see the .av block: people are told apart by initial
+   and name, not by a borrowed metric hue */
+const avatar=(m,size='')=>'<span class="av '+size+'">'+m.initial+'</span>';
 
 /* 7.3 · the cheer control — an action with states, not a counter */
 function cheerBtn(m){
@@ -1064,28 +1226,28 @@ function renderFriendsCard(){
       +'<span class="av sm" style="background:var(--surface-raised);color:transparent">.</span>'
       +'<span style="display:block;height:10px;width:96px;border-radius:999px;background:var(--surface-raised)"></span>'
       +'<span style="display:block;height:10px;width:44px;border-radius:999px;background:var(--surface-raised);justify-self:end"></span>'
-      +bar(0,1)+'</div>';
+      +'</div>';
     }).join('')+'</div>';
     return;
   }
   if(M.nocircle){                                    /* F2 — CTA in the card's slot */
     body.innerHTML='<div class="fc-slot">'
-      +'<p class="msg">Compare your steps with friends and family. Invite someone, or join with a code.</p>'
+      +'<p class="msg">Swap codes with friends and family to compare your steps.</p>'
       /* secondary, not primary: Start Workout is Home's one teal action and
          the button spec forbids two on a screen. */
-      +'<button class="btn btn--secondary btn--m" data-sheet="add">Add people</button></div>';
+      +'<button class="btn btn--secondary btn--m" data-tap="friends">See how it works</button></div>';
     return;
   }
   const R=ranked(M.list);
   if(!R.has.length){                                 /* F5 — nothing to rank */
     body.innerHTML='<div class="fc-slot"><span class="big">—</span>'
-      +'<p class="msg">Nothing to rank yet. Figures appear as your circle&rsquo;s bands sync.</p></div>';
+      +'<p class="msg">Nothing to rank yet. Figures appear as your friends&rsquo; bands sync.</p></div>';
     return;
   }
   if(M.solo){                                        /* F3 */
     body.innerHTML='<div class="fc-slot"><span class="big">'+n(R.has[0].val)+'</span>'
-      +'<p class="msg">'+(S.period==='today'?'steps today':'steps over 7 days')+'. Invite someone to compare with.</p>'
-      +'<button class="btn btn--secondary btn--m" data-sheet="add">Invite someone</button></div>';
+      +'<p class="msg">'+(S.period==='today'?'steps today':'steps over 7 days')+'. Share your code to compare.</p>'
+      +'<button class="btn btn--secondary btn--m" data-sheet="share">Share your code</button></div>';
     return;
   }
 
@@ -1101,9 +1263,13 @@ function renderFriendsCard(){
   body.innerHTML='<div class="fc-rows">'+pick.map(function(m){
       return '<div class="fcrow" data-row="'+(m.you?'you':'ranked')+'">'
         +'<span class="rank">'+m.rank+'</span>'+avatar(m,'sm')
-        +'<span class="nm">'+m.name+'</span>'
-        +'<span class="val"><span class="num">'+n(m.val)+'</span><span class="unit">steps</span></span>'
-        +bar(m.val,R.leader.val)+'</div>';
+        +'<span class="nm">'+(m.you?'You':m.name)+'</span>'
+        /* glyph before the numeral: the three figures then end on the same
+           pixel and the card reads as a ranking rather than three stray
+           numbers. In --text-3, because it is the unit. */
+        +'<span class="val">'
+        +'<span class="phi stepglyph" data-ph="footprints" data-weight="fill"></span>'
+        +'<span class="num">'+n(m.val)+'</span></span></div>';
     }).join('')+'</div>'
     +'<div class="fc-gap">'+(g
         ? (g.lead ? 'You&rsquo;re leading by <b>'+n(g.by)+'</b> steps'
@@ -1111,28 +1277,84 @@ function renderFriendsCard(){
         : 'You have nothing synced for this period')+'</div>';
 }
 
-/* ═══ S02 · LEADERBOARD ═══════════════════════════════════════════════════ */
+/* ═══ S02 · LEADERBOARD ═══════════════════════════════════════════════════
+   Rev 2 shape: podium (1–3) · list from rank 4 · Not synced · sticky you-card.
+   You are never rendered in the scrolling list — the sticky card is your row.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* the figure, with the steps glyph as its unit (rev 2 — no relative bar) */
+function figure(v, dim){
+  return '<span class="val">'
+    +'<span class="phi stepglyph'+(dim?' dim':'')+'" data-ph="footprints" data-weight="fill"></span>'
+    +'<span class="num">'+(v==null?'&mdash;':n(v))+'</span></span>';
+}
+
+/* 7.9 · the podium. The top three PEOPLE of your leaderboard, not the ranks
+   1/2/3 — those are different things the moment there is a tie. Ranks 1,2,2
+   has no third place, and reserving a hole for one dropped the second
+   second-placer off the screen entirely: they were too high for the list
+   (which starts below the podium) and had no plinth to stand on.
+   So: take the first three of the sorted list, place them 2nd-left,
+   1st-centre, 3rd-right, and let each plinth carry that person's own rank
+   numeral — which may repeat. The list picks up from the fourth person. */
+function renderPodium(top){
+  if(top.length<2) return '';                   /* two people minimum to place */
+  const order=[1,0,2];                          /* left, centre, right */
+  return '<div class="podium">'+order.map(function(idx){
+    const place=idx+1, m=top[idx];
+    if(!m) return '<div class="pod" data-place="'+place+'" data-empty>'
+      +'<span class="av">&mdash;</span><span class="nm">&nbsp;</span>'
+      +'<span class="val"><span class="num">&mdash;</span></span>'
+      +'<span class="plinth">'+place+'</span></div>';
+    return '<button class="pod" data-place="'+place+'"'+(m.you?' data-you':'')
+      +(m.you?' data-tap="mine"':' data-tap="friend" data-id="'+m.id+'"')+'>'
+      +avatar(m)+'<span class="nm">'+(m.you?'You':m.name)+'</span>'
+      +figure(m.val)+'<span class="plinth">'+m.rank+'</span></button>';
+  }).join('')+'</div>';
+}
+
 function renderLeaderboard(){
-  const M=model(), mount=$('#lb-mount'), foot=$('#lb-foot'), status=$('#lb-status');
+  const M=model(), mount=$('#lb-mount'), foot=$('#lb-foot'), status=$('#lb-status'), yc=$('#youcard');
   $$('#lb-seg button').forEach(function(b){
     b.classList.toggle('active', b.dataset.period===S.period);
     b.disabled = M.offline;                          /* last-known is one period only */
   });
 
-  if(M.nocircle){                                    /* 7.8 · no-circle variant */
-    status.innerHTML=''; foot.innerHTML=''; $('#youbar').hidden=true;
-    mount.innerHTML='<div class="empty"><span class="chip40">'+ico('user','fill')+'</span>'
-      +'<h3>No circle yet</h3>'
-      +'<p>A circle ranks everyone&rsquo;s steps side by side and lets you open each other&rsquo;s day. Invite someone, or join with a code.</p>'
-      +'<button class="btn btn--primary" data-sheet="add">Add people</button></div>';
+  /* 7.11 · first use. No links yet, so teach the model before asking for
+     anything. There is no group to join and none to create — a code makes a
+     mutual link, and the two buttons are the two ends of the same act. */
+  if(M.nocircle){
+    status.innerHTML=''; foot.innerHTML=''; yc.hidden=true;
+    mount.innerHTML='<div class="learn">'
+      +'<div class="learn-head"><h2>Compare your steps</h2>'
+      +'<p>Swap codes with friends and family. Everyone keeps their own leaderboard.</p></div>'
+      +'<div class="learn-steps">'
+      +'<div class="lstep"><span class="n">1</span><span class="t">'
+        +'<b>Share your code.</b> Anyone who enters it shows up on your leaderboard, '
+        +'and you show up on theirs.</span></div>'
+      +'<div class="lstep"><span class="n">2</span><span class="t">'
+        +'<b>Or enter a friend&rsquo;s code.</b> Same result &mdash; it works from either side.</span></div>'
+      +'<div class="lstep"><span class="n">3</span><span class="t">'
+        +'<b>You&rsquo;ll each see the other&rsquo;s day</b> &mdash; activity, heart rate, sleep and '
+        +'blood oxygen, for any date. Remove someone and you both disappear from each other&rsquo;s list.</span></div>'
+      +'</div>'
+      /* the code is on the screen, not behind the share button — the whole
+         first-use task is getting it to someone */
+      +'<div class="learn-code"><span class="lbl">Your code</span>'
+      +'<div class="codebox"><span>K7M4Q2</span></div></div>'
+      +'<div style="display:flex;flex-direction:column;gap:8px;padding-bottom:8px">'
+      +'<button class="btn btn--primary" data-sheet="share">Share your code</button>'
+      +'<button class="btn btn--tertiary" data-open="p-join">Enter a friend&rsquo;s code</button></div>'
+      +'</div>';
     injectIcons(mount); return;
   }
+
   if(M.loading){                                     /* F1 */
-    status.textContent='Loading your circle…'; foot.innerHTML=''; $('#youbar').hidden=true;
+    status.textContent='Loading your leaderboard…'; foot.innerHTML=''; yc.hidden=true;
     mount.innerHTML=[0,1,2,3].map(function(){
       return '<div class="lbrow" data-row="skeleton"><span class="rank"></span>'
       +'<span class="av" style="background:var(--surface-raised);color:transparent">.</span>'
-      +'<span class="sk w1"></span><span class="sk w2"></span>'+bar(0,1)+'<span></span></div>';
+      +'<span class="sk w1"></span><span class="sk w2"></span><span></span></div>';
     }).join('');
     return;
   }
@@ -1145,66 +1367,72 @@ function renderLeaderboard(){
       +(S.period==='today' ? 'updated 14:20' : 'Aug 28 &ndash; Sep 3');
 
   let html='';
-  if(R.has.length){
-    html += R.has.map(function(m){
-      const st = m.stale ? 'stale' : 'ranked';
-      /* hard rule 7 — your own row does not open a second copy of you; it
-         routes to the Activity tab at the selected period. */
-      const tap = m.you ? ' data-tap="mine"' : ' data-tap="friend" data-id="'+m.id+'"';
-      return '<div class="lbrow" data-row="'+st+'"'+(m.you?' data-you':'')+tap+'>'
-        +'<span class="rank">'+m.rank+'</span>'+avatar(m)
-        +'<span class="who"><span class="nm">'+m.name+'</span></span>'
-        +'<span class="val"><span class="num">'+n(m.val)+'</span><span class="unit">steps</span></span>'
-        +cheerBtn(m)+bar(m.val,R.leader.val)
-        +(m.stale?'<span class="why">last synced '+(m.sync||'earlier')+'</span>':'')+'</div>';
-    }).join('');
-  } else {
+  if(!R.has.length){
     html += '<div class="empty"><span class="chip40">'+ico('footprints','fill')+'</span>'
       +'<h3>Nothing to rank yet</h3>'
-      +'<p>No one in your circle has a figure for '+(S.period==='today'?'today':'this period')
+      +'<p>No one on your leaderboard has a figure for '+(S.period==='today'?'today':'this period')
       +'. Ranks appear as bands sync.</p></div>';
+  } else {
+    const top = R.has.slice(0,3);
+    html += renderPodium(top);
+    /* the list picks up where the podium stops — by position, so a tie can
+       never strand someone between the two — and never contains you: the
+       sticky card below is your row (hard rule 1, rev 2) */
+    const rest = R.has.slice(top.length).filter(m=>!m.you);
+    if(rest.length){
+      html += '<div style="padding-top:8px">'+rest.map(function(m){
+        return '<div class="lbrow" data-row="'+(m.stale?'stale':'ranked')+'" data-tap="friend" data-id="'+m.id+'">'
+          +'<span class="rank">'+m.rank+'</span>'+avatar(m)
+          +'<span class="who"><span class="nm">'+m.name+'</span></span>'
+          +figure(m.val)+cheerBtn(m)
+          +(m.stale?'<span class="why">last synced '+(m.sync||'earlier')+'</span>':'')+'</div>';
+      }).join('')+'</div>';
+    }
   }
-  /* the Not synced break — no rank numerals, no positions (hard rule 2) */
-  if(R.none.length){
+
+  /* the Not synced break — no rank numerals, no positions (hard rule 2).
+     You appear here only through the sticky card, never as a row. */
+  const none = R.none.filter(m=>!m.you);
+  if(none.length){
     html += '<div class="lb-break">Not synced</div>'
-      + R.none.map(function(m){
+      + none.map(function(m){
           const why = m.noband ? 'hasn&rsquo;t set up a band'
                     : m.since ? 'last synced '+m.since
                     : 'nothing recorded yet';
-          return '<div class="lbrow" data-row="nosync"'+(m.you?' data-you':' data-tap="friend" data-id="'+m.id+'"')+'>'
+          return '<div class="lbrow" data-row="nosync" data-tap="friend" data-id="'+m.id+'">'
             +'<span class="rank"></span>'+avatar(m)
             +'<span class="who"><span class="nm">'+m.name+'</span></span>'
-            +'<span class="val"><span class="num">&mdash;</span></span>'
-            +cheerBtn(m)+'<span class="why">'+why+'</span></div>';
+            +figure(null,true)+cheerBtn(m)+'<span class="why">'+why+'</span></div>';
         }).join('');
   }
   mount.innerHTML=html;
 
-  /* one primary action per screen — primary only when it is the whole point */
+  /* one primary action per screen */
   foot.innerHTML = M.solo
-    ? '<button class="btn btn--primary" data-sheet="add">Invite someone</button>'
-    : '<button class="btn btn--secondary" data-sheet="add">Invite someone</button>';
+    ? '<button class="btn btn--primary" data-sheet="share">Share your code</button>'
+    : '<button class="btn btn--secondary" data-sheet="share">Share your code</button>';
 
   injectIcons(mount); injectIcons(foot);
-  syncYouBar();
+  renderYouCard();
 }
 
-/* The sticky you-bar is shown ONLY while your row is off-screen. It is a
-   scroll affordance, never a second row — hard rule 1, and the fix for the
-   legacy screen's duplicated pinned row. */
-function syncYouBar(){
-  const page=$('#p-friends'), yb=$('#youbar'), row=$('.lbrow[data-you]',page);
-  if(!row || page.hidden){ yb.hidden=true; return; }
-  const pr=page.getBoundingClientRect(), rr=row.getBoundingClientRect();
-  const visible = rr.bottom > pr.top+72 && rr.top < pr.bottom-64;
-  yb.hidden = visible;
-  if(!visible){
-    const R=ranked(model().list), me=R.has.find(m=>m.you), g=gapAbove(R.has);
-    if(!me){ yb.hidden=true; return; }
-    $('#yb-rank').textContent=me.rank;
-    $('#yb-num').textContent=n(me.val);
-    $('#yb-gap').innerHTML = g ? (g.lead?'leading by '+n(g.by):n(g.by)+' behind '+g.who) : '';
-  }
+/* 7.10 · the sticky you-card — always on, and the only place you appear in
+   the list region. No scroll listener: there is nothing to react to. */
+function renderYouCard(){
+  const yc=$('#youcard'), M=model();
+  if(M.nocircle || M.loading || $('#p-friends').hidden){ yc.hidden=true; return; }
+  const R=ranked(M.list), me=R.has.find(m=>m.you) || R.none.find(m=>m.you);
+  if(!me){ yc.hidden=true; return; }
+  yc.hidden=false;
+  const g=gapAbove(R.has);
+  $('#yc-rank').textContent = me.rank || '';
+  $('#yc-num').textContent  = me.val!=null ? n(me.val) : '—';
+  $('#yc-gap').innerHTML = me.val==null
+    ? 'Nothing synced yet today'
+    : (g ? (g.lead ? 'Leading by <b>'+n(g.by)+'</b> steps'
+                   : '<b>'+n(g.by)+'</b> steps behind '+g.who)
+         : 'The only figure so far');
+  injectIcons(yc);
 }
 
 /* ═══ S03 · FRIEND PROFILE — Home's cards, Home's order, read-only ════════
@@ -1245,17 +1473,16 @@ function renderFriend(){
       +bar(p.val,max)+'</div>'
       +'<div class="cmprow"><span class="who">You</span>'
       +'<span class="val"><span class="num">'+n(me.val)+'</span><span class="unit">steps</span></span>'
-      +bar(me.val,max,'var(--text-3)')+'</div>'
+      +bar(me.val,max,'color-mix(in srgb, var(--metric-steps) 42%, var(--surface-fill))')+'</div>'
       +'<div class="cmp-say">'+say+'</div></div></div>';
   }
 
-  /* the date control — the month-scroll calendar the other tabs already use,
-     not the clipped 7-day strip of the legacy page (item 11) */
-  html += '<button class="card" data-cal style="text-align:left;border:0;cursor:pointer;font-family:inherit;'
-    +'display:flex;align-items:center;justify-content:space-between;gap:8px">'
-    +'<span><span style="font:500 15px/22px var(--font-text);color:var(--text-1)">Today, Sep 3</span><br>'
-    +'<span class="subnote" style="color:var(--text-3)">Tap to see earlier days</span></span>'
-    +'<span class="chev"></span></button>';
+  /* The date control is NOT here any more. Rev 2 put it in the page body as
+     a full-width card — a control the rest of the app has never rendered as a
+     card, sitting between the compare strip and the metric cards as though it
+     were a fourth piece of data. It is now the same .date-btn dropdown Home,
+     Activity and Sleep carry, directly under the page title (see #p-friend in
+     the markup). Same control, same place, same month-scroll sheet behind it. */
 
   if(p.noband || (p.val==null && p.m.hr==null)){
     /* 7.8 · friend-has-no-band / nothing recorded — an empty state, not a
@@ -1263,17 +1490,20 @@ function renderFriend(){
     html += '<div class="empty"><span class="chip40">'+ico('watch','fill')+'</span>'
       +'<h3>'+(p.noband?'No band yet':'Nothing recorded')+'</h3>'
       +'<p>'+(p.noband
-          ? p.name+' has joined your circle but hasn&rsquo;t paired a band, so there&rsquo;s nothing to show.'
+          ? p.name+' is on your leaderboard but hasn&rsquo;t paired a band, so there&rsquo;s nothing to show.'
           : p.name+' has no data for this day. Try an earlier date.')+'</p></div>';
   } else {
     /* Home's Activity card, read-only */
     html += '<div class="card" data-readonly><div class="card-head"><div class="card-title">Activity</div></div>'
       +'<div class="card-body">'+goalRows(p)+'</div></div>';
-    /* Home's Health monitor metrics, read-only, in Home's order */
+    /* Home's Health monitor metrics, read-only, in Home's order.
+       Owner, 2026-09-03: a friend's page shows heart rate and blood oxygen
+       only. Stress and skin temperature came off — they were the two figures
+       on the legacy page that nobody had asked to share, and the disclosure
+       copy in §4.3 (activity, heart rate, sleep, blood oxygen) never covered
+       them. Dropping them makes the sheet's promise and the page agree. */
     const tiles=[['Heart rate',p.m.hr,'bpm','var(--metric-heart-rate)'],
-                 ['Blood oxygen',p.m.spo2,'%','var(--metric-spo2)'],
-                 ['Stress',p.m.stress,'','var(--metric-stress)'],
-                 ['Skin temp',p.m.temp,'&deg;C','var(--metric-skin-temp)']];
+                 ['Blood oxygen',p.m.spo2,'%','var(--metric-spo2)']];
     html += '<div class="card"><div class="card-head"><div class="card-title">Health monitor</div>'
       +'<span class="subnote" style="color:var(--text-3)">avg today</span></div>'
       +'<div class="card-body metricgrid">'
@@ -1286,7 +1516,9 @@ function renderFriend(){
     /* Sleep last, as on Home */
     html += '<div class="card"><div class="card-head"><div class="card-title">Sleep</div>'
       +'<span class="subnote" style="color:var(--text-3)">last night</span></div>'
-      +'<div class="card-body" style="display:flex;align-items:baseline;gap:12px">'
+      +'<div class="card-body" style="display:flex;align-items:center;gap:8px">'
+      +'<span class="dot" style="width:8px;height:8px;border-radius:50%;flex:0 0 auto;'
+      +'background:var(--metric-sleep)"></span>'
       +'<span style="font:700 24px/28px var(--font-number);font-feature-settings:var(--num-features)">'
       +(p.m.sleep||'&mdash;')+'</span>'
       +(p.m.sleepScore?'<span class="subnote" style="color:var(--text-3)">score '+p.m.sleepScore+'</span>':'')
@@ -1306,18 +1538,20 @@ function renderFriend(){
 
 /* ═══ S06 · CIRCLE MEMBERS ════════════════════════════════════════════════ */
 function renderCircle(){
-  const M=model(), rows=[M.list.find(m=>m.you)].concat(M.list.filter(m=>!m.you)).filter(Boolean);
+  const M=model(), rows=M.list.filter(m=>!m.you);
   $('#circle-body').innerHTML =
-    '<div class="card"><div class="card-head"><div class="card-title">Members</div>'
-    /* FLAG (§9): the member cap is unresolved. "of 8" is a placeholder — it
-       decides whether + disappears at the cap and whether S05 needs a
-       circle-full state. */
-    +'<span class="subnote">'+M.list.length+' of 8</span></div><div class="card-body" style="margin-top:8px">'
+    '<div class="card"><div class="card-head"><div class="card-title">Friends</div>'
+    /* FLAG (§9): whether there is a cap at all is unresolved. Under the link
+       model there is no group to be full, so a cap would be a limit on how
+       many people may hold a working code — a different question. */
+    +'<span class="subnote">'+rows.length+'</span></div><div class="card-body" style="margin-top:8px">'
+    + (rows.length ? '' : '<p class="sheet-sub" style="color:var(--text-3);padding:4px 0 8px">'
+        +'Nobody yet. Share your code, or enter a friend&rsquo;s.</p>')
     + rows.map(function(m,i){
         return '<div class="listrow"'+(i===0?' style="border-top:0"':'')+'>'
-          +'<span class="lft">'+avatar(m)+'<span class="txt"><span class="t1">'+m.name+(m.you?' (you)':'')+'</span>'
+          +'<span class="lft">'+avatar(m)+'<span class="txt"><span class="t1">'+m.name+'</span>'
           +'<span class="t2">'+(m.noband?'no band paired':m.sync?'synced '+m.sync:m.since?'last synced '+m.since:'never synced')+'</span></span></span>'
-          +(m.you?'':'<span class="rgt"><button class="btn btn--tertiary btn--m" style="width:auto;padding:0 8px;font-size:13px" data-confirm="remove" data-id="'+m.id+'">Remove</button></span>')
+          +'<span class="rgt"><button class="btn btn--tertiary btn--m" style="width:auto;padding:0 8px;font-size:13px" data-confirm="remove" data-id="'+m.id+'">Remove</button></span>'
           +'</div>';
       }).join('')
     +'</div></div>'
@@ -1328,50 +1562,48 @@ function renderCircle(){
     /* §9: a permanent code that grants health-data access can never be
        un-shared, so rev 1 assumes it rotates. Confirm the lifetime. */
     +'<p class="sheet-sub" style="margin-top:8px;color:var(--text-3);font:400 11px/16px var(--font-text)">'
-    +'Rotating stops the old code working. People already in your circle stay.</p></div></div>'
-    +'<button class="btn btn--destructive" data-confirm="leave">Leave circle</button>';
+    +'Rotating stops the old code working. Friends you already have stay.</p></div></div>'
+    /* No "leave" action: v1 creates no group, so there is nothing to leave.
+       You remove friends one at a time, and each removal is mutual. */
+    +'<p class="sheet-sub" style="color:var(--text-3);font:400 11px/16px var(--font-text);padding:0 4px">'
+    +'Removing a friend drops you from their leaderboard too.</p>';
   injectIcons($('#circle-body'));
 }
 
 /* ═══ 7.7 · S04 ADD PEOPLE + the confirm sheets ═══════════════════════════ */
-const DISCLOSURE = 'They&rsquo;ll be able to see your <b>activity, heart rate, sleep and blood oxygen</b> '
-  + '&mdash; for any day, not just today.';
+/* The disclosure is a requirement, not copy garnish (§4.3): v1 shares every
+   metric, so a six-character code hands over resting heart rate and sleep.
+   It is mutual, and saying so is also what makes the exchange feel fair. */
+const DISCLOSURE = 'You&rsquo;ll each be able to see the other&rsquo;s <b>activity, heart rate, sleep '
+  + 'and blood oxygen</b> &mdash; for any day, not just today.';
 
 function openSheet(kind, arg){
   const t=$('#sheet-title'), b=$('#sheet-body');
-  if(kind==='add'){
-    t.textContent='Add people';
+  if(kind==='share'){
+    t.textContent='Share your code';
     b.innerHTML =
-      '<span class="sheet-label">Invite someone to your circle</span>'
+      '<span class="sheet-label">Anyone who enters this sees your steps</span>'
       /* The disclosure is a requirement, not copy garnish. Rev 1 shares
          every metric, so this sheet is the only place a person learns what
          a code hands over — §4.3 and the first privacy item in §9. */
       +'<div class="disclose">'+ico('info','fill')+'<p>'+DISCLOSURE+'</p></div>'
       +'<div class="codebox"><span>K7M4Q2</span></div>'
       +'<div class="btnrow"><button class="btn btn--primary btn--m">Share</button>'
-      +'<button class="btn btn--secondary btn--m">Copy</button></div>'
+      +'<button class="btn btn--tertiary btn--m">Copy</button></div>'
       +'<hr class="sheet-rule">'
       +'<span class="sheet-label">Have a code?</span>'
-      +'<button class="btn btn--tertiary btn--m" data-open="p-join">Join a circle</button>';
+      +'<button class="btn btn--tertiary btn--m" data-open="p-join">Enter a friend&rsquo;s code</button>';
   }
   if(kind==='remove'){
     const who=(PEOPLE[arg]||{}).name||'this person';
     t.textContent='Remove '+who+'?';
-    b.innerHTML='<p class="sheet-sub">'+who+' leaves your circle. You stop seeing each other&rsquo;s '
-      +'figures and days, and your cheers disappear from each other&rsquo;s rows. '
-      +'They aren&rsquo;t told, and they can rejoin with your code.</p>'
+    b.innerHTML='<p class="sheet-sub">You disappear from '+who+'&rsquo;s leaderboard and they disappear '
+      +'from yours &mdash; removal works both ways. You stop seeing each other&rsquo;s days, and your '
+      +'cheers go with it. They aren&rsquo;t told, and either of you can link again with a code.</p>'
       /* §9: whether a removed member loses access to days already seen is
          unresolved — this copy will change when it is answered. */
       +'<button class="btn btn--destructive" data-close="sheet">Remove '+who+'</button>'
-      +'<button class="btn btn--tertiary" data-close="sheet">Keep in circle</button>';
-  }
-  if(kind==='leave'){
-    t.textContent='Leave this circle?';
-    b.innerHTML='<p class="sheet-sub">You stop seeing everyone&rsquo;s figures and they stop seeing yours '
-      +'&mdash; including days already recorded. Your own history stays in Pebble. '
-      +'Rejoining needs a new code from someone still in the circle.</p>'
-      +'<button class="btn btn--destructive" data-close="sheet">Leave circle</button>'
-      +'<button class="btn btn--tertiary" data-close="sheet">Stay</button>';
+      +'<button class="btn btn--tertiary" data-close="sheet">Keep</button>';
   }
   $('#scrim').hidden=false; $('#sheet').hidden=false; injectIcons($('#sheet'));
 }
@@ -1379,19 +1611,51 @@ function closeSheets(){
   $('#scrim').hidden=true; $('#sheet').hidden=true; $('#menu-sheet').hidden=true;
 }
 
-/* ═══ the month-scroll calendar, shared with the Activity / Sleep tabs ═════ */
+/* ═══ the month-scroll calendar, shared with the Activity / Sleep tabs ═════
+   Day cells are the app's: numeral over a 28px ring at r=10.5, stroke 3, on a
+   --surface-raised track, filled to that day's share of the goal. The hue is
+   the metric the page ranks — steps — and the selected day takes gold.100,
+   the same relationship the Activity tab has with lime and Sleep with violet.
+   TODAY is Thu 3 September 2026, matching every other date in this file.     */
+const CAL_MONTHS=[['August 2026',31,5],['September 2026',30,1]];  /* [name, days, firstDow 0=Mon] */
+const CAL_TODAY={mi:1,d:3};
+const MONTH_SHORT=['Aug','Sep'], DAY_SHORT=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+/* a stable stand-in for "how much of the goal that day met" — the real build
+   reads history. Deterministic so the calendar does not reshuffle on reopen. */
+function dayFill(mi,d){
+  const v=(d*37+mi*11)%100;
+  return d%7===0 ? 0 : 35+Math.round(v*0.62);          /* every 7th day: nothing recorded */
+}
+function dateLabel(mi,d){
+  if(mi===CAL_TODAY.mi && d===CAL_TODAY.d) return 'Today, '+MONTH_SHORT[mi]+' '+d;
+  const dow=(CAL_MONTHS[mi][2]+d-1)%7;
+  return DAY_SHORT[dow]+', '+MONTH_SHORT[mi]+' '+d;
+}
 function renderCal(){
-  const months=[['August 2026',31,5],['September 2026',30,1]];   /* [name, days, firstDow 0=Mon] */
-  const today=3, cur=1;
-  $('#cal-scroll').innerHTML = months.map(function(mo,mi){
+  const C=2*Math.PI*10.5;
+  $('#cal-scroll').innerHTML = CAL_MONTHS.map(function(mo,mi){
     let cells='';
     for(let i=0;i<mo[2];i++) cells+='<span></span>';
     for(let d=1;d<=mo[1];d++){
-      const future = mi===cur && d>today;
-      const has = !future && (d%7!==0);                  /* sample sync pattern */
-      cells += '<button class="cal-day'+(future?' future':'')+(mi===cur&&d===today?' sel':'')+'">'
+      const future = mi===CAL_TODAY.mi && d>CAL_TODAY.d;
+      const sel    = mi===S.date.mi && d===S.date.d;
+      const pct    = future?0:dayFill(mi,d);
+      const dash   = (pct/100*C).toFixed(1)+' '+C.toFixed(1);
+      /* future days keep the empty svg so the rows stay aligned — same as the
+         Activity and Sleep calendars (owner request, recorded there) */
+      cells += '<button class="cal-day'+(future?' future':'')+(sel?' sel':'')+'"'
+        +(future?'':' data-day="'+mi+'-'+d+'"')+'>'
         +'<span class="dn">'+d+'</span>'
-        +(future?'':'<span class="dd'+(has?'':' none')+'"></span>')+'</button>';
+        +(future
+          ? '<svg width="28" height="28" viewBox="0 0 28 28"></svg>'
+          : '<svg width="28" height="28" viewBox="0 0 28 28">'
+            +'<circle cx="14" cy="14" r="10.5" fill="none" stroke-width="3" stroke="var(--surface-raised)"/>'
+            +(pct?'<circle cx="14" cy="14" r="10.5" fill="none" stroke-width="3" stroke="'
+              +(sel?'var(--gold-100)':'var(--metric-steps)')+'" stroke-linecap="round" '
+              +'stroke-dasharray="'+dash+'" transform="rotate(-90 14 14)"/>':'')
+            +'</svg>')
+        +'</button>';
     }
     return '<div class="cal-month"><div class="mt">'+mo[0]+'</div><div class="cal-grid">'+cells+'</div></div>';
   }).join('');
@@ -1400,16 +1664,17 @@ function renderCal(){
 
 /* ═══ the component gallery — a review aid, not a shipping screen ═════════ */
 function renderGallery(){
-  const m=PEOPLE.rashmi, mv=Object.assign({},m,{val:m.today,rank:2});
+  const m=PEOPLE.rashmi, mv=Object.assign({},m,{val:m.today,rank:4});
   const row=(state,extra,label)=>
-    '<div class="cap">'+label+'</div><div class="lbrow" data-row="'+(state==='you'?'ranked':state)+'"'+(state==='you'?' data-you':'')+'>'
-    +'<span class="rank">'+(state==='nosync'||state==='skeleton'?'':'2')+'</span>'+avatar(mv)
+    '<div class="cap">'+label+'</div>'
+    +'<div class="lbrow" data-row="'+(state==='you'?'ranked':state)+'"'+(state==='you'?' data-you':'')+'>'
+    +'<span class="rank">'+(state==='nosync'||state==='skeleton'?'':'4')+'</span>'
+    +avatar(state==='you'?PEOPLE.me:mv)
     +'<span class="who"><span class="nm">'+(state==='skeleton'?'':(state==='you'?'You':'Rashmi'))+'</span></span>'
-    +'<span class="val"><span class="num">'+(state==='nosync'?'&mdash;':n(mv.val))+'</span>'
-    +(state==='nosync'?'':'<span class="unit">steps</span>')+'</span>'
+    +(state==='skeleton' ? '<span class="sk w2"></span>' : figure(state==='nosync'?null:mv.val, state==='nosync'))
     +'<button class="cheer" data-cheer="idle"><span class="ico"><span class="phi lineheart" data-ph="heart"></span>'
     +'<span class="phi fillheart" data-ph="heart" data-weight="fill"></span></span><span class="n">4</span></button>'
-    +(state==='nosync'?'':bar(mv.val,12480))+(extra||'')+'</div>';
+    +(extra||'')+'</div>';
 
   const cheer=(st,label)=>'<div style="display:flex;flex-direction:column;align-items:center;gap:4px">'
     +'<button class="cheer" data-cheer="'+st+'"><span class="ico">'
@@ -1418,25 +1683,41 @@ function renderGallery(){
     +'<span class="n">4</span></button>'
     +'<span style="font:400 10px/14px var(--font-text);color:var(--text-3)">'+label+'</span></div>';
 
+  /* the podium, off a fixed cast so the gallery does not move with the
+     state — and built by the screen's own function, so the two can't drift */
+  const podDemo=renderPodium([
+    Object.assign({},PEOPLE.koms,  {val:PEOPLE.koms.today,   rank:1}),
+    Object.assign({},PEOPLE.me,    {val:PEOPLE.me.today+3200,rank:2, you:true}),
+    Object.assign({},PEOPLE.rashmi,{val:PEOPLE.rashmi.today, rank:2})
+  ]);
+
   $('#gal').innerHTML =
-    '<h3>7.1 Leaderboard row</h3><div class="grp">'
-      + row('ranked','','ranked')
-      + row('you','','you — the only highlight, and there is only ever one')
+    '<h3>7.9 Podium — ranks 1–3</h3><div class="grp" style="padding:8px 0">'+podDemo
+      +'<div class="cap" style="padding-top:8px">1st is centre and tallest; 2nd sits left, 3rd right. '
+      +'Plinths carry each person&rsquo;s own rank, so a tie shows two 2nds and no 3rd &mdash; the list '
+      +'below picks up from the fourth <em>person</em>, never from rank 4, so a tie can&rsquo;t strand '
+      +'anyone between the two.</div></div>'
+
+    + '<h3>7.1 Leaderboard row</h3><div class="grp">'
+      + row('ranked','','ranked — figure and steps glyph at the right end, no bar')
+      + row('you','','you — only ever seen on the podium; in the list you are the sticky card')
       + row('stale','<span class="why">last synced 09:40</span>','stale — last known, still ranked')
       + row('nosync','<span class="why">hasn&rsquo;t set up a band</span>','not synced — no numeral, no position')
-      + '<div class="cap">skeleton</div><div class="lbrow" data-row="skeleton"><span class="rank"></span>'
-      + '<span class="av" style="background:var(--surface-raised);color:transparent">.</span>'
-      + '<span class="sk w1"></span><span class="sk w2"></span>'+bar(0,1)+'<span></span></div>'
+      + row('skeleton','','skeleton')
+    + '</div>'
+
+    + '<h3>7.10 Sticky you-card</h3><div class="grp" style="padding:12px">'
+      + '<div class="youcard" style="position:static;left:auto;right:auto;bottom:auto;box-shadow:none">'
+      + '<span class="rank">4</span>'+avatar(PEOPLE.me)
+      + '<span class="nm">You</span>'+figure(7240)
+      + '<span class="gap"><b>1,866</b> steps behind Ankit</span></div>'
+      + '<div class="cap">Always on, so the one thing permanently on screen is the one thing you came for.</div>'
     + '</div>'
 
     + '<h3>7.3 Cheer control</h3><div class="grp" style="display:flex;gap:8px;justify-content:space-around;padding:16px 8px">'
       + cheer('idle','idle') + cheer('pending','pending') + cheer('done','done')
       + cheer('failed','failed') + cheer('limit','at limit') + cheer('queued','queued')
     + '</div>'
-
-    + '<h3>7.2 Relative bar</h3><div class="grp" style="padding:16px">'
-      + '<div style="display:flex;flex-direction:column;gap:12px">'
-      + bar(12480,12480) + bar(9106,12480) + bar(7240,12480) + bar(0,12480) + '</div></div>'
 
     + '<h3>7.5 Period control</h3><div class="grp" style="padding:12px">'
       + '<div class="seg"><button class="active">Today</button><button>7 days</button></div>'
@@ -1446,18 +1727,20 @@ function renderGallery(){
       + 'Offline &mdash; showing last known figures</div>'
     + '</div>'
 
-    + '<h3>7.6 Compare strip</h3><div class="grp" style="padding:16px"><div class="compare">'
+    + '<h3>7.6 Compare strip — friend profile</h3><div class="grp" style="padding:16px"><div class="compare">'
       + '<div class="cmprow"><span class="who">Rashmi</span><span class="val"><span class="num">9,106</span>'
       + '<span class="unit">steps</span></span>'+bar(9106,9106)+'</div>'
       + '<div class="cmprow"><span class="who">You</span><span class="val"><span class="num">7,240</span>'
       + '<span class="unit">steps</span></span>'+bar(7240,9106,'var(--text-3)')+'</div>'
-      + '<div class="cmp-say"><b>1,866</b> steps ahead of you</div></div></div>'
+      + '<div class="cmp-say"><b>1,866</b> steps ahead of you</div></div>'
+      + '<div class="cap">The one place a bar survives rev 2: two values, one comparison, and the bars '
+      + 'are the picture the sentence describes.</div></div>'
 
-    + '<h3>7.7 Disclosure — required, not decoration</h3><div class="grp" style="padding:12px">'
+    + '<h3>7.7 Disclosure — required, and mutual</h3><div class="grp" style="padding:12px">'
       + '<div class="disclose">'+ico('info','fill')+'<p>'+DISCLOSURE+'</p></div></div>'
 
-    + '<h3>Avatars — 40px chip, initial fallback</h3><div class="grp" style="display:flex;gap:8px;padding:16px;justify-content:center">'
-      + [PEOPLE.me,PEOPLE.koms,PEOPLE.rashmi,PEOPLE.ankit,PEOPLE.shash].map(p=>avatar(p)).join('')
+    + '<h3>Avatars — 40px chip, initial fallback, one neutral tint</h3><div class="grp" style="display:flex;gap:8px;padding:16px;justify-content:center">'
+      + [PEOPLE.me,PEOPLE.koms,PEOPLE.rashmi,PEOPLE.ankit,PEOPLE.meera,PEOPLE.shash].map(p=>avatar(p)).join('')
     + '</div>';
   injectIcons($('#gal'));
 }
@@ -1476,9 +1759,9 @@ $('#fstates').innerHTML = FSTATES.map(function(f){
 }).join('');
 $('#screens').innerHTML = [
   ['page-home','Home','The Friends card in place, at the end of Activity monitor.'],
-  ['p-friends','Leaderboard','S02.'],
+  ['p-friends','Leaderboard','S02 — podium, list from 4th, sticky you-card.'],
   ['p-friend','Friend profile','S03 — Home&rsquo;s cards, read-only.'],
-  ['p-circle','Circle members','S06.'],
+  ['p-circle','Your friends','S06 — remove is mutual, and there is nothing to leave.'],
   ['page-gallery','Components','Every state from §7, for review.']
 ].map(function(s,i){
   return '<label'+(i===0?' class="on"':'')+'><input type="radio" name="scr" value="'+s[0]+'"'
@@ -1489,7 +1772,7 @@ $$('#fstates input').forEach(function(r){
   r.addEventListener('change',function(){
     S.f=r.value; S.cheered={};
     $$('#fstates label').forEach(l=>l.classList.toggle('on', l.contains(r)));
-    renderAll(); syncYouBar();
+    renderAll();
   });
 });
 function showScreen(id){
@@ -1498,7 +1781,7 @@ function showScreen(id){
   closeSheets(); $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true;
   if(id.indexOf('page-')===0){ $('#'+id).classList.add('active'); }
   else { $('#page-home').classList.add('active'); $('#'+id).hidden=false; $('#'+id).scrollTop=0; }
-  syncYouBar();
+  renderYouCard();
 }
 $$('#screens input').forEach(function(r){
   r.addEventListener('change',function(){
@@ -1537,6 +1820,23 @@ document.addEventListener('click', function(e){
   if(t.closest('[data-close]')){ closeSheets(); $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true; return; }
   if(t.closest('[data-back]')){ t.closest('.subpage').hidden=true; return; }
   if(t.closest('[data-cal]')){ $('#cal-sheet').hidden=false; $('#cal-scrim').hidden=false; renderCal(); return; }
+
+  /* picking a day: the dropdown's label follows the selection and the sheet
+     closes, exactly as it does on Home, Activity and Sleep.
+     FLAG (§9): this prototype carries one day of figures per person, so an
+     earlier date moves the label and the ring selection but not the cards
+     below. Wire it to real history in the build — and decide first whether a
+     friend's page may show a date from before you swapped codes (§9,
+     "does a removed member lose historical access?"). */
+  const dayEl=t.closest('.cal-day[data-day]');
+  if(dayEl){
+    const parts=dayEl.dataset.day.split('-');
+    S.date={mi:+parts[0], d:+parts[1]};
+    $('#p-friend [data-datelabel]').textContent = dateLabel(S.date.mi, S.date.d);
+    renderCal();
+    $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true;
+    return;
+  }
   if(t.closest('[data-menu]')){ $('#scrim').hidden=false; $('#menu-sheet').hidden=false; return; }
 
   const rowEl=t.closest('[data-tap]');
@@ -1570,7 +1870,7 @@ otp.forEach(function(inp,i){
     if(code.length<6){ st.innerHTML=''; box.dataset.otp=''; return; }
     if(code==='K7M4Q2'){                       /* your own code */
       box.dataset.otp='error';
-      st.innerHTML='<div class="inline-err">'+ico('info','fill')+'That&rsquo;s your own code.</div>';
+      st.innerHTML='<div class="inline-err">'+ico('info','fill')+'That&rsquo;s your own code &mdash; share it instead.</div>';
     } else if(code[0]==='X'){                  /* demo: X… is an expired code */
       box.dataset.otp='error';
       st.innerHTML='<div class="inline-err">'+ico('info','fill')+'This code has expired. Ask for a new one.</div>';
@@ -1579,12 +1879,11 @@ otp.forEach(function(inp,i){
          confirming. The sixth character is never the commit (§4.4). */
       box.dataset.otp='';
       st.innerHTML='<div class="resolved">'+avatar(PEOPLE.koms)
-        +'<span class="txt"><span class="t1">Koms&rsquo;s circle</span>'
-        +'<span class="t2">5 people &middot; Koms, Rashmi, Ankit, Meera, Dev</span></span></div>'
+        +'<span class="txt"><span class="t1">Koms</span>'
+        +'<span class="t2">You&rsquo;ll appear on each other&rsquo;s leaderboard</span></span></div>'
         +'<div class="disclose" style="margin-top:12px">'+ico('info','fill')
-        +'<p>Everyone in this circle will be able to see your <b>activity, heart rate, sleep and blood oxygen</b> '
-        +'&mdash; for any day, not just today.</p></div>'
-        +'<button class="btn btn--primary" style="margin-top:12px">Join Koms&rsquo;s circle</button>'
+        +'<p>'+DISCLOSURE+'</p></div>'
+        +'<button class="btn btn--primary" style="margin-top:12px">Add Koms</button>'
         +'<button class="btn btn--tertiary" data-back>Cancel</button>';
     }
     injectIcons(st);
