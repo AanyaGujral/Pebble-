@@ -1,5 +1,39 @@
 # Changelog
 
+- 2026-09-03 (later) — **Me tab feedback round.** Three owner changes:
+
+  • **Bare glyphs, no containers.** The 40px filled chip is gone from every
+    row. Rows are now built to the Choose Activity screen's measurements from
+    the Start-Workout flow, which documents them exactly: a 20px glyph in a
+    32px UNPAINTED box, 16px padding, 8px from box to name, name 13/18 medium
+    in text-1, glyph in neutral-200, chevron 16px text-3, hairline inset 16px
+    each side and owned by the row below. Checked by rendering both pages and
+    diffing the computed styles — padding, gap, alignment, glyph box, glyph
+    colour, svg size, name size/weight/colour, caret and hairline all match
+    the reference to the pixel. `.group` also lost its horizontal padding and
+    gained overflow:hidden, so it is constructed like `.act-list` rather than
+    merely resembling it. Added `--gutter` and `--border-hairline` to match.
+
+  • **Real product images, not icons.** The device card and every dormant
+    band row now carry an <img> layered over the watch glyph: the photograph
+    covers the glyph when the file exists, and removes itself when it does
+    not, so the card never renders as a hole. Paths live under
+    `assets/devices/` — see the README there for what to supply. Verified
+    both ways: with a stand-in file present the image fills 96x96 and 32x32
+    and fully covers the glyph; with it absent the glyph shows through.
+
+  • The dormant list became data (`{name, shot}`) rather than bare strings so
+    each band names its own render.
+
+  Still no actual render on disk. The owner has shared the Pebble Prime image
+  in chat several times but it has not arrived as an uploadable file, so
+  every device falls back to the glyph today. Same situation as the tab
+  background PNGs.
+
+  Unchanged and re-verified: all nine device-slot occupants still measure
+  168px (hard rule 4), no hex or fonts outside the token block, nothing
+  animating under prefers-reduced-motion, every icon resolving.
+
 - 2026-09-03 — **Me tab, build slice 1 of 5** ("tab shell + components"), in
   a new standalone file `Me Tab/Me Tab.html`, built from `docs/feature-me-tab.md`
   (rev 3). Same shape as the other per-tab prototypes: a 360px Android mockup

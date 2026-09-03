@@ -18,6 +18,16 @@
 > T1–T10, the pairing CTA in context, S03, S04) until slice 1 is approved —
 > §7 of the spec makes the slices gated on purpose.
 >
+> Rows follow the Choose Activity screen in the Start-Workout flow exactly
+> (bare 20px glyph in a 32px unpainted box, 16px padding, 8px gap, 13/18
+> medium name, hairline inset 16px). If you add a row anywhere in this tab,
+> copy an existing one rather than measuring afresh.
+>
+> Device shots are real images, not icons: `assets/devices/*.png`, layered
+> over a glyph that shows only while the file is missing. **No render has
+> arrived as a file yet** — ask for it again; see assets/devices/README.md
+> for the sizes needed.
+>
 > Owner calls already made, so do not re-ask: break 4 is only Do Not Disturb
 > + Call notification (low battery prompt -> S03, analytics + AI insights ->
 > About); two bands is the tested case not a cap, so break 1 is a list and

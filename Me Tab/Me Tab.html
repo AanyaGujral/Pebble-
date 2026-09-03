@@ -91,6 +91,11 @@
   --font-number:'Spartan','League Spartan',sans-serif;
   --num-features:'tnum' 1,'lnum' 1;
 
+  /* layout constants lifted from the Start-Workout flow's Choose Activity
+     screen, so the two screens measure identically (owner, 2026-09-03) */
+  --gutter:16px;              /* the screen's side margin */
+  --border-hairline:0.5px;
+
   /* radii, control heights, motion */
   --radius-card:20px;
   --control-h-m:44px;
@@ -262,12 +267,21 @@ body{
 .iconbtn:hover{background:var(--surface-fill)}
 .iconbtn .phi{width:20px;height:20px}
 
-/* The tab body. gap:12px between groups IS the "silent break" — five card
-   surfaces with nothing written between them (hard rule 2: no group headers). */
-.tab-body{padding:16px 16px 32px;display:flex;flex-direction:column;gap:12px}
+/* The tab body. The gap between groups IS the "silent break" — five card
+   surfaces with nothing written between them (hard rule 2: no group headers).
 
-/* one silent break = one card surface */
-.group{background:var(--surface-card);border-radius:var(--radius-card);padding:0 16px}
+   Flag: the Choose Activity screen has a single list, so it has no
+   group-to-group spacing to copy. 12px is kept from the shipped Activity tab,
+   where it is the gap between stacked cards. Say the word and it moves to the
+   24px that screen leaves under its one list. */
+.tab-body{padding:16px var(--gutter) 32px;display:flex;flex-direction:column;gap:12px}
+
+/* One silent break = one card surface. No horizontal padding: the rows carry
+   their own 16px and the hairline is inset by the row, exactly as .act-list
+   and .act-row do on the Choose Activity screen. */
+.group{
+  background:var(--surface-card);border-radius:var(--radius-card);overflow:hidden;
+}
 
 /* buttons — components/button.html, four tiers sharing one geometry.
    Hierarchy is carried entirely by colour; every state is a change in
@@ -321,50 +335,56 @@ body{
    6. COMPONENT 5.1 — NAVIGATION ROW  (12 instances on the tab)
       States: default · value · badge · pressed · needs-band
    --------------------------------------------------------------------------
-   Geometry copied from the Workouts card in Activity Tab/Workout Tab.html,
-   which §2 of the spec names as the pattern to follow: a 20px glyph inside
-   a 40px chip, rows divided by a 0.5px hairline.
+   Geometry is the Choose Activity screen's `.act-row`, copied measurement for
+   measurement (owner, 2026-09-03) so the two screens read as one app:
+
+     a 20px glyph inside a 32px box, UNPAINTED — no chip, no fill, no radius
+     16px in from the top and the left  ·  8px from that box to the name
+     name at 13/18 medium in text-1     ·  glyph in neutral-200
+     chevron 16px in text-3             ·  hairline inset 16px each side
+
+   The earlier draft used a 40px filled chip and a 15/22 label. Both are gone.
    ========================================================================== */
 .row{
-  display:flex;align-items:center;gap:12px;width:100%;
-  padding:12px 0;margin:0;border:0;border-top:0.5px solid var(--divider);
-  background:none;text-align:left;font-family:inherit;cursor:pointer;
-  color:inherit;
-  transition:opacity var(--duration-fast) ease;
+  position:relative;width:100%;
+  display:flex;align-items:center;gap:8px;
+  padding:16px;border:none;background:none;cursor:pointer;
+  font-family:inherit;text-align:left;color:inherit;
+  transition:background var(--duration-fast) ease, opacity var(--duration-fast) ease;
 }
-.row:first-child{border-top:0}
-.row:focus-visible{outline:1px solid var(--text-2);outline-offset:2px;border-radius:8px}
+/* the divider belongs to the row below, inset from both ends, so it never
+   runs out to the card's edge */
+.row + .row::after,
+.row + .trow::after,
+.trow + .row::after,
+.trow + .trow::after{
+  content:"";position:absolute;top:0;left:16px;right:16px;
+  height:var(--border-hairline);background:var(--divider);
+}
+.row:hover{background:var(--surface-raised)}
+.row:focus-visible{outline:1px solid var(--text-2);outline-offset:-2px}
 
-/* Flag (2026-09-03): the glyph is MONOCHROME. The dev build tinted each row
-   icon with a different metric hue (--metric-sleep on Do Not Disturb, and so
-   on), but §2 reserves the metric aliases for body signals — one hue per
-   signal — so a settings row has no business wearing one. The Workouts card,
-   which §2 points at, uses neutral-100 on a neutral chip. Followed that. */
-.row .chipbox{
-  flex:0 0 auto;display:grid;place-items:center;width:40px;height:40px;
-  border-radius:12px;background:var(--neutral-bg);
-  transition:background var(--duration-fast) ease;
+.row .glyph{
+  flex:none;width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--neutral-200);
 }
-.row:hover .chipbox{background:var(--surface-fill)}
-.row .glyph{width:20px;height:20px;color:var(--neutral-100)}
-.row .lab{flex:1;min-width:0;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
-/* the trailing value — "Metric", "v2.0.1". Numerals switch to Spartan. */
-.row .val{flex:0 0 auto;font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
-.row .val.num{font-size:13px;line-height:16px}
-.row .caret{flex:0 0 auto;width:16px;height:16px;color:var(--text-3)}
+.row .glyph svg{width:20px;height:20px;display:block}
+.row .lab{flex:1;min-width:0;font-size:13px;line-height:18px;font-weight:500;color:var(--text-1)}
+/* the trailing value — "Metric", "v2.0.1" */
+.row .val{flex:none;font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
+.row .caret{flex:none;width:16px;height:16px;color:var(--text-3)}
+.row .caret svg{width:100%;height:100%;display:block}
 
-/* badge — the update dot on Firmware Update. Sits before the caret. */
-.row .dot{
-  flex:0 0 auto;width:8px;height:8px;border-radius:999px;
-  background:var(--caution-icon);
-}
+/* badge — the update dot on Firmware Update. Sits before the chevron. */
+.row .dot{flex:none;width:8px;height:8px;border-radius:999px;background:var(--caution-icon)}
 
 /* pressed — opacity only, per the button spec. No scale, no new colour. */
 .row:active,.row.is-pressed{opacity:.7}
 
 /* needs-band — NOT a visual state.
    Hard rule 3: never disable, dim or hide a band row. It stays fully lit and
-   fully tappable; the difference is only where the tap lands (its own
+   fully tappable; the only difference is where the tap lands (its own
    band-required empty state). So this class changes nothing you can see, and
    exists to carry the routing. It is marked in the bench with a caption. */
 .row.needs-band{ /* intentionally empty — see the comment above */ }
@@ -373,6 +393,9 @@ body{
    7. COMPONENT 5.2 — TOGGLE ROW  (2 instances on the tab)
       States: on · off · pending · failed · stale · fixed-on · blocked
    --------------------------------------------------------------------------
+   Same measurements as the navigation row above, so a toggle row and a
+   navigation row sit on one rhythm.
+
    Flag (owner, 2026-09-03): §3 rev 3 put FIVE toggles in break 4. The owner
    cut that to two — Do Not Disturb and Call notification. The other three
    moved:
@@ -386,17 +409,17 @@ body{
    because S03 will want it.
    ========================================================================== */
 .trow{
-  display:flex;align-items:flex-start;gap:12px;width:100%;
-  padding:12px 0;border-top:0.5px solid var(--divider);
+  position:relative;width:100%;
+  display:flex;align-items:center;gap:8px;padding:16px;
 }
-.trow:first-child{border-top:0}
-.trow .chipbox{
-  flex:0 0 auto;display:grid;place-items:center;width:40px;height:40px;
-  border-radius:12px;background:var(--neutral-bg);
+.trow .glyph{
+  flex:none;width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--neutral-200);
 }
-.trow .glyph{width:20px;height:20px;color:var(--neutral-100)}
-.trow .tbody{flex:1;min-width:0;padding-top:9px}
-.trow .lab{font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.trow .glyph svg{width:20px;height:20px;display:block}
+.trow .tbody{flex:1;min-width:0}
+.trow .lab{font-size:13px;line-height:18px;font-weight:500;color:var(--text-1)}
 /* the reason line — why a toggle failed, why it is stale, why it is locked */
 .trow .why{
   display:none;margin-top:2px;font-size:11px;line-height:16px;font-weight:400;color:var(--text-3);
@@ -409,7 +432,7 @@ body{
 .trow[data-toggle="pending"] .why{display:block}
 .trow[data-toggle="failed"] .why{color:var(--negative-text)}
 .trow[data-toggle="stale"] .why{color:var(--neutral-text)}
-.trow .tctrl{flex:0 0 auto;padding-top:9px;display:flex;align-items:center;gap:8px}
+.trow .tctrl{flex:none;display:flex;align-items:center;gap:8px}
 
 /* the switch itself — geometry from the shipped prototypes */
 .switch{
@@ -476,7 +499,7 @@ body{
 .dev-slot{
   min-height:var(--dev-slot-h);
   display:flex;flex-direction:column;
-  padding:16px 0;
+  padding:16px;              /* .group stopped padding; the slot pads itself */
 }
 .dev-slot > *{flex:1 1 auto;min-height:0}
 
@@ -495,16 +518,27 @@ body{
    per memory/session-handoff.md). Until an image file lands, the slot holds
    the Phosphor watch glyph on a raised tile. Drop a real image in and swap
    the <span class="phi"> for an <img> — the tile size does not change. */
- /* 96px, not 72: the slot is sized by the pairing CTA (the taller of the
-    two occupants), so a small product tile left a visible void under the
-    battery. A larger render fills the card honestly instead of padding it
-    with air, and gives the eventual product photograph room to read. */
+ /* The product shot. 96px, not 72: the slot is sized by the pairing CTA (the
+    taller of the two occupants), so a small tile left a visible void under
+    the battery, and a real product render needs room to read.
+
+    This is a REAL IMAGE slot, not an icon (owner, 2026-09-03). The <img> is
+    layered over a watch glyph: when the file is present the photograph
+    covers the glyph completely; when it is missing the image collapses and
+    the glyph shows through, so the card never renders as a hole. Drop the
+    file at the path below and it takes over with no code change.
+
+    ⚠ The render has NOT arrived as a file yet — see assets/devices/README.md.
+    Until it does, every device here falls back to the glyph. */
 .devcard .shot{
-  flex:0 0 auto;width:96px;height:96px;border-radius:20px;background:var(--surface-raised);
-  display:grid;place-items:center;overflow:hidden;
+  position:relative;flex:0 0 auto;width:96px;height:96px;border-radius:20px;
+  background:var(--surface-raised);display:grid;place-items:center;overflow:hidden;
 }
 .devcard .shot .phi{width:52px;height:52px;color:var(--text-2)}
-.devcard .shot img{width:100%;height:100%;object-fit:cover;display:block}
+.devcard .shot img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:block;
+}
 
 .devcard .meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding-top:2px}
 .devcard .name{
@@ -653,10 +687,19 @@ body{
    "+" never hides. This supersedes T6's "+ hidden (cap)" in §4 and makes
    S02's `cap-reached` state unreachable until a real cap is set. */
 .dormant .lab{display:flex;flex-direction:column;gap:2px}
-.dormant .dn{font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.dormant .dn{font-size:13px;line-height:18px;font-weight:500;color:var(--text-1)}
 .dormant .ds{font-size:11px;line-height:16px;font-weight:400;color:var(--neutral-text)}
-.dormant .chipbox{background:var(--neutral-bg)}
-.dormant .glyph{color:var(--neutral-icon)}
+/* A paired band is a real product too, so the second device shows its own
+   photograph rather than an icon (owner, 2026-09-03) — same layered <img>
+   over glyph as the card above, at the row's 32px glyph size. The box stays
+   unpainted when the glyph is showing and only gains a radius once there is
+   an image to clip. */
+.dormant .glyph{position:relative;overflow:hidden;border-radius:8px;color:var(--neutral-icon)}
+.dormant .glyph .phi{display:flex;align-items:center;justify-content:center;width:20px;height:20px}
+.dormant .glyph img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:block;
+}
 
 /* ==========================================================================
    9. COMPONENT 5.5 — BAND-REQUIRED EMPTY STATE
@@ -884,7 +927,12 @@ body{
               <button class="devcard" id="devCard" type="button">
                 <div class="top">
                   <span class="shot">
+                    <!-- The glyph is the floor, the photograph is the ceiling:
+                         the <img> sits on top and covers it when the file
+                         exists. No file, no broken frame — just the glyph. -->
                     <span class="phi" data-ph="watch" data-weight="fill"></span>
+                    <img src="../assets/devices/pebble-prime.png" alt=""
+                         onerror="this.remove()">
                   </span>
                   <span class="meta">
                     <span class="name">Pebble Prime</span>
@@ -950,13 +998,13 @@ body{
           <!-- ── break 2 · you ───────────────────────────────────────── -->
           <div class="group">
             <button class="row" type="button">
-              <span class="chipbox"><span class="phi glyph" data-ph="user" data-weight="fill"></span></span>
+              <span class="glyph phi" data-ph="user" data-weight="fill"></span>
               <span class="lab">Profile</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
             <!-- needs-band, but never dimmed and never disabled (hard rule 3) -->
             <button class="row needs-band" type="button">
-              <span class="chipbox"><span class="phi glyph" data-ph="crosshair" data-weight="fill"></span></span>
+              <span class="glyph phi" data-ph="crosshair" data-weight="fill"></span>
               <span class="lab">Goal Setting</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
@@ -965,27 +1013,27 @@ body{
           <!-- ── break 3 · what the band does ────────────────────────── -->
           <div class="group">
             <button class="row needs-band" type="button">
-              <span class="chipbox"><span class="phi glyph" data-ph="heartbeat" data-weight="fill"></span></span>
+              <span class="glyph phi" data-ph="heartbeat" data-weight="fill"></span>
               <span class="lab">Health Monitor</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
             <button class="row needs-band" type="button">
-              <span class="chipbox"><span class="phi glyph" data-ph="bell" data-weight="fill"></span></span>
+              <span class="glyph phi" data-ph="bell" data-weight="fill"></span>
               <span class="lab">Health Reminder</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
             <button class="row needs-band" type="button">
-              <span class="chipbox"><span class="phi glyph" data-ph="magnifying-glass" data-weight="fill"></span></span>
+              <span class="glyph phi" data-ph="magnifying-glass" data-weight="fill"></span>
               <span class="lab">Find Device</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
             <button class="row needs-band" type="button">
-              <span class="chipbox"><span class="phi glyph" data-ph="camera" data-weight="fill"></span></span>
+              <span class="glyph phi" data-ph="camera" data-weight="fill"></span>
               <span class="lab">Take Picture</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
             <button class="row needs-band" type="button">
-              <span class="chipbox"><span class="phi glyph" data-ph="download-simple" data-weight="fill"></span></span>
+              <span class="glyph phi" data-ph="download-simple" data-weight="fill"></span>
               <span class="lab">Firmware Update</span>
               <span class="dot" title="Update available"></span>
               <span class="phi caret" data-ph="caret-right"></span>
@@ -998,7 +1046,7 @@ body{
                not five — see the flag on the toggle-row component above. -->
           <div class="group">
             <div class="trow" data-toggle="on">
-              <span class="chipbox"><span class="phi glyph" data-ph="moon" data-weight="fill"></span></span>
+              <span class="glyph phi" data-ph="moon" data-weight="fill"></span>
               <span class="tbody">
                 <span class="lab">Do Not Disturb</span>
                 <span class="why"></span>
@@ -1009,7 +1057,7 @@ body{
               </span>
             </div>
             <div class="trow" data-toggle="on">
-              <span class="chipbox"><span class="phi glyph" data-ph="phone" data-weight="fill"></span></span>
+              <span class="glyph phi" data-ph="phone" data-weight="fill"></span>
               <span class="tbody">
                 <span class="lab">Call notification</span>
                 <span class="why"></span>
@@ -1024,18 +1072,18 @@ body{
           <!-- ── break 5 · app and help ──────────────────────────────── -->
           <div class="group">
             <button class="row" type="button">
-              <span class="chipbox"><span class="phi glyph" data-ph="ruler" data-weight="fill"></span></span>
+              <span class="glyph phi" data-ph="ruler" data-weight="fill"></span>
               <span class="lab">Units &amp; Format</span>
               <span class="val">Metric</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
             <button class="row" type="button">
-              <span class="chipbox"><span class="phi glyph" data-ph="heart" data-weight="fill"></span></span>
+              <span class="glyph phi" data-ph="heart" data-weight="fill"></span>
               <span class="lab">Apple Health</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
             <button class="row" type="button">
-              <span class="chipbox"><span class="phi glyph" data-ph="question" data-weight="fill"></span></span>
+              <span class="glyph phi" data-ph="question" data-weight="fill"></span>
               <span class="lab">FAQs</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
@@ -1043,7 +1091,7 @@ body{
                  the privacy policy and user agreement links already there
                  (owner, 2026-09-03). Built in slice 3 with S14. -->
             <button class="row" type="button">
-              <span class="chipbox"><span class="phi glyph" data-ph="info" data-weight="fill"></span></span>
+              <span class="glyph phi" data-ph="info" data-weight="fill"></span>
               <span class="lab">About</span>
               <span class="val num">v2.0.1</span>
               <span class="phi caret" data-ph="caret-right"></span>
@@ -1091,23 +1139,23 @@ body{
           <p class="bench-note">12 instances on the tab.</p>
 
           <div class="spec"><div class="spec-lab">default</div><div class="spec-in">
-            <button class="row" type="button"><span class="chipbox"><span class="phi glyph" data-ph="user" data-weight="fill"></span></span><span class="lab">Profile</span><span class="phi caret" data-ph="caret-right"></span></button>
+            <button class="row" type="button"><span class="glyph phi" data-ph="user" data-weight="fill"></span><span class="lab">Profile</span><span class="phi caret" data-ph="caret-right"></span></button>
           </div></div>
 
           <div class="spec"><div class="spec-lab">value <em>— trailing value</em></div><div class="spec-in">
-            <button class="row" type="button"><span class="chipbox"><span class="phi glyph" data-ph="ruler" data-weight="fill"></span></span><span class="lab">Units &amp; Format</span><span class="val">Metric</span><span class="phi caret" data-ph="caret-right"></span></button>
+            <button class="row" type="button"><span class="glyph phi" data-ph="ruler" data-weight="fill"></span><span class="lab">Units &amp; Format</span><span class="val">Metric</span><span class="phi caret" data-ph="caret-right"></span></button>
           </div></div>
 
           <div class="spec"><div class="spec-lab">badge <em>— firmware update waiting</em></div><div class="spec-in">
-            <button class="row" type="button"><span class="chipbox"><span class="phi glyph" data-ph="download-simple" data-weight="fill"></span></span><span class="lab">Firmware Update</span><span class="dot"></span><span class="phi caret" data-ph="caret-right"></span></button>
+            <button class="row" type="button"><span class="glyph phi" data-ph="download-simple" data-weight="fill"></span><span class="lab">Firmware Update</span><span class="dot"></span><span class="phi caret" data-ph="caret-right"></span></button>
           </div></div>
 
           <div class="spec"><div class="spec-lab">pressed <em>— opacity only, per the button spec</em></div><div class="spec-in">
-            <button class="row is-pressed" type="button"><span class="chipbox"><span class="phi glyph" data-ph="magnifying-glass" data-weight="fill"></span></span><span class="lab">Find Device</span><span class="phi caret" data-ph="caret-right"></span></button>
+            <button class="row is-pressed" type="button"><span class="glyph phi" data-ph="magnifying-glass" data-weight="fill"></span><span class="lab">Find Device</span><span class="phi caret" data-ph="caret-right"></span></button>
           </div></div>
 
           <div class="spec"><div class="spec-lab">needs-band <em>— looks identical on purpose</em></div><div class="spec-in">
-            <button class="row needs-band" type="button"><span class="chipbox"><span class="phi glyph" data-ph="heartbeat" data-weight="fill"></span></span><span class="lab">Health Monitor</span><span class="phi caret" data-ph="caret-right"></span></button>
+            <button class="row needs-band" type="button"><span class="glyph phi" data-ph="heartbeat" data-weight="fill"></span><span class="lab">Health Monitor</span><span class="phi caret" data-ph="caret-right"></span></button>
           </div></div>
           <p class="bench-note">Hard rule 3: a band row is never disabled, dimmed or hidden. It stays lit and tappable with no band paired — the tap just lands on the band-required empty state below.</p>
 
@@ -1115,32 +1163,32 @@ body{
           <p class="bench-note">2 instances on the tab — Do Not Disturb and Call notification.</p>
 
           <div class="spec"><div class="spec-lab">on</div><div class="spec-in">
-            <div class="trow" data-toggle="on"><span class="chipbox"><span class="phi glyph" data-ph="moon" data-weight="fill"></span></span><span class="tbody"><span class="lab">Do Not Disturb</span><span class="why"></span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch on" type="button" role="switch" aria-checked="true" aria-label="Do Not Disturb"><i></i></button></span></div>
+            <div class="trow" data-toggle="on"><span class="glyph phi" data-ph="moon" data-weight="fill"></span><span class="tbody"><span class="lab">Do Not Disturb</span><span class="why"></span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch on" type="button" role="switch" aria-checked="true" aria-label="Do Not Disturb"><i></i></button></span></div>
           </div></div>
 
           <div class="spec"><div class="spec-lab">off</div><div class="spec-in">
-            <div class="trow" data-toggle="off"><span class="chipbox"><span class="phi glyph" data-ph="phone" data-weight="fill"></span></span><span class="tbody"><span class="lab">Call notification</span><span class="why"></span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch" type="button" role="switch" aria-checked="false" aria-label="Call notification"><i></i></button></span></div>
+            <div class="trow" data-toggle="off"><span class="glyph phi" data-ph="phone" data-weight="fill"></span><span class="tbody"><span class="lab">Call notification</span><span class="why"></span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch" type="button" role="switch" aria-checked="false" aria-label="Call notification"><i></i></button></span></div>
           </div></div>
 
           <div class="spec"><div class="spec-lab">pending <em>— optimistic, rolls back on failure</em></div><div class="spec-in">
-            <div class="trow" data-toggle="pending"><span class="chipbox"><span class="phi glyph" data-ph="moon" data-weight="fill"></span></span><span class="tbody"><span class="lab">Do Not Disturb</span><span class="why">Saving to the band…</span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch on" type="button" role="switch" aria-checked="true" aria-busy="true" aria-label="Do Not Disturb"><i></i></button></span></div>
+            <div class="trow" data-toggle="pending"><span class="glyph phi" data-ph="moon" data-weight="fill"></span><span class="tbody"><span class="lab">Do Not Disturb</span><span class="why">Saving to the band…</span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch on" type="button" role="switch" aria-checked="true" aria-busy="true" aria-label="Do Not Disturb"><i></i></button></span></div>
           </div></div>
 
           <div class="spec"><div class="spec-lab">failed <em>— reverted, with the reason</em></div><div class="spec-in">
-            <div class="trow" data-toggle="failed"><span class="chipbox"><span class="phi glyph" data-ph="moon" data-weight="fill"></span></span><span class="tbody"><span class="lab">Do Not Disturb</span><span class="why"><span class="phi" data-ph="warning-circle" data-weight="fill"></span>The band did not respond. Tap to try again.</span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch" type="button" role="switch" aria-checked="false" aria-label="Do Not Disturb"><i></i></button></span></div>
+            <div class="trow" data-toggle="failed"><span class="glyph phi" data-ph="moon" data-weight="fill"></span><span class="tbody"><span class="lab">Do Not Disturb</span><span class="why"><span class="phi" data-ph="warning-circle" data-weight="fill"></span>The band did not respond. Tap to try again.</span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch" type="button" role="switch" aria-checked="false" aria-label="Do Not Disturb"><i></i></button></span></div>
           </div></div>
 
           <div class="spec"><div class="spec-lab">stale <em>— last known, band disconnected</em></div><div class="spec-in">
-            <div class="trow" data-toggle="stale"><span class="chipbox"><span class="phi glyph" data-ph="phone" data-weight="fill"></span></span><span class="tbody"><span class="lab">Call notification</span><span class="why"><span class="phi" data-ph="link-break" data-weight="fill"></span>Last known — reconnect to change</span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch on" type="button" role="switch" aria-checked="true" aria-disabled="true" aria-label="Call notification"><i></i></button></span></div>
+            <div class="trow" data-toggle="stale"><span class="glyph phi" data-ph="phone" data-weight="fill"></span><span class="tbody"><span class="lab">Call notification</span><span class="why"><span class="phi" data-ph="link-break" data-weight="fill"></span>Last known — reconnect to change</span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch on" type="button" role="switch" aria-checked="true" aria-disabled="true" aria-label="Call notification"><i></i></button></span></div>
           </div></div>
 
           <div class="spec"><div class="spec-lab">fixed-on <em>— locked, with a visible reason</em></div><div class="spec-in">
-            <div class="trow" data-toggle="fixed-on"><span class="chipbox"><span class="phi glyph" data-ph="battery-warning" data-weight="fill"></span></span><span class="tbody"><span class="lab">Low battery prompt</span><span class="why">Always on, so the band never dies without warning</span></span><span class="tctrl"><span class="lockpill"><span class="phi" data-ph="lock-simple" data-weight="fill"></span>On</span></span></div>
+            <div class="trow" data-toggle="fixed-on"><span class="glyph phi" data-ph="battery-warning" data-weight="fill"></span><span class="tbody"><span class="lab">Low battery prompt</span><span class="why">Always on, so the band never dies without warning</span></span><span class="tctrl"><span class="lockpill"><span class="phi" data-ph="lock-simple" data-weight="fill"></span>On</span></span></div>
           </div></div>
           <p class="bench-note">Built for S03, where the low battery prompt now lives. It has no instance on the tab any more — a switch that will not move reads as broken, so the tab states it instead of faking it.</p>
 
           <div class="spec"><div class="spec-lab">blocked <em>— OS permission missing</em></div><div class="spec-in">
-            <div class="trow" data-toggle="blocked"><span class="chipbox"><span class="phi glyph" data-ph="phone" data-weight="fill"></span></span><span class="tbody"><span class="lab">Call notification</span><span class="why"><span class="phi" data-ph="prohibit" data-weight="fill"></span>Pebble has no access to your calls</span></span><span class="tctrl"><button class="linkout" type="button">Settings<span class="phi" data-ph="arrow-circle-up-right" data-weight="fill"></span></button></span></div>
+            <div class="trow" data-toggle="blocked"><span class="glyph phi" data-ph="phone" data-weight="fill"></span><span class="tbody"><span class="lab">Call notification</span><span class="why"><span class="phi" data-ph="prohibit" data-weight="fill"></span>Pebble has no access to your calls</span></span><span class="tctrl"><button class="linkout" type="button">Settings<span class="phi" data-ph="arrow-circle-up-right" data-weight="fill"></span></button></span></div>
           </div></div>
 
           <div class="bench-h">5.3 · Device card</div>
@@ -1151,7 +1199,7 @@ body{
           <div class="bench-h">5.3b · Dormant band row</div>
           <p class="bench-note">The second entry in break 1. A dormant band has no functions at all until it becomes the connected one (hard rule 1) — so this row does one thing: connect.</p>
           <div class="spec"><div class="spec-lab">dormant-row</div><div class="spec-in">
-            <button class="row dormant" type="button"><span class="chipbox"><span class="phi glyph" data-ph="watch" data-weight="fill"></span></span><span class="lab"><span class="dn">PBL Qore 2</span><span class="ds">Dormant · tap to connect</span></span><span class="phi caret" data-ph="caret-right"></span></button>
+            <button class="row dormant" type="button"><span class="glyph"><span class="phi" data-ph="watch" data-weight="fill"></span><img src="../assets/devices/pbl-qore-2.png" alt="" onerror="this.remove()"></span><span class="lab"><span class="dn">PBL Qore 2</span><span class="ds">Dormant · tap to connect</span></span><span class="phi caret" data-ph="caret-right"></span></button>
           </div></div>
 
           <div class="bench-h">5.4 · Pairing CTA</div>
@@ -1335,14 +1383,26 @@ function injectIcons(root = document){
    is a list of any length and the header "+" never disappears. A dormant
    band is named here and nowhere else in the tab (hard rule 1), and the only
    thing its row can do is connect. */
-const DORMANT_BANDS = ['PBL Qore 2', 'Pebble Arc', 'Pebble Prime (work)'];
+const DORMANT_BANDS = [
+  { name: 'PBL Qore 2',          shot: '../assets/devices/pbl-qore-2.png' },
+  { name: 'Pebble Arc',          shot: '../assets/devices/pebble-arc.png' },
+  { name: 'Pebble Prime (work)', shot: '../assets/devices/pebble-prime.png' },
+];
 
 function renderDormant(n){
   const host = $('#dormList');
-  host.innerHTML = DORMANT_BANDS.slice(0, n).map(name => (
+  host.innerHTML = DORMANT_BANDS.slice(0, n).map(band => (
     '<button class="row dormant" type="button">' +
-      '<span class="chipbox"><span class="phi glyph" data-ph="watch" data-weight="fill"></span></span>' +
-      '<span class="lab"><span class="dn">' + name + '</span>' +
+      // A paired band is a real product, so it shows its own photograph
+      // rather than an icon. Same layering as the device card: glyph
+      // underneath, image over it, and the image removes itself when the
+      // file is missing. The glyph keeps its own .phi span — injectIcons()
+      // writes innerHTML, which would eat an <img> nested inside it.
+      '<span class="glyph">' +
+        '<span class="phi" data-ph="watch" data-weight="fill"></span>' +
+        '<img src="' + band.shot + '" alt="" onerror="this.remove()">' +
+      '</span>' +
+      '<span class="lab"><span class="dn">' + band.name + '</span>' +
       '<span class="ds">Dormant · tap to connect</span></span>' +
       '<span class="phi caret" data-ph="caret-right"></span>' +
     '</button>'
