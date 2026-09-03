@@ -1,5 +1,52 @@
 # Changelog
 
+- 2026-09-03 — **Me tab, build slice 1 of 5** ("tab shell + components"), in
+  a new standalone file `Me Tab/Me Tab.html`, built from `docs/feature-me-tab.md`
+  (rev 3). Same shape as the other per-tab prototypes: a 360px Android mockup
+  with a review panel beside it, opening by double-click with no server.
+  Contains the tab shell — header, the device-card slot and the five silent
+  breaks in the exact §3 row order, no group headers — plus a second
+  "component bench" view holding all six §5 components with every listed
+  state drawn and labelled at once.
+
+  Owner decisions taken this session (asked, not assumed):
+  • Break 4 keeps only Do Not Disturb and Call notification. The low battery
+    prompt moves to S03 as a stated always-on line (hard rule 5 still holds —
+    it always fires; a switch that will not move reads as broken). Usage
+    analytics and AI insights move into S14 About, next to the privacy policy
+    and user agreement links already there.
+  • Two bands is only the TESTED case, not a cap — so break 1 is a list of
+    dormant bands of any length and the header "+" never hides. This
+    supersedes T6's "+ hidden (cap)" in §4 and leaves S02's `cap-reached`
+    state unreachable until a real cap is set.
+  • Do Not Disturb stays a toggle with no schedule.
+  • No new tokens. §2 names --surface-raised, --surface-fill, --divider,
+    --radius-card and --duration-*, none of which are exports in
+    js/tokens.js; all are already-established aliases of existing values in
+    the shipped prototypes, so they are re-declared from the same primitives
+    and js/tokens.js is untouched.
+
+  Verified rather than asserted: all nine device-slot occupants (seven card
+  states plus both pairing CTAs) measure 168px, so nothing below break 1
+  shifts between a paired and an unpaired account (hard rule 4) — the review
+  panel measures both and prints the result, and it caught a real 2px
+  mismatch in the first draft. No hex or rgb() outside the token block, no
+  font-family literals, nothing animating under prefers-reduced-motion.
+
+  Row icons are monochrome (neutral-100 glyph on a neutral chip, per the
+  Workouts card §2 points at), not the per-row metric hues the dev build
+  used — the metric aliases are reserved for body signals.
+
+  Flagged in code, not decided: sign out, delete account, Cycle, Edit Cards,
+  and the legacy System Setting leftovers (language, screen timeout) have no
+  home yet; whether band history survives an unbind; whether FAQ articles are
+  bundled or fetched; where the user lands after switching bands.
+
+  Still no product image for any band — the Phosphor watch glyph stands in,
+  and the tile takes an <img> without changing size when a render arrives.
+  Not merged into index.html: the standalone is the review surface first,
+  same as the Activity and Sleep tabs were.
+
 A running log of what changed and why. Add a new line at the top after each
 meaningful change. Format: `[date] — what changed — why/notes`
 

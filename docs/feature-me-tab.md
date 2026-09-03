@@ -12,6 +12,37 @@ Status: **UX approved (rev 3, 2026-09-02). UI not yet specified.**
 
 ---
 
+## 0a · Decisions since rev 3 (owner, 2026-09-03)
+
+Rev 3 below is left intact — it is the approved artifact. These are the calls
+taken against it during the slice-1 build. Where they conflict, **these win.**
+
+| Area | Rev 3 said | Now |
+|------|-----------|-----|
+| Break 4 | five toggles | **two** — Do Not Disturb, Call notification |
+| Low battery prompt | a locked-on row in break 4 | **moves to S03** as a stated always-on line. Hard rule 5 still holds — it always fires; it is simply not drawn as a switch that cannot move |
+| Usage analytics · AI insights | toggles in break 4 | **move into S14 About**, next to the privacy policy and user agreement links already there |
+| Two bands (§8) | open question | **not a cap** — two was only the tested case. Break 1 is a LIST of dormant bands and the header `+` never hides. Supersedes T6's "`+` hidden (cap)"; leaves S02's `cap-reached` unreachable until a real cap is set |
+| DND schedule (§8) | open question | **stays a toggle**, no schedule, no page |
+| Missing tokens (§2) | "add it to `js/tokens.js` first" | **use existing tokens; ask before adding.** `--surface-raised`, `--surface-fill`, `--divider`, `--radius-card`, `--duration-*` are not exports in `js/tokens.js` but are established aliases of existing values in the shipped prototypes, so they are re-declared from the same primitives and `js/tokens.js` is untouched |
+
+**Still open** — flagged in code, not decided: sign out · delete account ·
+Cycle · Edit Cards · the System Setting leftovers (language, screen timeout) ·
+whether band history survives an unbind · FAQ articles bundled or fetched ·
+where the user lands after switching bands.
+
+### Build status
+
+| Slice | Contents | State |
+|-------|----------|-------|
+| 1 | tab shell + all six §5 components | **built** — `Me Tab/Me Tab.html`, awaiting review |
+| 2 | device card T1–T10, pairing CTA, S03, S04 | not started |
+| 3 | S01, S11, S12, S13, S14 | not started |
+| 4 | S05–S09, S02, the toggles | not started |
+| 5 | S10 Firmware Update | not started |
+
+---
+
 ## 0 · Read first
 
 | Order | File | Why |

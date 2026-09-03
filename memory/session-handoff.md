@@ -1,19 +1,31 @@
 # Session Handoff
 
-> **2026-08-10 — read this first.** `index.html` is now the MERGED source of
-> truth: it adopts the parallel session's build (metric details pages with a
-> D/W/M/Y period switcher; control panel reduced to Default + No data and
-> scoped to the Activity tab — Health/Sleep/Me tabs temporarily disabled in
-> the tab bar) plus this session's StatTile feedback round (component-styled
-> summary tiles, thousands formatting, one-line headers, DAY-11 best-day
-> format, taller chart axis gap, no-data = headers + — + empty chart frames).
-> The owner approved on 2026-08-10 and the branch is now PUSHED. The named
-> snapshot lives in `Activity Tab/Workout Tab.html`; `index.html` stays the
-> live working copy at the root. The background PNGs STILL have not arrived
-> as files (three attempts, inline previews only), so the code-drawn
-> stand-in scenes are what ship. Image slots are wired to
-> `assets/backgrounds/activity-dusk.png` + `sleep-night.png` — dropping the
-> real files in takes over automatically.
+> **2026-09-03 — read this first.** Work has moved to the **Me tab**.
+> `Me Tab/Me Tab.html` is a NEW standalone prototype holding **build slice 1
+> of 5** from `docs/feature-me-tab.md` (rev 3): the tab shell (header, device
+> slot, five silent breaks in the exact §3 row order) plus a "component
+> bench" view with all six §5 components in every listed state. Open it by
+> double-clicking; the panel on the left switches the device slot, the
+> dormant-band count and the confirm sheet.
+>
+> **Awaiting owner review.** Do not start slice 2 (device card across
+> T1–T10, the pairing CTA in context, S03, S04) until slice 1 is approved —
+> §7 of the spec makes the slices gated on purpose.
+>
+> Owner calls already made, so do not re-ask: break 4 is only Do Not Disturb
+> + Call notification (low battery prompt -> S03, analytics + AI insights ->
+> About); two bands is the tested case not a cap, so break 1 is a list and
+> "+" never hides; DND stays a toggle; no new tokens without asking.
+>
+> Still open and flagged in the code, not decided: sign out, delete account,
+> Cycle, Edit Cards, the System Setting leftovers (language, screen timeout),
+> whether band history survives an unbind, whether FAQ articles are bundled
+> or fetched, and where the user lands after switching bands.
+>
+> The earlier Activity/Sleep note still applies: `index.html` is the merged
+> app prototype and its Me tab is the OLD first-pass layout — it has not been
+> touched, and should be replaced from this file once the slices are done.
+> Background PNGs still have not arrived.
 
 **Read this first when you (or Claude) pick up work.** It says what shipped,
 what decisions were made, and the exact next steps.

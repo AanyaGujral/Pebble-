@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Me tab · slice 1 — shell + components</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@500;700&display=swap">
+
+<!-- ==========================================================================
+     ME TAB — BUILD SLICE 1 of 5  ("tab shell + components")
+
+     What this file is, in plain English:
+       The left-hand panel is a set of switches for reviewing. The phone in
+       the middle shows two views:
+         • "Tab shell"       — the Me tab itself: the header, the device
+                               slot, and the five silent breaks in the exact
+                               row order from the spec. Static structure only.
+         • "Component bench" — every one of the six components from §5 of the
+                               spec, drawn once per state, each labelled.
+
+     What is deliberately NOT here (it belongs to later slices):
+       • Real data and real navigation — no row opens a page yet.
+       • The ten tab states T1–T10 (slice 2).
+       • All 14 inner pages S01–S14 (slices 2–5).
+
+     Source of truth: docs/feature-me-tab.md (rev 3, 2026-09-02).
+     ========================================================================== -->
+
+<style>
+/* ==========================================================================
+   1. TOKENS
+   --------------------------------------------------------------------------
+   Flag: these custom properties are copied VERBATIM from js/tokens.js (the
+   single source of truth). They are inlined here because the page must open
+   by double-clicking (file://), where ES-module imports are blocked by the
+   browser. If js/tokens.js changes, re-copy the values. Same arrangement as
+   index.html, Workout Tab.html and components/button.html.
+
+   Flag (owner, 2026-09-03): "use existing tokens, ask me if something new
+   needs adding". §2 of the spec names --surface-raised, --surface-fill,
+   --divider, --gridline, --radius-card and --duration-* . None of those are
+   exports in js/tokens.js, but all of them are already-established ALIASES
+   of existing token values in the shipped prototypes (Workout Tab.html,
+   button.html). They are re-declared here from the same primitives, so this
+   file adds NO new token values — every colour below traces to a value in
+   js/tokens.js. Nothing new was invented; nothing was added to tokens.js.
+   ========================================================================== */
+:root{
+  /* hue ramps — 0 lightest -> 900 darkest, primary at 400 */
+  --crimson-0:#FFEAED;--crimson-100:#FFC2C9;--crimson-200:#FD99A5;--crimson-300:#F26E83;--crimson-400:#E43A62;--crimson-500:#C02D50;--crimson-600:#9E2040;--crimson-700:#7C142F;--crimson-800:#5D0820;--crimson-900:#3F0112;
+  --terracotta-0:#FFEEE5;--terracotta-100:#FDCEBE;--terracotta-200:#F2AF98;--terracotta-300:#E68F72;--terracotta-400:#D96F4A;--terracotta-500:#B65A3A;--terracotta-600:#93472B;--terracotta-700:#73341D;--terracotta-800:#532210;--terracotta-900:#361104;
+  --tangerine-0:#FFF0DF;--tangerine-100:#FFDCBA;--tangerine-200:#FDC894;--tangerine-300:#FAB36C;--tangerine-400:#F59E3B;--tangerine-500:#CA8028;--tangerine-600:#A16315;--tangerine-700:#7A4700;--tangerine-800:#552D00;--tangerine-900:#331500;
+  --gold-0:#FBF3DE;--gold-100:#F9E8BE;--gold-200:#F7DD9C;--gold-300:#F5D278;--gold-400:#F2C64B;--gold-500:#C6A034;--gold-600:#9C7C1C;--gold-700:#735901;--gold-800:#4D3900;--gold-900:#2A1B00;
+  --lime-0:#EEF8E0;--lime-100:#DCEEBF;--lime-200:#CAE39D;--lime-300:#B8D978;--lime-400:#A6CE4E;--lime-500:#86A839;--lime-600:#688424;--lime-700:#4B620F;--lime-800:#304100;--lime-900:#172300;
+  --emerald-0:#E6F9EC;--emerald-100:#C0E8CE;--emerald-200:#9BD7B0;--emerald-300:#73C693;--emerald-400:#43B476;--emerald-500:#329560;--emerald-600:#22774A;--emerald-700:#125B36;--emerald-800:#034023;--emerald-900:#002611;
+  --teal-0:#E4F9F4;--teal-100:#C1EDE4;--teal-200:#9EE0D3;--teal-300:#76D4C3;--teal-400:#45C7B3;--teal-500:#31A492;--teal-600:#1D8173;--teal-700:#076155;--teal-800:#004239;--teal-900:#00261F;
+  --sky-0:#E7F6FF;--sky-100:#C4E3FA;--sky-200:#A2CFF1;--sky-300:#7EBCE8;--sky-400:#58A8DF;--sky-500:#458ABA;--sky-600:#336E96;--sky-700:#215273;--sky-800:#113952;--sky-900:#032134;
+  --violet-0:#F1F1FF;--violet-100:#D6D4FF;--violet-200:#BBB7FC;--violet-300:#A29AF5;--violet-400:#8A7CEC;--violet-500:#7266C6;--violet-600:#5B50A2;--violet-700:#453C7F;--violet-800:#30295E;--violet-900:#1D163E;
+  --orchid-0:#FEEDFF;--orchid-100:#F1CFFA;--orchid-200:#E4B1F2;--orchid-300:#D692E8;--orchid-400:#C873DE;--orchid-500:#A65DB9;--orchid-600:#864896;--orchid-700:#663474;--orchid-800:#492053;--orchid-900:#2D0E35;
+  --neutral-0:#EFF1F9;--neutral-100:#D5D9EA;--neutral-200:#B8BDD3;--neutral-300:#999FB9;--neutral-400:#7B819C;--neutral-500:#5E637D;--neutral-600:#42465B;--neutral-700:#282B39;--neutral-800:#0F111B;--neutral-900:#07080C;
+
+  /* surfaces — elevation is lightness, never shadow */
+  --surface-app:var(--neutral-900);
+  --surface-card:var(--neutral-800);
+  --surface-raised:var(--neutral-700);
+  --surface-fill:var(--neutral-600);
+
+  /* text */
+  --text-1:var(--neutral-0);
+  --text-2:var(--neutral-200);
+  --text-3:var(--neutral-400);
+  --text-on-accent:var(--neutral-900);
+
+  /* lines */
+  --divider:var(--neutral-700);
+  --gridline:var(--neutral-700);
+
+  /* accent — the product teal. One primary action per screen. */
+  --metric-readiness:var(--teal-400);
+
+  /* semantic quads — glyphs and badges only, never chart lines or fills */
+  --positive-bg:#0E2A1B;--positive-fill:#1E5B38;--positive-icon:#4ADE80;--positive-text:#8AF0B0;
+  --negative-bg:#331109;--negative-fill:#6E2418;--negative-icon:#F4604C;--negative-text:#FF9184;
+  --caution-bg:#2E2103;--caution-fill:#6B4E0E;--caution-icon:#EFB428;--caution-text:#F5CE6F;
+  --neutral-bg:var(--neutral-700);--neutral-fill:var(--neutral-600);--neutral-icon:var(--neutral-300);--neutral-text:var(--neutral-200);
+
+  /* type — Google Sans Flex for words, League Spartan for every numeral */
+  --font-text:'Google Sans Flex','Google Sans',sans-serif;
+  --font-number:'Spartan','League Spartan',sans-serif;
+  --num-features:'tnum' 1,'lnum' 1;
+
+  /* radii, control heights, motion */
+  --radius-card:20px;
+  --control-h-m:44px;
+  --control-h-l:52px;
+  --duration-fast:120ms;
+  --duration-base:140ms;
+  --duration-slow:240ms;
+
+  /* The height of the device-card slot. The device card AND the pairing CTA
+     both fill exactly this, which is what stops anything below them from
+     shifting when a band is paired or unpaired (hard rule 4). The control
+     panel measures both and prints the result so it can be checked.
+
+     The number is set from the TALLEST natural content, which is the pairing
+     CTA: 72px tile + 14px gap + 44px button + 2x16px padding = 162. Anything
+     lower and the CTA pushes the slot open on its own and the tab shifts —
+     the first draft used 160 and the readout caught it. 168 leaves headroom
+     for a longer button label without another mismatch. */
+  --dev-slot-h:168px;
+}
+
+/* ==========================================================================
+   2. PAGE SCAFFOLD — the desk the phone sits on, plus the review panel
+   ========================================================================== */
+:root{color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+/* The browser hides [hidden] elements with display:none, but that is a
+   low-priority rule — any `display` an author writes beats it. Several
+   components below set display:flex on things the script hides with
+   el.hidden, so without this the hidden parts leak through (an empty red
+   error block showed up under the unbind sheet before this line existed). */
+[hidden]{display:none !important}
+body{
+  min-height:100vh;background:var(--surface-app);color:var(--text-1);
+  font-family:var(--font-text);
+  display:flex;align-items:flex-start;justify-content:center;
+  gap:32px;padding:32px 16px;flex-wrap:wrap;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* Control panel — lives OUTSIDE the phone, same pattern as the Activity and
+   Sleep prototypes. Every switch here is for review only; none of it ships. */
+.panel{
+  position:sticky;top:32px;width:248px;flex:0 0 auto;
+  background:var(--surface-card);
+  border:0.5px solid var(--neutral-700);border-radius:var(--radius-card);
+  padding:16px;max-height:calc(100vh - 64px);overflow-y:auto;scrollbar-width:thin;
+}
+.panel h2{
+  margin:0;font-size:11px;line-height:16px;font-weight:600;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+}
+.panel h2 + .hint{margin-top:6px}
+.panel .grp{margin-top:20px}
+.panel .grp:first-of-type{margin-top:12px}
+.panel .hint{margin:0 0 10px;font-size:11px;line-height:16px;color:var(--text-3)}
+.panel .opts{display:flex;flex-direction:column;gap:2px}
+.panel label{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 10px;border-radius:12px;cursor:pointer;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-2);
+}
+.panel label:hover{background:var(--surface-raised)}
+.panel label.on{background:var(--surface-raised);color:var(--text-1)}
+.panel input{accent-color:var(--metric-readiness);margin:0;flex:0 0 auto}
+.panel .desc{display:block;font-size:10px;line-height:14px;font-weight:400;color:var(--text-3)}
+
+/* the live footprint readout — proves hard rule 4 rather than asserting it */
+.proof{
+  margin-top:12px;padding:10px 12px;border-radius:12px;
+  background:var(--surface-raised);
+}
+.proof .pl{font-size:10px;line-height:14px;color:var(--text-3)}
+.proof .pv{
+  margin-top:2px;font-family:var(--font-number);font-size:13px;line-height:16px;
+  font-weight:500;font-feature-settings:var(--num-features);color:var(--text-1);
+}
+.proof.ok .pv{color:var(--positive-text)}
+.proof.bad .pv{color:var(--negative-text)}
+
+/* ==========================================================================
+   3. PHONE MOCKUP — Android, 360px-wide screen, punch-hole camera.
+      Copied from the approved Activity / Sleep prototypes.
+   ========================================================================== */
+.phone{
+  flex:0 0 auto;border-radius:40px;background:var(--neutral-900);
+  border:2px solid var(--neutral-700);outline:6px solid var(--neutral-800);padding:10px;
+}
+.screen{
+  position:relative;width:360px;height:780px;
+  border-radius:32px;overflow:hidden;background:var(--surface-app);
+  display:flex;flex-direction:column;
+}
+.screen::before{
+  content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:12px;height:12px;border-radius:50%;
+  background:var(--neutral-900);border:2px solid var(--neutral-700);
+  z-index:60;pointer-events:none;
+}
+.statusbar{
+  position:absolute;top:0;left:0;right:0;height:32px;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-1);pointer-events:none;
+}
+.statusbar .batt{width:20px;height:10px;border-radius:3px;border:1px solid var(--text-2);padding:1px}
+.statusbar .batt i{display:block;width:12px;height:100%;border-radius:2px;background:var(--text-1)}
+.statusbar .right{display:flex;align-items:center;gap:6px;color:var(--text-2)}
+
+.pages{flex:1;overflow:hidden;position:relative}
+.page{
+  position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  display:none;scrollbar-width:none;padding-bottom:96px;
+}
+.page::-webkit-scrollbar{display:none}
+.page.active{display:block}
+.gesture{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:112px;height:4px;border-radius:999px;background:var(--neutral-600);
+  z-index:60;pointer-events:none;
+}
+
+/* ==========================================================================
+   4. BOTTOM NAVIGATION — components/pebble-nav.html. Me is tab 4.
+      The other three are drawn but inert: their screens live elsewhere.
+   ========================================================================== */
+.pebble-nav{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:20px;z-index:55;
+  display:flex;align-items:center;gap:4px;
+  width:328px;height:60px;padding:0 14px;border-radius:999px;
+  background:color-mix(in srgb, var(--neutral-800) 80%, transparent);
+  -webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px);
+  box-shadow:0 8px 24px color-mix(in srgb, var(--neutral-900) 48%, transparent),
+             0 2px 6px color-mix(in srgb, var(--neutral-900) 32%, transparent);
+}
+.pebble-tab{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  width:72px;height:60px;padding:10px 0;border:0;background:none;border-radius:999px;
+  font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.pebble-tab:focus-visible{outline:2px solid var(--neutral-0);outline-offset:-2px}
+.pebble-tab .icon{display:block;width:24px;height:24px;color:var(--neutral-300);transition:color 160ms ease, transform 160ms ease}
+.pebble-tab .icon svg{width:100%;height:100%;display:block;fill:currentColor}
+.pebble-tab .label{font-size:10px;line-height:14px;font-weight:400;letter-spacing:.01em;color:var(--neutral-300);transition:color 160ms ease}
+.pebble-tab:active .icon{transform:scale(.92)}
+.pebble-tab[aria-current="page"] .icon{color:var(--neutral-0)}
+.pebble-tab[aria-current="page"] .label{color:var(--neutral-100)}
+.pebble-tab[aria-disabled="true"]{cursor:default}
+.pebble-tab[aria-disabled="true"]:active .icon{transform:none}
+
+/* ==========================================================================
+   5. SHARED PIECES — icons, header, the "silent break" surface, buttons
+   ========================================================================== */
+/* Phosphor glyphs. Path data is injected into these spans by the script at
+   the bottom; every path is copied verbatim from @phosphor-icons/core. */
+.phi{display:inline-block;line-height:0}
+.phi svg{width:100%;height:100%;display:block;fill:currentColor}
+
+/* 44px top padding = the 32px status-bar overlay + the usual 12px */
+.screen-head{
+  padding:44px 16px 0;display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.screen-title{font-size:24px;line-height:30px;font-weight:500;letter-spacing:-0.01em;color:var(--text-1)}
+.iconbtn{
+  width:36px;height:36px;border-radius:999px;background:var(--surface-raised);border:0;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--text-1);
+  transition:background var(--duration-fast) ease;
+}
+.iconbtn:hover{background:var(--surface-fill)}
+.iconbtn .phi{width:20px;height:20px}
+
+/* The tab body. gap:12px between groups IS the "silent break" — five card
+   surfaces with nothing written between them (hard rule 2: no group headers). */
+.tab-body{padding:16px 16px 32px;display:flex;flex-direction:column;gap:12px}
+
+/* one silent break = one card surface */
+.group{background:var(--surface-card);border-radius:var(--radius-card);padding:0 16px}
+
+/* buttons — components/button.html, four tiers sharing one geometry.
+   Hierarchy is carried entirely by colour; every state is a change in
+   opacity. No shadows, no scale. */
+.btn{
+  -webkit-appearance:none;appearance:none;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  box-sizing:border-box;width:100%;height:var(--control-h-l);padding:0 24px;
+  border:none;border-radius:999px;background:transparent;box-shadow:none;
+  font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:600;
+  text-align:center;white-space:nowrap;cursor:pointer;
+  transition:opacity var(--duration-fast) ease;
+}
+.btn--m{height:var(--control-h-m)}
+.btn--primary{background:var(--metric-readiness);color:var(--text-on-accent)}
+.btn--secondary{background:transparent;border:1px solid var(--metric-readiness);color:var(--metric-readiness)}
+.btn--tertiary{background:transparent;border:none;color:var(--text-2);font-weight:500}
+/* Destructive is the TERTIARY shape with a negative-text label. Never a red
+   fill — see components/button.html. */
+.btn--destructive{background:transparent;border:none;color:var(--negative-text);font-weight:500}
+.btn--primary:not([disabled]):hover{opacity:.9}
+.btn--primary:not([disabled]):active{opacity:.8}
+.btn--secondary:not([disabled]):hover{opacity:.75}
+.btn--secondary:not([disabled]):active{opacity:.6}
+.btn--tertiary:not([disabled]):hover,.btn--destructive:not([disabled]):hover{opacity:.7}
+.btn--tertiary:not([disabled]):active,.btn--destructive:not([disabled]):active{opacity:.55}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn:focus-visible{outline:2px solid var(--metric-readiness);outline-offset:4px}
+.btn .phi{width:18px;height:18px}
+
+/* status chip — the small pill that names what the band is doing */
+.chip{
+  display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;
+  height:22px;padding:0 8px;border-radius:999px;
+  font-size:11px;line-height:16px;font-weight:500;
+}
+.chip .phi{width:12px;height:12px}
+.chip[data-tone="positive"]{background:var(--positive-bg);color:var(--positive-text)}
+.chip[data-tone="positive"] .phi{color:var(--positive-icon)}
+.chip[data-tone="negative"]{background:var(--negative-bg);color:var(--negative-text)}
+.chip[data-tone="negative"] .phi{color:var(--negative-icon)}
+.chip[data-tone="caution"]{background:var(--caution-bg);color:var(--caution-text)}
+.chip[data-tone="caution"] .phi{color:var(--caution-icon)}
+.chip[data-tone="neutral"]{background:var(--neutral-bg);color:var(--neutral-text)}
+.chip[data-tone="neutral"] .phi{color:var(--neutral-icon)}
+
+/* every numeral in the app uses League Spartan with tabular lining figures */
+.num{font-family:var(--font-number);font-feature-settings:var(--num-features);font-weight:500}
+
+/* ==========================================================================
+   6. COMPONENT 5.1 — NAVIGATION ROW  (12 instances on the tab)
+      States: default · value · badge · pressed · needs-band
+   --------------------------------------------------------------------------
+   Geometry copied from the Workouts card in Activity Tab/Workout Tab.html,
+   which §2 of the spec names as the pattern to follow: a 20px glyph inside
+   a 40px chip, rows divided by a 0.5px hairline.
+   ========================================================================== */
+.row{
+  display:flex;align-items:center;gap:12px;width:100%;
+  padding:12px 0;margin:0;border:0;border-top:0.5px solid var(--divider);
+  background:none;text-align:left;font-family:inherit;cursor:pointer;
+  color:inherit;
+  transition:opacity var(--duration-fast) ease;
+}
+.row:first-child{border-top:0}
+.row:focus-visible{outline:1px solid var(--text-2);outline-offset:2px;border-radius:8px}
+
+/* Flag (2026-09-03): the glyph is MONOCHROME. The dev build tinted each row
+   icon with a different metric hue (--metric-sleep on Do Not Disturb, and so
+   on), but §2 reserves the metric aliases for body signals — one hue per
+   signal — so a settings row has no business wearing one. The Workouts card,
+   which §2 points at, uses neutral-100 on a neutral chip. Followed that. */
+.row .chipbox{
+  flex:0 0 auto;display:grid;place-items:center;width:40px;height:40px;
+  border-radius:12px;background:var(--neutral-bg);
+  transition:background var(--duration-fast) ease;
+}
+.row:hover .chipbox{background:var(--surface-fill)}
+.row .glyph{width:20px;height:20px;color:var(--neutral-100)}
+.row .lab{flex:1;min-width:0;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+/* the trailing value — "Metric", "v2.0.1". Numerals switch to Spartan. */
+.row .val{flex:0 0 auto;font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
+.row .val.num{font-size:13px;line-height:16px}
+.row .caret{flex:0 0 auto;width:16px;height:16px;color:var(--text-3)}
+
+/* badge — the update dot on Firmware Update. Sits before the caret. */
+.row .dot{
+  flex:0 0 auto;width:8px;height:8px;border-radius:999px;
+  background:var(--caution-icon);
+}
+
+/* pressed — opacity only, per the button spec. No scale, no new colour. */
+.row:active,.row.is-pressed{opacity:.7}
+
+/* needs-band — NOT a visual state.
+   Hard rule 3: never disable, dim or hide a band row. It stays fully lit and
+   fully tappable; the difference is only where the tap lands (its own
+   band-required empty state). So this class changes nothing you can see, and
+   exists to carry the routing. It is marked in the bench with a caption. */
+.row.needs-band{ /* intentionally empty — see the comment above */ }
+
+/* ==========================================================================
+   7. COMPONENT 5.2 — TOGGLE ROW  (2 instances on the tab)
+      States: on · off · pending · failed · stale · fixed-on · blocked
+   --------------------------------------------------------------------------
+   Flag (owner, 2026-09-03): §3 rev 3 put FIVE toggles in break 4. The owner
+   cut that to two — Do Not Disturb and Call notification. The other three
+   moved:
+     • Low battery prompt -> S03 Device detail, as a stated always-on line.
+       (Hard rule 5 still holds: it always fires. It is no longer shown as a
+       switch, because a switch you cannot move reads as broken.)
+     • Usage analytics + AI insights -> S14 About, alongside the privacy
+       policy and user agreement links that already live there.
+   The `fixed-on` state below is therefore built but has NO instance on the
+   tab any more. It is kept because §9 asks for every listed state, and
+   because S03 will want it.
+   ========================================================================== */
+.trow{
+  display:flex;align-items:flex-start;gap:12px;width:100%;
+  padding:12px 0;border-top:0.5px solid var(--divider);
+}
+.trow:first-child{border-top:0}
+.trow .chipbox{
+  flex:0 0 auto;display:grid;place-items:center;width:40px;height:40px;
+  border-radius:12px;background:var(--neutral-bg);
+}
+.trow .glyph{width:20px;height:20px;color:var(--neutral-100)}
+.trow .tbody{flex:1;min-width:0;padding-top:9px}
+.trow .lab{font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+/* the reason line — why a toggle failed, why it is stale, why it is locked */
+.trow .why{
+  display:none;margin-top:2px;font-size:11px;line-height:16px;font-weight:400;color:var(--text-3);
+}
+.trow .why .phi{width:12px;height:12px;vertical-align:-2px;margin-right:4px}
+.trow[data-toggle="failed"] .why,
+.trow[data-toggle="stale"] .why,
+.trow[data-toggle="fixed-on"] .why,
+.trow[data-toggle="blocked"] .why,
+.trow[data-toggle="pending"] .why{display:block}
+.trow[data-toggle="failed"] .why{color:var(--negative-text)}
+.trow[data-toggle="stale"] .why{color:var(--neutral-text)}
+.trow .tctrl{flex:0 0 auto;padding-top:9px;display:flex;align-items:center;gap:8px}
+
+/* the switch itself — geometry from the shipped prototypes */
+.switch{
+  width:46px;height:28px;flex:0 0 auto;border:0;border-radius:999px;cursor:pointer;
+  padding:4px;display:flex;justify-content:flex-start;align-items:center;
+  background:var(--surface-fill);
+  transition:background var(--duration-base) ease;
+}
+.switch i{
+  width:20px;height:20px;border-radius:999px;background:var(--text-1);display:block;
+  transition:transform var(--duration-base) ease;
+}
+.switch.on{justify-content:flex-end;background:var(--metric-readiness)}
+.switch.on i{background:var(--text-on-accent)}
+
+/* pending — the write to the band is still in flight. The switch shows the
+   OPTIMISTIC position (where the user asked it to go) and is dimmed with a
+   spinner beside it, so it never looks settled while it isn't.
+   §5.2: "Never let a toggle look settled while a write is in flight." */
+.trow[data-toggle="pending"] .switch{opacity:.5;cursor:progress}
+.trow .spin{display:none;width:14px;height:14px;color:var(--text-3)}
+.trow[data-toggle="pending"] .spin{display:block;animation:spin 1.1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* stale — last known value, band offline. Marked with the neutral quad
+   (§2: neutral = dormant, not worn, inert), never dimmed away. */
+.trow[data-toggle="stale"] .switch{background:var(--neutral-fill)}
+.trow[data-toggle="stale"] .switch.on{background:var(--neutral-fill)}
+.trow[data-toggle="stale"] .switch.on i{background:var(--neutral-text)}
+
+/* fixed-on — locked, with a visible reason. A padlock replaces the switch
+   rather than showing a switch that refuses to move. */
+.lockpill{
+  display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;
+  border-radius:999px;background:var(--neutral-bg);
+  font-size:11px;line-height:16px;font-weight:500;color:var(--neutral-text);
+}
+.lockpill .phi{width:12px;height:12px;color:var(--neutral-icon)}
+
+/* blocked — the OS permission is missing, so the app cannot honour the
+   switch at all. Links out to system settings instead of pretending. */
+.trow[data-toggle="blocked"] .switch{display:none}
+.linkout{
+  display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;
+  border:0;border-radius:999px;background:transparent;cursor:pointer;font-family:inherit;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--metric-readiness);
+  transition:opacity var(--duration-fast) ease;
+}
+.linkout:hover{opacity:.7}
+.linkout .phi{width:14px;height:14px}
+
+/* ==========================================================================
+   8. COMPONENT 5.3 — DEVICE CARD  +  5.4 PAIRING CTA
+      Card states: connected · disconnected · syncing · updating ·
+                   low-battery · not-worn · skeleton   (+ the dormant row)
+      CTA states:  default · bluetooth-off
+   --------------------------------------------------------------------------
+   HARD RULE 4 — the CTA occupies the device card's slot at the same
+   footprint. Both are children of .dev-slot, which has a fixed min-height,
+   and both stretch to fill it. Nothing below break 1 can shift between a
+   paired and an unpaired account. The control panel measures both elements
+   and prints the two heights so this is checked, not just claimed.
+   ========================================================================== */
+.dev-slot{
+  min-height:var(--dev-slot-h);
+  display:flex;flex-direction:column;
+  padding:16px 0;
+}
+.dev-slot > *{flex:1 1 auto;min-height:0}
+
+/* ---- the device card ---- */
+.devcard{
+  display:flex;flex-direction:column;gap:14px;justify-content:space-between;
+  width:100%;padding:0;border:0;background:none;text-align:left;
+  font-family:inherit;color:inherit;cursor:pointer;
+  transition:opacity var(--duration-fast) ease;
+}
+.devcard:active{opacity:.7}
+.devcard:focus-visible{outline:1px solid var(--text-2);outline-offset:4px;border-radius:12px}
+.devcard .top{display:flex;align-items:flex-start;gap:14px}
+
+/* Flag: no product render has been supplied for any band (three attempts,
+   per memory/session-handoff.md). Until an image file lands, the slot holds
+   the Phosphor watch glyph on a raised tile. Drop a real image in and swap
+   the <span class="phi"> for an <img> — the tile size does not change. */
+ /* 96px, not 72: the slot is sized by the pairing CTA (the taller of the
+    two occupants), so a small product tile left a visible void under the
+    battery. A larger render fills the card honestly instead of padding it
+    with air, and gives the eventual product photograph room to read. */
+.devcard .shot{
+  flex:0 0 auto;width:96px;height:96px;border-radius:20px;background:var(--surface-raised);
+  display:grid;place-items:center;overflow:hidden;
+}
+.devcard .shot .phi{width:52px;height:52px;color:var(--text-2)}
+.devcard .shot img{width:100%;height:100%;object-fit:cover;display:block}
+
+.devcard .meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding-top:2px}
+.devcard .name{
+  font-size:17px;line-height:22px;font-weight:600;color:var(--text-1);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;
+}
+/* Battery is ALWAYS visible when known — §5.3 calls it the primary way a
+   user learns the level, so it never hides behind a tap. */
+.devcard .batt{display:flex;align-items:center;gap:5px;color:var(--text-2)}
+.devcard .batt .phi{width:16px;height:16px}
+.devcard .batt .pct{
+  font-family:var(--font-number);font-size:15px;line-height:20px;font-weight:700;
+  font-feature-settings:var(--num-features);color:var(--text-1);
+}
+.devcard .caret{flex:0 0 auto;width:16px;height:16px;color:var(--text-3);margin-top:4px}
+
+/* the bottom line — last sync, transfer progress, or a caution */
+.devcard .foot{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;line-height:16px;font-weight:400;color:var(--text-3);
+}
+.devcard .foot .phi{width:12px;height:12px;flex:0 0 auto}
+.devcard .foot .num{font-size:11px;line-height:16px}
+/* one text span per foot line: .foot is a flex row, so bare text nodes
+   either side of a numeral would each become a flex item and inherit the
+   6px gap ("Last synced  2  h ago"). */
+.devcard .foot .ft{min-width:0}
+
+/* a thin progress track, used by syncing and updating */
+.track{height:3px;border-radius:999px;background:var(--surface-raised);overflow:hidden}
+.track i{display:block;height:100%;border-radius:999px;background:var(--metric-readiness);transition:width var(--duration-slow) ease}
+.track.caution i{background:var(--caution-icon)}
+
+/* --- per-state trim on the device card ------------------------------------
+   Everything below is driven by data-slot on the tab root (or on a bench
+   item), matching the .stateful / data-state convention already used by the
+   Activity and Sleep prototypes. */
+[data-slot] .devcard,[data-slot] .paircta{display:none}
+[data-slot="connected"]    .devcard,
+[data-slot="disconnected"] .devcard,
+[data-slot="syncing"]      .devcard,
+[data-slot="updating"]     .devcard,
+[data-slot="low-battery"]  .devcard,
+[data-slot="not-worn"]     .devcard,
+[data-slot="skeleton"]     .devcard{display:flex}
+[data-slot="pair"] .paircta,[data-slot="pair-bt-off"] .paircta{display:flex}
+
+/* which chip shows */
+.devcard .chip{display:none}
+[data-slot="connected"]   .devcard .chip.c-connected{display:inline-flex}
+[data-slot="disconnected"] .devcard .chip.c-disconnected{display:inline-flex}
+[data-slot="syncing"]     .devcard .chip.c-syncing{display:inline-flex}
+[data-slot="updating"]    .devcard .chip.c-updating{display:inline-flex}
+[data-slot="low-battery"] .devcard .chip.c-low{display:inline-flex}
+[data-slot="not-worn"]    .devcard .chip.c-notworn{display:inline-flex}
+[data-slot="syncing"] .devcard .chip.c-syncing .phi{animation:spin 1.1s linear infinite}
+
+/* which foot line shows */
+.devcard .foot,.devcard .track{display:none}
+[data-slot="connected"]    .devcard .foot.f-synced{display:flex}
+[data-slot="disconnected"] .devcard .foot.f-lastsync{display:flex}
+[data-slot="not-worn"]     .devcard .foot.f-notworn{display:flex}
+[data-slot="low-battery"]  .devcard .foot.f-low{display:flex}
+[data-slot="syncing"]      .devcard .track.t-sync{display:block}
+[data-slot="updating"]     .devcard .track.t-update{display:block}
+[data-slot="updating"]     .devcard .foot.f-updating{display:flex}
+
+/* disconnected — the level is unknown, so it reads an em dash rather than a
+   stale percentage. Showing the last-known number here would be a lie: the
+   band has been out of contact and could be anywhere. */
+.devcard .batt .dash{
+  display:none;font-family:var(--font-number);font-size:15px;line-height:20px;
+  font-weight:700;color:var(--text-3);
+}
+[data-slot="disconnected"] .devcard .batt .pct{display:none}
+[data-slot="disconnected"] .devcard .batt .pct-low{display:none}
+[data-slot="disconnected"] .devcard .batt .dash{display:inline}
+[data-slot="disconnected"] .devcard .batt .phi{color:var(--text-3)}
+
+/* low battery — the figure itself turns negative (T9), and it is a LOW
+   figure: showing "Low battery · 82%" would contradict itself. */
+.devcard .batt .pct-low,.devcard .batt .g-low{display:none}
+[data-slot="low-battery"] .devcard .batt .pct{display:none}
+[data-slot="low-battery"] .devcard .batt .pct-low{display:inline;color:var(--negative-text)}
+[data-slot="low-battery"] .devcard .batt .g-high{display:none}
+[data-slot="low-battery"] .devcard .batt .g-low{display:block;color:var(--negative-icon)}
+[data-slot="low-battery"] .devcard .foot.f-low{color:var(--negative-text)}
+[data-slot="low-battery"] .devcard .foot.f-low .phi{color:var(--negative-icon)}
+
+/* updating — locked. The whole card stops being a way out of this screen.
+   It is also the only state carrying THREE stacked pieces (device, caution
+   line, progress track) rather than two, so the 14px rhythm would push it
+   past the slot and shift the whole tab. Tightened to 8px for this state
+   only: 96 + 8 + 16 + 8 + 3 = 131, inside the 136px the slot allows. */
+[data-slot="updating"] .devcard{cursor:default;pointer-events:none;gap:8px}
+[data-slot="updating"] .devcard .caret{visibility:hidden}
+[data-slot="updating"] .devcard .foot.f-updating{color:var(--caution-text)}
+[data-slot="updating"] .devcard .foot.f-updating .phi{color:var(--caution-icon)}
+
+/* skeleton — first load, the device is not resolved yet. No chip, no
+   battery, no caret: we do not know any of it, so we claim none of it. */
+[data-slot="skeleton"] .devcard{cursor:default;pointer-events:none}
+[data-slot="skeleton"] .devcard .caret{visibility:hidden}
+[data-slot="skeleton"] .devcard .name,
+[data-slot="skeleton"] .devcard .batt{display:none}
+.skel{display:none;border-radius:8px;background:var(--surface-raised);position:relative;overflow:hidden}
+[data-slot="skeleton"] .skel{display:block}
+[data-slot="skeleton"] .devcard .shot .phi{display:none}
+[data-slot="skeleton"] .devcard .shot{background:var(--surface-raised)}
+.skel::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--surface-fill) 55%,transparent),transparent);
+  transform:translateX(-100%);animation:shimmer 1.4s ease-in-out infinite;
+}
+@keyframes shimmer{to{transform:translateX(100%)}}
+.skel.s-name{width:132px;height:18px;margin-top:2px}
+.skel.s-chip{width:88px;height:18px;border-radius:999px}
+.skel.s-batt{width:56px;height:14px}
+
+/* not-worn — the band is connected but off the wrist, so its live readings
+   are meaningless. Neutral, not negative: nothing is wrong. */
+[data-slot="not-worn"] .devcard .foot.f-notworn{color:var(--neutral-text)}
+
+/* ---- the pairing CTA (§5.4) ---- */
+.paircta{
+  display:flex;flex-direction:column;gap:14px;justify-content:space-between;width:100%;
+}
+.paircta .top{display:flex;align-items:flex-start;gap:14px}
+.paircta .shot{
+  flex:0 0 auto;width:72px;height:72px;border-radius:16px;background:var(--surface-raised);
+  display:grid;place-items:center;
+}
+.paircta .shot .phi{width:32px;height:32px;color:var(--text-3)}
+.paircta .copy{flex:1;min-width:0}
+.paircta .h{font-size:17px;line-height:22px;font-weight:600;color:var(--text-1)}
+.paircta .s{margin-top:4px;font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
+/* bluetooth-off is the fix-this-first variant: same slot, same footprint,
+   but the primary action turns Bluetooth on rather than starting a scan. */
+[data-slot="pair"] .paircta .v-bt,[data-slot="pair-bt-off"] .paircta .v-default{display:none}
+[data-slot="pair-bt-off"] .paircta .shot .phi{color:var(--caution-icon)}
+
+/* ---- the dormant band row (the second entry in break 1) ----
+   Flag (owner, 2026-09-03): §8 asked whether two bands is a hard cap. The
+   owner's answer is that two is only the TESTED case, so break 1 is built as
+   a LIST of dormant bands rather than a fixed second slot, and the header
+   "+" never hides. This supersedes T6's "+ hidden (cap)" in §4 and makes
+   S02's `cap-reached` state unreachable until a real cap is set. */
+.dormant .lab{display:flex;flex-direction:column;gap:2px}
+.dormant .dn{font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.dormant .ds{font-size:11px;line-height:16px;font-weight:400;color:var(--neutral-text)}
+.dormant .chipbox{background:var(--neutral-bg)}
+.dormant .glyph{color:var(--neutral-icon)}
+
+/* ==========================================================================
+   9. COMPONENT 5.5 — BAND-REQUIRED EMPTY STATE
+      Variants: no-band (routes to S02) · reconnect (band exists, offline)
+   --------------------------------------------------------------------------
+   This is what a band row opens when there is no usable band. Hard rule 3
+   is the whole point: the row never greys out, it opens THIS instead — so
+   the user finds out what the page does and how to get there.
+   ========================================================================== */
+.empty{
+  padding:48px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:0;
+}
+.empty .mark{
+  width:72px;height:72px;border-radius:999px;display:grid;place-items:center;
+  background:var(--neutral-bg);
+}
+.empty .mark .phi{width:32px;height:32px;color:var(--neutral-icon)}
+.empty[data-empty="reconnect"] .mark{background:var(--caution-bg)}
+.empty[data-empty="reconnect"] .mark .phi{color:var(--caution-icon)}
+.empty .h{margin-top:20px;font-size:17px;line-height:22px;font-weight:600;color:var(--text-1)}
+.empty .s{margin-top:6px;font-size:13px;line-height:18px;font-weight:400;color:var(--text-2);max-width:248px}
+.empty .acts{margin-top:24px;width:100%;max-width:264px;display:flex;flex-direction:column;gap:4px}
+
+/* ==========================================================================
+   10. COMPONENT 5.6 — CONFIRM SHEET  (4 destructive actions)
+       Variants: standard · consequence · in-progress · failed
+   --------------------------------------------------------------------------
+   §5.6: "Reuse the existing sheet pattern (#sheetTitle / #sheetRows /
+   #sheetConfirm) rather than a new one."
+
+   Flag: the shipped sheet is a VALUE PICKER — #sheetRows holds numbers and
+   #sheetConfirm is a check button in the header. A confirm sheet needs a
+   named destructive action instead. The chrome, the IDs and the geometry are
+   kept exactly; what changed is that #sheetRows now holds the consequence
+   lines and #sheetConfirm is the action button at the foot rather than a
+   tick in the corner. Flagged rather than forked into a second sheet.
+   ========================================================================== */
+.scrim{
+  position:absolute;inset:0;z-index:65;background:color-mix(in srgb,var(--neutral-900) 68%,transparent);
+  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+}
+.sheet{
+  position:absolute;left:8px;right:8px;bottom:8px;z-index:70;
+  background:var(--surface-card);border-radius:24px;padding:20px 16px 16px;
+}
+.sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.sheet-head .t{font-size:17px;line-height:22px;font-weight:600;color:var(--text-1)}
+.sheet-head .iconbtn{width:32px;height:32px}
+.sheet-head .iconbtn .phi{width:16px;height:16px}
+.sheet .sub{margin-top:6px;font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
+.sheet-rows{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.sheet-rows:empty{display:none}
+/* a consequence line — one thing that will be lost, said plainly */
+.conseq{display:flex;align-items:flex-start;gap:10px}
+.conseq .phi{flex:0 0 auto;width:16px;height:16px;margin-top:1px;color:var(--negative-icon)}
+.conseq span{font-size:13px;line-height:18px;font-weight:400;color:var(--text-2)}
+.sheet-acts{margin-top:20px;display:flex;flex-direction:column;gap:4px}
+/* in-progress — non-dismissable: no close button, no cancel, no scrim tap */
+.sheet[data-sheet="in-progress"] .sheet-head .iconbtn{display:none}
+.sheet .prog{margin-top:18px}
+.sheet .prog .track{margin-bottom:8px}
+.sheet .prog .pl{font-size:11px;line-height:16px;color:var(--text-3);display:flex;justify-content:space-between}
+/* failed — the reason first, then a retry */
+.sheet .fail{
+  margin-top:14px;display:flex;align-items:flex-start;gap:10px;
+  padding:12px;border-radius:12px;background:var(--negative-bg);
+}
+.sheet .fail .phi{flex:0 0 auto;width:16px;height:16px;color:var(--negative-icon);margin-top:1px}
+.sheet .fail span{font-size:13px;line-height:18px;color:var(--negative-text)}
+
+/* ==========================================================================
+   11. THE COMPONENT BENCH — the review view, not part of the app
+   --------------------------------------------------------------------------
+   Every state of every component, drawn at once and labelled, so a whole
+   component can be signed off in one look rather than by flicking a switch
+   twenty times.
+   ========================================================================== */
+.bench{padding:44px 12px 32px;display:flex;flex-direction:column;gap:8px}
+.bench-h{
+  padding:0 4px;font-size:11px;line-height:16px;font-weight:600;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+}
+.bench-h:not(:first-child){margin-top:20px}
+.bench-note{padding:0 4px;margin:-2px 0 4px;font-size:11px;line-height:16px;color:var(--text-3)}
+.spec{background:var(--surface-card);border-radius:16px;padding:0 14px;position:relative}
+.spec + .spec{margin-top:6px}
+.spec-lab{
+  padding:8px 0 0;font-size:10px;line-height:14px;font-weight:500;
+  letter-spacing:0.04em;color:var(--metric-readiness);
+}
+.spec-lab em{font-style:normal;color:var(--text-3)}
+.spec-in{padding-bottom:4px}
+.spec-in .row,.spec-in .trow{border-top:0}
+/* the empty-state variants are full pages, so the bench shows them boxed */
+.spec.page-spec{padding:0;overflow:hidden}
+.spec.page-spec .spec-lab{padding:8px 14px 0}
+.spec.page-spec .empty{padding:24px 20px 28px}
+.spec.page-spec .empty .mark{width:56px;height:56px}
+.spec.page-spec .empty .mark .phi{width:26px;height:26px}
+/* the sheet variants are overlays, so the bench shows them in place */
+.spec.sheet-spec{padding:0;background:none}
+.spec.sheet-spec .spec-lab{padding:0 4px 6px}
+.spec.sheet-spec .sheet{position:static;left:auto;right:auto;bottom:auto}
+/* the device-card states, each in its own slot so the footprint shows */
+.spec.slot-spec{padding:0 14px}
+.spec.slot-spec .dev-slot{padding:8px 0 14px}
+
+/* ==========================================================================
+   12. MOTION SAFETY — hard gate: everything stops under reduced motion
+   ========================================================================== */
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+  .pebble-tab:active .icon{transform:none !important}
+  /* the shimmer is decoration; with motion off the skeleton is a flat block */
+  .skel::after{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ======================= REVIEW PANEL =======================
+     Not part of the app. Switches the parts of slice 1 that have
+     more than one appearance, so each can be checked in place.
+     The ten tab states T1-T10 arrive in slice 2 and will hang off
+     data-state on the same root, next to data-slot.
+     ============================================================= -->
+<aside class="panel" aria-label="Prototype controls">
+  <h2>View</h2>
+  <div class="opts" id="viewOpts">
+    <label class="on"><input type="radio" name="view" value="me" checked><span>Tab shell<span class="desc">The Me tab: header + five silent breaks</span></span></label>
+    <label><input type="radio" name="view" value="bench"><span>Component bench<span class="desc">All six components, every state</span></span></label>
+  </div>
+
+  <div class="grp">
+    <h2>Device card slot</h2>
+    <p class="hint">Seven card states plus the two pairing CTAs. All nine fill the same slot.</p>
+    <div class="opts" id="slotOpts">
+      <label class="on"><input type="radio" name="slot" value="connected" checked><span>Connected</span></label>
+      <label><input type="radio" name="slot" value="disconnected"><span>Disconnected</span></label>
+      <label><input type="radio" name="slot" value="syncing"><span>Syncing</span></label>
+      <label><input type="radio" name="slot" value="updating"><span>Updating<span class="desc">Locked — cannot navigate away</span></span></label>
+      <label><input type="radio" name="slot" value="low-battery"><span>Low battery</span></label>
+      <label><input type="radio" name="slot" value="not-worn"><span>Not worn</span></label>
+      <label><input type="radio" name="slot" value="skeleton"><span>Skeleton<span class="desc">First load, device not resolved</span></span></label>
+      <label><input type="radio" name="slot" value="pair"><span>Pairing CTA</span></label>
+      <label><input type="radio" name="slot" value="pair-bt-off"><span>Pairing CTA — Bluetooth off</span></label>
+    </div>
+    <!-- Hard rule 4, measured rather than asserted -->
+    <div class="proof" id="proof">
+      <div class="pl">Slot footprint — card vs CTA</div>
+      <div class="pv" id="proofVal">—</div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h2>Dormant bands</h2>
+    <p class="hint">Break 1 is a list, not a fixed pair — two bands was only the tested case, so the header + never hides. This control is deliberately independent of the one above, so the slot footprint can be compared with the rest of break 1 held still; in the real T2 there would be no dormant band to show.</p>
+    <div class="opts" id="dormOpts">
+      <label><input type="radio" name="dorm" value="0"><span>None</span></label>
+      <label class="on"><input type="radio" name="dorm" value="1" checked><span>One</span></label>
+      <label><input type="radio" name="dorm" value="2"><span>Two</span></label>
+      <label><input type="radio" name="dorm" value="3"><span>Three</span></label>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h2>Confirm sheet</h2>
+    <p class="hint">Overlays whichever view is showing.</p>
+    <div class="opts" id="sheetOpts">
+      <label class="on"><input type="radio" name="sheet" value="none" checked><span>Closed</span></label>
+      <label><input type="radio" name="sheet" value="standard"><span>Standard<span class="desc">Restart the band</span></span></label>
+      <label><input type="radio" name="sheet" value="consequence"><span>Consequence<span class="desc">Unbind — names what is lost</span></span></label>
+      <label><input type="radio" name="sheet" value="in-progress"><span>In progress<span class="desc">Non-dismissable</span></span></label>
+      <label><input type="radio" name="sheet" value="failed"><span>Failed<span class="desc">Reason + retry</span></span></label>
+    </div>
+  </div>
+</aside>
+
+<!-- ======================= PHONE ======================= -->
+<div class="phone">
+  <div class="screen">
+
+    <div class="statusbar">
+      <span>12:30</span>
+      <!-- Flag: the clock is a mock of the phone's OWN status bar, not app
+           content, so it stays on the text face rather than League Spartan —
+           same as the Activity and Sleep prototypes. The "every numeral uses
+           --font-number" gate is about figures the app renders. -->
+      <span class="right">
+        <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M1 11h2V8H1v3Zm4 0h2V5H5v6Zm4 0h2V2H9v9Z" fill="currentColor"/></svg>
+        <span class="batt"><i></i></span>
+      </span>
+    </div>
+
+    <div class="pages">
+
+      <!-- ==================================================================
+           THE ME TAB
+           Row order is §3 of the spec, exactly. Five silent breaks, no
+           group headers anywhere (hard rule 2). Nothing navigates yet —
+           that is slice 2 onwards.
+           ================================================================== -->
+      <section class="page active" id="page-me" data-slot="connected">
+
+        <div class="screen-head">
+          <div class="screen-title">Me</div>
+          <!-- The "+" pairs a NEW band. §6 S08 warns this must not read as
+               Find Device, which rings the band you already have — so this
+               is `plus` and Find Device is `magnifying-glass`. -->
+          <button class="iconbtn" type="button" aria-label="Pair a new device">
+            <span class="phi" data-ph="plus"></span>
+          </button>
+        </div>
+
+        <div class="tab-body">
+
+          <!-- ── break 1 · the device ────────────────────────────────────
+               The device card is the ONLY place in the tab where a device
+               is named (hard rule 1). No band page below contains a device
+               picker, and none ever should. -->
+          <div class="group">
+            <div class="dev-slot" id="devSlot">
+
+              <!-- the device card (§5.3) -->
+              <button class="devcard" id="devCard" type="button">
+                <div class="top">
+                  <span class="shot">
+                    <span class="phi" data-ph="watch" data-weight="fill"></span>
+                  </span>
+                  <span class="meta">
+                    <span class="name">Pebble Prime</span>
+                    <span class="skel s-name"></span>
+
+                    <span class="chip c-connected" data-tone="positive"><span class="phi" data-ph="check-circle" data-weight="fill"></span>Connected</span>
+                    <span class="chip c-disconnected" data-tone="negative"><span class="phi" data-ph="link-break" data-weight="fill"></span>Disconnected</span>
+                    <span class="chip c-syncing" data-tone="neutral"><span class="phi" data-ph="arrows-clockwise" data-weight="fill"></span>Syncing</span>
+                    <span class="chip c-updating" data-tone="caution"><span class="phi" data-ph="download-simple" data-weight="fill"></span>Updating</span>
+                    <span class="chip c-low" data-tone="negative"><span class="phi" data-ph="battery-warning" data-weight="fill"></span>Low battery</span>
+                    <span class="chip c-notworn" data-tone="neutral"><span class="phi" data-ph="watch" data-weight="fill"></span>Not worn</span>
+                    <span class="skel s-chip"></span>
+
+                    <span class="batt">
+                      <span class="phi g-high" data-ph="battery-high" data-weight="fill"></span>
+                      <span class="phi g-low" data-ph="battery-low" data-weight="fill"></span>
+                      <span class="pct">82<span aria-hidden="true">%</span></span>
+                      <span class="pct pct-low">12<span aria-hidden="true">%</span></span>
+                      <span class="dash" aria-label="Battery level unknown">—</span>
+                    </span>
+                    <span class="skel s-batt"></span>
+                  </span>
+                  <span class="phi caret" data-ph="caret-right"></span>
+                </div>
+
+                <span class="foot f-synced"><span class="phi" data-ph="check-circle" data-weight="fill"></span><span class="ft">Synced just now</span></span>
+                <span class="foot f-lastsync"><span class="phi" data-ph="warning-circle" data-weight="fill"></span><span class="ft">Last synced <span class="num">2</span>h ago</span></span>
+                <span class="foot f-notworn"><span class="phi" data-ph="watch" data-weight="fill"></span><span class="ft">Off the wrist since <span class="num">09:40</span></span></span>
+                <span class="foot f-low"><span class="phi" data-ph="battery-warning" data-weight="fill"></span><span class="ft">Charge soon — under <span class="num">15</span>% left</span></span>
+                <span class="foot f-updating"><span class="phi" data-ph="warning" data-weight="fill"></span><span class="ft">Do not close the app</span></span>
+                <span class="track t-sync"><i style="width:62%"></i></span>
+                <span class="track t-update caution"><i style="width:38%"></i></span>
+              </button>
+
+              <!-- the pairing CTA (§5.4) — same slot, same footprint -->
+              <div class="paircta">
+                <div class="top">
+                  <div class="shot v-default"><span class="phi" data-ph="watch" data-weight="fill"></span></div>
+                  <div class="shot v-bt"><span class="phi" data-ph="bluetooth-slash" data-weight="fill"></span></div>
+                  <div class="copy">
+                    <div class="v-default">
+                      <div class="h">No band paired</div>
+                      <div class="s">Pair one to track heart rate, sleep and steps around the clock.</div>
+                    </div>
+                    <div class="v-bt">
+                      <div class="h">Bluetooth is off</div>
+                      <div class="s">Turn Bluetooth on, then we can look for your band.</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- one primary action per screen (§2) -->
+                <button class="btn btn--primary btn--m v-default" type="button">Pair a device</button>
+                <button class="btn btn--primary btn--m v-bt" type="button">Turn on Bluetooth</button>
+              </div>
+            </div>
+
+            <!-- the dormant band list. Rendered by the script so the count
+                 is switchable; a dormant band has NO functions until it
+                 becomes the connected one (hard rule 1). -->
+            <div id="dormList"></div>
+          </div>
+
+          <!-- ── break 2 · you ───────────────────────────────────────── -->
+          <div class="group">
+            <button class="row" type="button">
+              <span class="chipbox"><span class="phi glyph" data-ph="user" data-weight="fill"></span></span>
+              <span class="lab">Profile</span>
+              <span class="phi caret" data-ph="caret-right"></span>
+            </button>
+            <!-- needs-band, but never dimmed and never disabled (hard rule 3) -->
+            <button class="row needs-band" type="button">
+              <span class="chipbox"><span class="phi glyph" data-ph="crosshair" data-weight="fill"></span></span>
+              <span class="lab">Goal Setting</span>
+              <span class="phi caret" data-ph="caret-right"></span>
+            </button>
+          </div>
+
+          <!-- ── break 3 · what the band does ────────────────────────── -->
+          <div class="group">
+            <button class="row needs-band" type="button">
+              <span class="chipbox"><span class="phi glyph" data-ph="heartbeat" data-weight="fill"></span></span>
+              <span class="lab">Health Monitor</span>
+              <span class="phi caret" data-ph="caret-right"></span>
+            </button>
+            <button class="row needs-band" type="button">
+              <span class="chipbox"><span class="phi glyph" data-ph="bell" data-weight="fill"></span></span>
+              <span class="lab">Health Reminder</span>
+              <span class="phi caret" data-ph="caret-right"></span>
+            </button>
+            <button class="row needs-band" type="button">
+              <span class="chipbox"><span class="phi glyph" data-ph="magnifying-glass" data-weight="fill"></span></span>
+              <span class="lab">Find Device</span>
+              <span class="phi caret" data-ph="caret-right"></span>
+            </button>
+            <button class="row needs-band" type="button">
+              <span class="chipbox"><span class="phi glyph" data-ph="camera" data-weight="fill"></span></span>
+              <span class="lab">Take Picture</span>
+              <span class="phi caret" data-ph="caret-right"></span>
+            </button>
+            <button class="row needs-band" type="button">
+              <span class="chipbox"><span class="phi glyph" data-ph="download-simple" data-weight="fill"></span></span>
+              <span class="lab">Firmware Update</span>
+              <span class="dot" title="Update available"></span>
+              <span class="phi caret" data-ph="caret-right"></span>
+            </button>
+          </div>
+
+          <!-- ── break 4 · switches (nothing navigates) ────────────────
+               Break 4 exists so the affordance is self-evident: a tap here
+               flips something, a tap anywhere else navigates. Two rows,
+               not five — see the flag on the toggle-row component above. -->
+          <div class="group">
+            <div class="trow" data-toggle="on">
+              <span class="chipbox"><span class="phi glyph" data-ph="moon" data-weight="fill"></span></span>
+              <span class="tbody">
+                <span class="lab">Do Not Disturb</span>
+                <span class="why"></span>
+              </span>
+              <span class="tctrl">
+                <span class="phi spin" data-ph="circle-notch" data-weight="fill"></span>
+                <button class="switch on" type="button" role="switch" aria-checked="true" aria-label="Do Not Disturb"><i></i></button>
+              </span>
+            </div>
+            <div class="trow" data-toggle="on">
+              <span class="chipbox"><span class="phi glyph" data-ph="phone" data-weight="fill"></span></span>
+              <span class="tbody">
+                <span class="lab">Call notification</span>
+                <span class="why"></span>
+              </span>
+              <span class="tctrl">
+                <span class="phi spin" data-ph="circle-notch" data-weight="fill"></span>
+                <button class="switch on" type="button" role="switch" aria-checked="true" aria-label="Call notification"><i></i></button>
+              </span>
+            </div>
+          </div>
+
+          <!-- ── break 5 · app and help ──────────────────────────────── -->
+          <div class="group">
+            <button class="row" type="button">
+              <span class="chipbox"><span class="phi glyph" data-ph="ruler" data-weight="fill"></span></span>
+              <span class="lab">Units &amp; Format</span>
+              <span class="val">Metric</span>
+              <span class="phi caret" data-ph="caret-right"></span>
+            </button>
+            <button class="row" type="button">
+              <span class="chipbox"><span class="phi glyph" data-ph="heart" data-weight="fill"></span></span>
+              <span class="lab">Apple Health</span>
+              <span class="phi caret" data-ph="caret-right"></span>
+            </button>
+            <button class="row" type="button">
+              <span class="chipbox"><span class="phi glyph" data-ph="question" data-weight="fill"></span></span>
+              <span class="lab">FAQs</span>
+              <span class="phi caret" data-ph="caret-right"></span>
+            </button>
+            <!-- About now also holds Usage analytics + AI insights, next to
+                 the privacy policy and user agreement links already there
+                 (owner, 2026-09-03). Built in slice 3 with S14. -->
+            <button class="row" type="button">
+              <span class="chipbox"><span class="phi glyph" data-ph="info" data-weight="fill"></span></span>
+              <span class="lab">About</span>
+              <span class="val num">v2.0.1</span>
+              <span class="phi caret" data-ph="caret-right"></span>
+            </button>
+          </div>
+
+          <!-- ══ OPEN ITEMS — §8 of the spec. Flagged, not silently decided.
+               Resolved by the owner on 2026-09-03:
+                 • Two bands is only the tested case -> break 1 is a list,
+                   the "+" never hides. (Supersedes T6's "+ hidden (cap)".)
+                 • Do Not Disturb stays a toggle with no schedule.
+                 • Low battery prompt -> S03; analytics + AI -> S14 About.
+               Still open, and NOT built here:
+                 • Sign out — in the dev build, absent from §3. If it stays
+                   it goes below About as its own sixth break. If it goes,
+                   how does someone change accounts on a shared phone?
+                 • Delete account — app stores and GDPR both require an
+                   in-app deletion route. The privacy policy and user
+                   agreement links are in About; deletion still has no home.
+                 • Cycle — in the dev build, absent from §3. Would slot into
+                   break 5 next to Units & Format.
+                 • Edit Cards — if cut, Home's card order is fixed for good.
+                 • System Setting — folded into S03 (restart / factory reset
+                   / unbind). The legacy app also kept LANGUAGE and SCREEN
+                   TIMEOUT in there; those two still have no home. (Time
+                   format is accounted for — it is inside S11.)
+                 • Unbind and history — kept and browsable, or deleted with
+                   the pairing? Drives the S03 confirm copy (slice 2).
+                 • FAQ articles — bundled or fetched? Bundled removes four
+                   states and the offline case from S13 (slice 3).
+                 • After connecting the other band, where does the user
+                   land? Drives S04 (slice 2). ══ -->
+
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           COMPONENT BENCH — every state of all six §5 components.
+           Review surface only; none of this ships.
+           ================================================================== -->
+      <section class="page" id="page-bench">
+        <div class="bench">
+
+          <div class="bench-h">5.1 · Navigation row</div>
+          <p class="bench-note">12 instances on the tab.</p>
+
+          <div class="spec"><div class="spec-lab">default</div><div class="spec-in">
+            <button class="row" type="button"><span class="chipbox"><span class="phi glyph" data-ph="user" data-weight="fill"></span></span><span class="lab">Profile</span><span class="phi caret" data-ph="caret-right"></span></button>
+          </div></div>
+
+          <div class="spec"><div class="spec-lab">value <em>— trailing value</em></div><div class="spec-in">
+            <button class="row" type="button"><span class="chipbox"><span class="phi glyph" data-ph="ruler" data-weight="fill"></span></span><span class="lab">Units &amp; Format</span><span class="val">Metric</span><span class="phi caret" data-ph="caret-right"></span></button>
+          </div></div>
+
+          <div class="spec"><div class="spec-lab">badge <em>— firmware update waiting</em></div><div class="spec-in">
+            <button class="row" type="button"><span class="chipbox"><span class="phi glyph" data-ph="download-simple" data-weight="fill"></span></span><span class="lab">Firmware Update</span><span class="dot"></span><span class="phi caret" data-ph="caret-right"></span></button>
+          </div></div>
+
+          <div class="spec"><div class="spec-lab">pressed <em>— opacity only, per the button spec</em></div><div class="spec-in">
+            <button class="row is-pressed" type="button"><span class="chipbox"><span class="phi glyph" data-ph="magnifying-glass" data-weight="fill"></span></span><span class="lab">Find Device</span><span class="phi caret" data-ph="caret-right"></span></button>
+          </div></div>
+
+          <div class="spec"><div class="spec-lab">needs-band <em>— looks identical on purpose</em></div><div class="spec-in">
+            <button class="row needs-band" type="button"><span class="chipbox"><span class="phi glyph" data-ph="heartbeat" data-weight="fill"></span></span><span class="lab">Health Monitor</span><span class="phi caret" data-ph="caret-right"></span></button>
+          </div></div>
+          <p class="bench-note">Hard rule 3: a band row is never disabled, dimmed or hidden. It stays lit and tappable with no band paired — the tap just lands on the band-required empty state below.</p>
+
+          <div class="bench-h">5.2 · Toggle row</div>
+          <p class="bench-note">2 instances on the tab — Do Not Disturb and Call notification.</p>
+
+          <div class="spec"><div class="spec-lab">on</div><div class="spec-in">
+            <div class="trow" data-toggle="on"><span class="chipbox"><span class="phi glyph" data-ph="moon" data-weight="fill"></span></span><span class="tbody"><span class="lab">Do Not Disturb</span><span class="why"></span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch on" type="button" role="switch" aria-checked="true" aria-label="Do Not Disturb"><i></i></button></span></div>
+          </div></div>
+
+          <div class="spec"><div class="spec-lab">off</div><div class="spec-in">
+            <div class="trow" data-toggle="off"><span class="chipbox"><span class="phi glyph" data-ph="phone" data-weight="fill"></span></span><span class="tbody"><span class="lab">Call notification</span><span class="why"></span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch" type="button" role="switch" aria-checked="false" aria-label="Call notification"><i></i></button></span></div>
+          </div></div>
+
+          <div class="spec"><div class="spec-lab">pending <em>— optimistic, rolls back on failure</em></div><div class="spec-in">
+            <div class="trow" data-toggle="pending"><span class="chipbox"><span class="phi glyph" data-ph="moon" data-weight="fill"></span></span><span class="tbody"><span class="lab">Do Not Disturb</span><span class="why">Saving to the band…</span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch on" type="button" role="switch" aria-checked="true" aria-busy="true" aria-label="Do Not Disturb"><i></i></button></span></div>
+          </div></div>
+
+          <div class="spec"><div class="spec-lab">failed <em>— reverted, with the reason</em></div><div class="spec-in">
+            <div class="trow" data-toggle="failed"><span class="chipbox"><span class="phi glyph" data-ph="moon" data-weight="fill"></span></span><span class="tbody"><span class="lab">Do Not Disturb</span><span class="why"><span class="phi" data-ph="warning-circle" data-weight="fill"></span>The band did not respond. Tap to try again.</span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch" type="button" role="switch" aria-checked="false" aria-label="Do Not Disturb"><i></i></button></span></div>
+          </div></div>
+
+          <div class="spec"><div class="spec-lab">stale <em>— last known, band disconnected</em></div><div class="spec-in">
+            <div class="trow" data-toggle="stale"><span class="chipbox"><span class="phi glyph" data-ph="phone" data-weight="fill"></span></span><span class="tbody"><span class="lab">Call notification</span><span class="why"><span class="phi" data-ph="link-break" data-weight="fill"></span>Last known — reconnect to change</span></span><span class="tctrl"><span class="phi spin" data-ph="circle-notch" data-weight="fill"></span><button class="switch on" type="button" role="switch" aria-checked="true" aria-disabled="true" aria-label="Call notification"><i></i></button></span></div>
+          </div></div>
+
+          <div class="spec"><div class="spec-lab">fixed-on <em>— locked, with a visible reason</em></div><div class="spec-in">
+            <div class="trow" data-toggle="fixed-on"><span class="chipbox"><span class="phi glyph" data-ph="battery-warning" data-weight="fill"></span></span><span class="tbody"><span class="lab">Low battery prompt</span><span class="why">Always on, so the band never dies without warning</span></span><span class="tctrl"><span class="lockpill"><span class="phi" data-ph="lock-simple" data-weight="fill"></span>On</span></span></div>
+          </div></div>
+          <p class="bench-note">Built for S03, where the low battery prompt now lives. It has no instance on the tab any more — a switch that will not move reads as broken, so the tab states it instead of faking it.</p>
+
+          <div class="spec"><div class="spec-lab">blocked <em>— OS permission missing</em></div><div class="spec-in">
+            <div class="trow" data-toggle="blocked"><span class="chipbox"><span class="phi glyph" data-ph="phone" data-weight="fill"></span></span><span class="tbody"><span class="lab">Call notification</span><span class="why"><span class="phi" data-ph="prohibit" data-weight="fill"></span>Pebble has no access to your calls</span></span><span class="tctrl"><button class="linkout" type="button">Settings<span class="phi" data-ph="arrow-circle-up-right" data-weight="fill"></span></button></span></div>
+          </div></div>
+
+          <div class="bench-h">5.3 · Device card</div>
+          <p class="bench-note">Battery is always visible when it is known — it is the main way a user learns the level. Switch states from the panel to see one at full size in the tab.</p>
+
+          <div id="benchSlots"></div>
+
+          <div class="bench-h">5.3b · Dormant band row</div>
+          <p class="bench-note">The second entry in break 1. A dormant band has no functions at all until it becomes the connected one (hard rule 1) — so this row does one thing: connect.</p>
+          <div class="spec"><div class="spec-lab">dormant-row</div><div class="spec-in">
+            <button class="row dormant" type="button"><span class="chipbox"><span class="phi glyph" data-ph="watch" data-weight="fill"></span></span><span class="lab"><span class="dn">PBL Qore 2</span><span class="ds">Dormant · tap to connect</span></span><span class="phi caret" data-ph="caret-right"></span></button>
+          </div></div>
+
+          <div class="bench-h">5.4 · Pairing CTA</div>
+          <p class="bench-note">Occupies the device card's slot at the same footprint — switch to "Pairing CTA" in the panel and watch that nothing below break 1 moves.</p>
+
+          <div class="bench-h">5.5 · Band-required empty state</div>
+          <p class="bench-note">What a band row opens when there is no usable band. Two variants.</p>
+
+          <div class="spec page-spec"><div class="spec-lab">no-band <em>— routes to S02</em></div>
+            <div class="empty" data-empty="no-band">
+              <span class="mark"><span class="phi" data-ph="watch" data-weight="fill"></span></span>
+              <div class="h">Pair a band first</div>
+              <div class="s">Health Monitor samples heart rate, SpO₂, stress, skin temperature and HRV straight from your wrist.</div>
+              <div class="acts">
+                <button class="btn btn--primary btn--m" type="button">Pair a device</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec page-spec"><div class="spec-lab">reconnect <em>— band exists but is offline</em></div>
+            <div class="empty" data-empty="reconnect">
+              <span class="mark"><span class="phi" data-ph="link-break" data-weight="fill"></span></span>
+              <div class="h">Pebble Prime is offline</div>
+              <div class="s">Bring the band closer and check it is switched on, then try again.</div>
+              <div class="acts">
+                <button class="btn btn--primary btn--m" type="button"><span class="phi" data-ph="arrow-counter-clockwise" data-weight="fill"></span>Try again</button>
+                <button class="btn btn--tertiary btn--m" type="button">Not now</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="bench-h">5.6 · Confirm sheet</div>
+          <p class="bench-note">Four destructive actions. Destructive is the tertiary shape with a negative-text label — never a red fill.</p>
+
+          <div class="spec sheet-spec"><div class="spec-lab">standard <em>— restart</em></div>
+            <div class="sheet" data-sheet="standard">
+              <div class="sheet-head">
+                <div><div class="t">Restart Pebble Prime?</div><div class="sub">The band reboots and reconnects on its own. Nothing is lost.</div></div>
+                <button class="iconbtn" type="button" aria-label="Close"><span class="phi" data-ph="x"></span></button>
+              </div>
+              <div class="sheet-rows"></div>
+              <div class="sheet-acts">
+                <button class="btn btn--destructive btn--m" type="button">Restart</button>
+                <button class="btn btn--tertiary btn--m" type="button">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec sheet-spec"><div class="spec-lab">consequence <em>— unbind: names exactly what is lost</em></div>
+            <div class="sheet" data-sheet="consequence">
+              <div class="sheet-head">
+                <div><div class="t">Unbind Pebble Prime?</div><div class="sub">This band stops sending data to Pebble.</div></div>
+                <button class="iconbtn" type="button" aria-label="Close"><span class="phi" data-ph="x"></span></button>
+              </div>
+              <div class="sheet-rows">
+                <div class="conseq"><span class="phi" data-ph="warning-circle" data-weight="fill"></span><span>Anything recorded on the band and not yet synced is lost.</span></div>
+                <div class="conseq"><span class="phi" data-ph="warning-circle" data-weight="fill"></span><span>Reminders, alarms and goals stored on the band are cleared.</span></div>
+                <!-- Flag (§8, open): does the band's HISTORY survive an unbind,
+                     or go with the pairing? The line below is written for
+                     "kept and browsable". If history is deleted instead, this
+                     sheet needs a third, much blunter line. Owner's call. -->
+                <div class="conseq"><span class="phi" data-ph="check-circle" data-weight="fill" style="color:var(--positive-icon)"></span><span>History already synced to your account stays — assumed, pending your call.</span></div>
+              </div>
+              <div class="sheet-acts">
+                <button class="btn btn--destructive btn--m" type="button">Unbind band</button>
+                <button class="btn btn--tertiary btn--m" type="button">Keep it paired</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec sheet-spec"><div class="spec-lab">in-progress <em>— non-dismissable</em></div>
+            <div class="sheet" data-sheet="in-progress">
+              <div class="sheet-head">
+                <div><div class="t">Unbinding…</div><div class="sub">Keep the band close until this finishes.</div></div>
+                <button class="iconbtn" type="button" aria-label="Close"><span class="phi" data-ph="x"></span></button>
+              </div>
+              <div class="sheet-rows"></div>
+              <div class="prog">
+                <div class="track"><i style="width:54%"></i></div>
+                <div class="pl"><span>Clearing the band</span><span class="num">54%</span></div>
+              </div>
+              <div class="sheet-acts">
+                <button class="btn btn--tertiary btn--m" type="button" disabled>Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec sheet-spec"><div class="spec-lab">failed <em>— reason + retry</em></div>
+            <div class="sheet" data-sheet="failed">
+              <div class="sheet-head">
+                <div><div class="t">Unbind failed</div><div class="sub">The band is still paired. Nothing was changed.</div></div>
+                <button class="iconbtn" type="button" aria-label="Close"><span class="phi" data-ph="x"></span></button>
+              </div>
+              <div class="sheet-rows"></div>
+              <div class="fail"><span class="phi" data-ph="warning-circle" data-weight="fill"></span><span>The band went out of range partway through.</span></div>
+              <div class="sheet-acts">
+                <button class="btn btn--destructive btn--m" type="button"><span class="phi" data-ph="arrow-counter-clockwise" data-weight="fill"></span>Try again</button>
+                <button class="btn btn--tertiary btn--m" type="button">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div><!-- /pages -->
+
+    <!-- the live confirm sheet, driven by the panel -->
+    <div class="scrim" id="scrim" hidden></div>
+    <div class="sheet" id="liveSheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+      <div class="sheet-head">
+        <div>
+          <div class="t" id="sheetTitle">Restart Pebble Prime?</div>
+          <div class="sub" id="sheetSub"></div>
+        </div>
+        <button class="iconbtn" id="sheetClose" type="button" aria-label="Close"><span class="phi" data-ph="x"></span></button>
+      </div>
+      <div class="sheet-rows" id="sheetRows"></div>
+      <div class="prog" id="sheetProg" hidden>
+        <div class="track"><i id="sheetBar" style="width:54%"></i></div>
+        <div class="pl"><span id="sheetProgLab">Working</span><span class="num" id="sheetProgPct">54%</span></div>
+      </div>
+      <div class="fail" id="sheetFail" hidden>
+        <span class="phi" data-ph="warning-circle" data-weight="fill"></span><span id="sheetFailMsg"></span>
+      </div>
+      <div class="sheet-acts">
+        <button class="btn btn--destructive btn--m" id="sheetConfirm" type="button">Restart</button>
+        <button class="btn btn--tertiary btn--m" id="sheetCancel" type="button">Cancel</button>
+      </div>
+    </div>
+
+    <!-- bottom nav — Me is tab 4. The other three land elsewhere. -->
+    <nav class="pebble-nav" aria-label="Main">
+      <button class="pebble-tab" type="button" aria-disabled="true"><span class="icon phi" data-ph="house" data-weight="fill"></span><span class="label">Health</span></button>
+      <button class="pebble-tab" type="button" aria-disabled="true"><span class="icon phi" data-ph="sneaker-move" data-weight="fill"></span><span class="label">Activity</span></button>
+      <button class="pebble-tab" type="button" aria-disabled="true"><span class="icon phi" data-ph="moon" data-weight="fill"></span><span class="label">Sleep</span></button>
+      <button class="pebble-tab" type="button" aria-current="page"><span class="icon phi" data-ph="user" data-weight="fill"></span><span class="label">Me</span></button>
+    </nav>
+
+    <div class="gesture"></div>
+  </div><!-- /screen -->
+</div><!-- /phone -->
+
+<script>
+/* ==========================================================================
+   SCRIPT — reading order:
+     1. tiny helpers
+     2. Phosphor icons
+     3. the dormant band list  (break 1 is a list, not a fixed pair)
+     4. the review panel
+     5. the footprint proof for hard rule 4
+   Plain JavaScript, no build step, no modules — the file has to open by
+   double-clicking.
+   ========================================================================== */
+
+/* ---- 1. helpers --------------------------------------------------------- */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+/* ---- 2. Phosphor icons --------------------------------------------------
+   Path data copied verbatim from @phosphor-icons/core v2.1.1 (256x256
+   viewBox), the same set already embedded in index.html and Workout Tab.html
+   — the shared glyphs were checked byte-for-byte against that file so the
+   prototypes draw identical icons. Injected into every .phi span. */
+const PH = {"fill":{"arrow-circle-up":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm37.66,101.66a8,8,0,0,1-11.32,0L136,107.31V168a8,8,0,0,1-16,0V107.31l-18.34,18.35a8,8,0,0,1-11.32-11.32l32-32a8,8,0,0,1,11.32,0l32,32A8,8,0,0,1,165.66,125.66Z","arrow-circle-up-right":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm40,120a8,8,0,0,1-16,0V115.31l-50.34,50.35a8,8,0,0,1-11.32-11.32L140.69,104H112a8,8,0,0,1,0-16h48a8,8,0,0,1,8,8Z","arrow-counter-clockwise":"M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L60.63,81.29l17,17A8,8,0,0,1,72,112H24a8,8,0,0,1-8-8V56A8,8,0,0,1,29.66,50.3L49.31,70,60.25,60A96,96,0,0,1,224,128Z","arrows-clockwise":"M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1-5.66-13.66L180.65,72a79.48,79.48,0,0,0-54.72-22.09h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27,96,96,0,0,1,192,60.7l18.36-18.36A8,8,0,0,1,224,48ZM186.41,183.29A80,80,0,0,1,75.35,184l18.31-18.31A8,8,0,0,0,88,152H40a8,8,0,0,0-8,8v48a8,8,0,0,0,13.66,5.66L64,195.3a95.42,95.42,0,0,0,66,26.76h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z","battery-charging":"M256,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0ZM224,80v96a24,24,0,0,1-24,24H32A24,24,0,0,1,8,176V80A24,24,0,0,1,32,56H200A24,24,0,0,1,224,80Zm-85.19,43.79A8,8,0,0,0,132,120H112.94l10.22-20.42a8,8,0,1,0-14.32-7.16l-16,32A8,8,0,0,0,100,136h19.06l-10.22,20.42a8,8,0,0,0,14.32,7.16l16-32A8,8,0,0,0,138.81,123.79Z","battery-high":"M152,96v64a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8h96A8,8,0,0,1,152,96Zm72-16v96a24,24,0,0,1-24,24H32A24,24,0,0,1,8,176V80A24,24,0,0,1,32,56H200A24,24,0,0,1,224,80Zm-16,0a8,8,0,0,0-8-8H32a8,8,0,0,0-8,8v96a8,8,0,0,0,8,8H200a8,8,0,0,0,8-8Zm40,8a8,8,0,0,0-8,8v64a8,8,0,0,0,16,0V96A8,8,0,0,0,248,88Z","battery-low":"M72,96v64a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8H64A8,8,0,0,1,72,96ZM224,80v96a24,24,0,0,1-24,24H32A24,24,0,0,1,8,176V80A24,24,0,0,1,32,56H200A24,24,0,0,1,224,80Zm-16,0a8,8,0,0,0-8-8H32a8,8,0,0,0-8,8v96a8,8,0,0,0,8,8H200a8,8,0,0,0,8-8Zm40,8a8,8,0,0,0-8,8v64a8,8,0,0,0,16,0V96A8,8,0,0,0,248,88Z","battery-warning":"M200,56H32A24,24,0,0,0,8,80v96a24,24,0,0,0,24,24H200a24,24,0,0,0,24-24V80A24,24,0,0,0,200,56ZM108,88a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,116,176ZM256,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0Z","bell":"M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216Z","bluetooth":"M200,176a8,8,0,0,1-3.2,6.4l-64,48A8,8,0,0,1,128,232a8,8,0,0,1-8-8V144L68.8,182.4a8,8,0,0,1-9.6-12.8L114.67,128,59.2,86.4a8,8,0,0,1,9.6-12.8L120,112V32a8,8,0,0,1,12.8-6.4l64,48a8,8,0,0,1,0,12.8L141.33,128l55.47,41.6A8,8,0,0,1,200,176Z","bluetooth-slash":"M221.38,221.92a8,8,0,0,1-11.3-.54l-26.45-29.1L132.8,230.4a8,8,0,0,1-8.89.47,8.29,8.29,0,0,1-3.91-7.18V144L68.8,182.4a8,8,0,0,1-11.16-1.55,8.26,8.26,0,0,1,1.81-11.43l61.47-46.11L50.08,45.38A8,8,0,0,1,61.92,34.62l160,176A8,8,0,0,1,221.38,221.92ZM155,113.22a4,4,0,0,0,5.36.51L196.8,86.4a8,8,0,0,0,0-12.8l-64-48a8,8,0,0,0-10,.29A8.25,8.25,0,0,0,120,32.24V73.18a4,4,0,0,0,1,2.69Z","camera":"M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm-44,76a36,36,0,1,1-36-36A36,36,0,0,1,164,132Z","check-circle":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z","circle-notch":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,176A72,72,0,0,1,92,65.64a8,8,0,0,1,8,13.85,56,56,0,1,0,56,0,8,8,0,0,1,8-13.85A72,72,0,0,1,128,200Z","crosshair":"M232,120h-8.34A96.14,96.14,0,0,0,136,32.34V24a8,8,0,0,0-16,0v8.34A96.14,96.14,0,0,0,32.34,120H24a8,8,0,0,0,0,16h8.34A96.14,96.14,0,0,0,120,223.66V232a8,8,0,0,0,16,0v-8.34A96.14,96.14,0,0,0,223.66,136H232a8,8,0,0,0,0-16Zm-32,16h7.6A80.15,80.15,0,0,1,136,207.6V200a8,8,0,0,0-16,0v7.6A80.15,80.15,0,0,1,48.4,136H56a8,8,0,0,0,0-16H48.4A80.15,80.15,0,0,1,120,48.4V56a8,8,0,0,0,16,0V48.4A80.15,80.15,0,0,1,207.6,120H200a8,8,0,0,0,0,16Zm-32-8a40,40,0,1,1-40-40A40,40,0,0,1,168,128Z","device-mobile":"M176,16H80A24,24,0,0,0,56,40V216a24,24,0,0,0,24,24h96a24,24,0,0,0,24-24V40A24,24,0,0,0,176,16ZM80,32h96a8,8,0,0,1,8,8v8H72V40A8,8,0,0,1,80,32Zm96,192H80a8,8,0,0,1-8-8v-8H184v8A8,8,0,0,1,176,224Z","dot":"M128,80a48,48,0,1,0,48,48A48,48,0,0,0,128,80Zm0,60a12,12,0,1,1,12-12A12,12,0,0,1,128,140Z","download-simple":"M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40A8,8,0,0,0,168,96H136V32a8,8,0,0,0-16,0V96H88a8,8,0,0,0-5.66,13.66Z","gear":"M216,130.16q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.6,107.6,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.29,107.29,0,0,0-26.25-10.86,8,8,0,0,0-7.06,1.48L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.6,107.6,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z","heart":"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z","heartbeat":"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0c-3.35-1.8-63.55-34.69-92.68-80.89A4,4,0,0,1,34.92,144H72a8,8,0,0,0,6.66-3.56l9.34-14,25.34,38a8,8,0,0,0,9.16,3.16,8.23,8.23,0,0,0,4.28-3.34L140.28,144H160a8,8,0,0,0,8-8.53,8.18,8.18,0,0,0-8.25-7.47H136a8,8,0,0,0-6.66,3.56l-9.34,14-25.34-38a8,8,0,0,0-9.17-3.16,8.25,8.25,0,0,0-4.27,3.34L67.72,128H23.53a4,4,0,0,1-3.83-2.81A76.93,76.93,0,0,1,16,102,62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z","house":"M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z","info":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-4,48a12,12,0,1,1-12,12A12,12,0,0,1,124,72Zm12,112a16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40a8,8,0,0,1,0,16Z","link-break":"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM96,64a8,8,0,0,1,16,0V80a8,8,0,0,1-16,0ZM64,96H80a8,8,0,0,1,0,16H64a8,8,0,0,1,0-16Zm64.08,85.66-7.21,7.21a38,38,0,1,1-53.74-53.74l7.21-7.21a8,8,0,1,1,11.32,11.31l-7.22,7.21a22,22,0,0,0,31.12,31.12l7.21-7.22a8,8,0,1,1,11.31,11.32ZM160,192a8,8,0,0,1-16,0V176a8,8,0,0,1,16,0Zm32-32H176a8,8,0,0,1,0-16h16a8,8,0,0,1,0,16Zm-3.13-39.13-7.21,7.21a8,8,0,1,1-11.32-11.31l7.22-7.21a22,22,0,0,0-31.12-31.12l-7.21,7.22a8,8,0,1,1-11.31-11.32l7.21-7.21a38,38,0,1,1,53.74,53.74Z","lock-simple":"M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96Z","magnifying-glass":"M168,112a56,56,0,1,1-56-56A56,56,0,0,1,168,112Zm61.66,117.66a8,8,0,0,1-11.32,0l-50.06-50.07a88,88,0,1,1,11.32-11.31l50.06,50.06A8,8,0,0,1,229.66,229.66ZM112,184a72,72,0,1,0-72-72A72.08,72.08,0,0,0,112,184Z","moon":"M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z","phone":"M231.88,175.08A56.26,56.26,0,0,1,176,224C96.6,224,32,159.4,32,80A56.26,56.26,0,0,1,80.92,24.12a16,16,0,0,1,16.62,9.52l21.12,47.15,0,.12A16,16,0,0,1,117.39,96c-.18.27-.37.52-.57.77L96,121.45c7.49,15.22,23.41,31,38.83,38.51l24.34-20.71a8.12,8.12,0,0,1,.75-.56,16,16,0,0,1,15.17-1.4l.13.06,47.11,21.11A16,16,0,0,1,231.88,175.08Z","plus":"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM184,136H136v48a8,8,0,0,1-16,0V136H72a8,8,0,0,1,0-16h48V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z","prohibit":"M200,128a71.69,71.69,0,0,1-15.78,44.91L83.09,71.78A71.95,71.95,0,0,1,200,128ZM56,128a71.95,71.95,0,0,0,116.91,56.22L71.78,83.09A71.69,71.69,0,0,0,56,128Zm180,0A108,108,0,1,1,128,20,108.12,108.12,0,0,1,236,128Zm-20,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z","question":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,168a12,12,0,1,1,12-12A12,12,0,0,1,128,192Zm8-48.72V144a8,8,0,0,1-16,0v-8a8,8,0,0,1,8-8c13.23,0,24-9,24-20s-10.77-20-24-20-24,9-24,20v4a8,8,0,0,1-16,0v-4c0-19.85,17.94-36,40-36s40,16.15,40,36C168,125.38,154.24,139.93,136,143.28Z","ruler":"M235.32,96,96,235.31a16,16,0,0,1-22.63,0L20.68,182.63a16,16,0,0,1,0-22.63l29.17-29.17a4,4,0,0,1,5.66,0l34.83,34.83a8,8,0,0,0,11.71-.43,8.18,8.18,0,0,0-.6-11.09L66.82,119.51a4,4,0,0,1,0-5.65l15-15a4,4,0,0,1,5.66,0l34.83,34.83a8,8,0,0,0,11.71-.43,8.18,8.18,0,0,0-.6-11.09L98.83,87.51a4,4,0,0,1,0-5.65l15-15a4,4,0,0,1,5.65,0l34.83,34.83a8,8,0,0,0,11.72-.43,8.18,8.18,0,0,0-.61-11.09L130.83,55.51a4,4,0,0,1,0-5.65L160,20.69a16,16,0,0,1,22.63,0l52.69,52.68A16,16,0,0,1,235.32,96Z","seal-check":"M225.86,102.82c-3.77-3.94-7.67-8-9.14-11.57-1.36-3.27-1.44-8.69-1.52-13.94-.15-9.76-.31-20.82-8-28.51s-18.75-7.85-28.51-8c-5.25-.08-10.67-.16-13.94-1.52-3.56-1.47-7.63-5.37-11.57-9.14C146.28,23.51,138.44,16,128,16s-18.27,7.51-25.18,14.14c-3.94,3.77-8,7.67-11.57,9.14C88,40.64,82.56,40.72,77.31,40.8c-9.76.15-20.82.31-28.51,8S41,67.55,40.8,77.31c-.08,5.25-.16,10.67-1.52,13.94-1.47,3.56-5.37,7.63-9.14,11.57C23.51,109.72,16,117.56,16,128s7.51,18.27,14.14,25.18c3.77,3.94,7.67,8,9.14,11.57,1.36,3.27,1.44,8.69,1.52,13.94.15,9.76.31,20.82,8,28.51s18.75,7.85,28.51,8c5.25.08,10.67.16,13.94,1.52,3.56,1.47,7.63,5.37,11.57,9.14C109.72,232.49,117.56,240,128,240s18.27-7.51,25.18-14.14c3.94-3.77,8-7.67,11.57-9.14,3.27-1.36,8.69-1.44,13.94-1.52,9.76-.15,20.82-.31,28.51-8s7.85-18.75,8-28.51c.08-5.25.16-10.67,1.52-13.94,1.47-3.56,5.37-7.63,9.14-11.57C232.49,146.28,240,138.44,240,128S232.49,109.73,225.86,102.82Zm-52.2,6.84-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z","sign-out":"M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40A8,8,0,0,0,176,88v32H112a8,8,0,0,0,0,16h64v32a8,8,0,0,0,13.66,5.66l40-40A8,8,0,0,0,229.66,122.34Z","sneaker-move":"M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z","spinner-gap":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM48,136a8,8,0,0,1,0-16H72a8,8,0,0,1,0,16Zm46.06,37.25-17,17a8,8,0,0,1-11.32-11.32l17-17a8,8,0,0,1,11.31,11.31Zm0-79.19a8,8,0,0,1-11.31,0l-17-17A8,8,0,0,1,77.09,65.77l17,17A8,8,0,0,1,94.06,94.06ZM136,208a8,8,0,0,1-16,0V184a8,8,0,0,1,16,0Zm0-136a8,8,0,0,1-16,0V48a8,8,0,0,1,16,0Zm54.23,118.23a8,8,0,0,1-11.32,0l-17-17a8,8,0,0,1,11.31-11.31l17,17A8,8,0,0,1,190.23,190.23ZM208,136H184a8,8,0,0,1,0-16h24a8,8,0,0,1,0,16Z","trash":"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM112,168a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm0-120H96V40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z","user":"M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z","users":"M164.47,195.63a8,8,0,0,1-6.7,12.37H10.23a8,8,0,0,1-6.7-12.37,95.83,95.83,0,0,1,47.22-37.71,60,60,0,1,1,66.5,0A95.83,95.83,0,0,1,164.47,195.63Zm87.91-.15a95.87,95.87,0,0,0-47.13-37.56A60,60,0,0,0,144.7,54.59a4,4,0,0,0-1.33,6A75.83,75.83,0,0,1,147,150.53a4,4,0,0,0,1.07,5.53,112.32,112.32,0,0,1,29.85,30.83,23.92,23.92,0,0,1,3.65,16.47,4,4,0,0,0,3.95,4.64h60.3a8,8,0,0,0,7.73-5.93A8.22,8.22,0,0,0,252.38,195.48Z","warning":"M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z","warning-circle":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-8,56a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm8,104a12,12,0,1,1,12-12A12,12,0,0,1,128,184Z","watch":"M175.3,63.53l-6.24-34.38A16,16,0,0,0,153.32,16H102.68A16,16,0,0,0,86.94,29.15L80.7,63.53a79.9,79.9,0,0,0,0,128.94l6.24,34.38A16,16,0,0,0,102.68,240h50.64a16,16,0,0,0,15.74-13.15l6.24-34.38a79.9,79.9,0,0,0,0-128.94ZM102.68,32h50.64l3.91,21.55a79.75,79.75,0,0,0-58.46,0Zm50.64,192H102.68l-3.91-21.55a79.75,79.75,0,0,0,58.46,0ZM168,136H128a8,8,0,0,1-8-8V88a8,8,0,0,1,16,0v32h32a8,8,0,0,1,0,16Z","wifi-slash":"M213.92,210.62a8,8,0,1,1-11.84,10.76l-33.67-37-28.1,33.88A15.93,15.93,0,0,1,128,224h0a15.93,15.93,0,0,1-12.31-5.77L11.65,92.8A15.65,15.65,0,0,1,8.11,80.91,15.93,15.93,0,0,1,14.28,70.1,188.26,188.26,0,0,1,46.6,50.35l-4.29-4.72a8.22,8.22,0,0,1,.13-11.38,8,8,0,0,1,11.48.37Zm34-129.71a15.93,15.93,0,0,0-6.17-10.81A186.67,186.67,0,0,0,128,32a191,191,0,0,0-42.49,4.75,4,4,0,0,0-2,6.59L186,156.07a4,4,0,0,0,6-.14L244.35,92.8A15.65,15.65,0,0,0,247.89,80.91Z"},"regular":{"arrow-clockwise":"M240,56v48a8,8,0,0,1-8,8H184a8,8,0,0,1,0-16H211.4L184.81,71.64l-.25-.24a80,80,0,1,0-1.67,114.78,8,8,0,0,1,11,11.63A95.44,95.44,0,0,1,128,224h-1.32A96,96,0,1,1,195.75,60L224,85.8V56a8,8,0,1,1,16,0Z","caret-left":"M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z","caret-right":"M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z","check":"M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z","plus":"M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z","watch":"M208,128a79.94,79.94,0,0,0-32.7-64.47l-6.24-34.38A16,16,0,0,0,153.32,16H102.68A16,16,0,0,0,86.94,29.15L80.7,63.53a79.9,79.9,0,0,0,0,128.94l6.24,34.38A16,16,0,0,0,102.68,240h50.64a16,16,0,0,0,15.74-13.15l6.24-34.38A79.94,79.94,0,0,0,208,128ZM102.68,32h50.64l3.91,21.55a79.75,79.75,0,0,0-58.46,0ZM64,128a64,64,0,1,1,64,64A64.07,64.07,0,0,1,64,128Zm89.32,96H102.68l-3.91-21.55a79.75,79.75,0,0,0,58.46,0ZM120,128V88a8,8,0,0,1,16,0v32h32a8,8,0,0,1,0,16H128A8,8,0,0,1,120,128Z","x":"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"}};
+
+function injectIcons(root = document){
+  $$('.phi', root).forEach(el => {
+    if (el.dataset.done) return;
+    const weight = el.dataset.weight === 'fill' ? 'fill' : 'regular';
+    const d = (PH[weight] || {})[el.dataset.ph];
+    if (!d) { console.warn('missing icon', el.dataset.ph, weight); return; }
+    el.innerHTML = '<svg viewBox="0 0 256 256" aria-hidden="true"><path d="' + d + '"/></svg>';
+    el.dataset.done = '1';
+  });
+}
+
+/* ---- 3. the dormant band list -------------------------------------------
+   Break 1 holds the connected device card plus zero or more DORMANT bands.
+   The owner's call (2026-09-03): two bands was only the tested case, so this
+   is a list of any length and the header "+" never disappears. A dormant
+   band is named here and nowhere else in the tab (hard rule 1), and the only
+   thing its row can do is connect. */
+const DORMANT_BANDS = ['PBL Qore 2', 'Pebble Arc', 'Pebble Prime (work)'];
+
+function renderDormant(n){
+  const host = $('#dormList');
+  host.innerHTML = DORMANT_BANDS.slice(0, n).map(name => (
+    '<button class="row dormant" type="button">' +
+      '<span class="chipbox"><span class="phi glyph" data-ph="watch" data-weight="fill"></span></span>' +
+      '<span class="lab"><span class="dn">' + name + '</span>' +
+      '<span class="ds">Dormant · tap to connect</span></span>' +
+      '<span class="phi caret" data-ph="caret-right"></span>' +
+    '</button>'
+  )).join('');
+  injectIcons(host);
+}
+
+/* ---- 3b. the device-card gallery on the bench ---------------------------
+   Each state gets its own slot so the seven cards can be compared at once
+   without touching the panel. Built by cloning the real card, so the bench
+   can never drift away from what the tab actually renders. */
+const SLOT_STATES = [
+  ['connected',    'connected'],
+  ['disconnected', 'disconnected — battery unknown, so it reads an em dash'],
+  ['syncing',      'syncing — last-known values are held, not blanked'],
+  ['updating',     'updating — locked, no way out of the screen'],
+  ['low-battery',  'low-battery — the figure itself turns negative'],
+  ['not-worn',     'not-worn — neutral: nothing is wrong'],
+  ['skeleton',     'skeleton — no chip, no battery, no caret'],
+];
+
+function buildBenchSlots(){
+  const host = $('#benchSlots');
+  const card = $('#devCard');
+  host.innerHTML = '';
+  SLOT_STATES.forEach(([state, label]) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'spec slot-spec';
+    wrap.setAttribute('data-slot', state);
+    const lab = document.createElement('div');
+    lab.className = 'spec-lab';
+    const dash = label.indexOf(' — ');
+    lab.innerHTML = dash === -1 ? label
+      : label.slice(0, dash) + ' <em>—' + label.slice(dash + 2) + '</em>';
+    const slot = document.createElement('div');
+    slot.className = 'dev-slot';
+    slot.appendChild(card.cloneNode(true));
+    wrap.append(lab, slot);
+    host.appendChild(wrap);
+  });
+  // the cloned cards are plain samples, not controls
+  $$('#benchSlots .devcard').forEach(c => { c.removeAttribute('id'); c.tabIndex = -1; });
+}
+
+/* ---- 4. the review panel ------------------------------------------------
+   Same pattern as the Activity and Sleep prototypes: a radio group per
+   thing, and the picked option gets highlighted. */
+function wire(groupSel, onPick){
+  const group = $(groupSel);
+  group.addEventListener('change', e => {
+    if (e.target.name === undefined) return;
+    $$('label', group).forEach(l => l.classList.toggle('on', l.contains(e.target)));
+    onPick(e.target.value);
+  });
+}
+
+wire('#viewOpts', v => {
+  $$('.page').forEach(p => p.classList.toggle('active', p.id === (v === 'me' ? 'page-me' : 'page-bench')));
+  $('.page.active').scrollTop = 0;
+});
+
+wire('#slotOpts', v => {
+  // data-slot on the tab root, matching the data-state convention the
+  // Activity and Sleep prototypes already use for card states
+  $('#page-me').setAttribute('data-slot', v);
+  measureSlot();
+});
+
+wire('#dormOpts', v => renderDormant(Number(v)));
+
+/* the confirm sheet (§5.6) */
+const SHEETS = {
+  standard: {
+    title: 'Restart Pebble Prime?',
+    sub: 'The band reboots and reconnects on its own. Nothing is lost.',
+    rows: [],
+    confirm: 'Restart', cancel: 'Cancel', dismissable: true,
+  },
+  consequence: {
+    title: 'Unbind Pebble Prime?',
+    sub: 'This band stops sending data to Pebble.',
+    rows: [
+      ['negative', 'Anything recorded on the band and not yet synced is lost.'],
+      ['negative', 'Reminders, alarms and goals stored on the band are cleared.'],
+      // Flag (§8, open): whether synced history survives an unbind is still
+      // the owner's call. Written here for "kept" — see the bench comment.
+      ['positive', 'History already synced to your account stays — assumed, pending your call.'],
+    ],
+    confirm: 'Unbind band', cancel: 'Keep it paired', dismissable: true,
+  },
+  'in-progress': {
+    title: 'Unbinding…',
+    sub: 'Keep the band close until this finishes.',
+    rows: [], prog: ['Clearing the band', 54],
+    confirm: null, cancel: 'Cancel', cancelDisabled: true, dismissable: false,
+  },
+  failed: {
+    title: 'Unbind failed',
+    sub: 'The band is still paired. Nothing was changed.',
+    rows: [], fail: 'The band went out of range partway through.',
+    confirm: 'Try again', cancel: 'Cancel', dismissable: true,
+  },
+};
+
+function showSheet(key){
+  const sheet = $('#liveSheet'), scrim = $('#scrim');
+  if (key === 'none'){ sheet.hidden = true; scrim.hidden = true; return; }
+  const cfg = SHEETS[key];
+  sheet.setAttribute('data-sheet', key);
+  $('#sheetTitle').textContent = cfg.title;
+  $('#sheetSub').textContent = cfg.sub;
+
+  $('#sheetRows').innerHTML = (cfg.rows || []).map(([tone, text]) => (
+    '<div class="conseq"><span class="phi" data-ph="' +
+      (tone === 'positive' ? 'check-circle' : 'warning-circle') +
+      '" data-weight="fill"' + (tone === 'positive' ? ' style="color:var(--positive-icon)"' : '') +
+      '></span><span>' + text + '</span></div>'
+  )).join('');
+
+  $('#sheetProg').hidden = !cfg.prog;
+  if (cfg.prog){
+    $('#sheetProgLab').textContent = cfg.prog[0];
+    $('#sheetProgPct').textContent = cfg.prog[1] + '%';
+    $('#sheetBar').style.width = cfg.prog[1] + '%';
+  }
+  $('#sheetFail').hidden = !cfg.fail;
+  if (cfg.fail) $('#sheetFailMsg').textContent = cfg.fail;
+
+  const confirm = $('#sheetConfirm'), cancel = $('#sheetCancel');
+  confirm.hidden = !cfg.confirm;
+  if (cfg.confirm) confirm.textContent = cfg.confirm;
+  cancel.textContent = cfg.cancel;
+  cancel.disabled = !!cfg.cancelDisabled;
+
+  sheet.hidden = false; scrim.hidden = false;
+  injectIcons(sheet);
+}
+wire('#sheetOpts', showSheet);
+
+// closing puts the panel's radio back, so the two never disagree
+function closeSheet(){
+  showSheet('none');
+  const none = $('#sheetOpts input[value="none"]');
+  none.checked = true;
+  $$('label', $('#sheetOpts')).forEach(l => l.classList.toggle('on', l.contains(none)));
+}
+$('#sheetClose').addEventListener('click', closeSheet);
+$('#sheetCancel').addEventListener('click', e => { if (!e.currentTarget.disabled) closeSheet(); });
+// in-progress is non-dismissable, so the scrim only closes the others
+$('#scrim').addEventListener('click', () => {
+  if ($('#liveSheet').getAttribute('data-sheet') !== 'in-progress') closeSheet();
+});
+
+/* the two toggles on the tab actually flip, so the switch can be felt */
+$$('#page-me .switch').forEach(sw => sw.addEventListener('click', () => {
+  const on = !sw.classList.contains('on');
+  sw.classList.toggle('on', on);
+  sw.setAttribute('aria-checked', String(on));
+}));
+
+/* ---- 5. the footprint proof (hard rule 4) -------------------------------
+   Acceptance criterion: "Pairing CTA and device card occupy the same
+   footprint — nothing below shifts between T2 and T3." Rather than assert
+   it, measure the slot with the card in it and with the CTA in it, and print
+   both. If they ever diverge the readout turns negative-coloured. */
+function measureSlot(){
+  const page = $('#page-me'), slot = $('#devSlot'), out = $('#proof'), val = $('#proofVal');
+  const was = page.getAttribute('data-slot');
+  const read = state => { page.setAttribute('data-slot', state); return Math.round(slot.getBoundingClientRect().height); };
+  const cardH = read('connected');
+  const ctaH  = read('pair');
+  page.setAttribute('data-slot', was);
+  const same = cardH === ctaH;
+  val.textContent = cardH + ' px vs ' + ctaH + ' px — ' + (same ? 'identical' : 'MISMATCH');
+  out.classList.toggle('ok', same);
+  out.classList.toggle('bad', !same);
+}
+
+/* ---- go ----------------------------------------------------------------- */
+injectIcons();
+renderDormant(1);
+buildBenchSlots();
+measureSlot();
+// fonts land after first paint and can change the height, so measure again
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureSlot);
+window.addEventListener('resize', measureSlot);
+</script>
+</body>
+</html>
