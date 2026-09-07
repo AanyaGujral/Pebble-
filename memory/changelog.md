@@ -1,5 +1,19 @@
 # Changelog
 
+- 2026-09-03 (later still) — **The Me tab's text now matches Sleep and
+  Activity.** The owner asked for the tab name to be set the same as those
+  two; the cause turned out to be the font request, not the title rule.
+  `.screen-title` was already byte-identical in all three files
+  (24/30, weight 500, -0.01em, `--text-1`), but `Me Tab/me-tab.html` only
+  ever asked Google Fonts for **League Spartan** — it never requested
+  **Google Sans Flex** — so `--font-text` fell all the way through to the
+  browser's own sans and EVERY word on the Me tab was set in a different
+  face from the other tabs. The font link is now character-for-character the
+  same as `index.html` and `Activity Tab/Workout Tab.html`, including the
+  numeral weights (400-700, not just 500 and 700). This fixes the whole tab,
+  not only the header. Also checked while in there: the bottom-nav label
+  rule already matched `index.html` exactly, so nothing to change.
+
 - 2026-09-03 (later still) — Device card: **the grey tile behind the product
   photograph is gone** (owner). The watch now sits straight on the card. A
   cut-out render on its own raised square was reading as a grey box with a
