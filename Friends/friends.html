@@ -169,6 +169,11 @@
   /* radii, spacing, motion */
   --radius-card:20px;--radius-pill:999px;--radius-sheet:28px;--radius-row:16px;
   --radius-8:8px;--radius-12:12px;--radius-16:16px;--radius-24:24px;
+  /* 4px is the floor (owner, 2026-09-03): nothing in this flow lays elements
+     out at less than 4px apart. --space-2 stays in the mirror because
+     js/tokens.js declares it, but nothing here uses it. The two sub-4px
+     values left in the file are not spacing — the caret's 3px nudge centres a
+     rotated square, and the battery's 1px is a stroke inside a drawn glyph. */
   --space-2:2px;--space-4:4px;--space-8:8px;--space-12:12px;
   --space-16:16px;--space-20:20px;--space-24:24px;--space-32:32px;
   --border-hairline:0.5px;--border-thin:1px;
@@ -214,7 +219,7 @@ body{
 }
 .panel label:hover{background:var(--surface-raised)}
 .panel label.on{background:var(--surface-raised);color:var(--text-1)}
-.panel input{accent-color:var(--metric-readiness);margin:3px 0 0}
+.panel input{accent-color:var(--metric-readiness);margin:4px 0 0}
 .panel .desc{display:block;font:400 10px/14px var(--font-text);color:var(--text-3)}
 .panel .rule{margin:16px 0;border:0;border-top:var(--border-hairline) solid var(--neutral-700)}
 
@@ -224,7 +229,11 @@ body{
   border:2px solid var(--neutral-700);outline:6px solid var(--neutral-800);padding:10px;
 }
 .screen{
-  position:relative;width:360px;height:780px;border-radius:32px;overflow:hidden;
+  /* 780px is the design height, but the phone has to FIT the window it is
+     being reviewed in — on a laptop the bottom of the frame, and with it the
+     nav pill, was falling below the fold. */
+  position:relative;width:360px;height:min(780px, calc(100vh - 96px));min-height:600px;
+  border-radius:32px;overflow:hidden;
   background:var(--surface-app);display:flex;flex-direction:column;
 }
 .screen::before{
@@ -264,8 +273,8 @@ body{
              0 2px 6px color-mix(in srgb, var(--neutral-900) 32%, transparent);
 }
 .pebble-tab{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  width:72px;height:60px;padding:10px 0;border:0;background:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  width:72px;height:60px;padding:8px 0;border:0;background:none;
   border-radius:var(--radius-pill);font-family:inherit;cursor:default;
 }
 .pebble-tab .icon{display:block;width:24px;height:24px;color:var(--neutral-300)}
@@ -315,7 +324,7 @@ body{
 /* list rows — workouts, members, settings */
 .listrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:var(--border-hairline) solid var(--divider)}
 .listrow .lft{display:flex;align-items:center;gap:8px;min-width:0}
-.listrow .txt{display:grid;gap:2px;min-width:0}
+.listrow .txt{display:grid;gap:4px;min-width:0}
 .listrow .t1{font:500 13px/18px var(--font-text);color:var(--text-1)}
 .listrow .t2{font:500 11px/16px var(--font-text);color:var(--text-3)}
 .listrow .rgt{display:flex;align-items:center;gap:8px;flex:0 0 auto}
@@ -368,10 +377,15 @@ body{
     color-mix(in srgb, var(--metric-readiness) 10%, var(--surface-app)) 0%,
     var(--surface-app) 88%);
 }
+/* Brighter (owner, 2026-09-03): 22% at the top rather than 12%, falling to 6%,
+   so the panel reads as a lit surface rather than a slightly-off black.
+   FLAG: the hue is still color.teal.400 through --metric-readiness, which is
+   what the Health tab's hero uses in index.html. If "green" meant emerald or
+   lime rather than this teal-green, it is one token swap here — say which. */
 .lb-hero{
   background:linear-gradient(180deg,
-    color-mix(in srgb, var(--metric-readiness) 12%, var(--surface-app)) 0%,
-    color-mix(in srgb, var(--metric-readiness) 4%, var(--surface-app)) 100%);
+    color-mix(in srgb, var(--metric-readiness) 22%, var(--surface-app)) 0%,
+    color-mix(in srgb, var(--metric-readiness) 6%, var(--surface-app)) 100%);
   border-radius:0 0 var(--radius-sheet) var(--radius-sheet);
 }
 .subpage::-webkit-scrollbar{display:none}
@@ -394,7 +408,7 @@ body{
 /* the date dropdown's row on an inner page. 36px of left padding puts the
    label on the same optical line as the title above it, since .date-btn
    carries the app's -10px pull and the back button is 40px wide. */
-.sub-date{padding:2px var(--gutter) 0 calc(var(--gutter) + 20px)}
+.sub-date{padding:4px var(--gutter) 0 calc(var(--gutter) + 20px)}
 .sub-date .date-btn{margin-top:0}
 
 /* scrim + bottom sheet — the Me tab pattern */
@@ -462,7 +476,7 @@ body{
    to carry one, as a word or as a glyph, never bare. */
 .lbrow{
   display:grid;grid-template-columns:20px 32px minmax(0,1fr) auto 56px;
-  align-items:center;column-gap:12px;row-gap:2px;
+  align-items:center;column-gap:12px;row-gap:4px;
   /* Owner, 2026-09-03: the 40px chip was the biggest thing in a row that is
      mostly a name and a number, so it sized the row and left no air in the
      card. At 32px the chip is still the row's anchor, and the 8px it gives
@@ -505,13 +519,12 @@ body{
 .stepglyph{width:14px;height:14px;color:var(--text-3);flex:0 0 auto}
 .stepglyph.dim{opacity:.5}
 
-/* the top three carry the podium's medals into the list (owner, 2026-09-03):
-   the numeral takes the medal colour and the chip takes the medal ring, so a
-   row and its plinth above are recognisably the same person's placing. Keyed
-   to rank, so a 1-2-2 tie colours two silvers and no bronze — exactly what
-   the podium does. */
+/* the top three carry the podium's medals into the list, and carry them the
+   same way the podium now does: on the numeral only. The ring round the chip
+   came off with the podium's — one coloured mark per person, in the same place
+   on both halves of the screen. Keyed to rank, so a 1-2-2 tie colours two
+   silvers and no bronze. */
 .lbrow[data-medal] .rank{color:var(--medal);font-weight:var(--weight-bold)}
-.lbrow[data-medal] .av{box-shadow:0 0 0 2px var(--medal)}
 .lbrow[data-medal="1"]{--medal:var(--medal-1)}
 .lbrow[data-medal="2"]{--medal:var(--medal-2)}
 .lbrow[data-medal="3"]{--medal:var(--medal-3)}
@@ -563,22 +576,20 @@ body{
 .pod .stepglyph{width:14px;height:14px}
 /* the plinth — height carries the placing, the numeral names it */
 .pod .plinth{
-  width:100%;margin-top:2px;border-radius:var(--radius-16) var(--radius-16) 0 0;
-  background:var(--surface-card);
+  width:100%;margin-top:4px;border-radius:var(--radius-16) var(--radius-16) 0 0;
+  background:var(--surface-raised);
   display:flex;align-items:flex-start;justify-content:center;padding-top:8px;
   font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3);
 }
-/* Medal colour (owner, 2026-09-03) — see --medal-1/2/3 in the token block for
-   why this is the doctrine's one sanctioned exception. Three restrained uses
-   per tile: a ring on the chip, the plinth numeral, and a tint plus a top edge
-   on the plinth, so the colour frames the figure instead of shouting over it.
-   Height still carries the placing; the medal carries the reading. */
-.pod[data-medal] .av{box-shadow:0 0 0 2px var(--medal)}
-.pod[data-medal] .plinth{
-  color:var(--medal);
-  background:color-mix(in srgb, var(--medal) 20%, var(--surface-card));
-  box-shadow:inset 0 2px 0 0 var(--medal);
-}
+/* Medal colour (owner, 2026-09-03, narrowed 2026-09-03 later) — see
+   --medal-1/2/3 in the token block for why this is the doctrine's one
+   sanctioned exception, and note how little of it there now is: ONE use per
+   tile, the numeral on the stand. The tinted plinth, its top edge and the ring
+   round the chip all came off — three coloured marks per person turned a
+   ranking of four people into a stack of coloured blocks, and the figures they
+   were meant to frame were the thing losing. The stands are neutral; the
+   numeral says the placing; height says it again. */
+.pod[data-medal] .plinth{color:var(--medal)}
 .pod[data-medal="1"]{--medal:var(--medal-1)}
 .pod[data-medal="2"]{--medal:var(--medal-2)}
 .pod[data-medal="3"]{--medal:var(--medal-3)}
@@ -600,6 +611,9 @@ body{
    is a card, so the break reads as a gap in a stack rather than a rule
    through a table. */
 .lb-list{padding-top:4px;display:flex;flex-direction:column;gap:8px}
+/* first load: the skeletons sit further off the header than the real rows do,
+   because there is no state line above them to hold the two apart */
+.lb-list--loading{padding-top:24px}
 /* break label between the ranked list and the not-synced group */
 .lb-break{
   padding:20px 4px 8px;
@@ -646,7 +660,7 @@ body{
      Rev 3 stacked the count under the heart, which made the control 46px tall
      against a 40px row and left every cheerless row shorter than its
      neighbours. 40px high keeps the tap target honest. */
-  min-width:56px;height:40px;padding:0 2px;border:0;background:none;cursor:pointer;font-family:inherit;
+  min-width:56px;height:40px;padding:0 4px;border:0;background:none;cursor:pointer;font-family:inherit;
   display:flex;flex-direction:row-reverse;align-items:center;justify-content:flex-start;gap:4px;
   border-radius:var(--radius-12);
   transition:opacity var(--duration-fast) var(--ease-standard);
@@ -674,8 +688,9 @@ body{
 .cheer[data-cheer="failed"] .ico{color:var(--negative-icon)}
 /* at-limit — non-interactive, reason on tap */
 .cheer[data-cheer="limit"]{opacity:var(--state-inactive);cursor:default}
-/* queued — offline; the cheer is held, not lost */
-.cheer[data-cheer="queued"] .ico{background:var(--surface-raised);color:var(--caution-icon)}
+/* (the queued state came out with the offline state on 2026-09-03: a cheer
+   that cannot be sent now fails and says so, rather than sitting in a queue
+   the screen invents) */
 /* received — your own row: a count of what others gave you, not a control.
    Filled heart because these are cheers that happened; no chip behind it,
    no pointer, no press state, because there is nothing here to do. */
@@ -692,7 +707,7 @@ body{
    friends, none or one, nothing below this card on Home moves. */
 .friends-card .card-body{height:var(--friends-body-h);display:flex;flex-direction:column;overflow:hidden}
 .friends-card .card-head{align-items:center}
-.friends-card .chev{margin-right:2px}
+.friends-card .chev{margin-right:4px}
 .fc-rows{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px}
 .fcrow{
   display:grid;grid-template-columns:16px 28px 1fr auto;align-items:center;column-gap:8px;
@@ -740,7 +755,7 @@ body{
   display:flex;gap:10px;padding:12px;border-radius:var(--radius-row);
   background:var(--caution-bg);
 }
-.disclose .phi{width:16px;height:16px;color:var(--caution-icon);flex:0 0 auto;margin-top:1px}
+.disclose .phi{width:16px;height:16px;color:var(--caution-icon);flex:0 0 auto}
 .disclose p{margin:0;font:400 11px/16px var(--font-text);color:var(--caution-text)}
 .disclose p b{font-weight:var(--weight-semibold)}
 .codebox{
@@ -769,7 +784,7 @@ body{
 .inline-err .phi{width:14px;height:14px;color:var(--negative-icon)}
 /* the resolved-circle preview — you see whose circle before you confirm */
 .resolved{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--radius-row);background:var(--surface-card)}
-.resolved .txt{min-width:0;display:grid;gap:2px}
+.resolved .txt{min-width:0;display:grid;gap:4px}
 .resolved .t1{font:500 15px/22px var(--font-text);color:var(--text-1)}
 .resolved .t2{font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
 
@@ -839,12 +854,12 @@ body{
 
 /* ── friend profile pieces ──────────────────────────────────────────────── */
 .ident{display:flex;align-items:center;gap:12px;padding:4px 0 0}
-.ident .txt{min-width:0;display:grid;gap:2px}
+.ident .txt{min-width:0;display:grid;gap:4px}
 .ident .nm{font:500 20px/26px var(--font-text);letter-spacing:-.005em;color:var(--text-1)}
 /* the rank you arrived from — restated, so the page knows where you came
    from (item 13 in §1) */
-.ident .rk{margin-top:2px;font:500 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
-.ident .sy{margin-top:2px;font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
+.ident .rk{font:500 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
+.ident .sy{font:500 11px/16px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
 /* NOTE what is deliberately absent here: no email (item 10), no
    "Touch to set background" (item 9), no share icon, no edit control.
    Hard rule 6 — a control that writes to your account does not render on a
@@ -876,7 +891,7 @@ body{
 .cal-grab span{width:36px;height:4px;border-radius:var(--radius-pill);background:var(--surface-fill)}
 .cal-head{flex:0 0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .cal-head .t{font:500 20px/26px var(--font-text);letter-spacing:-.005em;color:var(--text-1)}
-.cal-sub{margin-top:2px;font:400 11px/16px var(--font-text);color:var(--text-3)}
+.cal-sub{margin-top:4px;font:400 11px/16px var(--font-text);color:var(--text-3)}
 .iconbtn{width:36px;height:36px;border-radius:var(--radius-pill);background:var(--surface-raised);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--text-1)}
 .iconbtn .phi{width:16px;height:16px}
 .cal-week{flex:0 0 auto;padding:0 16px 8px;display:grid;grid-template-columns:repeat(7,1fr);border-bottom:var(--border-hairline) solid var(--surface-raised)}
@@ -885,7 +900,7 @@ body{
 .cal-scroll::-webkit-scrollbar{display:none}
 .cal-month{padding-top:24px}
 .cal-month .mt{text-align:center;font:500 17px/22px var(--font-text);color:var(--text-1)}
-.cal-grid{margin-top:16px;display:grid;grid-template-columns:repeat(7,1fr);row-gap:16px;column-gap:2px}
+.cal-grid{margin-top:16px;display:grid;grid-template-columns:repeat(7,1fr);row-gap:16px;column-gap:4px}
 .cal-day{width:100%;min-height:44px;background:none;border:0;padding:0;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px}
 .cal-day .dn{font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
 /* Each day is a numeral over a 28px progress ring — the same day cell the
@@ -901,7 +916,7 @@ body{
 .gal{padding:44px 16px 100px;display:flex;flex-direction:column;gap:20px}
 .gal h3{margin:0;font:600 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
 .gal .grp{background:var(--surface-card);border-radius:var(--radius-card);padding:8px}
-.gal .cap{padding:6px 8px 2px;font:400 10px/14px var(--font-text);color:var(--text-3)}
+.gal .cap{padding:8px 8px 4px;font:400 10px/14px var(--font-text);color:var(--text-3)}
 </style>
 </head>
 <body>
@@ -910,7 +925,8 @@ body{
 <aside class="panel">
   <h2>State</h2>
   <p class="hint">The nine F-states from §6 of the spec. They are modifiers, not
-     layouts &mdash; F7 offline combines with any of the others in the real build.</p>
+     layouts &mdash; a member being behind on sync combines with any of the
+     others in the real build.</p>
   <div class="opts" id="fstates"></div>
 
   <hr class="rule">
@@ -1086,11 +1102,14 @@ body{
       <div id="lb-podium"></div>
       </div><!-- /.lb-hero -->
 
-      <div style="padding:0 var(--gutter)" id="lb-mount"></div>
+      <!-- 20px between the podium panel and the first row: the panel closes a
+           section, and the list is the next one -->
+      <div style="padding:20px var(--gutter) 0" id="lb-mount"></div>
 
-      <!-- 96px of clearance under the button: the self card docks 88px off the
-           bottom of the screen, and the page's one action cannot sit under it -->
-      <div style="padding:20px var(--gutter) 96px" id="lb-foot"></div>
+      <!-- 176px of clearance under the button, on the states that have one:
+           the self card docks 88px off the bottom of the screen and stands
+           64px tall, so nothing may end inside that band -->
+      <div style="padding:20px var(--gutter) 0" id="lb-foot"></div>
 
     </div>
 
@@ -1173,9 +1192,11 @@ body{
     <div class="sheet" id="menu-sheet" hidden>
       <div class="sheet-grab"><span></span></div>
       <div class="sheet-body">
+        <!-- Report came out (owner, 2026-09-03). §9 asked whether there was a
+             route behind it; there is not, and a menu entry that leads nowhere
+             is worse than no entry. It goes back in when reporting exists. -->
         <button class="btn btn--tertiary btn--m" style="justify-content:flex-start;padding:0 8px">Mute Cheers From <span id="mute-name">Rashmi</span></button>
         <button class="btn btn--destructive btn--m" style="justify-content:flex-start;padding:0 8px" data-confirm="remove">Remove Friend</button>
-        <button class="btn btn--tertiary btn--m" style="justify-content:flex-start;padding:0 8px">Report</button>
       </div>
     </div>
   </div>
@@ -1192,7 +1213,12 @@ body{
     <span id="yc-cheer"></span>
   </div>
 
-  <nav class="pebble-nav">
+  <!-- Tapping any tab closes whatever inner page is open and returns to Home.
+       FLAG: Activity, Sleep and Me are not built in this file — this is the
+       Family ranking flow, not the whole app — so all four return to the one
+       page that exists here rather than pretending to navigate. In the app
+       they are the real tabs. -->
+  <nav class="pebble-nav" data-nav>
     <button class="pebble-tab" aria-current="page"><span class="icon phi" data-ph="house" data-weight="fill"></span><span class="label">Health</span></button>
     <button class="pebble-tab"><span class="icon phi" data-ph="sneaker-move"></span><span class="label">Activity</span></button>
     <button class="pebble-tab"><span class="icon phi" data-ph="moon"></span><span class="label">Sleep</span></button>
@@ -1279,8 +1305,7 @@ const FSTATES = [
   ['F3','Solo',              'One friend, nothing synced on their side. Nothing to place; sharing is promoted.'],
   ['F2','First use',         'No friends yet. The educational state, and the CTA in the card slot at the same footprint.'],
   ['F1','First load',        'Leaderboard unresolved — skeleton rows, no ranks, period control already live.'],
-  ['F7','Offline',           'Last-known figures, marked stale, ranks not recomputed. Cheers queue.'],
-  ['F8','Your band offline', 'Your own figure is stale — still ranked, on last-known.'],
+  ['F8','Your band is behind','Your own figure is from an earlier sync — still ranked, on what was last sent.'],
   ['F9','Friend has no band','A member who never paired sits in Not synced permanently.']
 ];
 /* S.date is the day the friend profile's dropdown is pointing at — {month
@@ -1301,11 +1326,10 @@ function model(){
   list.forEach(m=>{
     m.val = p==='today' ? m.today : m.week;
     if(f==='F5') m.val=null;                          // nobody synced
-    if(f==='F7') m.stale=true;                        // whole board is last-known
-    if(f==='F8' && m.you) m.stale=true;               // your band offline
+    if(f==='F8' && m.you) m.stale=true;               // your band is behind
     if(f==='F9' && m.id==='akaush'){ m.noband=true; m.val=null; }
   });
-  return {f, p, list, offline:f==='F7', loading:f==='F1', nocircle:f==='F2', solo:f==='F3'};
+  return {f, p, list, loading:f==='F1', nocircle:f==='F2', solo:f==='F3'};
 }
 
 /* Ranking. Ties share a rank and the next rank skips (1,2,2,4).
@@ -1349,7 +1373,6 @@ function cheerBtn(m){
       +'<span class="n">'+(S.cheers.me||0)+'</span></span>';
   }
   let st = S.cheered[m.id] || 'idle';
-  if(S.f==='F7' && st==='done') st='queued';
   return '<button class="cheer" data-cheer="'+st+'" data-cheerid="'+m.id+'" aria-label="Cheer '+m.name+'">'
     +'<span class="ico"><span class="phi lineheart" data-ph="heart"></span>'
     +'<span class="phi fillheart" data-ph="heart" data-weight="fill"></span></span>'
@@ -1515,8 +1538,13 @@ function renderLeaderboard(){
   }
 
   if(M.loading){                                     /* F1 */
-    status.textContent='Loading your leaderboard…'; foot.innerHTML=''; yc.hidden=true;
-    mount.innerHTML='<div class="lb-list">'+[0,1,2,3].map(function(){
+    /* no "Loading your leaderboard…" line (owner, 2026-09-03): the skeleton
+       rows say it, and the state line's job is to qualify figures that exist.
+       The empty line is removed from the flow rather than left blank, so the
+       skeletons keep their distance from the header instead of hanging under
+       an invisible one. */
+    status.textContent=''; status.hidden=true; foot.innerHTML=''; yc.hidden=true;
+    mount.innerHTML='<div class="lb-list lb-list--loading">'+[0,1,2,3].map(function(){
       return '<div class="lbrow" data-row="skeleton"><span class="rank"></span>'
       +'<span class="av" style="background:var(--surface-raised);color:transparent">.</span>'
       +'<span class="sk w1"></span><span class="sk w2"></span><span></span></div>';
@@ -1524,11 +1552,14 @@ function renderLeaderboard(){
     return;
   }
 
+  status.hidden=false;
   const R=ranked(M.list);
-  status.className='statusline'+(M.offline?' stale':'');
-  status.innerHTML = M.offline
-    ? ico('arrows-clockwise','fill')+'Offline &mdash; showing last known figures'
-    : 'Today &middot; '+R.has.length+' of '+M.list.length+' synced &middot; updated 14:20';
+  /* every figure on this screen is the last one that synced — the line says
+     how many have sent anything today and when the board last changed, which
+     is the whole truth there is to tell. There is no offline banner because
+     there is no other kind of figure. */
+  status.className='statusline';
+  status.innerHTML = 'Today &middot; '+R.has.length+' of '+M.list.length+' synced &middot; updated 14:20';
 
   let html='';
   if(!R.has.length){
@@ -1578,10 +1609,14 @@ function renderLeaderboard(){
   }
   mount.innerHTML=html;
 
-  /* one primary action per screen */
+  /* One action per screen — and on a populated board this was the second:
+     the header already carries share, and this copy of it sat under the
+     docked self card until you scrolled. It stays in the states where sharing
+     IS the screen's job (solo, first use); on a ranked board the header is
+     the route. */
   foot.innerHTML = M.solo
     ? '<button class="btn btn--primary" data-sheet="share">Share Your Code</button>'
-    : '<button class="btn btn--secondary" data-sheet="share">Share Your Code</button>';
+    : '';
 
   injectIcons(mount); injectIcons(foot);
   renderYouCard();
@@ -1863,6 +1898,10 @@ function openSheet(kind, arg){
       +'<button class="btn btn--destructive" data-close="sheet">Remove '+who+'</button>'
       +'<button class="btn btn--tertiary" data-close="sheet">Keep</button>';
   }
+  /* the ⋯ menu is what launched this; it closes as the confirm arrives, so
+     the two never stack (they share a z-index, and the menu is later in the
+     DOM, so it was painting over the sheet that replaced it) */
+  $('#menu-sheet').hidden=true;
   $('#scrim').hidden=false; $('#sheet').hidden=false; injectIcons($('#sheet'));
 }
 function closeSheets(){
@@ -1976,15 +2015,13 @@ function renderGallery(){
 
     + '<h3>7.3 Cheer control</h3><div class="grp" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:space-around;padding:16px 8px">'
       + cheer('idle','idle') + cheer('pending','pending') + cheer('done','done')
-      + cheer('failed','failed') + cheer('limit','at limit') + cheer('queued','queued')
+      + cheer('failed','failed') + cheer('limit','at limit')
     + '</div>'
 
-    + '<h3>7.5 Period control</h3><div class="grp" style="padding:12px">'
+    /* kept in the gallery, off every screen: there is one period today, and
+       the control returns the day there is a second one */
+    + '<h3>7.5 Period control — not on any screen</h3><div class="grp" style="padding:12px">'
       + '<div class="seg"><button class="active">Today</button><button>7 days</button></div>'
-      + '<div class="cap">offline — last known is one period only</div>'
-      + '<div class="seg"><button class="active" disabled>Today</button><button disabled>7 days</button></div>'
-      + '<div class="statusline stale" style="padding:0 4px">'+ico('arrows-clockwise','fill')
-      + 'Offline &mdash; showing last known figures</div>'
     + '</div>'
 
     + '<h3>7.6 Compare strip — friend profile</h3><div class="grp" style="padding:16px"><div class="compare">'
@@ -2079,6 +2116,7 @@ document.addEventListener('click', function(e){
 
   if(t.closest('[data-close]')){ closeSheets(); $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true; return; }
   if(t.closest('[data-back]')){ t.closest('.subpage').hidden=true; syncYouCard(); return; }
+  if(t.closest('[data-nav]')){ showScreen('page-home'); return; }
   if(t.closest('[data-cal]')){ $('#cal-sheet').hidden=false; $('#cal-scrim').hidden=false; renderCal(); return; }
 
   /* picking a day: the dropdown's label follows the selection and the sheet

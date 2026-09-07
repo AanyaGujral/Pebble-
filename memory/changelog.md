@@ -5,6 +5,32 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-03 (rev 8) — Owner round of eight: **the podium goes neutral** —
+  grey `--surface-raised` stands, no medal tint, no top edge bar, and no ring
+  round the chips either here or in the list, so the rank numeral is the only
+  coloured mark per person (three coloured marks each had turned a ranking of
+  four people into a stack of coloured blocks); **the panel's wash goes
+  brighter**, teal.400 at 22% falling to 6% (flagged: still the Health tab's
+  teal-green through `--metric-readiness` — if "green" meant emerald or lime it
+  is one token swap); **20px between the panel and the first row**; **Report
+  came out** of the friend menu, since §9 established there is no route behind
+  it; **the remove-confirm sheet no longer opens behind the ⋯ menu** — both sat
+  at z-index 70 and the menu, later in the DOM, won the tie, so the menu is now
+  dismissed as the confirm arrives; **the nav pill works** — tapping any tab
+  closes the inner page and returns to Home, and the phone frame is capped at
+  the window height so the pill is never below the fold on a laptop; **the
+  offline state is gone** — every figure is the last one that synced and the
+  state line says when, so a parallel offline presentation (stale banner,
+  disabled control, queued cheers) was inventing a second kind of figure;
+  **first load** drops the "Loading your leaderboard…" line and pulls the
+  skeletons 24px clear of the header; and **4px is now the spacing floor**
+  everywhere — sixteen 1–3px gaps, paddings and margins raised, with the rule
+  recorded next to the spacing scale (the two sub-4px values left are glyph
+  optics, not spacing: the caret's rotation nudge and the battery's stroke).
+  Also: the ranked board's bottom "Share Your Code" came off — it duplicated
+  the header's share action and sat under the docked self card — and stays in
+  the solo and first-use states where sharing is the screen's whole job.
+
 - 2026-09-03 (rev 7) — Ranking page layout, three owner notes from a reference
   screenshot: the **podium now sits in a panel with the header and the state
   line** — the teal wash moved off the page and onto that panel, which closes
