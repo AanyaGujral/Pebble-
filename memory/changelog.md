@@ -1,5 +1,49 @@
 # Changelog
 
+- 2026-09-03 (late) — **Feedback round on the inner pages** (owner):
+    • **S02 Pair a device is in**, PORTED from `Pebble Onboarding.html` §4j —
+      the same rings, tips card, device list, connecting screen and success
+      disc with confetti, on the same two timers. The header **+**, the
+      pairing CTA and every "Pair Now" open it. Success puts the new band at
+      the front of the list: it becomes the connected one and the previous
+      one drops to a dormant row. Bluetooth-off variant, and the no-device
+      recovery sheet (tips + Try Again, in the live confirm sheet). Outcome
+      switchable from the panel, as in onboarding.
+    • **S04 Connect the other band is in.** A dormant row is tappable: a
+      confirm the FIRST time for a given pair (§7's recommendation), silent
+      after; the switch runs in the in-progress sheet and the card changes
+      to the other band. Two failure endings from the panel: target
+      unreachable, and fails-and-rolls-back. The device list is now ONE
+      model (`DEVICES`, connected first) that the card, dormant rows, device
+      page, Find Device, Firmware Update, confirm sheets and band-required
+      empty states all read — so every page names whichever band is
+      actually connected.
+    • **Unpairing** (the owner's note ended mid-sentence): built as — the
+      unbound band leaves the list; if another paired band remains it
+      becomes the connected one, otherwise the slot shows the pairing CTA.
+      FLAGGED as an assumption.
+    • **Take Picture goes straight to the camera**, shutter at the bottom, the
+      band named in a chip over the viewfinder; tapping the shutter flashes
+      and confirms "Saved to Photos". FLAG: no camera can open from file:// or
+      inside the artifact, so the viewfinder is a token-drawn stand-in.
+    • **Goal sheets are a wheel.** Only the numbers scroll; the unit is
+      painted once beside the selection band, so only "600 kcal" reads with
+      its unit. Same wheel for the HR upper limit. **The tick matches the
+      close button** — no more accent fill on the confirm.
+    • **Find Device shows the device's photograph**, with a status badge on
+      its corner while reaching or ringing, instead of a glyph.
+    • **Every CTA is Title Case**, as in the shipped prototypes ("Pair Now",
+      "I'll Do It Later", "Skip For Now"): 39 relabelled — Update Now, Check
+      For Updates, Try Again, Not Now, Save Changes, Add Alarm, Ring My Band,
+      Unbind Band, Keep It Paired, Send Past 7 Days… A rendered-DOM scan
+      confirms no button label has a lowercase word left.
+  Confirm sheet gained three small things for this: neutral-toned rows (the
+  switch sheet's three facts), a raw-html body (the pairing tips), and a
+  confirm tier (Connect / Try Again are primary, not destructive), plus an
+  on-close hook so cancelling the recovery sheet returns to the pairing
+  intro. Three more metric aliases in the token block (hrv, heart-rate,
+  skin-temp) for the confetti — all from tokens.js.
+
 - 2026-09-03 (evening) — **Every inner page of the Me tab is built.** Slices
   2, 3 and 4 in one pass, from the owner's brief and two screenshots. Every
   row on the tab now opens something, and the device card opens S03.

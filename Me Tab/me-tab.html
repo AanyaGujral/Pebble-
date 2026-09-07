@@ -33,11 +33,13 @@
                                Picture, S11 Units & Format, S12 Apple Health,
                                S13 FAQs, S14 About. Every row on the tab now
                                opens something.
+         • the two flows     — S02 Pair a device (ported from the onboarding
+                               prototype: the header +, the pairing CTA and
+                               every Pair Now open it) and S04 Connect the
+                               other band (tap a dormant row; the card
+                               changes to that band).
 
      What is deliberately NOT here:
-       • S02 Pair a device and S04 Connect the other band — the pairing flow
-         is to be reused from onboarding, not rebuilt (§6). "Pair a device"
-         buttons return to the tab, where the CTA sits, until it lands.
        • The ten tab STATES as a control-panel matrix (T1–T10). The band
          pages do read the device card's state, so T2 (no band) and T4
          (disconnected) are already exercised across every band page.
@@ -111,6 +113,9 @@
   --metric-calories:var(--tangerine-400);
   --metric-sleep:var(--violet-400);
   --metric-activity:var(--lime-400);
+  --metric-hrv:var(--terracotta-400);
+  --metric-heart-rate:var(--crimson-400);
+  --metric-skin-temp:var(--orchid-400);
 
   /* semantic quads — glyphs and badges only, never chart lines or fills */
   --positive-bg:#0E2A1B;--positive-fill:#1E5B38;--positive-icon:#4ADE80;--positive-text:#8AF0B0;
@@ -1039,8 +1044,6 @@ body{
 #fieldSheet .sheet-head .t{flex:1;min-width:0;text-align:center}
 #fieldSheet .sheet-head .iconbtn{width:32px;height:32px}
 #fieldSheet .sheet-head .iconbtn .phi{width:16px;height:16px}
-#fsConfirm{background:var(--metric-readiness);color:var(--text-on-accent)}
-#fsConfirm:hover{background:var(--metric-readiness);opacity:.9}
 #fsConfirm[disabled]{opacity:.45;cursor:default}
 
 /* ---- the scroll wheel (height, weight, and the calendar's month+year) --- */
@@ -1438,26 +1441,6 @@ body{
 .goalwrap .gw .phi{width:12px;height:12px;flex:none}
 .goalwrap[data-w="pending"] .gw .phi{animation:spin 1.1s linear infinite}
 
-/* ---- the value-picker sheet rows — PORTED from index.html -----------------
-   The Activity goal sheet: one big numeral per row, the unit small beside it,
-   the picked row on the raised surface. Lives inside the field sheet here,
-   so cancel / title / tick is the same header as every other picker. */
-.vals{margin-top:14px;display:flex;flex-direction:column;gap:6px;max-height:328px;overflow-y:auto;scrollbar-width:none}
-.vals::-webkit-scrollbar{display:none}
-.sheet-row{
-  display:flex;align-items:center;justify-content:center;width:100%;height:48px;
-  border:0;border-radius:14px;background:transparent;cursor:pointer;font-family:inherit;
-  transition:background var(--duration-fast) ease;
-}
-.sheet-row:hover{background:var(--surface-raised)}
-.sheet-row.sel{background:var(--surface-raised)}
-.sheet-row .v{
-  font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:500;
-  font-feature-settings:var(--num-features);color:var(--text-3);
-}
-.sheet-row.sel .v{color:var(--text-1);font-weight:700}
-.sheet-row .u{margin-left:6px;font-family:var(--font-text);font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
-
 /* ---- the time wheel — two numeric columns in the same picker chrome -------
    From the Add Alarm screenshot: hours beside minutes, one selection band.
    The screenshot confirms with a Done button under the wheel; this one uses
@@ -1572,6 +1555,175 @@ body{
 .band-page[data-band="offline"] .gate.g-offline{display:block}
 
 /* ==========================================================================
+   10f. FEEDBACK ROUND (owner, 2026-09-03 late): pairing, switching, camera
+   --------------------------------------------------------------------------
+     • the + in the header, the pairing CTA and every "Pair Now" open S02 —
+       the pairing flow PORTED from Pebble Onboarding.html (rings, tips,
+       device list, connecting, success), not rebuilt
+     • a dormant band is tappable: S04 connects it, and the device card
+       changes to it — the old band becomes the dormant row
+     • Take Picture opens the camera straight away, shutter at the bottom
+     • goal sheets are a WHEEL: only the numbers scroll, the unit sits still
+       beside the selected one; the tick matches the close button
+     • Find Device shows the device's photograph, not a glyph
+     • every CTA is Title Case, as in the other prototypes
+   ========================================================================== */
+
+/* the sheet's tick is the same neutral button as its X (owner) */
+#fsConfirm{background:var(--surface-raised);color:var(--text-1)}
+#fsConfirm:hover{background:var(--surface-fill);opacity:1}
+
+/* ---- one-column wheel with a still unit -----------------------------------
+   The numbers scroll; the unit is painted once, beside the selection band,
+   so only the chosen value reads "600 kcal" (owner). */
+.picker.one .col .opt{text-align:right;padding-right:calc(50% + 6px)}
+.picker .unit-fixed{
+  position:absolute;z-index:2;left:calc(50% + 6px);top:88px;height:44px;line-height:44px;
+  font-family:var(--font-text);font-size:11px;font-weight:500;letter-spacing:0.08em;
+  text-transform:uppercase;color:var(--text-3);pointer-events:none;
+}
+
+/* ---- Find Device: the band itself, not an icon ----------------------------- */
+.mini-hero .shot{position:relative;width:112px;height:112px;display:grid;place-items:center}
+.mini-hero .shot .phi{width:48px;height:48px;color:var(--text-2)}
+.mini-hero .shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.mini-hero .shot:has(img) .phi{display:none}
+.mini-hero.live .shot img{animation:ring 1s ease-in-out infinite;transform-origin:50% 40%}
+/* a small status badge on the photograph's corner: spinner while reaching,
+   bell while ringing */
+.mini-hero .badge{
+  position:absolute;right:-2px;bottom:6px;width:32px;height:32px;border-radius:999px;
+  display:grid;place-items:center;background:var(--surface-raised);border:2px solid var(--surface-card);
+}
+.mini-hero .badge .phi{width:16px;height:16px;color:var(--text-2)}
+.mini-hero[data-tone="accent"] .badge{background:var(--metric-readiness)}
+.mini-hero[data-tone="accent"] .badge .phi{color:var(--text-on-accent)}
+.mini-hero.busy .badge .phi{animation:spin 1.1s linear infinite}
+
+/* ---- Take Picture: the camera, open ----------------------------------------
+   FLAG: no camera can be opened from a file:// page or inside the published
+   artifact, so the viewfinder is a token-drawn stand-in. Everything around it
+   — the header floating over it, the shutter, the band chip — is the design.
+   The header only floats when the camera is showing; the band-required
+   empty states keep the normal header. */
+#p-shutter[data-band="ok"]{padding-bottom:0}
+#p-shutter[data-band="ok"] .inner-head{position:absolute;left:0;right:0;top:0;background:transparent;z-index:3}
+#p-shutter[data-band="ok"] .inner-head .t{opacity:0}
+#p-shutter[data-band="ok"] .inner-head .iconbtn{background:color-mix(in srgb,var(--neutral-900) 55%,transparent)}
+#p-shutter[data-band="ok"] .pbody{position:absolute;inset:0;padding:0;display:block}
+.cam{position:absolute;inset:0;overflow:hidden;background:var(--neutral-900)}
+.cam .vf{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at 50% 42%, color-mix(in srgb,var(--neutral-700) 55%,transparent) 0%, transparent 62%),
+    linear-gradient(180deg,var(--neutral-800) 0%,var(--neutral-900) 100%);
+}
+/* the four corner brackets a viewfinder draws */
+.cam .corner{position:absolute;width:26px;height:26px;border:2px solid color-mix(in srgb,var(--text-2) 55%,transparent)}
+.cam .tl{left:32px;top:132px;border-right:0;border-bottom:0;border-radius:6px 0 0 0}
+.cam .tr{right:32px;top:132px;border-left:0;border-bottom:0;border-radius:0 6px 0 0}
+.cam .bl{left:32px;bottom:212px;border-right:0;border-top:0;border-radius:0 0 0 6px}
+.cam .br{right:32px;bottom:212px;border-left:0;border-top:0;border-radius:0 0 6px 0}
+.cam .cam-top{position:absolute;left:0;right:0;top:96px;display:flex;justify-content:center;pointer-events:none}
+.cam .cam-top .chip{height:28px;padding:0 12px;background:color-mix(in srgb,var(--neutral-900) 62%,transparent);color:var(--text-1)}
+.cam .cam-top .chip .phi{color:var(--positive-icon)}
+.cam .cam-bottom{
+  position:absolute;left:0;right:0;bottom:0;padding:24px 0 44px;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  background:linear-gradient(to top,color-mix(in srgb,var(--neutral-900) 90%,transparent) 0,transparent 100%);
+}
+.cam .shutter{
+  width:76px;height:76px;border-radius:999px;border:4px solid var(--text-1);background:transparent;
+  padding:0;cursor:pointer;display:grid;place-items:center;transition:transform var(--duration-fast) ease;
+}
+.cam .shutter i{display:block;width:58px;height:58px;border-radius:999px;background:var(--text-1);transition:transform var(--duration-fast) ease}
+.cam .shutter:active i{transform:scale(.88)}
+.cam .cam-hint{font-size:11px;line-height:16px;color:var(--text-2)}
+.cam .flash{position:absolute;inset:0;background:var(--text-1);opacity:0;pointer-events:none;transition:opacity 220ms ease}
+.cam .flash.on{opacity:.85;transition:none}
+.cam .toast{
+  position:absolute;left:50%;bottom:172px;transform:translateX(-50%);
+  padding:8px 14px;border-radius:999px;background:color-mix(in srgb,var(--neutral-900) 78%,transparent);
+  font-size:12px;line-height:16px;font-weight:500;color:var(--text-1);white-space:nowrap;
+  display:flex;align-items:center;gap:6px;
+}
+.cam .toast .phi{width:14px;height:14px;color:var(--positive-icon)}
+
+/* ---- S02 · PAIR A DEVICE — ported from Pebble Onboarding.html §4j ------------
+   Same rings, same tips card, same device list, same success disc. Centred
+   compositions, so the page lays out as a column rather than a list. The
+   colour is the accent alias this file uses for the same teal. */
+#p-pair{padding-bottom:0}
+.pair{display:flex;flex-direction:column;min-height:100%;padding:44px 24px 28px}
+.pair .topbar{height:40px;margin:0 -12px;display:flex;align-items:center;flex:0 0 auto}
+.pair .mid{flex:1;display:flex;flex-direction:column;justify-content:center}
+.pair .phead{text-align:center;flex:0 0 auto}
+.pair .phead .eyebrow{margin:0 0 6px;font-size:13px;line-height:18px;font-weight:500;color:var(--text-3)}
+.pair .phead .t{margin:0;font-size:26px;line-height:32px;font-weight:500;letter-spacing:-.01em;color:var(--text-1)}
+.pair .phead .t.sm{font-size:22px;line-height:28px}
+.pair .phead .sub{margin:10px 0 0;font-size:13px;line-height:19px;color:var(--text-2)}
+.pair .ctas{margin-top:auto;padding-top:20px;display:flex;flex-direction:column;gap:12px;flex:0 0 auto}
+
+.rings{--d:268px;position:relative;width:var(--d);height:var(--d);margin:0 auto;flex:0 0 auto}
+.rings.sm{--d:176px}
+.rings .r,.rings .wave,.rings .core{position:absolute;left:50%;top:50%;border-radius:50%;transform:translate(-50%,-50%)}
+.rings .r1{width:100%;height:100%;background:color-mix(in srgb,var(--metric-readiness) 5%,transparent)}
+.rings .r2{width:76%;height:76%;background:color-mix(in srgb,var(--metric-readiness) 7%,transparent)}
+.rings .r3{width:53%;height:53%;background:color-mix(in srgb,var(--metric-readiness) 9%,transparent)}
+.rings .core{
+  width:35%;height:35%;
+  background:color-mix(in srgb,var(--metric-readiness) 14%,var(--surface-app));
+  display:flex;align-items:center;justify-content:center;color:var(--metric-readiness);
+}
+.rings .core svg{width:52%;height:52%;display:block}
+.rings.searching .r1,.rings.linking .r1{box-shadow:inset 0 0 0 0.5px color-mix(in srgb,var(--metric-readiness) 14%,transparent)}
+.rings.searching .r2,.rings.linking .r2{box-shadow:inset 0 0 0 0.5px color-mix(in srgb,var(--metric-readiness) 16%,transparent)}
+.rings.searching .r3,.rings.linking .r3{box-shadow:inset 0 0 0 0.5px color-mix(in srgb,var(--metric-readiness) 18%,transparent)}
+.rings.searching .core,.rings.linking .core{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--metric-readiness) 26%,transparent)}
+.rings .wave{width:100%;height:100%;opacity:0;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--metric-readiness) 55%,transparent)}
+.rings.searching .wave{animation:wave 3s cubic-bezier(.25,.6,.35,1) infinite}
+.rings.searching .wave:nth-child(2){animation-delay:1s}
+.rings.searching .wave:nth-child(3){animation-delay:2s}
+@keyframes wave{0%{transform:translate(-50%,-50%) scale(.34);opacity:0}14%{opacity:.5}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+.rings.linking .core{animation:breathe 1.8s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.06)}}
+.chevrons{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:18px;flex:0 0 auto}
+.chevrons span{width:22px;height:12px;color:var(--metric-readiness);opacity:.45;animation:rise 1.5s ease-in-out infinite}
+.chevrons span svg{width:100%;height:100%;display:block}
+.chevrons span:nth-child(2){animation-delay:.18s}
+.chevrons span:nth-child(3){animation-delay:.36s}
+@keyframes rise{0%,100%{opacity:.2;transform:translateY(3px)}50%{opacity:1;transform:translateY(-3px)}}
+.tips{background:var(--surface-card);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.tip{display:flex;gap:12px;align-items:flex-start}
+.tip .n{
+  font-family:var(--font-number);font-size:13px;line-height:18px;font-weight:500;
+  font-feature-settings:var(--num-features);color:var(--text-3);flex:0 0 auto;width:10px;
+}
+.tip .x{font-size:13px;line-height:18px;color:var(--text-2)}
+.sheet .tips{background:var(--surface-raised);margin-top:14px}
+.dev-list{display:flex;flex-direction:column;gap:8px;flex:0 0 auto}
+.dev-row{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  background:var(--surface-card);border:0;border-radius:16px;padding:15px 16px;
+  cursor:pointer;font-family:inherit;transition:background var(--duration-base) ease;
+}
+.dev-row:hover{background:var(--surface-raised)}
+.dev-row .nm{flex:1;font-size:15px;line-height:20px;font-weight:500;color:var(--text-1)}
+.dev-row .phi{width:18px;height:18px;color:var(--text-3)}
+.win{position:relative;flex:0 0 auto;height:300px;display:flex;align-items:center;justify-content:center}
+.win .disc{
+  position:relative;z-index:2;width:132px;height:132px;border-radius:50%;
+  background:var(--metric-readiness);color:var(--text-on-accent);
+  display:flex;align-items:center;justify-content:center;
+  animation:pop 240ms cubic-bezier(.2,1.3,.4,1) 1;
+}
+.win .disc::before{content:"";position:absolute;inset:-34px;border-radius:50%;z-index:-1;background:color-mix(in srgb,var(--metric-readiness) 9%,transparent)}
+.win .disc .phi{width:56px;height:56px}
+@keyframes pop{0%{transform:scale(.72)}100%{transform:scale(1)}}
+.win i{position:absolute;display:block;border-radius:2px;opacity:.9;animation:drift 3.4s ease-in-out infinite}
+@keyframes drift{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-9px) rotate(14deg)}}
+
+/* ==========================================================================
    11. THE COMPONENT BENCH — the review view, not part of the app
    --------------------------------------------------------------------------
    Every state of every component, drawn at once and labelled, so a whole
@@ -1670,7 +1822,7 @@ body{
   <div class="mh-in">
     <p class="mh-eyebrow">Pebble &middot; prototype review</p>
     <h1 class="mh-t">The Me tab</h1>
-    <p class="mh-s">The whole tab. Every row opens its page: Profile, Goal Setting, Health Monitor, Health Reminder (with its reminder and alarm screens), Find Device, Take Picture, Firmware Update, Units &amp; Format, Apple Health, FAQs and About &mdash; and the device card opens the device page with shut down, restart and reset behind confirm sheets.</p>
+    <p class="mh-s">The whole tab. Every row opens its page: Profile, Goal Setting, Health Monitor, Health Reminder (with its reminder and alarm screens), Find Device, Take Picture, Firmware Update, Units &amp; Format, Apple Health, FAQs and About &mdash; and the device card opens the device page with shut down, restart and reset behind confirm sheets. The header <strong>+</strong> runs the pairing flow from onboarding; tapping a dormant band connects it and the card changes to it.</p>
     <p class="mh-s mh-how">Tap around on the phone, or jump with the panel. Switch the <strong>Device card slot</strong> to a Pairing CTA or to Disconnected and watch every band page turn into its empty state. Flip a toggle on a band page and it goes <em>pending</em> before it settles; flip one with the band disconnected and it refuses, with the reason.</p>
   </div>
 </header>
@@ -1687,6 +1839,7 @@ body{
     <label class="on"><input type="radio" name="view" value="me" checked><span>Tab shell<span class="desc">The Me tab: header + five silent breaks</span></span></label>
     <label><input type="radio" name="view" value="bench"><span>Component bench<span class="desc">All six components, every state</span></span></label>
     <p class="hint" style="margin:10px 0 4px">Inner pages &mdash; or tap the rows on the tab</p>
+    <label><input type="radio" name="view" value="pair"><span>Pair a device<span class="desc">S02 &mdash; ported from onboarding</span></span></label>
     <label><input type="radio" name="view" value="device"><span>Device detail<span class="desc">S03 &mdash; tap the device card. Shut down / restart / reset</span></span></label>
     <label><input type="radio" name="view" value="profile"><span>Profile<span class="desc">S01</span></span></label>
     <label><input type="radio" name="view" value="goals"><span>Goal Setting<span class="desc">S05</span></span></label>
@@ -1804,6 +1957,26 @@ body{
   </div>
 
   <div class="grp">
+    <h2>Pairing &mdash; S02</h2>
+    <p class="hint">Which ending the search lands on. Open the flow with the header <b>+</b>, the pairing CTA, or any Pair Now.</p>
+    <div class="opts" id="pairOpts">
+      <label class="on"><input type="radio" name="pair" value="many" checked><span>Multiple devices found</span></label>
+      <label><input type="radio" name="pair" value="one"><span>One device<span class="desc">Connects straight away</span></span></label>
+      <label><input type="radio" name="pair" value="none"><span>Nothing found<span class="desc">Recovery sheet</span></span></label>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h2>Band switch &mdash; S04</h2>
+    <p class="hint">Tap a dormant band on the tab. The first switch between a given pair asks; after that it just goes.</p>
+    <div class="opts" id="switchOpts">
+      <label class="on"><input type="radio" name="sw" value="ok" checked><span>Succeeds<span class="desc">The card changes to the other band</span></span></label>
+      <label><input type="radio" name="sw" value="unreachable"><span>Target unreachable</span></label>
+      <label><input type="radio" name="sw" value="rollback"><span>Fails &mdash; rolled back</span></label>
+    </div>
+  </div>
+
+  <div class="grp">
     <h2>Avatar</h2>
     <p class="hint">No photograph has been supplied, so the stand-in is a code-drawn disc in token colours. Tapping the camera badge on the page opens a real file picker.</p>
     <div class="opts" id="avaOpts">
@@ -1844,7 +2017,7 @@ body{
           <!-- The "+" pairs a NEW band. §6 S08 warns this must not read as
                Find Device, which rings the band you already have — so this
                is `plus` and Find Device is `magnifying-glass`. -->
-          <button class="iconbtn" type="button" aria-label="Pair a new device">
+          <button class="iconbtn" type="button" data-act="pair" aria-label="Pair a new device">
             <span class="phi" data-ph="plus"></span>
           </button>
         </div>
@@ -1871,7 +2044,7 @@ body{
                     <img id="devShot" alt="Pebble Prime">
                   </span>
                   <span class="meta">
-                    <span class="name">Pebble Prime</span>
+                    <span class="name" id="devName">Pebble Prime</span>
                     <span class="skel s-name"></span>
 
                     <span class="chip c-connected" data-tone="positive"><span class="phi" data-ph="check-circle" data-weight="fill"></span>Connected</span>
@@ -1920,8 +2093,8 @@ body{
                   </div>
                 </div>
                 <!-- one primary action per screen (§2) -->
-                <button class="btn btn--primary btn--m v-default" type="button">Pair a device</button>
-                <button class="btn btn--primary btn--m v-bt" type="button">Turn on Bluetooth</button>
+                <button class="btn btn--primary btn--m v-default" type="button" data-act="pair">Pair Now</button>
+                <button class="btn btn--primary btn--m v-bt" type="button" data-act="pair:bt">Turn On Bluetooth</button>
               </div>
             </div>
 
@@ -2132,7 +2305,7 @@ body{
               <div class="h">Pair a band first</div>
               <div class="s">Health Monitor samples heart rate, SpO₂, stress, skin temperature and HRV straight from your wrist.</div>
               <div class="acts">
-                <button class="btn btn--primary btn--m" type="button">Pair a device</button>
+                <button class="btn btn--primary btn--m" type="button">Pair Now</button>
               </div>
             </div>
           </div>
@@ -2143,8 +2316,8 @@ body{
               <div class="h">Pebble Prime is offline</div>
               <div class="s">Bring the band closer and check it is switched on, then try again.</div>
               <div class="acts">
-                <button class="btn btn--primary btn--m" type="button"><span class="phi" data-ph="arrow-counter-clockwise" data-weight="fill"></span>Try again</button>
-                <button class="btn btn--tertiary btn--m" type="button">Not now</button>
+                <button class="btn btn--primary btn--m" type="button"><span class="phi" data-ph="arrow-counter-clockwise" data-weight="fill"></span>Try Again</button>
+                <button class="btn btn--tertiary btn--m" type="button">Not Now</button>
               </div>
             </div>
           </div>
@@ -2182,8 +2355,8 @@ body{
                 <div class="conseq"><span class="phi" data-ph="check-circle" data-weight="fill" style="color:var(--positive-icon)"></span><span>History already synced to your account stays — assumed, pending your call.</span></div>
               </div>
               <div class="sheet-acts">
-                <button class="btn btn--destructive btn--m" type="button">Unbind band</button>
-                <button class="btn btn--tertiary btn--m" type="button">Keep it paired</button>
+                <button class="btn btn--destructive btn--m" type="button">Unbind Band</button>
+                <button class="btn btn--tertiary btn--m" type="button">Keep It Paired</button>
               </div>
             </div>
           </div>
@@ -2214,7 +2387,7 @@ body{
               <div class="sheet-rows"></div>
               <div class="fail"><span class="phi" data-ph="warning-circle" data-weight="fill"></span><span>The band went out of range partway through.</span></div>
               <div class="sheet-acts">
-                <button class="btn btn--destructive btn--m" type="button"><span class="phi" data-ph="arrow-counter-clockwise" data-weight="fill"></span>Try again</button>
+                <button class="btn btn--destructive btn--m" type="button"><span class="phi" data-ph="arrow-counter-clockwise" data-weight="fill"></span>Try Again</button>
                 <button class="btn btn--tertiary btn--m" type="button">Cancel</button>
               </div>
             </div>
@@ -2323,7 +2496,7 @@ body{
             <div class="h">Pair a band first</div>
             <div class="s">Firmware runs on the band itself — it is what reads your heart rate and keeps your alarms. There has to be a band before there is anything to update.</div>
             <div class="acts">
-              <button class="btn btn--primary btn--m" type="button" data-fwa="pair">Pair a device</button>
+              <button class="btn btn--primary btn--m" type="button" data-fwa="pair">Pair Now</button>
             </div>
           </div>
         </div>
@@ -2333,8 +2506,8 @@ body{
             <div class="h">Pebble Prime is offline</div>
             <div class="s">An update is sent to the band over Bluetooth, so it has to be connected the whole way through. Bring it closer and check it is switched on.</div>
             <div class="acts">
-              <button class="btn btn--primary btn--m" type="button" data-fwa="reconnect"><span class="phi" data-ph="arrow-counter-clockwise" data-weight="fill"></span>Try again</button>
-              <button class="btn btn--tertiary btn--m" type="button" data-fwa="back">Not now</button>
+              <button class="btn btn--primary btn--m" type="button" data-fwa="reconnect"><span class="phi" data-ph="arrow-counter-clockwise" data-weight="fill"></span>Try Again</button>
+              <button class="btn btn--tertiary btn--m" type="button" data-fwa="back">Not Now</button>
             </div>
           </div>
         </div>
@@ -2542,6 +2715,17 @@ body{
         <div class="pbody" id="faqBody"></div>
       </section>
 
+
+      <!-- ==================================================================
+           S02 · PAIR A DEVICE — `p-pair`
+           Ported from Pebble Onboarding.html: intro → searching → found →
+           connecting → success, plus the no-device recovery sheet and a
+           Bluetooth-off variant. Rendered by renderPair(); state on data-pair.
+           ================================================================== -->
+      <section class="page" id="p-pair" data-pair="intro">
+        <div class="pair" id="pairBody"></div>
+      </section>
+
     </div><!-- /pages -->
 
     <!-- the live confirm sheet, driven by the panel -->
@@ -2582,7 +2766,7 @@ body{
         <button class="btn btn--tertiary btn--m" id="btnDiscard" type="button">Discard</button>
         <button class="btn btn--primary btn--m" id="btnSave" type="button">
           <span class="phi spinning" id="saveSpin" data-ph="circle-notch" data-weight="fill" hidden></span>
-          <span id="saveLab">Save changes</span>
+          <span id="saveLab">Save Changes</span>
         </button>
       </div>
     </div>
@@ -2643,8 +2827,13 @@ body{
       <!-- choice: gender, activity level, fitness goal -->
       <div class="choice-list" id="fsChoice" hidden></div>
 
-      <!-- values: the Activity-style goal picker (one numeral per row) -->
-      <div class="vals" id="fsValues" hidden></div>
+      <!-- values: a one-column wheel. Only the numbers scroll; the unit is
+           painted once beside the selection band (owner). -->
+      <div class="picker one" id="fsValues" hidden>
+        <div class="band" aria-hidden="true"></div>
+        <div class="col" id="fsValCol" role="listbox" aria-label="Value" tabindex="0"></div>
+        <span class="unit-fixed" id="fsValUnit"></span>
+      </div>
 
       <!-- time: hours beside minutes, one selection band (Add Alarm) -->
       <div class="picker" id="fsTime" hidden>
@@ -2699,6 +2888,10 @@ const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
    — the shared glyphs were checked byte-for-byte against that file so the
    prototypes draw identical icons. Injected into every .phi span. */
 const PH = {"fill":{"alarm":"M61.66,37.66l-32,32A8,8,0,0,1,18.34,58.34l32-32A8,8,0,0,1,61.66,37.66Zm176,20.68-32-32a8,8,0,0,0-11.32,11.32l32,32a8,8,0,0,0,11.32-11.32ZM224,136a96,96,0,1,1-96-96A96.11,96.11,0,0,1,224,136Zm-32,0a8,8,0,0,0-8-8H136V80a8,8,0,0,0-16,0v56a8,8,0,0,0,8,8h56A8,8,0,0,0,192,136Z","arrow-circle-up":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm37.66,101.66a8,8,0,0,1-11.32,0L136,107.31V168a8,8,0,0,1-16,0V107.31l-18.34,18.35a8,8,0,0,1-11.32-11.32l32-32a8,8,0,0,1,11.32,0l32,32A8,8,0,0,1,165.66,125.66Z","arrow-circle-up-right":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm40,120a8,8,0,0,1-16,0V115.31l-50.34,50.35a8,8,0,0,1-11.32-11.32L140.69,104H112a8,8,0,0,1,0-16h48a8,8,0,0,1,8,8Z","arrow-counter-clockwise":"M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L60.63,81.29l17,17A8,8,0,0,1,72,112H24a8,8,0,0,1-8-8V56A8,8,0,0,1,29.66,50.3L49.31,70,60.25,60A96,96,0,0,1,224,128Z","arrows-clockwise":"M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1-5.66-13.66L180.65,72a79.48,79.48,0,0,0-54.72-22.09h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27,96,96,0,0,1,192,60.7l18.36-18.36A8,8,0,0,1,224,48ZM186.41,183.29A80,80,0,0,1,75.35,184l18.31-18.31A8,8,0,0,0,88,152H40a8,8,0,0,0-8,8v48a8,8,0,0,0,13.66,5.66L64,195.3a95.42,95.42,0,0,0,66,26.76h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z","battery-charging":"M256,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0ZM224,80v96a24,24,0,0,1-24,24H32A24,24,0,0,1,8,176V80A24,24,0,0,1,32,56H200A24,24,0,0,1,224,80Zm-85.19,43.79A8,8,0,0,0,132,120H112.94l10.22-20.42a8,8,0,1,0-14.32-7.16l-16,32A8,8,0,0,0,100,136h19.06l-10.22,20.42a8,8,0,0,0,14.32,7.16l16-32A8,8,0,0,0,138.81,123.79Z","battery-high":"M152,96v64a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8h96A8,8,0,0,1,152,96Zm72-16v96a24,24,0,0,1-24,24H32A24,24,0,0,1,8,176V80A24,24,0,0,1,32,56H200A24,24,0,0,1,224,80Zm-16,0a8,8,0,0,0-8-8H32a8,8,0,0,0-8,8v96a8,8,0,0,0,8,8H200a8,8,0,0,0,8-8Zm40,8a8,8,0,0,0-8,8v64a8,8,0,0,0,16,0V96A8,8,0,0,0,248,88Z","battery-low":"M72,96v64a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8H64A8,8,0,0,1,72,96ZM224,80v96a24,24,0,0,1-24,24H32A24,24,0,0,1,8,176V80A24,24,0,0,1,32,56H200A24,24,0,0,1,224,80Zm-16,0a8,8,0,0,0-8-8H32a8,8,0,0,0-8,8v96a8,8,0,0,0,8,8H200a8,8,0,0,0,8-8Zm40,8a8,8,0,0,0-8,8v64a8,8,0,0,0,16,0V96A8,8,0,0,0,248,88Z","battery-warning":"M200,56H32A24,24,0,0,0,8,80v96a24,24,0,0,0,24,24H200a24,24,0,0,0,24-24V80A24,24,0,0,0,200,56ZM108,88a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,116,176ZM256,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0Z","bed":"M216,72H32V48a8,8,0,0,0-16,0V208a8,8,0,0,0,16,0V176H240v32a8,8,0,0,0,16,0V112A40,40,0,0,0,216,72ZM32,88h72v72H32Z","bell":"M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216Z","bell-ringing":"M224,71.1a8,8,0,0,1-10.78-3.42,94.13,94.13,0,0,0-33.46-36.91,8,8,0,1,1,8.54-13.54,111.46,111.46,0,0,1,39.12,43.09A8,8,0,0,1,224,71.1ZM35.71,72a8,8,0,0,0,7.1-4.32A94.13,94.13,0,0,1,76.27,30.77a8,8,0,1,0-8.54-13.54A111.46,111.46,0,0,0,28.61,60.32,8,8,0,0,0,35.71,72Zm186.1,103.94A16,16,0,0,1,208,200H167.2a40,40,0,0,1-78.4,0H48a16,16,0,0,1-13.79-24.06C43.22,160.39,48,138.28,48,112a80,80,0,0,1,160,0C208,138.27,212.78,160.38,221.81,175.94ZM150.62,200H105.38a24,24,0,0,0,45.24,0Z","bluetooth":"M200,176a8,8,0,0,1-3.2,6.4l-64,48A8,8,0,0,1,128,232a8,8,0,0,1-8-8V144L68.8,182.4a8,8,0,0,1-9.6-12.8L114.67,128,59.2,86.4a8,8,0,0,1,9.6-12.8L120,112V32a8,8,0,0,1,12.8-6.4l64,48a8,8,0,0,1,0,12.8L141.33,128l55.47,41.6A8,8,0,0,1,200,176Z","bluetooth-slash":"M221.38,221.92a8,8,0,0,1-11.3-.54l-26.45-29.1L132.8,230.4a8,8,0,0,1-8.89.47,8.29,8.29,0,0,1-3.91-7.18V144L68.8,182.4a8,8,0,0,1-11.16-1.55,8.26,8.26,0,0,1,1.81-11.43l61.47-46.11L50.08,45.38A8,8,0,0,1,61.92,34.62l160,176A8,8,0,0,1,221.38,221.92ZM155,113.22a4,4,0,0,0,5.36.51L196.8,86.4a8,8,0,0,0,0-12.8l-64-48a8,8,0,0,0-10,.29A8.25,8.25,0,0,0,120,32.24V73.18a4,4,0,0,0,1,2.69Z","camera":"M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm-44,76a36,36,0,1,1-36-36A36,36,0,0,1,164,132Z","chart-bar":"M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1,0-16h8V136a8,8,0,0,1,8-8H72a8,8,0,0,1,8,8v64H96V88a8,8,0,0,1,8-8h32a8,8,0,0,1,8,8V200h16V40a8,8,0,0,1,8-8h40a8,8,0,0,1,8,8V200h8A8,8,0,0,1,232,208Z","check-circle":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z","circle-notch":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,176A72,72,0,0,1,92,65.64a8,8,0,0,1,8,13.85,56,56,0,1,0,56,0,8,8,0,0,1,8-13.85A72,72,0,0,1,128,200Z","clock":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm56,112H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z","code":"M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM92.8,145.6a8,8,0,1,1-9.6,12.8l-32-24a8,8,0,0,1,0-12.8l32-24a8,8,0,0,1,9.6,12.8L69.33,128Zm58.89-71.4-32,112a8,8,0,1,1-15.38-4.4l32-112a8,8,0,0,1,15.38,4.4Zm53.11,60.2-32,24a8,8,0,0,1-9.6-12.8L186.67,128,163.2,110.4a8,8,0,1,1,9.6-12.8l32,24a8,8,0,0,1,0,12.8Z","crosshair":"M232,120h-8.34A96.14,96.14,0,0,0,136,32.34V24a8,8,0,0,0-16,0v8.34A96.14,96.14,0,0,0,32.34,120H24a8,8,0,0,0,0,16h8.34A96.14,96.14,0,0,0,120,223.66V232a8,8,0,0,0,16,0v-8.34A96.14,96.14,0,0,0,223.66,136H232a8,8,0,0,0,0-16Zm-32,16h7.6A80.15,80.15,0,0,1,136,207.6V200a8,8,0,0,0-16,0v7.6A80.15,80.15,0,0,1,48.4,136H56a8,8,0,0,0,0-16H48.4A80.15,80.15,0,0,1,120,48.4V56a8,8,0,0,0,16,0V48.4A80.15,80.15,0,0,1,207.6,120H200a8,8,0,0,0,0,16Zm-32-8a40,40,0,1,1-40-40A40,40,0,0,1,168,128Z","device-mobile":"M176,16H80A24,24,0,0,0,56,40V216a24,24,0,0,0,24,24h96a24,24,0,0,0,24-24V40A24,24,0,0,0,176,16ZM80,32h96a8,8,0,0,1,8,8v8H72V40A8,8,0,0,1,80,32Zm96,192H80a8,8,0,0,1-8-8v-8H184v8A8,8,0,0,1,176,224Z","dot":"M128,80a48,48,0,1,0,48,48A48,48,0,0,0,128,80Zm0,60a12,12,0,1,1,12-12A12,12,0,0,1,128,140Z","download-simple":"M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40A8,8,0,0,0,168,96H136V32a8,8,0,0,0-16,0V96H88a8,8,0,0,0-5.66,13.66Z","drop":"M174,47.75a254.19,254.19,0,0,0-41.45-38.3,8,8,0,0,0-9.18,0A254.19,254.19,0,0,0,82,47.75C54.51,79.32,40,112.6,40,144a88,88,0,0,0,176,0C216,112.6,201.49,79.32,174,47.75Zm9.85,105.59a57.6,57.6,0,0,1-46.56,46.55A8.75,8.75,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z","file-text":"M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,176H96a8,8,0,0,1,0-16h64a8,8,0,0,1,0,16Zm0-32H96a8,8,0,0,1,0-16h64a8,8,0,0,1,0,16Zm-8-56V44l44,44Z","fire":"M143.38,17.85a8,8,0,0,0-12.63,3.41l-22,60.41L84.59,58.26a8,8,0,0,0-11.93.89C51,87.53,40,116.08,40,144a88,88,0,0,0,176,0C216,84.55,165.21,36,143.38,17.85Zm40.51,135.49a57.6,57.6,0,0,1-46.56,46.55A7.65,7.65,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z","footprints":"M216.06,192v12A36,36,0,0,1,144,204V192a8,8,0,0,1,8-8h56A8,8,0,0,1,216.06,192ZM104,160h-56a8,8,0,0,0-8,8v12A36,36,0,0,0,112,180V168A8,8,0,0,0,104,160ZM76,16C64.36,16,53.07,26.31,44.2,45c-13.93,29.38-18.56,73,.29,96a8,8,0,0,0,6.2,2.93h50.55a8,8,0,0,0,6.2-2.93c18.85-23,14.22-66.65.29-96C98.85,26.31,87.57,16,76,16Zm78.8,152h50.55a8,8,0,0,0,6.2-2.93c18.85-23,14.22-66.65.29-96C202.93,50.31,191.64,40,180,40s-22.89,10.31-31.77,29c-13.93,29.38-18.56,73,.29,96A8,8,0,0,0,154.76,168Z","gauge":"M240,152v24a16,16,0,0,1-16,16H115.93a4,4,0,0,1-3.24-6.35L174.27,101a8.21,8.21,0,0,0-1.37-11.3,8,8,0,0,0-11.37,1.61l-72,99.06A4,4,0,0,1,86.25,192H32a16,16,0,0,1-16-16V153.13c0-1.79,0-3.57.13-5.33a4,4,0,0,1,4-3.8H48a8,8,0,0,0,8-8.53A8.17,8.17,0,0,0,47.73,128H23.92a4,4,0,0,1-3.87-5c12-43.84,49.66-77.13,95.52-82.28a4,4,0,0,1,4.43,4V72a8,8,0,0,0,8.53,8A8.17,8.17,0,0,0,136,71.73V44.67a4,4,0,0,1,4.43-4A112.18,112.18,0,0,1,236.23,123a4,4,0,0,1-3.88,5H208.27a8.17,8.17,0,0,0-8.25,7.47,8,8,0,0,0,8,8.53h27.92a4,4,0,0,1,4,3.86C240,149.23,240,150.61,240,152Z","gear":"M216,130.16q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.6,107.6,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.29,107.29,0,0,0-26.25-10.86,8,8,0,0,0-7.06,1.48L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.6,107.6,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z","heart":"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z","heartbeat":"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0c-3.35-1.8-63.55-34.69-92.68-80.89A4,4,0,0,1,34.92,144H72a8,8,0,0,0,6.66-3.56l9.34-14,25.34,38a8,8,0,0,0,9.16,3.16,8.23,8.23,0,0,0,4.28-3.34L140.28,144H160a8,8,0,0,0,8-8.53,8.18,8.18,0,0,0-8.25-7.47H136a8,8,0,0,0-6.66,3.56l-9.34,14-25.34-38a8,8,0,0,0-9.17-3.16,8.25,8.25,0,0,0-4.27,3.34L67.72,128H23.53a4,4,0,0,1-3.83-2.81A76.93,76.93,0,0,1,16,102,62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z","house":"M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z","info":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-4,48a12,12,0,1,1-12,12A12,12,0,0,1,124,72Zm12,112a16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40a8,8,0,0,1,0,16Z","link":"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM115.7,192.49a43.31,43.31,0,0,1-55-66.43l25.37-25.37a43.35,43.35,0,0,1,61.25,0,42.9,42.9,0,0,1,9.95,15.43,8,8,0,1,1-15,5.6A27.33,27.33,0,0,0,97.37,112L72,137.37a27.32,27.32,0,0,0,34.68,41.91,8,8,0,1,1,9,13.21Zm79.61-62.55-25.37,25.37A43,43,0,0,1,139.32,168h0a43.35,43.35,0,0,1-40.53-28.12,8,8,0,1,1,15-5.6A27.35,27.35,0,0,0,139.28,152h0a27.14,27.14,0,0,0,19.32-8L184,118.63a27.32,27.32,0,0,0-34.68-41.91,8,8,0,1,1-9-13.21,43.32,43.32,0,0,1,55,66.43Z","link-break":"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM96,64a8,8,0,0,1,16,0V80a8,8,0,0,1-16,0ZM64,96H80a8,8,0,0,1,0,16H64a8,8,0,0,1,0-16Zm64.08,85.66-7.21,7.21a38,38,0,1,1-53.74-53.74l7.21-7.21a8,8,0,1,1,11.32,11.31l-7.22,7.21a22,22,0,0,0,31.12,31.12l7.21-7.22a8,8,0,1,1,11.31,11.32ZM160,192a8,8,0,0,1-16,0V176a8,8,0,0,1,16,0Zm32-32H176a8,8,0,0,1,0-16h16a8,8,0,0,1,0,16Zm-3.13-39.13-7.21,7.21a8,8,0,1,1-11.32-11.31l7.22-7.21a22,22,0,0,0-31.12-31.12l-7.21,7.22a8,8,0,1,1-11.31-11.32l7.21-7.21a38,38,0,1,1,53.74,53.74Z","lock-simple":"M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96Z","magnifying-glass":"M168,112a56,56,0,1,1-56-56A56,56,0,0,1,168,112Zm61.66,117.66a8,8,0,0,1-11.32,0l-50.06-50.07a88,88,0,1,1,11.32-11.31l50.06,50.06A8,8,0,0,1,229.66,229.66ZM112,184a72,72,0,1,0-72-72A72.08,72.08,0,0,0,112,184Z","map-pin":"M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z","moon":"M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z","person-simple-run":"M120,56a32,32,0,1,1,32,32A32,32,0,0,1,120,56Zm103.28,74.08a8,8,0,0,0-10.6-4c-.25.12-26.71,10.72-72.18-20.19-52.29-35.54-88-7.77-89.51-6.57a8,8,0,1,0,10,12.48c.26-.21,25.12-19.5,64.07,3.27-4.25,13.35-12.76,31.82-25.25,47-18.56,22.48-41.11,32.56-67,30A8,8,0,0,0,31.2,208a92.29,92.29,0,0,0,9.34.47c27.38,0,52-12.38,71.63-36.18.57-.69,1.14-1.4,1.69-2.1C133.31,175.29,168,190.3,168,232a8,8,0,0,0,16,0c0-24.65-10.08-45.35-29.15-59.86a104.29,104.29,0,0,0-31.31-15.81A169.31,169.31,0,0,0,139,124c26.14,16.09,46.84,20,60.69,20,12.18,0,19.06-3,19.67-3.28A8,8,0,0,0,223.28,130.08Z","person-simple-walk":"M120,48a32,32,0,1,1,32,32A32,32,0,0,1,120,48Zm88,88c-28.64,0-41.81-13.3-55.75-27.37-3.53-3.57-7.18-7.26-11-10.58-37-32.14-96.22,22.73-98.72,25.08a8,8,0,0,0,10.95,11.66A163.88,163.88,0,0,1,84,113c13.78-7.38,25.39-10.23,34.7-8.58L64.66,228.81a8,8,0,0,0,4.15,10.52A7.84,7.84,0,0,0,72,240a8,8,0,0,0,7.34-4.81l33.59-77.27L144,180.12V232a8,8,0,0,0,16,0V176a8,8,0,0,0-3.35-6.51l-37.2-26.57L132.88,112c2.64,2.44,5.26,5.07,8,7.84C155.05,134.19,172.69,152,208,152a8,8,0,0,0,0-16Z","phone":"M231.88,175.08A56.26,56.26,0,0,1,176,224C96.6,224,32,159.4,32,80A56.26,56.26,0,0,1,80.92,24.12a16,16,0,0,1,16.62,9.52l21.12,47.15,0,.12A16,16,0,0,1,117.39,96c-.18.27-.37.52-.57.77L96,121.45c7.49,15.22,23.41,31,38.83,38.51l24.34-20.71a8.12,8.12,0,0,1,.75-.56,16,16,0,0,1,15.17-1.4l.13.06,47.11,21.11A16,16,0,0,1,231.88,175.08Z","plus":"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM184,136H136v48a8,8,0,0,1-16,0V136H72a8,8,0,0,1,0-16h48V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z","power":"M128,24A104,104,0,1,0,232,128,104,104,0,0,0,128,24Zm-8,40a8,8,0,0,1,16,0v64a8,8,0,0,1-16,0Zm8,144A80,80,0,0,1,83.55,61.48a8,8,0,1,1,8.9,13.29,64,64,0,1,0,71.1,0,8,8,0,1,1,8.9-13.29A80,80,0,0,1,128,208Z","prohibit":"M200,128a71.69,71.69,0,0,1-15.78,44.91L83.09,71.78A71.95,71.95,0,0,1,200,128ZM56,128a71.95,71.95,0,0,0,116.91,56.22L71.78,83.09A71.69,71.69,0,0,0,56,128Zm180,0A108,108,0,1,1,128,20,108.12,108.12,0,0,1,236,128Zm-20,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z","pulse":"M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm-8,96H188.64L159,188a8,8,0,0,1-6.95,4h-.46a8,8,0,0,1-6.89-4.84L103,89.92,79,132a8,8,0,0,1-7,4H48a8,8,0,0,1,0-16H67.36L97.05,68a8,8,0,0,1,14.3.82L153,166.08l24-42.05a8,8,0,0,1,6.95-4h24a8,8,0,0,1,0,16Z","question":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,168a12,12,0,1,1,12-12A12,12,0,0,1,128,192Zm8-48.72V144a8,8,0,0,1-16,0v-8a8,8,0,0,1,8-8c13.23,0,24-9,24-20s-10.77-20-24-20-24,9-24,20v4a8,8,0,0,1-16,0v-4c0-19.85,17.94-36,40-36s40,16.15,40,36C168,125.38,154.24,139.93,136,143.28Z","ruler":"M235.32,96,96,235.31a16,16,0,0,1-22.63,0L20.68,182.63a16,16,0,0,1,0-22.63l29.17-29.17a4,4,0,0,1,5.66,0l34.83,34.83a8,8,0,0,0,11.71-.43,8.18,8.18,0,0,0-.6-11.09L66.82,119.51a4,4,0,0,1,0-5.65l15-15a4,4,0,0,1,5.66,0l34.83,34.83a8,8,0,0,0,11.71-.43,8.18,8.18,0,0,0-.6-11.09L98.83,87.51a4,4,0,0,1,0-5.65l15-15a4,4,0,0,1,5.65,0l34.83,34.83a8,8,0,0,0,11.72-.43,8.18,8.18,0,0,0-.61-11.09L130.83,55.51a4,4,0,0,1,0-5.65L160,20.69a16,16,0,0,1,22.63,0l52.69,52.68A16,16,0,0,1,235.32,96Z","scroll":"M220.8,169.6A8,8,0,0,0,216,168h-8V64a32,32,0,0,0-32-32H40A32,32,0,0,0,8,64C8,77.61,18.05,85.54,19.2,86.4h0A7.89,7.89,0,0,0,24,88a8,8,0,0,0,4.87-14.33h0C28.83,73.62,24,69.74,24,64a16,16,0,0,1,32,0V192a32,32,0,0,0,32,32H200a32,32,0,0,0,32-32C232,178.39,222,170.46,220.8,169.6ZM104,96h64a8,8,0,0,1,0,16H104a8,8,0,0,1,0-16Zm-8,40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H104A8,8,0,0,1,96,136Zm104,72H107.71A31.82,31.82,0,0,0,112,192a26.92,26.92,0,0,0-1.21-8h102a12.58,12.58,0,0,1,3.23,8A16,16,0,0,1,200,208Z","seal-check":"M225.86,102.82c-3.77-3.94-7.67-8-9.14-11.57-1.36-3.27-1.44-8.69-1.52-13.94-.15-9.76-.31-20.82-8-28.51s-18.75-7.85-28.51-8c-5.25-.08-10.67-.16-13.94-1.52-3.56-1.47-7.63-5.37-11.57-9.14C146.28,23.51,138.44,16,128,16s-18.27,7.51-25.18,14.14c-3.94,3.77-8,7.67-11.57,9.14C88,40.64,82.56,40.72,77.31,40.8c-9.76.15-20.82.31-28.51,8S41,67.55,40.8,77.31c-.08,5.25-.16,10.67-1.52,13.94-1.47,3.56-5.37,7.63-9.14,11.57C23.51,109.72,16,117.56,16,128s7.51,18.27,14.14,25.18c3.77,3.94,7.67,8,9.14,11.57,1.36,3.27,1.44,8.69,1.52,13.94.15,9.76.31,20.82,8,28.51s18.75,7.85,28.51,8c5.25.08,10.67.16,13.94,1.52,3.56,1.47,7.63,5.37,11.57,9.14C109.72,232.49,117.56,240,128,240s18.27-7.51,25.18-14.14c3.94-3.77,8-7.67,11.57-9.14,3.27-1.36,8.69-1.44,13.94-1.52,9.76-.15,20.82-.31,28.51-8s7.85-18.75,8-28.51c.08-5.25.16-10.67,1.52-13.94,1.47-3.56,5.37-7.63,9.14-11.57C232.49,146.28,240,138.44,240,128S232.49,109.73,225.86,102.82Zm-52.2,6.84-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z","shield-check":"M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm-34.32,69.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z","sign-out":"M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40A8,8,0,0,0,176,88v32H112a8,8,0,0,0,0,16h64v32a8,8,0,0,0,13.66,5.66l40-40A8,8,0,0,0,229.66,122.34Z","sneaker-move":"M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z","sparkle":"M208,144a15.78,15.78,0,0,1-10.42,14.94L146,178l-19,51.62a15.92,15.92,0,0,1-29.88,0L78,178l-51.62-19a15.92,15.92,0,0,1,0-29.88L78,110l19-51.62a15.92,15.92,0,0,1,29.88,0L146,110l51.62,19A15.78,15.78,0,0,1,208,144ZM152,48h16V64a8,8,0,0,0,16,0V48h16a8,8,0,0,0,0-16H184V16a8,8,0,0,0-16,0V32H152a8,8,0,0,0,0,16Zm88,32h-8V72a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0V96h8a8,8,0,0,0,0-16Z","spinner-gap":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM48,136a8,8,0,0,1,0-16H72a8,8,0,0,1,0,16Zm46.06,37.25-17,17a8,8,0,0,1-11.32-11.32l17-17a8,8,0,0,1,11.31,11.31Zm0-79.19a8,8,0,0,1-11.31,0l-17-17A8,8,0,0,1,77.09,65.77l17,17A8,8,0,0,1,94.06,94.06ZM136,208a8,8,0,0,1-16,0V184a8,8,0,0,1,16,0Zm0-136a8,8,0,0,1-16,0V48a8,8,0,0,1,16,0Zm54.23,118.23a8,8,0,0,1-11.32,0l-17-17a8,8,0,0,1,11.31-11.31l17,17A8,8,0,0,1,190.23,190.23ZM208,136H184a8,8,0,0,1,0-16h24a8,8,0,0,1,0,16Z","thermometer":"M212,56a28,28,0,1,0,28,28A28,28,0,0,0,212,56Zm0,40a12,12,0,1,1,12-12A12,12,0,0,1,212,96Zm-60,50.08V40a32,32,0,0,0-64,0V146.08a56,56,0,1,0,64,0ZM136,104H104V40a16,16,0,0,1,32,0Z","trash":"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM112,168a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm0-120H96V40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z","user":"M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z","users":"M164.47,195.63a8,8,0,0,1-6.7,12.37H10.23a8,8,0,0,1-6.7-12.37,95.83,95.83,0,0,1,47.22-37.71,60,60,0,1,1,66.5,0A95.83,95.83,0,0,1,164.47,195.63Zm87.91-.15a95.87,95.87,0,0,0-47.13-37.56A60,60,0,0,0,144.7,54.59a4,4,0,0,0-1.33,6A75.83,75.83,0,0,1,147,150.53a4,4,0,0,0,1.07,5.53,112.32,112.32,0,0,1,29.85,30.83,23.92,23.92,0,0,1,3.65,16.47,4,4,0,0,0,3.95,4.64h60.3a8,8,0,0,0,7.73-5.93A8.22,8.22,0,0,0,252.38,195.48Z","warning":"M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z","warning-circle":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-8,56a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm8,104a12,12,0,1,1,12-12A12,12,0,0,1,128,184Z","watch":"M175.3,63.53l-6.24-34.38A16,16,0,0,0,153.32,16H102.68A16,16,0,0,0,86.94,29.15L80.7,63.53a79.9,79.9,0,0,0,0,128.94l6.24,34.38A16,16,0,0,0,102.68,240h50.64a16,16,0,0,0,15.74-13.15l6.24-34.38a79.9,79.9,0,0,0,0-128.94ZM102.68,32h50.64l3.91,21.55a79.75,79.75,0,0,0-58.46,0Zm50.64,192H102.68l-3.91-21.55a79.75,79.75,0,0,0,58.46,0ZM168,136H128a8,8,0,0,1-8-8V88a8,8,0,0,1,16,0v32h32a8,8,0,0,1,0,16Z","wifi-slash":"M213.92,210.62a8,8,0,1,1-11.84,10.76l-33.67-37-28.1,33.88A15.93,15.93,0,0,1,128,224h0a15.93,15.93,0,0,1-12.31-5.77L11.65,92.8A15.65,15.65,0,0,1,8.11,80.91,15.93,15.93,0,0,1,14.28,70.1,188.26,188.26,0,0,1,46.6,50.35l-4.29-4.72a8.22,8.22,0,0,1,.13-11.38,8,8,0,0,1,11.48.37Zm34-129.71a15.93,15.93,0,0,0-6.17-10.81A186.67,186.67,0,0,0,128,32a191,191,0,0,0-42.49,4.75,4,4,0,0,0-2,6.59L186,156.07a4,4,0,0,0,6-.14L244.35,92.8A15.65,15.65,0,0,0,247.89,80.91Z"},"regular":{"arrow-clockwise":"M240,56v48a8,8,0,0,1-8,8H184a8,8,0,0,1,0-16H211.4L184.81,71.64l-.25-.24a80,80,0,1,0-1.67,114.78,8,8,0,0,1,11,11.63A95.44,95.44,0,0,1,128,224h-1.32A96,96,0,1,1,195.75,60L224,85.8V56a8,8,0,1,1,16,0Z","arrow-square-out":"M224,104a8,8,0,0,1-16,0V59.32l-66.33,66.34a8,8,0,0,1-11.32-11.32L196.68,48H152a8,8,0,0,1,0-16h64a8,8,0,0,1,8,8Zm-40,24a8,8,0,0,0-8,8v72H48V80h72a8,8,0,0,0,0-16H48A16,16,0,0,0,32,80V208a16,16,0,0,0,16,16H176a16,16,0,0,0,16-16V136A8,8,0,0,0,184,128Z","caret-left":"M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z","caret-right":"M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z","caret-up-down":"M181.66,170.34a8,8,0,0,1,0,11.32l-48,48a8,8,0,0,1-11.32,0l-48-48a8,8,0,0,1,11.32-11.32L128,212.69l42.34-42.35A8,8,0,0,1,181.66,170.34Zm-96-84.68L128,43.31l42.34,42.35a8,8,0,0,0,11.32-11.32l-48-48a8,8,0,0,0-11.32,0l-48,48A8,8,0,0,0,85.66,85.66Z","check":"M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z","plus":"M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z","watch":"M208,128a79.94,79.94,0,0,0-32.7-64.47l-6.24-34.38A16,16,0,0,0,153.32,16H102.68A16,16,0,0,0,86.94,29.15L80.7,63.53a79.9,79.9,0,0,0,0,128.94l6.24,34.38A16,16,0,0,0,102.68,240h50.64a16,16,0,0,0,15.74-13.15l6.24-34.38A79.94,79.94,0,0,0,208,128ZM102.68,32h50.64l3.91,21.55a79.75,79.75,0,0,0-58.46,0ZM64,128a64,64,0,1,1,64,64A64.07,64.07,0,0,1,64,128Zm89.32,96H102.68l-3.91-21.55a79.75,79.75,0,0,0,58.46,0ZM120,128V88a8,8,0,0,1,16,0v32h32a8,8,0,0,1,0,16H128A8,8,0,0,1,120,128Z","x":"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"}};
+
+/* the Pebble leaf that sits in the pairing rings' core — the same path as
+   Pebble Onboarding.html's splash mark */
+const LEAF_D = "M43.1542 10.8892C42.0506 8.0247 40.1268 5.56423 37.2804 4.26162C34.2591 2.87458 30.7734 2.67555 27.553 3.44746C21.4621 4.9129 16.7281 9.9967 15.4316 16.0816C15.2687 16.8595 15.1119 17.6375 14.9551 18.4154C14.3038 22.0398 13.6585 25.6642 13.0072 29.2946C10.7397 30.169 8.68934 31.538 7.21184 33.504C5.51725 35.7655 4.32321 39.414 5.42681 42.2061C6.4098 44.6968 9.25018 45.7038 11.6202 44.4796C13.2063 43.6595 13.9902 42.1338 14.2918 40.4452C14.726 37.9968 15.1662 35.7654 15.6064 33.323C14.7621 33.5039 13.2364 33.9261 12.0725 34.7583C11.8614 35.9403 11.6504 36.9052 11.4393 38.0872C11.2946 38.9013 11.2463 39.9145 10.9327 40.6924C10.6252 41.4583 9.9618 41.8141 9.36477 41.7779C9.1537 41.7659 8.91249 41.6814 8.77378 41.5427C8.46019 41.2352 8.35163 40.8432 8.30942 40.3788C8.28529 40.1436 8.29132 39.9024 8.30338 39.6672C8.30941 39.4501 8.33355 39.233 8.35767 39.0159C8.36973 38.9556 8.3818 38.8471 8.39989 38.7747C8.4421 38.5697 8.48431 38.3586 8.53858 38.1535C8.96675 36.4831 9.93767 34.9151 11.4694 33.7693C11.7469 33.5583 12.0363 33.3713 12.3258 33.1964C12.4343 33.0999 14.4063 32.0807 15.8054 31.8938H15.8356V31.8878C18.1875 31.4114 20.6902 31.5199 23.1387 31.4355C26.0273 31.333 28.9582 30.9229 31.7323 30.1148C35.2843 29.0775 38.7941 27.2985 41.1159 24.3314C43.9261 20.7191 44.8126 15.1951 43.1542 10.8892ZM40.1148 19.4708C39.5781 21.1111 38.6252 22.474 37.2864 23.6741C34.8923 25.821 31.6177 26.9427 28.2767 27.6C27.8787 27.6784 27.4867 27.7508 27.0887 27.8111C26.9198 27.8352 26.757 27.8593 26.5882 27.8895C26.5037 27.9016 26.4615 27.9076 26.4434 27.9136C26.4193 27.9136 26.365 27.9196 26.2565 27.9377C25.6233 28.0161 24.984 28.0764 24.3508 28.1247C23.5608 28.1789 22.7768 28.197 21.9808 28.2091C20.1716 28.2272 18.272 28.179 16.4447 28.4202C16.9513 25.5798 17.4639 22.7454 17.9704 19.905C18.0066 19.6999 18.0428 19.4889 18.079 19.2838C18.5313 17.0887 18.9172 14.9116 20.0329 12.9336C21.4622 10.4068 23.7116 8.35035 26.3952 7.22866C31.7323 4.99734 39.0534 6.6075 40.3922 12.9517C40.8505 15.0986 40.7902 17.4023 40.1148 19.4708Z";
 
 function injectIcons(root = document){
   $$('.phi', root).forEach(el => {
@@ -3266,51 +3459,72 @@ const DEVICE_SHOT = {
   'UncfFzKYkL/gWCWii0+QA78KfaZxUNgZbRV6n2OMkCc9zCe+xiVejfJECHbUt6RkFGdAAAAA=',
 };
 
-/* ---- 3. the dormant band list -------------------------------------------
-   Break 1 holds the connected device card plus zero or more DORMANT bands.
-   The owner's call (2026-09-03): two bands was only the tested case, so this
+/* ---- 3. the paired bands — ONE list, the connected band first -------------
+   Everything that names a device reads this list: the card in break 1, the
+   dormant rows under it, the device page, Find Device, Firmware Update, the
+   confirm sheets and the band-required empty states. Connecting a dormant
+   band (S04) moves it to the front and the old one drops to a dormant row;
+   pairing (S02) puts the new band at the front; unbinding removes the front.
+
+   The owner's call (2026-09-03): two bands was only the TESTED case, so this
    is a list of any length and the header "+" never disappears. A dormant
    band is named here and nowhere else in the tab (hard rule 1), and the only
-   thing its row can do is connect. */
-/* The owner's call (2026-09-03): one photograph for every device in the list
-   is acceptable. It is mapped per device instead, because both photographs
-   are real and accurate — a row named Pebble Prime showing a band would be a
-   worse answer than a repeated photograph. Two shots cover four devices. */
-const DORMANT_BANDS = [
-  { name: 'PBL Qore 2',          shot: 'band'  },
-  { name: 'Pebble Arc',          shot: 'band'  },
-  { name: 'Pebble Prime (work)', shot: 'watch' },
+   thing its row can do is connect. `devCount` is how many of these are
+   currently paired — the review panel's "Dormant bands" control sets it. */
+const DEVICES = [
+  { id:'prime',  name:'Pebble Prime',        shot:'watch', mac:'D4:3B:0E:7A:11:C2' },
+  { id:'qore',   name:'PBL Qore 2',          shot:'band',  mac:'D4:3B:0E:7A:2C:91' },
+  { id:'arc',    name:'Pebble Arc',          shot:'band',  mac:'D4:3B:0E:7A:44:0F' },
+  { id:'prime2', name:'Pebble Prime (work)', shot:'watch', mac:'D4:3B:0E:7B:0A:33' },
 ];
+let devCount = 2;
+const connected = () => devCount > 0 ? DEVICES[0] || null : null;
+const devName   = () => connected() ? connected().name : 'your band';
 
-function renderDormant(n){
+/* Draw break 1 from the list: the card's name and photograph, then one row
+   per dormant band. Also refreshes every page that names the device. */
+function paintDeviceCard(){
+  const c = connected();
+  $('#devName').textContent = c ? c.name : '';
+  const cardImg = $('#devShot');
+  if (c) paintShot(cardImg, DEVICE_SHOT[c.shot]); else if (cardImg) cardImg.remove();
+
   const host = $('#dormList');
-  host.innerHTML = DORMANT_BANDS.slice(0, n).map(band => (
-    '<button class="row dormant" type="button">' +
-      // A paired band is a real product, so it shows its own photograph
-      // rather than an icon. Same layering as the device card: glyph
-      // underneath, image over it, and the image removes itself when the
-      // file is missing. The glyph keeps its own .phi span — injectIcons()
-      // writes innerHTML, which would eat an <img> nested inside it.
+  host.innerHTML = DEVICES.slice(1, devCount).map(d => (
+    '<button class="row dormant" type="button" data-act="switch" data-id="' + d.id + '">' +
+      // A paired band is a real product, so it shows its own photograph. The
+      // glyph underneath is the fallback; the <img> covers it (see the card).
       '<span class="glyph">' +
         '<span class="phi" data-ph="watch" data-weight="fill"></span>' +
-        '<img alt="" data-shot="' + band.shot + '">' +
+        '<img alt="" data-shot="' + d.shot + '">' +
       '</span>' +
-      '<span class="lab"><span class="dn">' + band.name + '</span>' +
+      '<span class="lab"><span class="dn">' + d.name + '</span>' +
       '<span class="ds">Dormant · tap to connect</span></span>' +
       '<span class="phi caret" data-ph="caret-right"></span>' +
     '</button>'
   )).join('');
-  // same onerror-before-src rule as the card, so a missing photograph falls
-  // back to the glyph instead of leaving an empty box
   $$('img[data-shot]', host).forEach(img => paintShot(img, DEVICE_SHOT[img.dataset.shot]));
   injectIcons(host);
+
+  /* keep the panel's radio honest when the count changed from a flow */
+  const n = Math.max(0, Math.min(3, devCount - 1));
+  const radio = $('#dormOpts input[value="' + n + '"]');
+  if (radio && !radio.checked){ radio.checked = true; $$('label', $('#dormOpts')).forEach(l => l.classList.toggle('on', l.contains(radio))); }
+
+  /* the pages that say the device's name — all declared further down, and
+     all hoisted, so calling them here is safe once the script has loaded */
+  if (typeof buildGates === 'function'){ buildGates(); renderDevice(); renderFind(); fwRender(); }
 }
+/* the review panel's "Dormant bands" control: how many bands are paired
+   besides the connected one */
+function renderDormant(n){ devCount = Math.min(DEVICES.length, Number(n) + 1); paintDeviceCard(); }
 
 /* Put the photographs on the page. Called before buildBenchSlots(), because
    that clones the real device card — clone it first and the bench would show
    seven cards with an empty tile. */
 function paintDeviceShots(){
-  paintShot($('#devShot'), DEVICE_SHOT.watch);
+  /* the card's own photograph is painted by paintDeviceCard(); this only
+     dresses the bench sample */
   const bench = $('#benchDormant');
   if (bench) paintShot(bench.querySelector('img'), DEVICE_SHOT.band);
 }
@@ -3375,7 +3589,7 @@ function wire(groupSel, onPick){
 const VIEW_PAGE = { me:'page-me', bench:'page-bench', profile:'p-profile', firmware:'p-firmware',
                     device:'p-device', goals:'p-goals', monitor:'p-monitor', reminders:'p-reminders',
                     remdetail:'p-rem-detail', alarm:'p-rem-alarm', find:'p-find', shutter:'p-shutter',
-                    units:'p-units', health:'p-health-sync', faq:'p-faq', about:'p-about' };
+                    units:'p-units', health:'p-health-sync', faq:'p-faq', about:'p-about', pair:'p-pair' };
 
 /* One way in and out of every screen. An inner page (anything named p-*)
    hides the bottom nav, the way a pushed detail screen does on Android —
@@ -3402,6 +3616,7 @@ wire('#viewOpts', v => {
   /* two of the pages need setting up before they are shown */
   if (v === 'remdetail') return openRemDetail('sedentary');
   if (v === 'alarm')     return openAlarm(null);
+  if (v === 'pair')      return openPair(bandState() === 'no-band' && $('#page-me').getAttribute('data-slot') === 'pair-bt-off' ? 'bt-off' : 'intro');
   showPage(VIEW_PAGE[v] || 'page-me');
 });
 
@@ -3442,7 +3657,7 @@ const SHEETS = {
       // the owner's call. Written here for "kept" — see the bench comment.
       ['positive', 'History already synced to your account stays — assumed, pending your call.'],
     ],
-    confirm: 'Unbind band', cancel: 'Keep it paired', dismissable: true,
+    confirm: 'Unbind Band', cancel: 'Keep It Paired', dismissable: true,
   },
   'in-progress': {
     title: 'Unbinding…',
@@ -3456,13 +3671,13 @@ const SHEETS = {
   discard: {
     title: 'Discard your changes?',
     sub: 'These edits have not been saved to your account.',
-    rows: [], confirm: 'Discard', cancel: 'Keep editing', dismissable: true,
+    rows: [], confirm: 'Discard', cancel: 'Keep Editing', dismissable: true,
   },
   failed: {
     title: 'Unbind failed',
     sub: 'The band is still paired. Nothing was changed.',
     rows: [], fail: 'The band went out of range partway through.',
-    confirm: 'Try again', cancel: 'Cancel', dismissable: true,
+    confirm: 'Try Again', cancel: 'Cancel', dismissable: true,
   },
 };
 
@@ -3476,10 +3691,13 @@ function showSheet(key, overrides){
   $('#sheetTitle').textContent = cfg.title;
   $('#sheetSub').textContent = cfg.sub;
 
-  $('#sheetRows').innerHTML = (cfg.rows || []).map(([tone, text]) => (
+  /* three tones of consequence line: negative (default), positive, neutral —
+     and `html` for a body that is not a list at all (the pairing tips) */
+  $('#sheetRows').innerHTML = cfg.html || (cfg.rows || []).map(([tone, text]) => (
     '<div class="conseq"><span class="phi" data-ph="' +
-      (tone === 'positive' ? 'check-circle' : 'warning-circle') +
-      '" data-weight="fill"' + (tone === 'positive' ? ' style="color:var(--positive-icon)"' : '') +
+      (tone === 'positive' ? 'check-circle' : tone === 'neutral' ? 'info' : 'warning-circle') +
+      '" data-weight="fill"' +
+      (tone === 'positive' ? ' style="color:var(--positive-icon)"' : tone === 'neutral' ? ' style="color:var(--neutral-icon)"' : '') +
       '></span><span>' + text + '</span></div>'
   )).join('');
 
@@ -3493,6 +3711,9 @@ function showSheet(key, overrides){
   if (cfg.fail) $('#sheetFailMsg').textContent = cfg.fail;
 
   const confirm = $('#sheetConfirm'), cancel = $('#sheetCancel');
+  /* destructive unless the sheet says otherwise — Connect and Try Again are
+     the way forward, so they take the primary tier */
+  confirm.className = 'btn btn--' + (cfg.confirmTier || 'destructive') + ' btn--m';
   confirm.hidden = !cfg.confirm;
   if (cfg.confirm) confirm.textContent = cfg.confirm;
   cancel.textContent = cfg.cancel;
@@ -3504,9 +3725,11 @@ function showSheet(key, overrides){
 wire('#sheetOpts', showSheet);
 
 // closing puts the panel's radio back, so the two never disagree
+let onSheetClose = null;   /* fires once, on the next close, however it closes */
 function closeSheet(){
   onSheetConfirm = null;
   showSheet('none');
+  if (onSheetClose){ const f = onSheetClose; onSheetClose = null; f(); }
   const none = $('#sheetOpts input[value="none"]');
   none.checked = true;
   $$('label', $('#sheetOpts')).forEach(l => l.classList.toggle('on', l.contains(none)));
@@ -3829,7 +4052,7 @@ function syncSaveBar(){
   $('#btnSave').disabled  = errs || profSaving;
   $('#btnDiscard').disabled = profSaving;
   $('#saveSpin').hidden   = !profSaving;
-  $('#saveLab').textContent = profSaving ? 'Saving…' : 'Save changes';
+  $('#saveLab').textContent = profSaving ? 'Saving…' : 'Save Changes';
   $('#saveFail').hidden   = !profFailed;
   if (profFailed) $('#saveFailMsg').textContent = profFailed;
 }
@@ -4060,10 +4283,10 @@ function openAvatar(){
   const host = $('#fsActions');
   host.innerHTML =
     '<button class="btn btn--secondary btn--m" type="button" data-a="pick">' +
-      '<span class="phi" data-ph="camera" data-weight="fill"></span>Choose a photo</button>' +
+      '<span class="phi" data-ph="camera" data-weight="fill"></span>Choose Photo</button>' +
     (drafted.photo
       ? '<button class="btn btn--destructive btn--m" type="button" data-a="remove">' +
-        '<span class="phi" data-ph="trash" data-weight="fill"></span>Remove photo</button>'
+        '<span class="phi" data-ph="trash" data-weight="fill"></span>Remove Photo</button>'
       : '') +
     '<button class="btn btn--tertiary btn--m" type="button" data-a="cancel">Cancel</button>';
   injectIcons(host);
@@ -4231,7 +4454,7 @@ wire('#avaOpts', v => {
    dot on the tab go away by itself. */
 const FW_PREV = '2.0.1';        /* what the tab's About row already shows */
 const FW = {
-  device:    'Pebble Prime',
+  get device(){ return devName(); },   /* whichever band is connected */
   installed: FW_PREV,
   latest:    '2.1.0',
   sizeMb:    4.2,
@@ -4309,7 +4532,7 @@ const FW_STATES = {
       ['Released',          () => N(28) + ' Aug ' + N(2026)],
       ['Last checked',      () => 'today at ' + N('12:24')],
     ],
-    acts:[['secondary','Check for updates','check','arrows-clockwise']],
+    acts:[['secondary','Check For Updates','check','arrows-clockwise']],
     foot:'Firmware is the software on the band itself. Updating it changes nothing on your phone, and none of your recorded history is touched.',
   },
 
@@ -4339,7 +4562,7 @@ const FW_STATES = {
     ],
     notes:"What's new in v" + '2.1.0',
     checks:'Before you start',
-    acts:[['tertiary','Later','back'], ['primary','Update now','start','download-simple']],
+    acts:[['tertiary','Later','back'], ['primary','Update Now','start','download-simple']],
     foot:'You can start an update whenever it suits you. Nothing expires, and the band keeps working normally until you do.',
   },
 
@@ -4351,7 +4574,7 @@ const FW_STATES = {
     stage:['now','wait','wait'],
     live: pct => N((FW.sizeMb * pct / 100).toFixed(1)) + ' of ' + N(FW.sizeMb) + ' MB',
     steps:'Progress',
-    acts:[['destructive','Cancel download','cancel']],
+    acts:[['destructive','Cancel Download','cancel']],
     foot:'Nothing has been written to the band yet, so cancelling here costs you nothing but the download.',
   },
 
@@ -4374,7 +4597,7 @@ const FW_STATES = {
   complete: {
     tone:'positive', glyph:'seal-check',
     h:'Updated',
-    s:FW.device + ' is now on v2.1.0. It restarted and reconnected on its own — there is nothing else to do.',
+    s:() => FW.device + ' is now on v2.1.0. It restarted and reconnected on its own — there is nothing else to do.',
     vers:'installed',
     rows:[
       ['Installed version', () => ver(FW.installed)],
@@ -4395,7 +4618,7 @@ const FW_STATES = {
     banner:['negative','warning-circle','The download stopped before it finished. Check your connection, then start again.'],
     stage:['fail','wait','wait'],
     steps:'Where it stopped',
-    acts:[['tertiary','Not now','back'], ['primary','Try again','retry','arrow-counter-clockwise']],
+    acts:[['tertiary','Not Now','back'], ['primary','Try Again','retry','arrow-counter-clockwise']],
     foot:'Starting again downloads the update from the beginning. Nothing was written to the band.',
   },
 
@@ -4406,7 +4629,7 @@ const FW_STATES = {
   'battery-too-low': {
     tone:'negative', glyph:'battery-warning',
     h:'Charge the band first',
-    s:'An update needs at least 30% battery so it cannot run flat in the middle of installing. Put ' + FW.device + ' on its charger for about half an hour.',
+    s:() => 'An update needs at least 30% battery so it cannot run flat in the middle of installing. Put ' + FW.device + ' on its charger for about half an hour.',
     vers:'upgrade',
     banner:['caution','battery-charging','The update is downloaded and waiting. It will be ready the moment the band is above 30%.'],
     checks:'Before you start',
@@ -4414,7 +4637,7 @@ const FW_STATES = {
       ['New version',   () => ver(FW.latest)],
       ['Download size', () => N(FW.sizeMb) + ' MB'],
     ],
-    acts:[['primary','Update now','start',null,{ disabled:true }]],
+    acts:[['primary','Update Now','start',null,{ disabled:true }]],
     foot:'',
   },
 
@@ -4424,12 +4647,12 @@ const FW_STATES = {
   'connection-lost': {
     tone:'negative', glyph:'link-break',
     h:'The band lost contact',
-    s:FW.device + ' went out of range while installing. It keeps the old firmware until an update finishes, so it is not damaged.',
+    s:() => FW.device + ' went out of range while installing. It keeps the old firmware until an update finishes, so it is not damaged.',
     vers:'installed',
     banner:['negative','warning','If the band&rsquo;s screen is blank, leave it on the charger for a minute — it restarts itself. Do not factory reset it, and do not unbind it: either one makes this harder to recover, not easier.'],
     stage:['done','fail','wait'],
     steps:'Where it stopped',
-    acts:[['tertiary','Not now','back'], ['primary','Try again','retry','arrow-counter-clockwise']],
+    acts:[['tertiary','Not Now','back'], ['primary','Try Again','retry','arrow-counter-clockwise']],
     foot:'Bring the band next to your phone before starting again. Most interrupted installs finish on the second attempt.',
   },
 
@@ -4447,7 +4670,7 @@ const FW_STATES = {
       ['Installed version', () => ver(FW.installed)],
       ['Last checked',      () => 'today at ' + N('12:24')],
     ],
-    acts:[['primary','Try again','check','arrow-counter-clockwise']],
+    acts:[['primary','Try Again','check','arrow-counter-clockwise']],
     foot:'',
   },
 
@@ -4485,7 +4708,8 @@ function fwRender(){
     delete glyph.dataset.done;      /* injectIcons skips anything already done */
   }
   $('#fwH').textContent = cfg.h;
-  $('#fwS').innerHTML   = cfg.s;
+  $('#fwS').innerHTML   = typeof cfg.s === 'function' ? cfg.s() : cfg.s;
+  $('#p-firmware .e-recon .h').textContent = devName() + ' is offline';
 
   /* Each side of the pill goes in ONE span. `.fw-vers` is a flex row, so a
      bare "v" beside a numeral span would be two flex items and inherit the
@@ -4668,7 +4892,7 @@ function fwAction(a){
   /* FLAG: S02 Pair a device is slice 4 and does not exist yet. Rather than a
      button that does nothing, this puts the pairing CTA in the device slot
      and returns to the tab, which is where S02 will be entered from. */
-  if (a === 'pair'){ setSlot('pair'); showPage('page-me'); }
+  if (a === 'pair'){ openPair(); }
 }
 $('#p-firmware').addEventListener('click', e => {
   const b = e.target.closest('[data-fwa]');
@@ -4819,18 +5043,16 @@ function buildGates(){
       '<div class="empty" data-empty="no-band">' +
         '<span class="mark"><span class="phi" data-ph="' + glyph + '" data-weight="fill"></span></span>' +
         '<div class="h">Pair a band first</div><div class="s">' + what + '</div>' +
-        /* FLAG: S02 Pair a device is not built (slice 4). The button goes back
-           to the tab, where the pairing CTA sits in the device slot. */
-        '<div class="acts"><button class="btn btn--primary btn--m" type="button" data-back="page-me">Pair a device</button></div>' +
+        '<div class="acts"><button class="btn btn--primary btn--m" type="button" data-act="pair">Pair Now</button></div>' +
       '</div>';
     page.querySelector('.gate.g-offline').innerHTML =
       '<div class="empty" data-empty="reconnect">' +
         '<span class="mark"><span class="phi" data-ph="link-break" data-weight="fill"></span></span>' +
-        '<div class="h">Pebble Prime is offline</div>' +
+        '<div class="h">' + devName() + ' is offline</div>' +
         '<div class="s">Bring the band closer and check it is switched on, then try again.</div>' +
         '<div class="acts">' +
-          '<button class="btn btn--primary btn--m" type="button" data-act="reconnect"><span class="phi" data-ph="arrow-counter-clockwise" data-weight="fill"></span>Try again</button>' +
-          '<button class="btn btn--tertiary btn--m" type="button" data-back="page-me">Not now</button>' +
+          '<button class="btn btn--primary btn--m" type="button" data-act="reconnect"><span class="phi" data-ph="arrow-counter-clockwise" data-weight="fill"></span>Try Again</button>' +
+          '<button class="btn btn--tertiary btn--m" type="button" data-back="page-me">Not Now</button>' +
         '</div>' +
       '</div>';
     injectIcons(page);
@@ -4866,19 +5088,14 @@ function appToggle(get, set, render){ set(!get()); render(); }
 /* ---- 8c. three more sheet bodies ------------------------------------------
    Same §5.6 chrome as every other picker: cancel / title / tick. */
 
-/* the Activity goal picker — one numeral per row, PORTED from index.html */
+/* a one-column wheel: the numbers scroll, the unit is painted once beside the
+   selected value (owner) — so only "600 kcal" reads with its unit */
 function openValues(title, opts, current, fmt, unit, onConfirm){
-  let pick = current;
+  let idx = Math.max(0, opts.indexOf(current));
   openFieldSheet(title, 'Values', true);
-  const host = $('#fsValues');
-  const paint = () => {
-    host.innerHTML = opts.map(v =>
-      '<button type="button" class="sheet-row' + (v === pick ? ' sel' : '') + '" data-v="' + v + '">' +
-        '<span class="v">' + fmt(v) + '<span class="u">' + unit + '</span></span></button>').join('');
-  };
-  paint();
-  host.onclick = e => { const b = e.target.closest('.sheet-row'); if (!b) return; pick = Number(b.dataset.v); paint(); };
-  fsOnConfirm = () => onConfirm(pick);
+  $('#fsValUnit').textContent = unit;
+  fillCol($('#fsValCol'), opts.map(fmt), idx, i => { idx = i; });
+  fsOnConfirm = () => onConfirm(opts[idx]);
 }
 
 /* hours beside minutes, one selection band — the Add Alarm screenshot */
@@ -5105,14 +5322,14 @@ function openAlarm(id){
 function renderAlarm(){
   if (!alarmDraft) return;
   const a = alarmDraft, editing = a.id !== null;
-  $('#alarmTitle').textContent = editing ? 'Edit alarm' : 'Add alarm';
+  $('#alarmTitle').textContent = editing ? 'Edit alarm' : 'Add Alarm';
   $('#alarmBody').innerHTML =
     '<div class="group">' + rowHTML({ label:'Time', val:fmtTime(a.time), accent:true, act:'alarm:time' }) + '</div>' +
     '<div class="sec-h">Repeat</div>' +
     '<div class="group" style="padding-top:16px">' + daysHTML(a.days, 'alarm:day') + '</div>' +
     '<p class="grp-note">' + daysSummary(a.days) + (a.days.filter(Boolean).length === 0 ? ' — rings the next time it is ' + fmtTimePlain(a.time) + ', then switches itself off.' : '') + '</p>' +
-    '<button class="btn btn--primary" type="button" data-act="alarm:save">' + (editing ? 'Save changes' : 'Add alarm') + '</button>' +
-    (editing ? '<button class="btn btn--destructive btn--m" type="button" data-act="alarm:delete">Delete alarm</button>' : '') +
+    '<button class="btn btn--primary" type="button" data-act="alarm:save">' + (editing ? 'Save Changes' : 'Add Alarm') + '</button>' +
+    (editing ? '<button class="btn btn--destructive btn--m" type="button" data-act="alarm:delete">Delete Alarm</button>' : '') +
     '<p class="grp-note">Alarms ring on the band, not on your phone &mdash; a vibration on your wrist that wakes nobody else.</p>';
   injectIcons($('#p-rem-alarm'));
 }
@@ -5127,8 +5344,8 @@ function renderTabToggles(){
 }
 
 /* ---- S03 · Device detail, with the system actions ------------------------ */
-const DEVICE = { mac:'D4:3B:0E:7A:11:C2' };
 function renderDevice(){
+  const c = connected() || DEVICES[0];
   const slot = $('#page-me').getAttribute('data-slot');
   const chip = {
     connected:['positive','check-circle','Connected'], disconnected:['negative','link-break','Disconnected'],
@@ -5141,8 +5358,8 @@ function renderDevice(){
   const sync = slot === 'disconnected' ? N(2) + 'h ago' : slot === 'syncing' ? 'now' : 'just now';
   $('#deviceBody').innerHTML =
     '<div class="dev-hero">' +
-      '<span class="shot"><span class="phi" data-ph="watch" data-weight="fill"></span><img alt="" data-shot="watch"></span>' +
-      '<span class="meta"><span class="name">Pebble Prime</span>' +
+      '<span class="shot"><span class="phi" data-ph="watch" data-weight="fill"></span><img alt="" data-shot="' + c.shot + '"></span>' +
+      '<span class="meta"><span class="name">' + c.name + '</span>' +
         '<span class="chip" data-tone="' + chip[0] + '"><span class="phi" data-ph="' + chip[1] + '" data-weight="fill"></span>' + chip[2] + '</span>' +
       '</span>' +
     '</div>' +
@@ -5150,7 +5367,7 @@ function renderDevice(){
       rowHTML({ tag:'div', cls:'row--ro', label:'Battery',     val:batt, nocaret:true }) +
       rowHTML({ label:'Firmware', val:ver(FW.installed), page:'p-firmware',
                 tail: FW.installed !== FW.latest ? '<span class="dot" title="Update available"></span>' : '' }) +
-      rowHTML({ tag:'div', cls:'row--ro', label:'MAC address', val:N(DEVICE.mac), nocaret:true }) +
+      rowHTML({ tag:'div', cls:'row--ro', label:'MAC address', val:N(c.mac), nocaret:true }) +
       rowHTML({ tag:'div', cls:'row--ro', label:'Last synced', val:sync, nocaret:true }) +
     '</div>' +
     /* hard rule 5: the low-battery prompt always fires. The owner moved it
@@ -5165,7 +5382,7 @@ function renderDevice(){
     '</div>' +
     '<div class="sec-h">System</div>' +
     '<div class="group">' +
-      rowHTML({ cls:'action', glyph:'power',            label:'Shut down', sub:'Stops tracking until you put the band on its charger', act:'dev:shutdown' }) +
+      rowHTML({ cls:'action', glyph:'power',            label:'Shut Down', sub:'Stops tracking until you put the band on its charger', act:'dev:shutdown' }) +
       rowHTML({ cls:'action', glyph:'arrows-clockwise', label:'Restart',   sub:'Reboots the band; connect it to your phone again afterwards', act:'dev:restart' }) +
       rowHTML({ cls:'action destructive', glyph:'trash', label:'Reset',    sub:'Deletes all data on the band and restores factory settings', act:'dev:reset' }) +
     '</div>' +
@@ -5174,7 +5391,7 @@ function renderDevice(){
     '<div class="group">' +
       rowHTML({ cls:'action destructive', glyph:'link-break', label:'Unbind', sub:'Removes this band from your account', act:'dev:unbind' }) +
     '</div>';
-  paintShot($('#deviceBody img[data-shot]'), DEVICE_SHOT.watch);
+  paintShot($('#deviceBody img[data-shot]'), DEVICE_SHOT[c.shot]);
   injectIcons($('#p-device'));
 }
 /* the three confirm sheets the system actions open. Restart reuses the
@@ -5184,7 +5401,7 @@ Object.assign(SHEETS, {
     title:'Shut down Pebble Prime?',
     sub:'The band switches off and stops tracking. It wakes up again the moment you put it on its charger.',
     rows:[['negative', 'Nothing is recorded — steps, sleep or heart rate — until it is back on.']],
-    confirm:'Shut down', cancel:'Keep it on', dismissable:true,
+    confirm:'Shut Down', cancel:'Keep It On', dismissable:true,
   },
   reset: {
     title:'Reset Pebble Prime?',
@@ -5196,7 +5413,7 @@ Object.assign(SHEETS, {
       /* same open question as unbind (§8): does synced history survive? */
       ['positive', 'History already synced to your account stays — assumed, pending your call.'],
     ],
-    confirm:'Reset band', cancel:'Cancel', dismissable:true,
+    confirm:'Reset Band', cancel:'Cancel', dismissable:true,
   },
 });
 /* restart's meaning, per the owner: you connect the band again afterwards */
@@ -5205,7 +5422,7 @@ SHEETS.standard.sub = 'The band reboots. Once it is back on, connect it to your 
 function confirmDeviceAction(kind){
   const key = kind === 'restart' ? 'standard' : kind === 'unbind' ? 'consequence' : kind;
   onSheetConfirm = () => runDeviceAction(kind);
-  showSheet(key);
+  showSheet(key, { title: { shutdown:'Shut Down', restart:'Restart', reset:'Reset', unbind:'Unbind' }[kind] + ' ' + devName() + '?' });
 }
 /* confirm → the non-dismissable in-progress sheet → the band's new state */
 function runDeviceAction(kind){
@@ -5220,7 +5437,17 @@ function runDeviceAction(kind){
       clearInterval(t); closeSheet();
       if (kind === 'shutdown'){ setSlot('disconnected'); }
       if (kind === 'restart') { setSlot('syncing'); setTimeout(() => setSlot('connected'), 1400); }
-      if (kind === 'reset' || kind === 'unbind'){ setSlot('pair'); }
+      if (kind === 'reset' || kind === 'unbind'){
+        /* FLAG (owner's note ended mid-sentence: "on unpairing band…"). Built
+           as: the unbound band leaves the list; if another paired band
+           remains it becomes the connected one, otherwise the slot shows the
+           pairing CTA. Say the word if unpairing should leave the next band
+           dormant instead. */
+        DEVICES.shift(); devCount = Math.max(0, devCount - 1);
+        paintDeviceCard();
+        if (connected()){ setSlot('syncing'); setTimeout(() => setSlot('connected'), 1400); }
+        else setSlot('pair');
+      }
       showPage('page-me');
     }
   }, reduced() ? 300 : 80);
@@ -5266,9 +5493,9 @@ function renderHealthSync(){
       : AH.state === 'revoked'
       ? '<button class="btn btn--primary" type="button" data-act="ah:connect">Reconnect</button>'
       : '<button class="btn btn--secondary" type="button" data-act="ah:push"' + (AH.pushing || AH.pushed ? ' disabled' : '') + '>' +
-          (AH.pushing ? '<span class="phi spinning" data-ph="circle-notch" data-weight="fill"></span>Sending ' + N(7) + ' days…'
-         : AH.pushed  ? '<span class="phi" data-ph="check" ></span>Past ' + N(7) + ' days sent'
-         : 'Send the past ' + N(7) + ' days') + '</button>' +
+          (AH.pushing ? '<span class="phi spinning" data-ph="circle-notch" data-weight="fill"></span>Sending ' + N(7) + ' Days…'
+         : AH.pushed  ? '<span class="phi" data-ph="check" ></span>Past ' + N(7) + ' Days Sent'
+         : 'Send Past ' + N(7) + ' Days') + '</button>' +
         '<button class="btn btn--destructive btn--m" type="button" data-act="ah:disconnect">Disconnect</button>') +
     '<p class="grp-note">' + (on
       ? 'Sending the past ' + N(7) + ' days copies what the band already recorded into Health. It happens once; after that new readings go across on their own.'
@@ -5330,20 +5557,27 @@ const FIND = { state:'ready' };   /* ready · searching · ringing */
 let findTimer = null;
 function renderFind(){
   const s = FIND.state;
+  const c = connected();
   $('#findBody').innerHTML =
     '<div class="mini-hero' + (s === 'searching' ? ' busy' : s === 'ringing' ? ' live' : '') + '" data-tone="' + (s === 'ringing' ? 'accent' : 'neutral') + '">' +
-      '<span class="mark"><span class="phi" data-ph="' + (s === 'ringing' ? 'bell-ringing' : s === 'searching' ? 'circle-notch' : 'watch') + '" data-weight="fill"></span></span>' +
-      '<div class="h">' + (s === 'ready' ? 'Find Pebble Prime' : s === 'searching' ? 'Reaching the band…' : 'Ringing') + '</div>' +
+      /* the device itself, not an icon (owner): the same photograph as the
+         card, with a status badge on its corner while reaching or ringing */
+      '<span class="shot"><span class="phi" data-ph="watch" data-weight="fill"></span>' +
+        (c ? '<img alt="" data-shot="' + c.shot + '">' : '') +
+        (s !== 'ready' ? '<span class="badge"><span class="phi" data-ph="' + (s === 'ringing' ? 'bell-ringing' : 'circle-notch') + '" data-weight="fill"></span></span>' : '') +
+      '</span>' +
+      '<div class="h">' + (s === 'ready' ? 'Find ' + devName() : s === 'searching' ? 'Reaching the band…' : 'Ringing') + '</div>' +
       '<div class="s">' + (s === 'ready' ? 'The band vibrates and lights up for ' + N(30) + ' seconds — even face-down under a cushion.'
                           : s === 'searching' ? 'Asking the band to make itself known.'
                           : 'Vibrating and flashing. Tap Stop once you have it, or it stops on its own in ' + N(30) + ' seconds.') + '</div>' +
       '<div class="acts">' + (s === 'ringing'
         ? '<button class="btn btn--secondary btn--m" type="button" data-act="find:stop">Stop</button>'
-        : '<button class="btn btn--primary btn--m" type="button" data-act="find:ring"' + (s === 'searching' ? ' disabled' : '') + '><span class="phi" data-ph="bell-ringing" data-weight="fill"></span>Ring my band</button>') +
+        : '<button class="btn btn--primary btn--m" type="button" data-act="find:ring"' + (s === 'searching' ? ' disabled' : '') + '><span class="phi" data-ph="bell-ringing" data-weight="fill"></span>Ring My Band</button>') +
       '</div>' +
     '</div>' +
     /* §6 S08: distinct from "+", which pairs a NEW band */
     '<p class="grp-note">This rings the band you already have. To add a new one, use the <b>+</b> on the Me tab.</p>';
+  if (c) paintShot($('#findBody img[data-shot]'), DEVICE_SHOT[c.shot]);
   injectIcons($('#p-find'));
 }
 function setFind(s){
@@ -5352,26 +5586,42 @@ function setFind(s){
   if (s === 'ringing')   findTimer = setTimeout(() => setFind('ready'), 30000);
 }
 
-/* ---- S09 · Take Picture -------------------------------------------------- */
-const SHUT = { perm:'granted', armed:false };
+/* ---- S09 · Take Picture --------------------------------------------------
+   Straight into the camera, shutter at the bottom (owner). No arming step.
+   FLAG: a file:// page and the published artifact both have no camera to
+   open, so the viewfinder is a token-drawn stand-in; the chrome around it is
+   the design. Tapping the shutter (or, on a real band, pressing its side
+   button) flashes and confirms. */
+const SHUT = { perm:'granted' };
 function renderShutter(){
-  const denied = SHUT.perm === 'denied';
-  $('#shutterBody').innerHTML =
-    '<div class="mini-hero' + (SHUT.armed ? ' live' : '') + '" data-tone="' + (denied ? 'caution' : SHUT.armed ? 'accent' : 'neutral') + '">' +
-      '<span class="mark"><span class="phi" data-ph="camera" data-weight="fill"></span></span>' +
-      '<div class="h">' + (denied ? 'Camera access needed' : SHUT.armed ? 'Shutter armed' : 'Remote shutter') + '</div>' +
-      '<div class="s">' + (denied ? 'Pebble cannot open the camera until you allow it in your phone&rsquo;s Settings.'
-                          : SHUT.armed ? 'Point your phone. A press on the band&rsquo;s side button takes the photo; a long press starts a ' + N(3) + '-second timer.'
-                          : 'Arm the shutter, then press the band&rsquo;s side button to take a photo with your phone&rsquo;s camera.') + '</div>' +
-      '<div class="acts">' + (denied
-        ? '<button class="btn btn--primary btn--m" type="button" data-act="shutter:settings"><span class="phi" data-ph="arrow-circle-up-right" data-weight="fill"></span>Open Settings</button>'
-        : SHUT.armed
-        ? '<button class="btn btn--secondary btn--m" type="button" data-act="shutter:disarm">Disarm</button>'
-        : '<button class="btn btn--primary btn--m" type="button" data-act="shutter:arm"><span class="phi" data-ph="camera" data-weight="fill"></span>Arm the shutter</button>') +
-      '</div>' +
-    '</div>' +
-    '<p class="grp-note">The camera opens on your phone; the band is only the button. Leaving this page disarms it.</p>';
+  if (SHUT.perm === 'denied'){
+    $('#shutterBody').innerHTML =
+      '<div class="mini-hero" data-tone="caution">' +
+        '<span class="mark"><span class="phi" data-ph="camera" data-weight="fill"></span></span>' +
+        '<div class="h">Camera access needed</div>' +
+        '<div class="s">Pebble cannot open the camera until you allow it in your phone&rsquo;s Settings.</div>' +
+        '<div class="acts"><button class="btn btn--primary btn--m" type="button" data-act="shutter:settings"><span class="phi" data-ph="arrow-circle-up-right" data-weight="fill"></span>Open Settings</button></div>' +
+      '</div>';
+  } else {
+    $('#shutterBody').innerHTML =
+      '<div class="cam"><div class="vf"></div>' +
+        '<span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>' +
+        '<div class="cam-top"><span class="chip" data-tone="positive"><span class="phi" data-ph="watch" data-weight="fill"></span>' + devName() + ' &middot; press its side button</span></div>' +
+        '<div class="cam-bottom">' +
+          '<button class="shutter" type="button" data-act="shutter:snap" aria-label="Take photo"><i></i></button>' +
+          '<div class="cam-hint">Tap, or press the button on the band</div>' +
+        '</div>' +
+        '<div class="flash" id="camFlash"></div>' +
+        '<div class="toast" id="camToast" hidden><span class="phi" data-ph="check-circle" data-weight="fill"></span>Saved to Photos</div>' +
+      '</div>';
+  }
   injectIcons($('#p-shutter'));
+}
+function snapPhoto(){
+  const f = $('#camFlash'), t = $('#camToast');
+  if (!f) return;
+  f.classList.add('on'); setTimeout(() => f.classList.remove('on'), 60);
+  t.hidden = false; clearTimeout(snapPhoto._t); snapPhoto._t = setTimeout(() => { t.hidden = true; }, 1400);
 }
 
 /* ---- S13 · FAQs ---------------------------------------------------------
@@ -5445,6 +5695,16 @@ $('.pages').addEventListener('click', e => {
   /* the band gate's retry */
   if (act === 'reconnect'){ setSlot('syncing'); setTimeout(() => setSlot('connected'), 1200); return; }
 
+  /* S04: a dormant band's row connects it */
+  if (act === 'switch') return startSwitch(d.id);
+
+  /* S02: every way into pairing — the header +, the CTA, every Pair Now */
+  if (act === 'pair')         return openPair($('#page-me').getAttribute('data-slot') === 'pair-bt-off' ? 'bt-off' : 'intro');
+  if (act === 'pair:bt'){     setSlot('pair'); if ($('#p-pair').classList.contains('active')) pairSet('intro'); return; }
+  if (act === 'pair:intro')   return pairSet('intro');
+  if (act === 'pair:search')  return pairSet('searching');
+  if (act === 'pair:connect') return pairConnect(d.name);
+
   /* goals */
   if (act === 'goal') return editGoal(d.k);
 
@@ -5486,7 +5746,7 @@ $('.pages').addEventListener('click', e => {
   /* apple health */
   if (act === 'ah:connect'){ setAH('connected'); AH.firstSync = true; renderHealthSync(); setTimeout(() => { AH.firstSync = false; renderHealthSync(); }, 2200); return; }
   if (act === 'ah:disconnect'){ onSheetConfirm = () => setAH('not-connected');
-    showSheet('standard', { title:'Disconnect Apple Health?', sub:'Pebble stops writing to Health. What is already there stays.', confirm:'Disconnect', cancel:'Keep connected' }); return; }
+    showSheet('standard', { title:'Disconnect Apple Health?', sub:'Pebble stops writing to Health. What is already there stays.', confirm:'Disconnect', cancel:'Keep Connected' }); return; }
   if (act === 'ah:push'){ AH.pushing = true; renderHealthSync(); setTimeout(() => { AH.pushing = false; AH.pushed = true; renderHealthSync(); }, 1800); return; }
   if (act === 'ah:settings') return;   /* would deep-link to the Health app */
 
@@ -5497,8 +5757,7 @@ $('.pages').addEventListener('click', e => {
   /* find device · take picture */
   if (act === 'find:ring') return setFind('searching');
   if (act === 'find:stop') return setFind('ready');
-  if (act === 'shutter:arm')    { SHUT.armed = true;  renderShutter(); return; }
-  if (act === 'shutter:disarm') { SHUT.armed = false; renderShutter(); return; }
+  if (act === 'shutter:snap') return snapPhoto();
   if (act === 'shutter:settings') return;
 
   /* faq */
@@ -5510,7 +5769,7 @@ $('#p-about').addEventListener('keydown', e => { if (e.key === 'Enter' && e.targ
 /* leaving Find Device / Take Picture ends what they were doing */
 function onShowPage(id){
   if (id !== 'p-find' && FIND.state !== 'ready') setFind('ready');
-  if (id !== 'p-shutter' && SHUT.armed){ SHUT.armed = false; renderShutter(); }
+  if (id !== 'p-pair'){ clearTimeout(pairTimer); }
   applyBandGate();
 }
 
@@ -5520,7 +5779,7 @@ $('#devCard').addEventListener('click', () => showPage('p-device'));
 
 /* the panel */
 wire('#ahOpts', setAH);
-wire('#shutOpts', v => { SHUT.perm = v; SHUT.armed = false; renderShutter(); });
+wire('#shutOpts', v => { SHUT.perm = v; renderShutter(); });
 
 function renderAllPages(){
   buildGates();
@@ -5528,6 +5787,190 @@ function renderAllPages(){
   renderRemDetail(); renderDevice(); renderHealthSync(); renderAbout(); renderFind(); renderShutter(); renderFaq();
   applyBandGate();
 }
+
+
+/* ==========================================================================
+   9. PAIRING (S02) AND SWITCHING (S04) — the two flows that change which
+      band the tab is about
+   ========================================================================== */
+
+/* ---- S02 · Pair a device — PORTED from Pebble Onboarding.html §4j ---------
+   Same five stages, same two timers, same recovery sheet. What changed for
+   the Me tab: the greeting is about adding a band rather than "Hey there",
+   the decline is "Not Now" back to the tab, and success adds the band to the
+   list at the front — it becomes the connected one, the previous one goes
+   dormant — instead of handing off to the dashboard. */
+const PAIR = { state:'intro', outcome:'many', target:null };
+const PAIR_TIPS = [
+  'Turn your phone&rsquo;s Bluetooth on',
+  'Make sure your Pebble device is switched on',
+  'Keep your device and phone close to each other',
+];
+const PAIR_CANDIDATES = ['Pebble Prime', 'Pebble Venus', 'Pebble Cosmos', 'Pebble Spark'];
+const SEARCH_MS = 3200, CONNECT_MS = 2600;
+let pairTimer = null;
+
+const ringsHTML = (cls) =>
+  '<div class="rings ' + cls + '">' +
+    (cls.indexOf('searching') !== -1 ? '<div class="wave"></div><div class="wave"></div><div class="wave"></div>' : '') +
+    '<div class="r r1"></div><div class="r r2"></div><div class="r r3"></div>' +
+    '<div class="core"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="currentColor" d="' + LEAF_D + '"/></svg></div>' +
+  '</div>';
+const tipsHTML = () => '<div class="tips">' + PAIR_TIPS.map((t, i) =>
+  '<div class="tip"><span class="n">' + (i + 1) + '</span><span class="x">' + t + '</span></div>').join('') + '</div>';
+const backbar = (act) => '<div class="topbar"><button class="iconbtn" type="button" data-act="' + act + '" aria-label="Back"><span class="phi" data-ph="caret-left"></span></button></div>';
+
+/* the names on offer exclude bands already paired */
+const pairFound = () => PAIR_CANDIDATES.filter(n => !DEVICES.slice(0, devCount).some(d => d.name === n));
+
+function openPair(state){ clearTimeout(pairTimer); PAIR.state = state || 'intro'; renderPair(); showPage('p-pair'); }
+function renderPair(){
+  const s = PAIR.state, page = $('#p-pair');
+  page.setAttribute('data-pair', s);
+  let html = '';
+  if (s === 'intro' || s === 'bt-off'){
+    html = '<div class="topbar"></div>' +
+      '<div class="mid">' + ringsHTML('sm') +
+        '<div class="phead" style="margin-top:30px">' +
+          '<p class="eyebrow">' + (devCount ? 'Add another band' : 'Hey ' + (PROFILE_BASE.name.split(' ')[0]) + '!') + '</p>' +
+          '<h1 class="t">Let&rsquo;s connect<br>your device</h1></div>' +
+        (s === 'bt-off'
+          ? '<div class="banner" data-tone="caution" style="margin-top:24px"><span class="phi" data-ph="bluetooth-slash" data-weight="fill"></span><span>Bluetooth is off. Pebble cannot look for a band until it is on.</span></div>'
+          : '<div style="margin-top:28px">' + tipsHTML() + '</div>') +
+      '</div>' +
+      '<div class="ctas">' +
+        (s === 'bt-off'
+          ? '<button class="btn btn--primary" type="button" data-act="pair:bt">Turn On Bluetooth</button>'
+          : '<button class="btn btn--primary" type="button" data-act="pair:search">Pair Now</button>') +
+        /* tertiary, not secondary: it declines the primary, and only one
+           accent element per screen (button.html) */
+        '<button class="btn btn--tertiary" type="button" data-back="page-me">Not Now</button>' +
+      '</div>';
+  } else if (s === 'searching'){
+    html = backbar('pair:intro') +
+      '<div class="mid">' + ringsHTML('searching') +
+        '<div class="phead" style="margin-top:44px"><h1 class="t">Searching&hellip;</h1>' +
+        '<p class="sub">Ensure your Pebble device is in pairing mode and<br>your phone&rsquo;s Bluetooth is turned on</p></div></div>' +
+      '<div class="ctas"><button class="btn btn--tertiary" type="button" data-act="pair:intro">Cancel</button></div>';
+  } else if (s === 'found'){
+    const list = pairFound();
+    html = backbar('pair:intro') +
+      '<div style="margin-top:4px">' + ringsHTML('sm') + '</div>' +
+      '<div class="phead" style="margin-top:24px"><h1 class="t sm">' + (list.length > 1 ? 'Multiple devices found' : 'Device found') + '</h1>' +
+      '<p class="sub">Pick the device you&rsquo;d like to pair with</p></div>' +
+      '<div class="dev-list" style="margin-top:22px">' + list.map(n =>
+        '<button class="dev-row" type="button" data-act="pair:connect" data-name="' + n + '"><span class="nm">' + n + '</span><span class="phi" data-ph="caret-right"></span></button>').join('') + '</div>' +
+      '<div class="ctas"><button class="btn btn--tertiary" type="button" data-act="pair:intro">Cancel</button></div>';
+  } else if (s === 'connecting'){
+    html = backbar('pair:intro') +
+      '<div class="mid" style="align-items:center">' + ringsHTML('linking') +
+        '<div class="chevrons" aria-hidden="true">' + '<span><svg viewBox="0 0 24 14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 11L12 3l10 8"/></svg></span>'.repeat(3) + '</div>' +
+        '<div class="phead" style="margin-top:26px"><h1 class="t sm">Connecting to<br>' + PAIR.target + '&hellip;</h1>' +
+        '<p class="sub">Keep your phone and device close to each other</p></div></div>' +
+      '<div class="ctas"><button class="btn btn--tertiary" type="button" data-act="pair:intro">Cancel</button></div>';
+  } else if (s === 'success'){
+    /* confetti cut from the metric hues — fixed positions, as in the source */
+    const CONF = [[14,22,10,3,-18,'sleep'],[52,6,6,6,12,'calories'],[96,40,12,3,28,'distance'],[12,96,5,5,22,'activity'],
+      [14,170,9,3,-30,'hrv'],[30,238,8,3,40,'steps'],[76,272,6,6,-10,'heart-rate'],[150,290,10,3,16,'sleep'],
+      [232,262,7,3,36,'calories'],[282,196,12,3,-22,'skin-temp'],[296,110,6,6,-14,'steps'],[262,26,9,3,24,'distance'],[198,4,5,5,32,'activity']];
+    html = '<div class="topbar"></div>' +
+      '<div class="mid">' +
+        '<div class="win"><div class="disc"><span class="phi" data-ph="check"></span></div>' +
+          CONF.map(([x,y,w,h,rot,hue],i) => '<i style="left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h + 'px;background:var(--metric-' + hue + ');transform:rotate(' + rot + 'deg);animation-delay:' + (i*0.18).toFixed(2) + 's"></i>').join('') +
+        '</div>' +
+        '<div class="phead" style="margin-top:6px"><h1 class="t sm">Connection successful!</h1>' +
+        '<p class="sub">' + PAIR.target + ' is now your connected band.<br>' + (connected() ? connected().name + ' stays paired and dormant.' : 'Taking you to the Me tab&hellip;') + '</p></div>' +
+      '</div><div class="ctas"></div>';
+  }
+  $('#pairBody').innerHTML = html;
+  injectIcons(page);
+}
+function pairSet(state){
+  clearTimeout(pairTimer); PAIR.state = state; renderPair();
+  if (state === 'searching') pairTimer = setTimeout(() => {
+    const list = pairFound();
+    if (PAIR.outcome === 'none' || list.length === 0){
+      /* the recovery sheet sits OVER the search screen; closing it goes back
+         to the intro, retrying searches again */
+      onSheetClose = () => { if (PAIR.state === 'searching') pairSet('intro'); };
+      showSheet('nofound');
+      onSheetConfirm = () => pairSet('searching');
+    }
+    else if (PAIR.outcome === 'one') pairConnect(list[0]);
+    else pairSet('found');
+  }, SEARCH_MS);
+  if (state === 'connecting') pairTimer = setTimeout(() => pairSet('success'), CONNECT_MS);
+  if (state === 'success')    pairTimer = setTimeout(pairFinish, 2200);
+}
+function pairConnect(name){ PAIR.target = name; pairSet('connecting'); }
+function pairFinish(){
+  const name = PAIR.target;
+  const id = 'new' + Date.now();
+  DEVICES.unshift({ id, name, shot: /Prime/.test(name) ? 'watch' : 'band',
+                    mac: 'D4:3B:0E:' + [0,0,0].map(() => Math.floor(Math.random()*256).toString(16).padStart(2,'0').toUpperCase()).join(':') });
+  devCount = Math.min(DEVICES.length, devCount + 1);
+  paintDeviceCard();
+  setSlot('connected');
+  showPage('page-me');
+}
+SHEETS.nofound = {
+  title:'No device found', sub:'Run through these, then search again.',
+  rows:[], html: tipsHTML(),
+  confirm:'Try Again', confirmTier:'primary', cancel:'Cancel', dismissable:true,
+};
+wire('#pairOpts', v => { PAIR.outcome = v; });
+
+/* ---- S04 · Connect the other band -----------------------------------------
+   Tap a dormant row. §7's recommendation, adopted: a blocking confirm the
+   FIRST time a given pair is switched, silent after that. The switch runs in
+   the non-dismissable in-progress sheet, then the list reorders and the card
+   changes to the other band. The three endings are switchable from the panel. */
+let switchOutcome = 'ok';
+const switchSeen = new Set();
+SHEETS.switch = {
+  title:'', sub:'',
+  rows:[
+    ['neutral', 'Only one band is connected at a time. The other stays paired and dormant.'],
+    ['neutral', 'Anything not yet synced comes across the next time that band connects.'],
+    /* the cross-tab consequence §7 warns about — named here, built elsewhere */
+    ['neutral', 'The Health, Activity and Sleep tabs reload from the newly connected band.'],
+  ],
+  confirm:'Connect', confirmTier:'primary', cancel:'Cancel', dismissable:true,
+};
+function startSwitch(id){
+  const t = DEVICES.find(d => d.id === id), c = connected();
+  if (!t || !c) return;
+  const pairKey = [c.id, t.id].sort().join('+');
+  if (switchSeen.has(pairKey)) return runSwitch(t);
+  onSheetConfirm = () => { switchSeen.add(pairKey); runSwitch(t); };
+  showSheet('switch', { title:'Connect ' + t.name + '?', sub: c.name + ' disconnects first.' });
+}
+function runSwitch(t){
+  const c = connected();
+  let pct = 0;
+  showSheet('in-progress', { title:'Switching…', sub:'Keep both bands close until this finishes.', prog:['Disconnecting ' + c.name, 0] });
+  const fail = (title, sub, msg) => {
+    clearInterval(tm);
+    showSheet('failed', { title, sub, fail: msg, confirm:'Try Again', confirmTier:'primary', cancel:'Cancel' });
+    onSheetConfirm = () => runSwitch(t);
+  };
+  const tm = setInterval(() => {
+    pct = Math.min(100, pct + (reduced() ? 25 : 5));
+    if (pct >= 50) $('#sheetProgLab').textContent = 'Connecting ' + t.name;
+    $('#sheetBar').style.width = pct + '%'; $('#sheetProgPct').textContent = pct + '%';
+    if (switchOutcome === 'unreachable' && pct >= 40)
+      return fail(t.name + ' is out of reach', c.name + ' stays connected. Nothing changed.', 'The ' + t.name + ' did not answer. Check it is charged and nearby.');
+    if (switchOutcome === 'rollback' && pct >= 80)
+      return fail('Switch failed', 'Reconnected to ' + c.name + '. Nothing changed.', 'The ' + t.name + ' dropped out while connecting.');
+    if (pct >= 100){
+      clearInterval(tm); closeSheet();
+      DEVICES.splice(DEVICES.indexOf(t), 1); DEVICES.unshift(t);
+      paintDeviceCard();
+      setSlot('syncing'); setTimeout(() => setSlot('connected'), 1400);
+    }
+  }, reduced() ? 300 : 80);
+}
+wire('#switchOpts', v => { switchOutcome = v; });
 
 /* ---- go ----------------------------------------------------------------- */
 injectIcons();

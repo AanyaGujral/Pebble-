@@ -12,11 +12,12 @@
 > Apple Health, S13 FAQs, S14 About. Every row on the tab opens something.
 > Republish to the SAME artifact URL (68bad1b7-40af-42f8-863c-1dcc1b0a6b4a).
 >
-> **Not built, on purpose:** S02 Pair a device and S04 Connect the other band
-> — the pairing flow is to be REUSED from onboarding (§6), not rebuilt. Every
-> "Pair a device" button currently returns to the tab, where the CTA sits.
-> Also not built: the T1–T10 state matrix as a panel; the band pages already
-> read the device card, so T2 and T4 are exercised on every band page.
+> **All 14 pages plus both flows are built.** S02 Pair a device is ported
+> from `Pebble Onboarding.html` (header +, pairing CTA, every Pair Now); S04
+> Connect the other band runs from a dormant row and the card changes to it.
+> The bands are ONE list (`DEVICES`, connected first) that every page reads.
+> Not built: the T1–T10 state matrix as a panel — the band pages already read
+> the device card, so T2 and T4 are exercised on every band page.
 >
 > **Waiting on the owner** — nine questions at the top of the 2026-09-03
 > (evening) changelog entry, every one flagged in code where the decision
