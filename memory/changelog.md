@@ -5,6 +5,28 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-03 (rev 9) — Four owner notes. **F8 "your band is behind" is gone**,
+  with the offline state it belonged to; a member who last synced earlier is
+  described by their row, not by a tab-level state. **Your own profile opens
+  from your row and from the self card**, rendered by the same S03 component as
+  anyone else's, titled "Your profile", with the ⋯ menu and the Cheer button
+  suppressed and one disclosure line saying whose view it is. This reverses
+  hard rule 7 (which forbade a second copy of your own data) and the reversal
+  is argued in the code: Home and Activity are for reading your day, this page
+  is for seeing what you are sharing, and nothing in the app answered that.
+  Fixed while doing it: `friendOf()` rebuilt the model, so the person it
+  returned carried no `.rank` and every profile read "nothing synced today"
+  above a card showing that day's steps. **A row with no rank gives up the
+  column too** — the nobody-synced rows and the self card now begin at the
+  chip, instead of indenting past an empty numeral slot that pointed at the
+  one thing the row deliberately lacks; F5 also stops rendering "Nothing to
+  rank yet" above a list of everyone, since the state line already says
+  "0 of 4 synced". And **the nav belongs to the tab level**: it shows on Home
+  and is hidden on every inner page, which is the platform pattern and the
+  reason those pages carry a back button. That reverses last round's fix and is
+  flagged as one line to change back; the self card drops to the screen edge
+  now that there is no pill under it.
+
 - 2026-09-03 (rev 8) — Owner round of eight: **the podium goes neutral** —
   grey `--surface-raised` stands, no medal tint, no top edge bar, and no ring
   round the chips either here or in the list, so the rank numeral is the only

@@ -263,6 +263,10 @@ body{
 }
 
 /* bottom nav — the owner's pebblenav component, 328×60 pill */
+/* The nav is the TAB level's, so it is hidden whenever an inner page is open.
+   Driven by a data-flag on .screen rather than :has(), so it behaves the same
+   in any browser this file gets opened in. */
+.screen[data-inner] .pebble-nav{display:none}
 .pebble-nav{
   position:absolute;left:50%;transform:translateX(-50%);bottom:20px;z-index:55;
   display:flex;align-items:center;gap:4px;width:328px;height:60px;padding:0 14px;
@@ -359,11 +363,12 @@ body{
 /* sub-pages slide over the tab content */
 .subpage{
   position:absolute;inset:0;z-index:30;background:var(--surface-app);
-  overflow-y:auto;scrollbar-width:none;padding-bottom:96px;
+  overflow-y:auto;scrollbar-width:none;padding-bottom:32px;
 }
-/* the ranking reserves room for the floating nav AND the docked self card, so
-   the last row can always be scrolled clear of both */
-#p-friends{padding-bottom:196px}
+/* the ranking reserves room for the docked self card, so the last row can
+   always be scrolled clear of it. No nav to allow for: an inner page does not
+   show one. */
+#p-friends{padding-bottom:132px}
 /* The teal wash (owner, 2026-09-03). Copied from the Health tab's hero in
    index.html — color.teal.400 through --metric-readiness at 10%, fading to
    the app background — rather than invented here, so the feature's pages sit
@@ -533,6 +538,16 @@ body{
    the list at all. Every row is the same card, and the one place you are
    called out is the self card docked at the bottom of the page. The name still
    reads "You", which is the only distinction the row needs. */
+/* A row with no rank numeral gives up the column too, so it begins at the
+   chip: reserving an empty 20px slot pointed at the absence instead of just
+   not showing it. Cells shift one column left; nothing else changes. */
+.lbrow[data-row="nosync"]{grid-template-columns:32px minmax(0,1fr) auto 56px}
+.lbrow[data-row="nosync"] .av{grid-area:1/1/3/2}
+.lbrow[data-row="nosync"] .who{grid-area:1/2/2/3}
+.lbrow[data-row="nosync"] .why{grid-area:2/2/3/3}
+.lbrow[data-row="nosync"] .val{grid-area:1/3/3/4}
+.lbrow[data-row="nosync"] .cheer{grid-area:1/4/3/5}
+
 /* state: not-synced — no rank numeral, em-dash figure, reason underneath.
    Hard rule 2: this row has no position, so it gets no number. */
 .lbrow[data-row="nosync"] .nm{color:var(--text-2)}
@@ -831,7 +846,7 @@ body{
    screen is the one thing you came to find out. Tapping it scrolls your row
    into view. */
 .youcard{
-  position:absolute;left:16px;right:16px;bottom:88px;z-index:56;
+  position:absolute;left:16px;right:16px;bottom:24px;z-index:56;
   padding:14px 16px;border-radius:var(--radius-16);
   background:color-mix(in srgb, var(--surface-raised) 94%, transparent);
   -webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px);
@@ -851,6 +866,13 @@ body{
 .youcard .val{grid-area:1/4/2/5;justify-self:end;display:flex;align-items:center;gap:6px}
 .youcard .num{font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
 #yc-cheer{grid-area:1/5/2/6;justify-self:end;display:flex;align-items:center}
+/* no rank, no column for one — the card begins at the chip, like the rows */
+.youcard[data-norank]{grid-template-columns:32px minmax(0,1fr) auto 56px}
+.youcard[data-norank] .rank{display:none}
+.youcard[data-norank] .av{grid-area:1/1/3/2}
+.youcard[data-norank] .nm{grid-area:1/2/2/3}
+.youcard[data-norank] .val{grid-area:1/3/2/4}
+.youcard[data-norank] #yc-cheer{grid-area:1/4/2/5}
 
 /* ── friend profile pieces ──────────────────────────────────────────────── */
 .ident{display:flex;align-items:center;gap:12px;padding:4px 0 0}
@@ -1122,7 +1144,9 @@ body{
       <div class="sub-head">
         <button class="backbtn" data-back><span class="phi" data-ph="caret-left"></span></button>
         <div class="t" id="fr-title">Rashmi</div>
-        <button class="act" data-menu="friend"><span class="phi" data-ph="dots-three-vertical"></span></button>
+        <!-- hidden on your own page: mute and remove are things you do to
+             another person, and there is no version of them aimed at you -->
+        <button class="act" id="fr-menu" data-menu="friend"><span class="phi" data-ph="dots-three-vertical"></span></button>
       </div>
       <!-- the date dropdown, sitting under the title the way it sits under
            "Good morning, Aanya" on Home and under "Activity" / "Sleep" on
@@ -1213,11 +1237,15 @@ body{
     <span id="yc-cheer"></span>
   </div>
 
-  <!-- Tapping any tab closes whatever inner page is open and returns to Home.
-       FLAG: Activity, Sleep and Me are not built in this file — this is the
-       Family ranking flow, not the whole app — so all four return to the one
-       page that exists here rather than pretending to navigate. In the app
-       they are the real tabs. -->
+  <!-- The nav belongs to the TAB level only: it shows on Home and is gone on
+       every inner page (owner, 2026-09-03) — which is the platform pattern,
+       and the reason those pages carry a back button. Hidden by .subpage
+       being open, below.
+       FLAG: this reverses the fix from the previous round, where the tabs were
+       made to work on inner pages. If the earlier note meant the nav should
+       stay visible in there, this is the one line to change back.
+       Activity, Sleep and Me are not built in this file — it is the Family
+       ranking flow, not the whole app — so a tab tap keeps you on Home. -->
   <nav class="pebble-nav" data-nav>
     <button class="pebble-tab" aria-current="page"><span class="icon phi" data-ph="house" data-weight="fill"></span><span class="label">Health</span></button>
     <button class="pebble-tab"><span class="icon phi" data-ph="sneaker-move"></span><span class="label">Activity</span></button>
@@ -1305,7 +1333,7 @@ const FSTATES = [
   ['F3','Solo',              'One friend, nothing synced on their side. Nothing to place; sharing is promoted.'],
   ['F2','First use',         'No friends yet. The educational state, and the CTA in the card slot at the same footprint.'],
   ['F1','First load',        'Leaderboard unresolved — skeleton rows, no ranks, period control already live.'],
-  ['F8','Your band is behind','Your own figure is from an earlier sync — still ranked, on what was last sent.'],
+
   ['F9','Friend has no band','A member who never paired sits in Not synced permanently.']
 ];
 /* S.date is the day the friend profile's dropdown is pointing at — {month
@@ -1326,7 +1354,6 @@ function model(){
   list.forEach(m=>{
     m.val = p==='today' ? m.today : m.week;
     if(f==='F5') m.val=null;                          // nobody synced
-    if(f==='F8' && m.you) m.stale=true;               // your band is behind
     if(f==='F9' && m.id==='akaush'){ m.noband=true; m.val=null; }
   });
   return {f, p, list, loading:f==='F1', nocircle:f==='F2', solo:f==='F3'};
@@ -1563,10 +1590,17 @@ function renderLeaderboard(){
 
   let html='';
   if(!R.has.length){
-    html += '<div class="empty"><span class="chip40">'+ico('footprints','fill')+'</span>'
-      +'<h3>Nothing to rank yet</h3>'
-      +'<p>No one on your leaderboard has a figure for '+(S.period==='today'?'today':'this period')
-      +'. Ranks appear as bands sync.</p></div>';
+    /* §6, F5: the Not-synced break on its own. The block below only renders
+       when there is nothing at all to show — with rows underneath it, an
+       empty state that says "nothing to rank" above a list of everyone is
+       the screen contradicting itself, and the state line ("0 of 4 synced")
+       has already said it once. */
+    if(!R.none.length){
+      html += '<div class="empty"><span class="chip40">'+ico('footprints','fill')+'</span>'
+        +'<h3>Nothing to rank yet</h3>'
+        +'<p>No one on your ranking has a figure for today. Ranks appear as '
+        +'bands sync.</p></div>';
+    }
   } else {
     $('#lb-podium').innerHTML = renderPodium(R.has.slice(0,3));
     injectIcons($('#lb-podium'));
@@ -1602,7 +1636,7 @@ function renderLeaderboard(){
                     : 'nothing recorded yet';
           return '<div class="lbrow" data-row="nosync"'+(m.you?' data-you':'')
             +(m.you?' data-tap="mine"':' data-tap="friend" data-id="'+m.id+'"')+'>'
-            +'<span class="rank"></span>'+avatar(m)
+            +avatar(m)
             +'<span class="who"><span class="nm">'+(m.you?'You':m.name)+'</span></span>'
             +figure(null,true)+cheerBtn(m)+'<span class="why">'+why+'</span></div>';
         }).join('') + '</div>';
@@ -1659,7 +1693,10 @@ function renderYouCard(){
      neither a row nor a rank tells you. If it should return, the honest place
      is one line under the state line at the top of this page, not squeezed
      into a row. */
+  /* same rule as the rows (owner, 2026-09-03): with no rank there is no
+     numeral column, so the card starts at the chip too */
   $('#yc-rank').textContent = me.rank || '';
+  yc.toggleAttribute('data-norank', !me.rank);
   $('#yc-num').textContent  = me.val!=null ? n(me.val) : '—';
   $('#yc-av').setAttribute('data-hue', hueOf('me'));
   $('#yc-cheer').innerHTML  = cheerBtn({you:true});
@@ -1714,12 +1751,16 @@ function dayData(p, mi, d){
 }
 function friendOf(){
   const M=model();
+  ranked(M.list);                 /* ranked() is what assigns .rank — without
+                                     it every profile reads as unranked */
   return M.list.find(m=>m.id===S.friend) || M.list.find(m=>!m.you) || null;
 }
 
 function renderFriend(){
   const M=model(), R=ranked(M.list);
-  const p = friendOf();
+  /* from the list this function has already ranked, so the identity line and
+     the ranking agree */
+  const p = M.list.find(m=>m.id===S.friend) || M.list.find(m=>!m.you);
   if(!p) return;
   const isToday = S.date.mi===CAL_TODAY.mi && S.date.d===CAL_TODAY.d;
   const when    = dateLabel(S.date.mi, S.date.d).replace('Today, ','');
@@ -1728,15 +1769,27 @@ function renderFriend(){
      it, so it takes the short form and stays on one line */
   const shortWhen = MONTH_SHORT[S.date.mi]+' '+S.date.d;
   const day     = dayData(p, S.date.mi, S.date.d);
-  $('#fr-title').textContent = p.name;
+  /* Owner, 2026-09-03: your own row opens your own profile, through the same
+     component as everyone else's — the point of the page is that it is the
+     view your friends get of you. This reverses hard rule 7, which forbade a
+     second copy of your own data on the grounds that Home and Activity are
+     already your profile. They are: this page is not for reading your day,
+     it is for seeing what you are sharing. That is a different question and it
+     had no answer anywhere in the app.
+     FLAG: it is also the only screen that answers "what can they see?" after
+     the join sheet has been dismissed. If a privacy review wants that stated
+     rather than implied, this page is where the sentence goes. */
+  const isMe = !!p.you;
+  $('#fr-title').textContent = isMe ? 'Your profile' : p.name;
+  $('#fr-menu').hidden = isMe;
   $('#mute-name').textContent = p.name;
-  $('#cal-who').innerHTML = p.name+'&rsquo;s history';
+  $('#cal-who').innerHTML = isMe ? 'Your history' : p.name+'&rsquo;s history';
 
   /* the identity block answers the ranking you arrived from — but only for
      today, because a rank is a thing today has and an earlier date does not */
   const rk = isToday
     ? ((p.val!=null && p.rank) ? '#'+p.rank+' today &middot; '+n(p.val)+' steps'
-                              : 'Not ranked today')
+                              : (p.you?'You have nothing synced today':'Not ranked today'))
     : (day ? when+' &middot; '+n(day.steps)+' steps' : when+' &middot; nothing recorded');
   const sy = p.noband ? 'No band paired'
            : !isToday ? ''
@@ -1744,9 +1797,17 @@ function renderFriend(){
            : p.since  ? 'Last synced '+p.since : 'Never synced';
 
   let html = '<div class="ident">'+avatar(p,'lg')
-    +'<span class="txt"><span class="nm">'+p.name+'</span>'
+    +'<span class="txt"><span class="nm">'+(isMe?'You':p.name)+'</span>'
     +'<span class="rk">'+rk+'</span>'
     +(sy?'<span class="sy">'+sy+'</span>':'')+'</span></span></div>';
+
+  /* one line, only on your own page, saying whose view this is */
+  if(isMe){
+    html += '<div class="disclose">'+ico('info','fill')
+      +'<p>This is the page your friends see when they tap you on their '
+      +'ranking &mdash; your activity, heart rate, blood oxygen and sleep, '
+      +'for any date.</p></div>';
+  }
 
   /* The "Compared with you" card came out (owner, 2026-09-03). §4.3 called it
      the reason this page exists; the owner's read is that the ranking already
@@ -1809,12 +1870,15 @@ function renderFriend(){
       +(day.sleep||'&mdash;')+'</span></div></div>';
   }
 
-  /* the page's one primary action */
-  html += '<div style="padding:4px 0 8px">'
-    + (S.cheered[p.id]==='done'
-        ? '<button class="btn btn--secondary" disabled>Cheered</button>'
-        : '<button class="btn btn--primary" data-cheerid="'+p.id+'">Cheer '+p.name+'</button>')
-    + '</div>';
+  /* the page's one primary action — absent on your own page, where there is
+     nothing to do to yourself */
+  if(!isMe){
+    html += '<div style="padding:4px 0 8px">'
+      + (S.cheered[p.id]==='done'
+          ? '<button class="btn btn--secondary" disabled>Cheered</button>'
+          : '<button class="btn btn--primary" data-cheerid="'+p.id+'">Cheer '+p.name+'</button>')
+      + '</div>';
+  }
 
   $('#fr-body').innerHTML = html;
   injectIcons($('#fr-body'));
@@ -2078,7 +2142,15 @@ function showScreen(id){
   closeSheets(); $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true;
   if(id.indexOf('page-')===0){ $('#'+id).classList.add('active'); }
   else { $('#page-home').classList.add('active'); $('#'+id).hidden=false; $('#'+id).scrollTop=0; }
+  syncChrome();
   renderYouCard();
+}
+/* one place decides what the phone's chrome shows: the nav belongs to the tab
+   level, so it is hidden while any inner page is open, and the docked self
+   card drops to the screen's edge when the nav is not there to clear. */
+function syncChrome(){
+  const inner = $$('.subpage').some(s=>!s.hidden);
+  $('.screen').toggleAttribute('data-inner', inner);
 }
 $$('#screens input').forEach(function(r){
   r.addEventListener('change',function(){
@@ -2115,7 +2187,9 @@ document.addEventListener('click', function(e){
   if(confirmEl){ openSheet(confirmEl.dataset.confirm, confirmEl.dataset.id); return; }
 
   if(t.closest('[data-close]')){ closeSheets(); $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true; return; }
-  if(t.closest('[data-back]')){ t.closest('.subpage').hidden=true; syncYouCard(); return; }
+  if(t.closest('[data-back]')){
+    t.closest('.subpage').hidden=true; syncChrome(); syncYouCard(); return;
+  }
   if(t.closest('[data-nav]')){ showScreen('page-home'); return; }
   if(t.closest('[data-cal]')){ $('#cal-sheet').hidden=false; $('#cal-scrim').hidden=false; renderCal(); return; }
 
@@ -2142,30 +2216,20 @@ document.addEventListener('click', function(e){
   if(rowEl){
     const kind=rowEl.dataset.tap;
     if(kind==='friends'){ showScreen('p-friends'); return; }
-    /* tapping the you-card takes you to your row, per §4.2 */
-    if(kind==='youcard'){
-      const row=$('#lb-mount .lbrow[data-you]');
-      if(row) row.scrollIntoView({block:'center', behavior:
-        matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto':'smooth'});
-      return;
-    }
+
     if(kind==='friend'){
       S.friend=rowEl.dataset.id;
       S.date={mi:CAL_TODAY.mi, d:CAL_TODAY.d};      /* every profile opens on today */
       $('#p-friend [data-datelabel]').textContent = dateLabel(S.date.mi, S.date.d);
       renderFriend(); renderCal(); showScreen('p-friend'); return;
     }
-    /* hard rule 7 — your own row never opens a second copy of your own data.
-       In the real build this routes to the Activity tab at the selected
-       period. Here it says so rather than pretending to navigate.
-       FLAG (§9): confirm that back from there returns to the leaderboard. */
-    if(kind==='mine'){
-      const s=$('#lb-status');
-      s.classList.add('stale');
-      s.innerHTML=ico('arrows-clockwise','fill')+'Your own row opens the Activity tab &mdash; not a second profile';
-      injectIcons(s);
-      setTimeout(renderLeaderboard, 1900);
-      return;
+    /* your own row and the self card open your own profile — see the note in
+       renderFriend() for why this now exists */
+    if(kind==='mine' || kind==='youcard'){
+      S.friend='me';
+      S.date={mi:CAL_TODAY.mi, d:CAL_TODAY.d};
+      $('#p-friend [data-datelabel]').textContent = dateLabel(S.date.mi, S.date.d);
+      renderFriend(); renderCal(); showScreen('p-friend'); return;
     }
   }
 });
