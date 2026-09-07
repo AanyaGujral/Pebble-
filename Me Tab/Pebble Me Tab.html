@@ -38,7 +38,7 @@ img{max-width:100%}
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,400..700&family=League+Spartan:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- ==========================================================================
-     ME TAB — BUILD SLICE 1 of 5, plus S01 Profile and S10 Firmware Update
+     ME TAB — THE FULL TAB: shell, components, and every inner page
 
      What this file is, in plain English:
        The left-hand panel is a set of switches for reviewing. The phone in
@@ -54,11 +54,21 @@ img{max-width:100%}
                                firmware the band is on, what a new one would
                                change, and the whole install walked through
                                in twelve states.
+         • every other row   — S03 Device detail (tap the card: shut down /
+                               restart / reset), S05 Goal Setting, S06 Health
+                               Monitor, S07 Health Reminder (+ reminder detail
+                               and alarm screens), S08 Find Device, S09 Take
+                               Picture, S11 Units & Format, S12 Apple Health,
+                               S13 FAQs, S14 About. Every row on the tab now
+                               opens something.
 
-     What is deliberately NOT here (it belongs to later slices):
-       • Real navigation from any row except Profile and Firmware Update.
-       • The ten tab states T1–T10 (slice 2).
-       • The other 12 inner pages, S02–S09 and S11–S14 (slices 2–4).
+     What is deliberately NOT here:
+       • S02 Pair a device and S04 Connect the other band — the pairing flow
+         is to be reused from onboarding, not rebuilt (§6). "Pair a device"
+         buttons return to the tab, where the CTA sits, until it lands.
+       • The ten tab STATES as a control-panel matrix (T1–T10). The band
+         pages do read the device card's state, so T2 (no band) and T4
+         (disconnected) are already exercised across every band page.
 
      Note on build order: §7 of the spec holds S10 back to slice 5, on the
      grounds that it should be built against an error vocabulary four other
@@ -121,6 +131,14 @@ img{max-width:100%}
 
   /* accent — the product teal. One primary action per screen. */
   --metric-readiness:var(--teal-400);
+  /* the other metric aliases from js/tokens.js `metric` — S05 Goal Setting
+     colours each goal by its metric, exactly as the Activity goal page does.
+     Aliases of ramps already above; no new value is introduced. */
+  --metric-steps:var(--gold-400);
+  --metric-distance:var(--emerald-400);
+  --metric-calories:var(--tangerine-400);
+  --metric-sleep:var(--violet-400);
+  --metric-activity:var(--lime-400);
 
   /* semantic quads — glyphs and badges only, never chart lines or fills */
   --positive-bg:#0E2A1B;--positive-fill:#1E5B38;--positive-icon:#4ADE80;--positive-text:#8AF0B0;
@@ -1322,6 +1340,266 @@ body{
 [data-fw="reconnect"]  .fw-empty.e-recon{display:block}
 
 /* ==========================================================================
+   10e. THE REMAINING INNER PAGES — slices 2, 3 and 4 in one pass
+   --------------------------------------------------------------------------
+   Owner's brief (2026-09-03), page by page:
+     S05 Goal Setting     — the Activity tab's goal page, plus sleep and
+                            active-minutes goals
+     S06 Health Monitor   — from the supplied screenshot: per-sensor
+                            toggles, a sampling interval, HR alert + limit
+     S07 Health Reminder  — from the supplied screenshots: bedtime nudge,
+                            sedentary + water reminders (start / end /
+                            interval 30-60-90 / repeat days), alarms, a
+                            do-not-disturb window
+     S03 Device detail    — the "system settings": shut down / restart /
+                            reset, each explained, each behind a confirm
+                            sheet (plus unbind — required by the spec)
+     S11 Units & Format   — distance, temperature, time format; two options
+                            each
+     S12 Apple Health     — logo, everything that is shared, and once
+                            connected a way to push the past 7 days
+     S14 About            — version, privacy policy, and the two consent
+                            controls (usage analytics, AI insights)
+   And so no row on the tab dead-ends: S08 Find Device, S09 Take Picture
+   and S13 FAQs, kept simple — no detail was given for them.
+
+   Layout: the screenshots draw each row as its own rounded card. This file
+   keeps the Me tab's shipped pattern instead — one `.group` card per section
+   with inset hairlines between rows — because that is what every row on the
+   tab behind these pages already does, and the spec says the shipped
+   component wins over a screenshot of the dev build. FLAGGED, not decided:
+   see the questions in the changelog.
+
+   Section headers ("MONITORING", "ALERTS") are fine HERE. Hard rule 2 bans
+   group headers on the TAB, where the five silent breaks do that job; the
+   screenshots use them on inner pages and they help on a long one.
+   ========================================================================== */
+
+/* the generic inner-page body — same rhythm as .prof-body and .fw-body */
+.pbody{padding:4px var(--gutter) 24px;display:flex;flex-direction:column;gap:12px}
+.sec-h{
+  padding:10px 4px 0;font-size:11px;line-height:16px;font-weight:600;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);
+}
+.pbody > .sec-h:first-child{padding-top:4px}
+/* a section header with an action at its right — "Alarm  +" */
+.sec-h.with-act{display:flex;align-items:center;justify-content:space-between;padding-right:0}
+.sec-h .iconbtn{width:32px;height:32px;background:transparent;color:var(--metric-readiness)}
+.sec-h .iconbtn .phi{width:18px;height:18px}
+
+/* ---- rows with a permanent description under the label -----------------
+   Not the `.why` reason line (that is for a state), a standing explanation:
+   "All-day interval sampling". Same 11/16 in text-3. */
+.row .sub,.trow .sub{display:block;margin-top:2px;font-size:11px;line-height:16px;font-weight:400;color:var(--text-3)}
+.row .rbody{flex:1;min-width:0}
+.row.two-line,.trow.two-line{align-items:center}
+
+/* ---- the "select" row: a value you tap to change --------------------------
+   The trailing value goes accent, and a caret-up-down says it is a choice
+   rather than a fact — copied from the screenshot's "10 min" affordance. */
+.row .val.pick{color:var(--metric-readiness);font-weight:500}
+.row .val.pick .num{color:var(--metric-readiness)}
+.row .updown{flex:none;width:16px;height:16px;color:var(--text-3)}
+.row .updown svg{width:100%;height:100%;display:block}
+/* a row that cannot be used right now (sampling interval with continuous HR
+   off): dimmed AND inert, unlike a band row, which is never either */
+.row.is-off{opacity:.45;pointer-events:none}
+
+/* ---- segmented control — the 2- and 3-way pickers ------------------------
+   Units & Format (km | mi), the reminder interval (30 | 60 | 90 min). Selected
+   is the accent fill: §2 says accent = selected states. */
+.seg{display:inline-flex;flex:none;padding:3px;gap:2px;border-radius:999px;background:var(--surface-raised)}
+.seg button{
+  height:28px;padding:0 12px;border:0;border-radius:999px;background:transparent;
+  font-family:var(--font-text);font-size:12px;line-height:16px;font-weight:500;color:var(--text-2);
+  cursor:pointer;transition:background var(--duration-fast) ease,color var(--duration-fast) ease;
+}
+.seg button .num{font-size:12px;line-height:16px;font-weight:inherit;color:inherit}
+.seg button[aria-pressed="true"]{background:var(--metric-readiness);color:var(--text-on-accent);font-weight:600}
+.seg button:focus-visible{outline:1px solid var(--text-2);outline-offset:-2px}
+/* full-width variant, for a control that owns its own row */
+.seg.wide{display:flex;margin:0 16px 16px}
+.seg.wide button{flex:1}
+
+/* ---- repeat days — S M T W T F S ---------------------------------------- */
+.days{display:flex;justify-content:space-between;gap:6px;padding:4px 16px 16px}
+.day{
+  width:36px;height:36px;flex:0 0 auto;border:0;border-radius:999px;cursor:pointer;
+  background:var(--surface-raised);color:var(--text-2);
+  font-family:var(--font-text);font-size:12px;line-height:16px;font-weight:600;
+  transition:background var(--duration-fast) ease,color var(--duration-fast) ease;
+}
+.day[aria-pressed="true"]{background:var(--metric-readiness);color:var(--text-on-accent)}
+.day:focus-visible{outline:1px solid var(--text-2);outline-offset:2px}
+
+/* ---- goal cards — PORTED from index.html's Activity goal page -------------
+   "Same as goal setting at activities" (owner): same card, same 20px radius,
+   same metric-coloured glyph, same big numeral + small uppercase unit. The
+   metric colour aliases were added to the token block above for this. */
+.goalcard{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  background:var(--surface-card);border:0;border-radius:var(--radius-card);padding:16px;
+  cursor:pointer;font-family:inherit;color:inherit;
+  transition:background var(--duration-fast) ease,opacity var(--duration-fast) ease;
+}
+.goalcard:hover{background:var(--surface-raised)}
+.goalcard:active{opacity:.7}
+.goalcard .gi{flex:none;width:20px;height:20px}
+.goalcard .nm{flex:1;min-width:0;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.goalcard .gv{display:flex;align-items:baseline;gap:4px}
+.goalcard .gn{
+  font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:700;
+  font-feature-settings:var(--num-features);color:var(--text-1);
+}
+.goalcard .gu{font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.goalcard .caret{flex:none;width:16px;height:16px;color:var(--text-3)}
+/* the write-to-band line under a goal — pending, queued, or saved */
+.goalcard .gw{
+  display:none;width:100%;margin-top:-6px;padding:0 16px 12px;
+  font-size:11px;line-height:16px;color:var(--text-3);
+}
+.goalwrap{display:flex;flex-direction:column;background:var(--surface-card);border-radius:var(--radius-card)}
+.goalwrap .goalcard{background:transparent}
+.goalwrap[data-w="pending"] .gw,.goalwrap[data-w="queued"] .gw,.goalwrap[data-w="saved"] .gw{display:flex;align-items:center;gap:6px}
+.goalwrap[data-w="queued"] .gw{color:var(--caution-text)}
+.goalwrap[data-w="saved"] .gw{color:var(--positive-text)}
+.goalwrap .gw .phi{width:12px;height:12px;flex:none}
+.goalwrap[data-w="pending"] .gw .phi{animation:spin 1.1s linear infinite}
+
+/* ---- the value-picker sheet rows — PORTED from index.html -----------------
+   The Activity goal sheet: one big numeral per row, the unit small beside it,
+   the picked row on the raised surface. Lives inside the field sheet here,
+   so cancel / title / tick is the same header as every other picker. */
+.vals{margin-top:14px;display:flex;flex-direction:column;gap:6px;max-height:328px;overflow-y:auto;scrollbar-width:none}
+.vals::-webkit-scrollbar{display:none}
+.sheet-row{
+  display:flex;align-items:center;justify-content:center;width:100%;height:48px;
+  border:0;border-radius:14px;background:transparent;cursor:pointer;font-family:inherit;
+  transition:background var(--duration-fast) ease;
+}
+.sheet-row:hover{background:var(--surface-raised)}
+.sheet-row.sel{background:var(--surface-raised)}
+.sheet-row .v{
+  font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:500;
+  font-feature-settings:var(--num-features);color:var(--text-3);
+}
+.sheet-row.sel .v{color:var(--text-1);font-weight:700}
+.sheet-row .u{margin-left:6px;font-family:var(--font-text);font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+
+/* ---- the time wheel — two numeric columns in the same picker chrome -------
+   From the Add Alarm screenshot: hours beside minutes, one selection band.
+   The screenshot confirms with a Done button under the wheel; this one uses
+   the tick in the header like every other sheet in the app (FLAGGED). */
+#fsTime .col{font-variant-numeric:tabular-nums}
+
+/* ---- an alarm in the list ------------------------------------------------ */
+.alarm .lab{display:flex;flex-direction:column;gap:2px}
+.alarm .at{
+  font-family:var(--font-number);font-size:20px;line-height:24px;font-weight:700;
+  font-feature-settings:var(--num-features);color:var(--text-1);
+}
+.alarm .ad{font-size:11px;line-height:16px;color:var(--text-3)}
+.alarm[data-toggle="off"] .at{color:var(--text-3)}
+/* the empty line under "Alarm" when there are none */
+.empty-line{padding:0 4px 4px;font-size:13px;line-height:18px;color:var(--text-3)}
+
+/* ---- the device page hero -------------------------------------------------
+   The same product shot, name and chip as the card on the tab, so the page
+   opens as a zoom-in rather than a different place. */
+.dev-hero{
+  background:var(--surface-card);border-radius:var(--radius-card);
+  padding:20px 16px;display:flex;align-items:center;gap:16px;
+}
+.dev-hero .shot{position:relative;flex:0 0 auto;width:96px;height:96px;display:grid;place-items:center}
+.dev-hero .shot .phi{width:52px;height:52px;color:var(--text-2)}
+.dev-hero .shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.dev-hero .shot:has(img) .phi{display:none}
+.dev-hero .meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.dev-hero .name{font-size:17px;line-height:22px;font-weight:600;color:var(--text-1)}
+/* the three system actions: label + one-line reason, destructive label only
+   on the one that deletes. Never a red fill (§2). */
+.row.action .lab{color:var(--text-1)}
+.row.action.destructive .lab{color:var(--negative-text)}
+.row.action .glyph{color:var(--neutral-200)}
+.row.action.destructive .glyph{color:var(--negative-icon)}
+
+/* ---- Apple Health --------------------------------------------------------
+   FLAG: the Apple Health icon is Apple's trademark and no asset was supplied,
+   so this is a token-drawn STAND-IN — a light tile with the heart glyph in
+   the crimson ramp — that keeps the layout honest. Apple's brand guidelines
+   require the real icon; drop it in as an <img> over this tile the way the
+   device photographs are done. */
+.ah-hero{
+  background:var(--surface-card);border-radius:var(--radius-card);
+  padding:24px 16px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+.ah-logo{
+  position:relative;width:64px;height:64px;border-radius:16px;
+  background:var(--neutral-0);display:grid;place-items:center;overflow:hidden;
+}
+.ah-logo .phi{width:34px;height:34px;color:var(--crimson-400)}
+.ah-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.ah-logo:has(img) .phi{display:none}
+.ah-hero .h{margin-top:14px;font-size:20px;line-height:26px;font-weight:600;letter-spacing:-0.005em;color:var(--text-1)}
+.ah-hero .s{margin-top:6px;font-size:13px;line-height:18px;color:var(--text-2);max-width:272px}
+.ah-hero .chip{margin-top:14px}
+/* the shared-data rows: a tick list before connecting, switches after */
+.share .glyph{color:var(--neutral-200)}
+[data-ah="not-connected"] .share .tctrl{display:none}
+[data-ah="not-connected"] .share .tick-only{display:block}
+.share .tick-only{display:none;width:18px;height:18px;color:var(--positive-icon);flex:none}
+
+/* ---- About: the version row counts taps -----------------------------------
+   §6 S14: "the home of the 7-tap developer unlock on the version number". */
+.row .tapnote{display:none}
+.row[data-taps] .tapnote{display:block}
+
+/* ---- FAQ accordion ------------------------------------------------------- */
+.faq .row{align-items:flex-start}
+.faq .row .lab{white-space:normal}
+.faq .row .caret{margin-top:1px;transition:transform var(--duration-base) ease}
+.faq .row[aria-expanded="true"] .caret{transform:rotate(90deg)}
+.faq .ans{
+  display:none;padding:0 16px 16px 16px;margin-top:-6px;
+  font-size:13px;line-height:19px;font-weight:400;color:var(--text-2);
+}
+.faq .row[aria-expanded="true"] + .ans{display:block}
+/* the answer needs the same inset hairline the rows give each other */
+.faq .ans + .row::after{
+  content:"";position:absolute;top:0;left:16px;right:16px;
+  height:var(--border-hairline);background:var(--divider);
+}
+
+/* ---- the simple hero used by Find Device and Take Picture ---------------- */
+.mini-hero{
+  background:var(--surface-card);border-radius:var(--radius-card);
+  padding:28px 20px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+.mini-hero .mark{width:72px;height:72px;border-radius:999px;display:grid;place-items:center;background:var(--neutral-bg)}
+.mini-hero .mark .phi{width:32px;height:32px;color:var(--neutral-icon)}
+.mini-hero[data-tone="accent"] .mark{background:color-mix(in srgb,var(--metric-readiness) 18%,transparent)}
+.mini-hero[data-tone="accent"] .mark .phi{color:var(--metric-readiness)}
+.mini-hero[data-tone="caution"] .mark{background:var(--caution-bg)}
+.mini-hero[data-tone="caution"] .mark .phi{color:var(--caution-icon)}
+.mini-hero.live .mark .phi{animation:ring 1s ease-in-out infinite}
+@keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(6deg)}}
+.mini-hero.busy .mark .phi{animation:spin 1.1s linear infinite}
+.mini-hero .h{margin-top:18px;font-size:20px;line-height:26px;font-weight:600;letter-spacing:-0.005em;color:var(--text-1)}
+.mini-hero .s{margin-top:8px;font-size:13px;line-height:19px;color:var(--text-2);max-width:272px}
+.mini-hero .acts{margin-top:20px;width:100%;max-width:264px;display:flex;flex-direction:column;gap:4px}
+
+/* ---- the band gate — §5.5 on every band page ------------------------------
+   Goal Setting, Health Monitor, Health Reminder, Find Device and Take Picture
+   all read the DEVICE CARD's state: pairing CTA showing → no band → the
+   `no-band` empty state; Disconnected → the `reconnect` one. Hard rule 3 —
+   the rows stay live and open these instead of greying out. */
+.band-page .gate{display:none}
+.band-page[data-band="no-band"] .pbody,
+.band-page[data-band="offline"] .pbody{display:none}
+.band-page[data-band="no-band"] .gate.g-noband{display:block}
+.band-page[data-band="offline"] .gate.g-offline{display:block}
+
+/* ==========================================================================
    11. THE COMPONENT BENCH — the review view, not part of the app
    --------------------------------------------------------------------------
    Every state of every component, drawn at once and labelled, so a whole
@@ -1420,8 +1698,8 @@ body{
   <div class="mh-in">
     <p class="mh-eyebrow">Pebble &middot; prototype review</p>
     <h1 class="mh-t">The Me tab</h1>
-    <p class="mh-s">The tab shell and all six components, every state &mdash; plus two inner pages. <strong>S01&nbsp;Profile</strong>: everything onboarding collected about you, and the flow for changing it. <strong>S10&nbsp;Firmware&nbsp;Update</strong>: the riskiest page in the tab, in all twelve of its states, from <em>up to date</em> through to a band that drops out mid&#8209;flash.</p>
-    <p class="mh-s mh-how">Tap <strong>Profile</strong> or <strong>Firmware&nbsp;Update</strong> on the tab to open them. On the firmware page, <strong>Update&nbsp;now</strong> runs the real sequence &mdash; download, install, restart &mdash; and the badge dot on the tab clears itself when it lands. Use the panel to switch the device slot, the dormant bands, the confirm sheet, and every profile and firmware state.</p>
+    <p class="mh-s">The whole tab. Every row opens its page: Profile, Goal Setting, Health Monitor, Health Reminder (with its reminder and alarm screens), Find Device, Take Picture, Firmware Update, Units &amp; Format, Apple Health, FAQs and About &mdash; and the device card opens the device page with shut down, restart and reset behind confirm sheets.</p>
+    <p class="mh-s mh-how">Tap around on the phone, or jump with the panel. Switch the <strong>Device card slot</strong> to a Pairing CTA or to Disconnected and watch every band page turn into its empty state. Flip a toggle on a band page and it goes <em>pending</em> before it settles; flip one with the band disconnected and it refuses, with the reason.</p>
   </div>
 </header>
 
@@ -1436,8 +1714,21 @@ body{
   <div class="opts" id="viewOpts">
     <label class="on"><input type="radio" name="view" value="me" checked><span>Tab shell<span class="desc">The Me tab: header + five silent breaks</span></span></label>
     <label><input type="radio" name="view" value="bench"><span>Component bench<span class="desc">All six components, every state</span></span></label>
-    <label><input type="radio" name="view" value="profile"><span>Profile page<span class="desc">S01 — the inner page, and its edit flow</span></span></label>
-    <label><input type="radio" name="view" value="firmware"><span>Firmware page<span class="desc">S10 — twelve states, switched below</span></span></label>
+    <p class="hint" style="margin:10px 0 4px">Inner pages &mdash; or tap the rows on the tab</p>
+    <label><input type="radio" name="view" value="device"><span>Device detail<span class="desc">S03 &mdash; tap the device card. Shut down / restart / reset</span></span></label>
+    <label><input type="radio" name="view" value="profile"><span>Profile<span class="desc">S01</span></span></label>
+    <label><input type="radio" name="view" value="goals"><span>Goal Setting<span class="desc">S05</span></span></label>
+    <label><input type="radio" name="view" value="monitor"><span>Health Monitor<span class="desc">S06</span></span></label>
+    <label><input type="radio" name="view" value="reminders"><span>Health Reminder<span class="desc">S07</span></span></label>
+    <label><input type="radio" name="view" value="remdetail"><span>&nbsp;&nbsp;&nbsp;Sedentary reminder<span class="desc">S07 &mdash; detail screen</span></span></label>
+    <label><input type="radio" name="view" value="alarm"><span>&nbsp;&nbsp;&nbsp;Add alarm<span class="desc">S07 &mdash; alarm screen</span></span></label>
+    <label><input type="radio" name="view" value="find"><span>Find Device<span class="desc">S08</span></span></label>
+    <label><input type="radio" name="view" value="shutter"><span>Take Picture<span class="desc">S09</span></span></label>
+    <label><input type="radio" name="view" value="firmware"><span>Firmware Update<span class="desc">S10 &mdash; twelve states, switched below</span></span></label>
+    <label><input type="radio" name="view" value="units"><span>Units &amp; Format<span class="desc">S11</span></span></label>
+    <label><input type="radio" name="view" value="health"><span>Apple Health<span class="desc">S12</span></span></label>
+    <label><input type="radio" name="view" value="faq"><span>FAQs<span class="desc">S13</span></span></label>
+    <label><input type="radio" name="view" value="about"><span>About<span class="desc">S14</span></span></label>
   </div>
 
   <div class="grp">
@@ -1514,6 +1805,29 @@ body{
       <label><input type="radio" name="fw" value="offline"><span>Offline<span class="desc">Band unaffected — Bluetooth is local</span></span></label>
       <label><input type="radio" name="fw" value="needs-band"><span>Needs band<span class="desc">No band paired at all</span></span></label>
       <label><input type="radio" name="fw" value="reconnect"><span>Reconnect first<span class="desc">Band paired but offline</span></span></label>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h2>Band pages</h2>
+    <p class="hint">Goal Setting, Health Monitor, Health Reminder, Find Device and Take Picture read the <b>Device card slot</b> above. Pick a Pairing CTA to see their no-band state; pick Disconnected for reconnect-first. Goal Setting stays open while disconnected and queues its changes (T4).</p>
+  </div>
+
+  <div class="grp">
+    <h2>Apple Health &mdash; S12</h2>
+    <div class="opts" id="ahOpts">
+      <label class="on"><input type="radio" name="ah" value="not-connected" checked><span>Not connected</span></label>
+      <label><input type="radio" name="ah" value="connected"><span>Connected<span class="desc">Per-type switches, send past 7 days</span></span></label>
+      <label><input type="radio" name="ah" value="partial"><span>Partial<span class="desc">Two types denied in the Health app</span></span></label>
+      <label><input type="radio" name="ah" value="revoked"><span>Revoked at OS level</span></label>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h2>Take Picture &mdash; camera</h2>
+    <div class="opts" id="shutOpts">
+      <label class="on"><input type="radio" name="shut" value="granted" checked><span>Permission granted</span></label>
+      <label><input type="radio" name="shut" value="denied"><span>Permission denied</span></label>
     </div>
   </div>
 
@@ -1647,13 +1961,13 @@ body{
 
           <!-- ── break 2 · you ───────────────────────────────────────── -->
           <div class="group">
-            <button class="row" type="button">
+            <button class="row" type="button" data-page="p-profile">
               <span class="glyph phi" data-ph="user" data-weight="fill"></span>
               <span class="lab">Profile</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
             <!-- needs-band, but never dimmed and never disabled (hard rule 3) -->
-            <button class="row needs-band" type="button">
+            <button class="row needs-band" type="button" data-page="p-goals">
               <span class="glyph phi" data-ph="crosshair" data-weight="fill"></span>
               <span class="lab">Goal Setting</span>
               <span class="phi caret" data-ph="caret-right"></span>
@@ -1662,22 +1976,22 @@ body{
 
           <!-- ── break 3 · what the band does ────────────────────────── -->
           <div class="group">
-            <button class="row needs-band" type="button">
+            <button class="row needs-band" type="button" data-page="p-monitor">
               <span class="glyph phi" data-ph="heartbeat" data-weight="fill"></span>
               <span class="lab">Health Monitor</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
-            <button class="row needs-band" type="button">
+            <button class="row needs-band" type="button" data-page="p-reminders">
               <span class="glyph phi" data-ph="bell" data-weight="fill"></span>
               <span class="lab">Health Reminder</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
-            <button class="row needs-band" type="button">
+            <button class="row needs-band" type="button" data-page="p-find">
               <span class="glyph phi" data-ph="magnifying-glass" data-weight="fill"></span>
               <span class="lab">Find Device</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
-            <button class="row needs-band" type="button">
+            <button class="row needs-band" type="button" data-page="p-shutter">
               <span class="glyph phi" data-ph="camera" data-weight="fill"></span>
               <span class="lab">Take Picture</span>
               <span class="phi caret" data-ph="caret-right"></span>
@@ -1685,7 +1999,7 @@ body{
             <!-- the first band row that navigates: S10 is built. The dot is
                  T8's update badge and is driven by the real version pair, so
                  it clears itself the moment an install finishes. -->
-            <button class="row needs-band" id="rowFirmware" type="button">
+            <button class="row needs-band" id="rowFirmware" type="button" data-page="p-firmware">
               <span class="glyph phi" data-ph="download-simple" data-weight="fill"></span>
               <span class="lab">Firmware Update</span>
               <span class="dot" id="fwDot" title="Update available"></span>
@@ -1697,45 +2011,24 @@ body{
                Break 4 exists so the affordance is self-evident: a tap here
                flips something, a tap anywhere else navigates. Two rows,
                not five — see the flag on the toggle-row component above. -->
-          <div class="group">
-            <div class="trow" data-toggle="on">
-              <span class="glyph phi" data-ph="moon" data-weight="fill"></span>
-              <span class="tbody">
-                <span class="lab">Do Not Disturb</span>
-                <span class="why"></span>
-              </span>
-              <span class="tctrl">
-                <span class="phi spin" data-ph="circle-notch" data-weight="fill"></span>
-                <button class="switch on" type="button" role="switch" aria-checked="true" aria-label="Do Not Disturb"><i></i></button>
-              </span>
-            </div>
-            <div class="trow" data-toggle="on">
-              <span class="glyph phi" data-ph="phone" data-weight="fill"></span>
-              <span class="tbody">
-                <span class="lab">Call notification</span>
-                <span class="why"></span>
-              </span>
-              <span class="tctrl">
-                <span class="phi spin" data-ph="circle-notch" data-weight="fill"></span>
-                <button class="switch on" type="button" role="switch" aria-checked="true" aria-label="Call notification"><i></i></button>
-              </span>
-            </div>
-          </div>
+          <!-- rendered by renderTabToggles(): the Do Not Disturb switch here and
+               the DND window on the Health Reminder page are ONE value -->
+          <div class="group" id="tabToggles"></div>
 
           <!-- ── break 5 · app and help ──────────────────────────────── -->
           <div class="group">
-            <button class="row" type="button">
+            <button class="row" type="button" data-page="p-units">
               <span class="glyph phi" data-ph="ruler" data-weight="fill"></span>
               <span class="lab">Units &amp; Format</span>
-              <span class="val">Metric</span>
+              <span class="val" id="unitsVal">Metric</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
-            <button class="row" type="button">
+            <button class="row" type="button" data-page="p-health-sync">
               <span class="glyph phi" data-ph="heart" data-weight="fill"></span>
               <span class="lab">Apple Health</span>
               <span class="phi caret" data-ph="caret-right"></span>
             </button>
-            <button class="row" type="button">
+            <button class="row" type="button" data-page="p-faq">
               <span class="glyph phi" data-ph="question" data-weight="fill"></span>
               <span class="lab">FAQs</span>
               <span class="phi caret" data-ph="caret-right"></span>
@@ -1743,7 +2036,7 @@ body{
             <!-- About now also holds Usage analytics + AI insights, next to
                  the privacy policy and user agreement links already there
                  (owner, 2026-09-03). Built in slice 3 with S14. -->
-            <button class="row" type="button">
+            <button class="row" type="button" data-page="p-about">
               <span class="glyph phi" data-ph="info" data-weight="fill"></span>
               <span class="lab">About</span>
               <span class="val num">v2.0.1</span>
@@ -2119,6 +2412,164 @@ body{
         </div>
       </section>
 
+
+      <!-- ==================================================================
+           S05 · GOAL SETTING — `p-goals`
+           The Activity tab's goal page, ported card for card, with two more
+           goals: sleep and active minutes. Rendered by renderGoals().
+           ================================================================== -->
+      <section class="page band-page" id="p-goals" data-band="ok">
+        <div class="inner-head">
+          <button class="iconbtn" type="button" data-back="page-me" aria-label="Back to Me"><span class="phi" data-ph="caret-left"></span></button>
+          <div class="t">Goal Setting</div>
+        </div>
+        <div class="gate g-noband"></div><div class="gate g-offline"></div>
+        <div class="pbody" id="goalsBody"></div>
+      </section>
+
+      <!-- ==================================================================
+           S06 · HEALTH MONITOR — `p-monitor`   (from the supplied screenshot)
+           ================================================================== -->
+      <section class="page band-page" id="p-monitor" data-band="ok">
+        <div class="inner-head">
+          <button class="iconbtn" type="button" data-back="page-me" aria-label="Back to Me"><span class="phi" data-ph="caret-left"></span></button>
+          <div class="t">Health Monitor</div>
+        </div>
+        <div class="gate g-noband"></div><div class="gate g-offline"></div>
+        <div class="pbody">
+          <div class="sec-h">Monitoring</div>
+          <div class="group" id="monRows"></div>
+          <div class="sec-h">Alerts</div>
+          <div class="group" id="monAlerts"></div>
+          <!-- §6 S06: "Each costs battery — say so on the page." -->
+          <p class="grp-note">Each of these keeps a sensor sampling through the day. More monitoring means a shorter time between charges &mdash; roughly a day less for every two switched on. Heart rate, SpO&#8322; and stress are what the Health and Sleep tabs are built from.</p>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           S07 · HEALTH REMINDER — `p-reminders`, plus two sub-screens
+           (from the supplied screenshots). Rendered by renderReminders().
+           ================================================================== -->
+      <section class="page band-page" id="p-reminders" data-band="ok">
+        <div class="inner-head">
+          <button class="iconbtn" type="button" data-back="page-me" aria-label="Back to Me"><span class="phi" data-ph="caret-left"></span></button>
+          <div class="t">Health Reminder</div>
+        </div>
+        <div class="gate g-noband"></div><div class="gate g-offline"></div>
+        <div class="pbody" id="remBody"></div>
+      </section>
+
+      <!-- one detail screen serves both the sedentary and the water reminder:
+           start, end, interval (30 / 60 / 90 min), repeat days -->
+      <section class="page band-page" id="p-rem-detail" data-band="ok">
+        <div class="inner-head">
+          <button class="iconbtn" type="button" data-back="p-reminders" aria-label="Back to Health Reminder"><span class="phi" data-ph="caret-left"></span></button>
+          <div class="t" id="remDetailTitle">Sedentary Reminder</div>
+        </div>
+        <div class="gate g-noband"></div><div class="gate g-offline"></div>
+        <div class="pbody" id="remDetailBody"></div>
+      </section>
+
+      <!-- add / edit an alarm -->
+      <section class="page band-page" id="p-rem-alarm" data-band="ok">
+        <div class="inner-head">
+          <button class="iconbtn" type="button" data-back="p-reminders" aria-label="Back to Health Reminder"><span class="phi" data-ph="caret-left"></span></button>
+          <div class="t" id="alarmTitle">Add alarm</div>
+        </div>
+        <div class="gate g-noband"></div><div class="gate g-offline"></div>
+        <div class="pbody" id="alarmBody"></div>
+      </section>
+
+      <!-- ==================================================================
+           S03 · DEVICE DETAIL — `p-device`   (tap the device card)
+           Battery, firmware, MAC, last sync — and the system actions the
+           owner asked for: shut down, restart, reset. Each is explained on
+           its row and confirmed in a bottom sheet. Unbind is here too, because
+           §6 S03 requires it (FLAGGED: not in the owner's list).
+           ================================================================== -->
+      <section class="page" id="p-device">
+        <div class="inner-head">
+          <button class="iconbtn" type="button" data-back="page-me" aria-label="Back to Me"><span class="phi" data-ph="caret-left"></span></button>
+          <div class="t">Pebble Prime</div>
+        </div>
+        <div class="pbody" id="deviceBody"></div>
+      </section>
+
+      <!-- ==================================================================
+           S11 · UNITS & FORMAT — `p-units`
+           Three rows, two options each. Rendered by renderUnits().
+           ================================================================== -->
+      <section class="page" id="p-units">
+        <div class="inner-head">
+          <button class="iconbtn" type="button" data-back="page-me" aria-label="Back to Me"><span class="phi" data-ph="caret-left"></span></button>
+          <div class="t">Units &amp; Format</div>
+        </div>
+        <div class="pbody" id="unitsBody"></div>
+      </section>
+
+      <!-- ==================================================================
+           S12 · APPLE HEALTH — `p-health-sync`
+           Rendered by renderHealthSync(); state on data-ah.
+           ================================================================== -->
+      <section class="page" id="p-health-sync" data-ah="not-connected">
+        <div class="inner-head">
+          <button class="iconbtn" type="button" data-back="page-me" aria-label="Back to Me"><span class="phi" data-ph="caret-left"></span></button>
+          <div class="t">Apple Health</div>
+        </div>
+        <div class="pbody" id="ahBody"></div>
+      </section>
+
+      <!-- ==================================================================
+           S14 · ABOUT — `p-about`
+           ================================================================== -->
+      <section class="page" id="p-about">
+        <div class="inner-head">
+          <button class="iconbtn" type="button" data-back="page-me" aria-label="Back to Me"><span class="phi" data-ph="caret-left"></span></button>
+          <div class="t">About</div>
+        </div>
+        <div class="pbody" id="aboutBody"></div>
+      </section>
+
+      <!-- ==================================================================
+           S08 · FIND DEVICE — `p-find`
+           No brief was given for this page; it is the smallest thing that
+           makes the row not dead-end. ready → searching → ringing.
+           ================================================================== -->
+      <section class="page band-page" id="p-find" data-band="ok">
+        <div class="inner-head">
+          <button class="iconbtn" type="button" data-back="page-me" aria-label="Back to Me"><span class="phi" data-ph="caret-left"></span></button>
+          <div class="t">Find Device</div>
+        </div>
+        <div class="gate g-noband"></div><div class="gate g-offline"></div>
+        <div class="pbody" id="findBody"></div>
+      </section>
+
+      <!-- ==================================================================
+           S09 · TAKE PICTURE — `p-shutter`
+           Likewise: ready → armed, plus the camera-permission-denied case.
+           ================================================================== -->
+      <section class="page band-page" id="p-shutter" data-band="ok">
+        <div class="inner-head">
+          <button class="iconbtn" type="button" data-back="page-me" aria-label="Back to Me"><span class="phi" data-ph="caret-left"></span></button>
+          <div class="t">Take Picture</div>
+        </div>
+        <div class="gate g-noband"></div><div class="gate g-offline"></div>
+        <div class="pbody" id="shutterBody"></div>
+      </section>
+
+      <!-- ==================================================================
+           S13 · FAQs — `p-faq`
+           Bundled articles, so no search / offline states (§8: FLAGGED as an
+           assumption — fetched articles would add four states).
+           ================================================================== -->
+      <section class="page" id="p-faq">
+        <div class="inner-head">
+          <button class="iconbtn" type="button" data-back="page-me" aria-label="Back to Me"><span class="phi" data-ph="caret-left"></span></button>
+          <div class="t">FAQs</div>
+        </div>
+        <div class="pbody" id="faqBody"></div>
+      </section>
+
     </div><!-- /pages -->
 
     <!-- the live confirm sheet, driven by the panel -->
@@ -2220,6 +2671,16 @@ body{
       <!-- choice: gender, activity level, fitness goal -->
       <div class="choice-list" id="fsChoice" hidden></div>
 
+      <!-- values: the Activity-style goal picker (one numeral per row) -->
+      <div class="vals" id="fsValues" hidden></div>
+
+      <!-- time: hours beside minutes, one selection band (Add Alarm) -->
+      <div class="picker" id="fsTime" hidden>
+        <div class="band" aria-hidden="true"></div>
+        <div class="col" id="fsTimeH" role="listbox" aria-label="Hour" tabindex="0"></div>
+        <div class="col" id="fsTimeM" role="listbox" aria-label="Minute" tabindex="0"></div>
+      </div>
+
       <!-- text: name -->
       <div class="fieldwrap" id="fsText" hidden>
         <input class="textfield" id="fsInput" type="text" autocomplete="name" spellcheck="false">
@@ -2265,7 +2726,7 @@ const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
    viewBox), the same set already embedded in index.html and Workout Tab.html
    — the shared glyphs were checked byte-for-byte against that file so the
    prototypes draw identical icons. Injected into every .phi span. */
-const PH = {"fill":{"arrow-circle-up":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm37.66,101.66a8,8,0,0,1-11.32,0L136,107.31V168a8,8,0,0,1-16,0V107.31l-18.34,18.35a8,8,0,0,1-11.32-11.32l32-32a8,8,0,0,1,11.32,0l32,32A8,8,0,0,1,165.66,125.66Z","arrow-circle-up-right":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm40,120a8,8,0,0,1-16,0V115.31l-50.34,50.35a8,8,0,0,1-11.32-11.32L140.69,104H112a8,8,0,0,1,0-16h48a8,8,0,0,1,8,8Z","arrow-counter-clockwise":"M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L60.63,81.29l17,17A8,8,0,0,1,72,112H24a8,8,0,0,1-8-8V56A8,8,0,0,1,29.66,50.3L49.31,70,60.25,60A96,96,0,0,1,224,128Z","arrows-clockwise":"M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1-5.66-13.66L180.65,72a79.48,79.48,0,0,0-54.72-22.09h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27,96,96,0,0,1,192,60.7l18.36-18.36A8,8,0,0,1,224,48ZM186.41,183.29A80,80,0,0,1,75.35,184l18.31-18.31A8,8,0,0,0,88,152H40a8,8,0,0,0-8,8v48a8,8,0,0,0,13.66,5.66L64,195.3a95.42,95.42,0,0,0,66,26.76h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z","battery-charging":"M256,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0ZM224,80v96a24,24,0,0,1-24,24H32A24,24,0,0,1,8,176V80A24,24,0,0,1,32,56H200A24,24,0,0,1,224,80Zm-85.19,43.79A8,8,0,0,0,132,120H112.94l10.22-20.42a8,8,0,1,0-14.32-7.16l-16,32A8,8,0,0,0,100,136h19.06l-10.22,20.42a8,8,0,0,0,14.32,7.16l16-32A8,8,0,0,0,138.81,123.79Z","battery-high":"M152,96v64a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8h96A8,8,0,0,1,152,96Zm72-16v96a24,24,0,0,1-24,24H32A24,24,0,0,1,8,176V80A24,24,0,0,1,32,56H200A24,24,0,0,1,224,80Zm-16,0a8,8,0,0,0-8-8H32a8,8,0,0,0-8,8v96a8,8,0,0,0,8,8H200a8,8,0,0,0,8-8Zm40,8a8,8,0,0,0-8,8v64a8,8,0,0,0,16,0V96A8,8,0,0,0,248,88Z","battery-low":"M72,96v64a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8H64A8,8,0,0,1,72,96ZM224,80v96a24,24,0,0,1-24,24H32A24,24,0,0,1,8,176V80A24,24,0,0,1,32,56H200A24,24,0,0,1,224,80Zm-16,0a8,8,0,0,0-8-8H32a8,8,0,0,0-8,8v96a8,8,0,0,0,8,8H200a8,8,0,0,0,8-8Zm40,8a8,8,0,0,0-8,8v64a8,8,0,0,0,16,0V96A8,8,0,0,0,248,88Z","battery-warning":"M200,56H32A24,24,0,0,0,8,80v96a24,24,0,0,0,24,24H200a24,24,0,0,0,24-24V80A24,24,0,0,0,200,56ZM108,88a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,116,176ZM256,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0Z","bell":"M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216Z","bluetooth":"M200,176a8,8,0,0,1-3.2,6.4l-64,48A8,8,0,0,1,128,232a8,8,0,0,1-8-8V144L68.8,182.4a8,8,0,0,1-9.6-12.8L114.67,128,59.2,86.4a8,8,0,0,1,9.6-12.8L120,112V32a8,8,0,0,1,12.8-6.4l64,48a8,8,0,0,1,0,12.8L141.33,128l55.47,41.6A8,8,0,0,1,200,176Z","bluetooth-slash":"M221.38,221.92a8,8,0,0,1-11.3-.54l-26.45-29.1L132.8,230.4a8,8,0,0,1-8.89.47,8.29,8.29,0,0,1-3.91-7.18V144L68.8,182.4a8,8,0,0,1-11.16-1.55,8.26,8.26,0,0,1,1.81-11.43l61.47-46.11L50.08,45.38A8,8,0,0,1,61.92,34.62l160,176A8,8,0,0,1,221.38,221.92ZM155,113.22a4,4,0,0,0,5.36.51L196.8,86.4a8,8,0,0,0,0-12.8l-64-48a8,8,0,0,0-10,.29A8.25,8.25,0,0,0,120,32.24V73.18a4,4,0,0,0,1,2.69Z","camera":"M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm-44,76a36,36,0,1,1-36-36A36,36,0,0,1,164,132Z","check-circle":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z","circle-notch":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,176A72,72,0,0,1,92,65.64a8,8,0,0,1,8,13.85,56,56,0,1,0,56,0,8,8,0,0,1,8-13.85A72,72,0,0,1,128,200Z","crosshair":"M232,120h-8.34A96.14,96.14,0,0,0,136,32.34V24a8,8,0,0,0-16,0v8.34A96.14,96.14,0,0,0,32.34,120H24a8,8,0,0,0,0,16h8.34A96.14,96.14,0,0,0,120,223.66V232a8,8,0,0,0,16,0v-8.34A96.14,96.14,0,0,0,223.66,136H232a8,8,0,0,0,0-16Zm-32,16h7.6A80.15,80.15,0,0,1,136,207.6V200a8,8,0,0,0-16,0v7.6A80.15,80.15,0,0,1,48.4,136H56a8,8,0,0,0,0-16H48.4A80.15,80.15,0,0,1,120,48.4V56a8,8,0,0,0,16,0V48.4A80.15,80.15,0,0,1,207.6,120H200a8,8,0,0,0,0,16Zm-32-8a40,40,0,1,1-40-40A40,40,0,0,1,168,128Z","device-mobile":"M176,16H80A24,24,0,0,0,56,40V216a24,24,0,0,0,24,24h96a24,24,0,0,0,24-24V40A24,24,0,0,0,176,16ZM80,32h96a8,8,0,0,1,8,8v8H72V40A8,8,0,0,1,80,32Zm96,192H80a8,8,0,0,1-8-8v-8H184v8A8,8,0,0,1,176,224Z","dot":"M128,80a48,48,0,1,0,48,48A48,48,0,0,0,128,80Zm0,60a12,12,0,1,1,12-12A12,12,0,0,1,128,140Z","download-simple":"M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40A8,8,0,0,0,168,96H136V32a8,8,0,0,0-16,0V96H88a8,8,0,0,0-5.66,13.66Z","gear":"M216,130.16q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.6,107.6,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.29,107.29,0,0,0-26.25-10.86,8,8,0,0,0-7.06,1.48L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.6,107.6,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z","heart":"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z","heartbeat":"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0c-3.35-1.8-63.55-34.69-92.68-80.89A4,4,0,0,1,34.92,144H72a8,8,0,0,0,6.66-3.56l9.34-14,25.34,38a8,8,0,0,0,9.16,3.16,8.23,8.23,0,0,0,4.28-3.34L140.28,144H160a8,8,0,0,0,8-8.53,8.18,8.18,0,0,0-8.25-7.47H136a8,8,0,0,0-6.66,3.56l-9.34,14-25.34-38a8,8,0,0,0-9.17-3.16,8.25,8.25,0,0,0-4.27,3.34L67.72,128H23.53a4,4,0,0,1-3.83-2.81A76.93,76.93,0,0,1,16,102,62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z","house":"M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z","info":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-4,48a12,12,0,1,1-12,12A12,12,0,0,1,124,72Zm12,112a16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40a8,8,0,0,1,0,16Z","link-break":"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM96,64a8,8,0,0,1,16,0V80a8,8,0,0,1-16,0ZM64,96H80a8,8,0,0,1,0,16H64a8,8,0,0,1,0-16Zm64.08,85.66-7.21,7.21a38,38,0,1,1-53.74-53.74l7.21-7.21a8,8,0,1,1,11.32,11.31l-7.22,7.21a22,22,0,0,0,31.12,31.12l7.21-7.22a8,8,0,1,1,11.31,11.32ZM160,192a8,8,0,0,1-16,0V176a8,8,0,0,1,16,0Zm32-32H176a8,8,0,0,1,0-16h16a8,8,0,0,1,0,16Zm-3.13-39.13-7.21,7.21a8,8,0,1,1-11.32-11.31l7.22-7.21a22,22,0,0,0-31.12-31.12l-7.21,7.22a8,8,0,1,1-11.31-11.32l7.21-7.21a38,38,0,1,1,53.74,53.74Z","lock-simple":"M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96Z","magnifying-glass":"M168,112a56,56,0,1,1-56-56A56,56,0,0,1,168,112Zm61.66,117.66a8,8,0,0,1-11.32,0l-50.06-50.07a88,88,0,1,1,11.32-11.31l50.06,50.06A8,8,0,0,1,229.66,229.66ZM112,184a72,72,0,1,0-72-72A72.08,72.08,0,0,0,112,184Z","moon":"M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z","phone":"M231.88,175.08A56.26,56.26,0,0,1,176,224C96.6,224,32,159.4,32,80A56.26,56.26,0,0,1,80.92,24.12a16,16,0,0,1,16.62,9.52l21.12,47.15,0,.12A16,16,0,0,1,117.39,96c-.18.27-.37.52-.57.77L96,121.45c7.49,15.22,23.41,31,38.83,38.51l24.34-20.71a8.12,8.12,0,0,1,.75-.56,16,16,0,0,1,15.17-1.4l.13.06,47.11,21.11A16,16,0,0,1,231.88,175.08Z","plus":"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM184,136H136v48a8,8,0,0,1-16,0V136H72a8,8,0,0,1,0-16h48V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z","prohibit":"M200,128a71.69,71.69,0,0,1-15.78,44.91L83.09,71.78A71.95,71.95,0,0,1,200,128ZM56,128a71.95,71.95,0,0,0,116.91,56.22L71.78,83.09A71.69,71.69,0,0,0,56,128Zm180,0A108,108,0,1,1,128,20,108.12,108.12,0,0,1,236,128Zm-20,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z","question":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,168a12,12,0,1,1,12-12A12,12,0,0,1,128,192Zm8-48.72V144a8,8,0,0,1-16,0v-8a8,8,0,0,1,8-8c13.23,0,24-9,24-20s-10.77-20-24-20-24,9-24,20v4a8,8,0,0,1-16,0v-4c0-19.85,17.94-36,40-36s40,16.15,40,36C168,125.38,154.24,139.93,136,143.28Z","ruler":"M235.32,96,96,235.31a16,16,0,0,1-22.63,0L20.68,182.63a16,16,0,0,1,0-22.63l29.17-29.17a4,4,0,0,1,5.66,0l34.83,34.83a8,8,0,0,0,11.71-.43,8.18,8.18,0,0,0-.6-11.09L66.82,119.51a4,4,0,0,1,0-5.65l15-15a4,4,0,0,1,5.66,0l34.83,34.83a8,8,0,0,0,11.71-.43,8.18,8.18,0,0,0-.6-11.09L98.83,87.51a4,4,0,0,1,0-5.65l15-15a4,4,0,0,1,5.65,0l34.83,34.83a8,8,0,0,0,11.72-.43,8.18,8.18,0,0,0-.61-11.09L130.83,55.51a4,4,0,0,1,0-5.65L160,20.69a16,16,0,0,1,22.63,0l52.69,52.68A16,16,0,0,1,235.32,96Z","seal-check":"M225.86,102.82c-3.77-3.94-7.67-8-9.14-11.57-1.36-3.27-1.44-8.69-1.52-13.94-.15-9.76-.31-20.82-8-28.51s-18.75-7.85-28.51-8c-5.25-.08-10.67-.16-13.94-1.52-3.56-1.47-7.63-5.37-11.57-9.14C146.28,23.51,138.44,16,128,16s-18.27,7.51-25.18,14.14c-3.94,3.77-8,7.67-11.57,9.14C88,40.64,82.56,40.72,77.31,40.8c-9.76.15-20.82.31-28.51,8S41,67.55,40.8,77.31c-.08,5.25-.16,10.67-1.52,13.94-1.47,3.56-5.37,7.63-9.14,11.57C23.51,109.72,16,117.56,16,128s7.51,18.27,14.14,25.18c3.77,3.94,7.67,8,9.14,11.57,1.36,3.27,1.44,8.69,1.52,13.94.15,9.76.31,20.82,8,28.51s18.75,7.85,28.51,8c5.25.08,10.67.16,13.94,1.52,3.56,1.47,7.63,5.37,11.57,9.14C109.72,232.49,117.56,240,128,240s18.27-7.51,25.18-14.14c3.94-3.77,8-7.67,11.57-9.14,3.27-1.36,8.69-1.44,13.94-1.52,9.76-.15,20.82-.31,28.51-8s7.85-18.75,8-28.51c.08-5.25.16-10.67,1.52-13.94,1.47-3.56,5.37-7.63,9.14-11.57C232.49,146.28,240,138.44,240,128S232.49,109.73,225.86,102.82Zm-52.2,6.84-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z","sign-out":"M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40A8,8,0,0,0,176,88v32H112a8,8,0,0,0,0,16h64v32a8,8,0,0,0,13.66,5.66l40-40A8,8,0,0,0,229.66,122.34Z","sneaker-move":"M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z","spinner-gap":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM48,136a8,8,0,0,1,0-16H72a8,8,0,0,1,0,16Zm46.06,37.25-17,17a8,8,0,0,1-11.32-11.32l17-17a8,8,0,0,1,11.31,11.31Zm0-79.19a8,8,0,0,1-11.31,0l-17-17A8,8,0,0,1,77.09,65.77l17,17A8,8,0,0,1,94.06,94.06ZM136,208a8,8,0,0,1-16,0V184a8,8,0,0,1,16,0Zm0-136a8,8,0,0,1-16,0V48a8,8,0,0,1,16,0Zm54.23,118.23a8,8,0,0,1-11.32,0l-17-17a8,8,0,0,1,11.31-11.31l17,17A8,8,0,0,1,190.23,190.23ZM208,136H184a8,8,0,0,1,0-16h24a8,8,0,0,1,0,16Z","trash":"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM112,168a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm0-120H96V40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z","user":"M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z","users":"M164.47,195.63a8,8,0,0,1-6.7,12.37H10.23a8,8,0,0,1-6.7-12.37,95.83,95.83,0,0,1,47.22-37.71,60,60,0,1,1,66.5,0A95.83,95.83,0,0,1,164.47,195.63Zm87.91-.15a95.87,95.87,0,0,0-47.13-37.56A60,60,0,0,0,144.7,54.59a4,4,0,0,0-1.33,6A75.83,75.83,0,0,1,147,150.53a4,4,0,0,0,1.07,5.53,112.32,112.32,0,0,1,29.85,30.83,23.92,23.92,0,0,1,3.65,16.47,4,4,0,0,0,3.95,4.64h60.3a8,8,0,0,0,7.73-5.93A8.22,8.22,0,0,0,252.38,195.48Z","warning":"M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z","warning-circle":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-8,56a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm8,104a12,12,0,1,1,12-12A12,12,0,0,1,128,184Z","watch":"M175.3,63.53l-6.24-34.38A16,16,0,0,0,153.32,16H102.68A16,16,0,0,0,86.94,29.15L80.7,63.53a79.9,79.9,0,0,0,0,128.94l6.24,34.38A16,16,0,0,0,102.68,240h50.64a16,16,0,0,0,15.74-13.15l6.24-34.38a79.9,79.9,0,0,0,0-128.94ZM102.68,32h50.64l3.91,21.55a79.75,79.75,0,0,0-58.46,0Zm50.64,192H102.68l-3.91-21.55a79.75,79.75,0,0,0,58.46,0ZM168,136H128a8,8,0,0,1-8-8V88a8,8,0,0,1,16,0v32h32a8,8,0,0,1,0,16Z","wifi-slash":"M213.92,210.62a8,8,0,1,1-11.84,10.76l-33.67-37-28.1,33.88A15.93,15.93,0,0,1,128,224h0a15.93,15.93,0,0,1-12.31-5.77L11.65,92.8A15.65,15.65,0,0,1,8.11,80.91,15.93,15.93,0,0,1,14.28,70.1,188.26,188.26,0,0,1,46.6,50.35l-4.29-4.72a8.22,8.22,0,0,1,.13-11.38,8,8,0,0,1,11.48.37Zm34-129.71a15.93,15.93,0,0,0-6.17-10.81A186.67,186.67,0,0,0,128,32a191,191,0,0,0-42.49,4.75,4,4,0,0,0-2,6.59L186,156.07a4,4,0,0,0,6-.14L244.35,92.8A15.65,15.65,0,0,0,247.89,80.91Z"},"regular":{"arrow-clockwise":"M240,56v48a8,8,0,0,1-8,8H184a8,8,0,0,1,0-16H211.4L184.81,71.64l-.25-.24a80,80,0,1,0-1.67,114.78,8,8,0,0,1,11,11.63A95.44,95.44,0,0,1,128,224h-1.32A96,96,0,1,1,195.75,60L224,85.8V56a8,8,0,1,1,16,0Z","caret-left":"M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z","caret-right":"M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z","check":"M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z","plus":"M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z","watch":"M208,128a79.94,79.94,0,0,0-32.7-64.47l-6.24-34.38A16,16,0,0,0,153.32,16H102.68A16,16,0,0,0,86.94,29.15L80.7,63.53a79.9,79.9,0,0,0,0,128.94l6.24,34.38A16,16,0,0,0,102.68,240h50.64a16,16,0,0,0,15.74-13.15l6.24-34.38A79.94,79.94,0,0,0,208,128ZM102.68,32h50.64l3.91,21.55a79.75,79.75,0,0,0-58.46,0ZM64,128a64,64,0,1,1,64,64A64.07,64.07,0,0,1,64,128Zm89.32,96H102.68l-3.91-21.55a79.75,79.75,0,0,0,58.46,0ZM120,128V88a8,8,0,0,1,16,0v32h32a8,8,0,0,1,0,16H128A8,8,0,0,1,120,128Z","x":"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"}};
+const PH = {"fill":{"alarm":"M61.66,37.66l-32,32A8,8,0,0,1,18.34,58.34l32-32A8,8,0,0,1,61.66,37.66Zm176,20.68-32-32a8,8,0,0,0-11.32,11.32l32,32a8,8,0,0,0,11.32-11.32ZM224,136a96,96,0,1,1-96-96A96.11,96.11,0,0,1,224,136Zm-32,0a8,8,0,0,0-8-8H136V80a8,8,0,0,0-16,0v56a8,8,0,0,0,8,8h56A8,8,0,0,0,192,136Z","arrow-circle-up":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm37.66,101.66a8,8,0,0,1-11.32,0L136,107.31V168a8,8,0,0,1-16,0V107.31l-18.34,18.35a8,8,0,0,1-11.32-11.32l32-32a8,8,0,0,1,11.32,0l32,32A8,8,0,0,1,165.66,125.66Z","arrow-circle-up-right":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm40,120a8,8,0,0,1-16,0V115.31l-50.34,50.35a8,8,0,0,1-11.32-11.32L140.69,104H112a8,8,0,0,1,0-16h48a8,8,0,0,1,8,8Z","arrow-counter-clockwise":"M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L60.63,81.29l17,17A8,8,0,0,1,72,112H24a8,8,0,0,1-8-8V56A8,8,0,0,1,29.66,50.3L49.31,70,60.25,60A96,96,0,0,1,224,128Z","arrows-clockwise":"M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1-5.66-13.66L180.65,72a79.48,79.48,0,0,0-54.72-22.09h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27,96,96,0,0,1,192,60.7l18.36-18.36A8,8,0,0,1,224,48ZM186.41,183.29A80,80,0,0,1,75.35,184l18.31-18.31A8,8,0,0,0,88,152H40a8,8,0,0,0-8,8v48a8,8,0,0,0,13.66,5.66L64,195.3a95.42,95.42,0,0,0,66,26.76h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z","battery-charging":"M256,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0ZM224,80v96a24,24,0,0,1-24,24H32A24,24,0,0,1,8,176V80A24,24,0,0,1,32,56H200A24,24,0,0,1,224,80Zm-85.19,43.79A8,8,0,0,0,132,120H112.94l10.22-20.42a8,8,0,1,0-14.32-7.16l-16,32A8,8,0,0,0,100,136h19.06l-10.22,20.42a8,8,0,0,0,14.32,7.16l16-32A8,8,0,0,0,138.81,123.79Z","battery-high":"M152,96v64a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8h96A8,8,0,0,1,152,96Zm72-16v96a24,24,0,0,1-24,24H32A24,24,0,0,1,8,176V80A24,24,0,0,1,32,56H200A24,24,0,0,1,224,80Zm-16,0a8,8,0,0,0-8-8H32a8,8,0,0,0-8,8v96a8,8,0,0,0,8,8H200a8,8,0,0,0,8-8Zm40,8a8,8,0,0,0-8,8v64a8,8,0,0,0,16,0V96A8,8,0,0,0,248,88Z","battery-low":"M72,96v64a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8H64A8,8,0,0,1,72,96ZM224,80v96a24,24,0,0,1-24,24H32A24,24,0,0,1,8,176V80A24,24,0,0,1,32,56H200A24,24,0,0,1,224,80Zm-16,0a8,8,0,0,0-8-8H32a8,8,0,0,0-8,8v96a8,8,0,0,0,8,8H200a8,8,0,0,0,8-8Zm40,8a8,8,0,0,0-8,8v64a8,8,0,0,0,16,0V96A8,8,0,0,0,248,88Z","battery-warning":"M200,56H32A24,24,0,0,0,8,80v96a24,24,0,0,0,24,24H200a24,24,0,0,0,24-24V80A24,24,0,0,0,200,56ZM108,88a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,116,176ZM256,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0Z","bed":"M216,72H32V48a8,8,0,0,0-16,0V208a8,8,0,0,0,16,0V176H240v32a8,8,0,0,0,16,0V112A40,40,0,0,0,216,72ZM32,88h72v72H32Z","bell":"M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216Z","bell-ringing":"M224,71.1a8,8,0,0,1-10.78-3.42,94.13,94.13,0,0,0-33.46-36.91,8,8,0,1,1,8.54-13.54,111.46,111.46,0,0,1,39.12,43.09A8,8,0,0,1,224,71.1ZM35.71,72a8,8,0,0,0,7.1-4.32A94.13,94.13,0,0,1,76.27,30.77a8,8,0,1,0-8.54-13.54A111.46,111.46,0,0,0,28.61,60.32,8,8,0,0,0,35.71,72Zm186.1,103.94A16,16,0,0,1,208,200H167.2a40,40,0,0,1-78.4,0H48a16,16,0,0,1-13.79-24.06C43.22,160.39,48,138.28,48,112a80,80,0,0,1,160,0C208,138.27,212.78,160.38,221.81,175.94ZM150.62,200H105.38a24,24,0,0,0,45.24,0Z","bluetooth":"M200,176a8,8,0,0,1-3.2,6.4l-64,48A8,8,0,0,1,128,232a8,8,0,0,1-8-8V144L68.8,182.4a8,8,0,0,1-9.6-12.8L114.67,128,59.2,86.4a8,8,0,0,1,9.6-12.8L120,112V32a8,8,0,0,1,12.8-6.4l64,48a8,8,0,0,1,0,12.8L141.33,128l55.47,41.6A8,8,0,0,1,200,176Z","bluetooth-slash":"M221.38,221.92a8,8,0,0,1-11.3-.54l-26.45-29.1L132.8,230.4a8,8,0,0,1-8.89.47,8.29,8.29,0,0,1-3.91-7.18V144L68.8,182.4a8,8,0,0,1-11.16-1.55,8.26,8.26,0,0,1,1.81-11.43l61.47-46.11L50.08,45.38A8,8,0,0,1,61.92,34.62l160,176A8,8,0,0,1,221.38,221.92ZM155,113.22a4,4,0,0,0,5.36.51L196.8,86.4a8,8,0,0,0,0-12.8l-64-48a8,8,0,0,0-10,.29A8.25,8.25,0,0,0,120,32.24V73.18a4,4,0,0,0,1,2.69Z","camera":"M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm-44,76a36,36,0,1,1-36-36A36,36,0,0,1,164,132Z","chart-bar":"M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1,0-16h8V136a8,8,0,0,1,8-8H72a8,8,0,0,1,8,8v64H96V88a8,8,0,0,1,8-8h32a8,8,0,0,1,8,8V200h16V40a8,8,0,0,1,8-8h40a8,8,0,0,1,8,8V200h8A8,8,0,0,1,232,208Z","check-circle":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z","circle-notch":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,176A72,72,0,0,1,92,65.64a8,8,0,0,1,8,13.85,56,56,0,1,0,56,0,8,8,0,0,1,8-13.85A72,72,0,0,1,128,200Z","clock":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm56,112H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z","code":"M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM92.8,145.6a8,8,0,1,1-9.6,12.8l-32-24a8,8,0,0,1,0-12.8l32-24a8,8,0,0,1,9.6,12.8L69.33,128Zm58.89-71.4-32,112a8,8,0,1,1-15.38-4.4l32-112a8,8,0,0,1,15.38,4.4Zm53.11,60.2-32,24a8,8,0,0,1-9.6-12.8L186.67,128,163.2,110.4a8,8,0,1,1,9.6-12.8l32,24a8,8,0,0,1,0,12.8Z","crosshair":"M232,120h-8.34A96.14,96.14,0,0,0,136,32.34V24a8,8,0,0,0-16,0v8.34A96.14,96.14,0,0,0,32.34,120H24a8,8,0,0,0,0,16h8.34A96.14,96.14,0,0,0,120,223.66V232a8,8,0,0,0,16,0v-8.34A96.14,96.14,0,0,0,223.66,136H232a8,8,0,0,0,0-16Zm-32,16h7.6A80.15,80.15,0,0,1,136,207.6V200a8,8,0,0,0-16,0v7.6A80.15,80.15,0,0,1,48.4,136H56a8,8,0,0,0,0-16H48.4A80.15,80.15,0,0,1,120,48.4V56a8,8,0,0,0,16,0V48.4A80.15,80.15,0,0,1,207.6,120H200a8,8,0,0,0,0,16Zm-32-8a40,40,0,1,1-40-40A40,40,0,0,1,168,128Z","device-mobile":"M176,16H80A24,24,0,0,0,56,40V216a24,24,0,0,0,24,24h96a24,24,0,0,0,24-24V40A24,24,0,0,0,176,16ZM80,32h96a8,8,0,0,1,8,8v8H72V40A8,8,0,0,1,80,32Zm96,192H80a8,8,0,0,1-8-8v-8H184v8A8,8,0,0,1,176,224Z","dot":"M128,80a48,48,0,1,0,48,48A48,48,0,0,0,128,80Zm0,60a12,12,0,1,1,12-12A12,12,0,0,1,128,140Z","download-simple":"M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40A8,8,0,0,0,168,96H136V32a8,8,0,0,0-16,0V96H88a8,8,0,0,0-5.66,13.66Z","drop":"M174,47.75a254.19,254.19,0,0,0-41.45-38.3,8,8,0,0,0-9.18,0A254.19,254.19,0,0,0,82,47.75C54.51,79.32,40,112.6,40,144a88,88,0,0,0,176,0C216,112.6,201.49,79.32,174,47.75Zm9.85,105.59a57.6,57.6,0,0,1-46.56,46.55A8.75,8.75,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z","file-text":"M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,176H96a8,8,0,0,1,0-16h64a8,8,0,0,1,0,16Zm0-32H96a8,8,0,0,1,0-16h64a8,8,0,0,1,0,16Zm-8-56V44l44,44Z","fire":"M143.38,17.85a8,8,0,0,0-12.63,3.41l-22,60.41L84.59,58.26a8,8,0,0,0-11.93.89C51,87.53,40,116.08,40,144a88,88,0,0,0,176,0C216,84.55,165.21,36,143.38,17.85Zm40.51,135.49a57.6,57.6,0,0,1-46.56,46.55A7.65,7.65,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z","footprints":"M216.06,192v12A36,36,0,0,1,144,204V192a8,8,0,0,1,8-8h56A8,8,0,0,1,216.06,192ZM104,160h-56a8,8,0,0,0-8,8v12A36,36,0,0,0,112,180V168A8,8,0,0,0,104,160ZM76,16C64.36,16,53.07,26.31,44.2,45c-13.93,29.38-18.56,73,.29,96a8,8,0,0,0,6.2,2.93h50.55a8,8,0,0,0,6.2-2.93c18.85-23,14.22-66.65.29-96C98.85,26.31,87.57,16,76,16Zm78.8,152h50.55a8,8,0,0,0,6.2-2.93c18.85-23,14.22-66.65.29-96C202.93,50.31,191.64,40,180,40s-22.89,10.31-31.77,29c-13.93,29.38-18.56,73,.29,96A8,8,0,0,0,154.76,168Z","gauge":"M240,152v24a16,16,0,0,1-16,16H115.93a4,4,0,0,1-3.24-6.35L174.27,101a8.21,8.21,0,0,0-1.37-11.3,8,8,0,0,0-11.37,1.61l-72,99.06A4,4,0,0,1,86.25,192H32a16,16,0,0,1-16-16V153.13c0-1.79,0-3.57.13-5.33a4,4,0,0,1,4-3.8H48a8,8,0,0,0,8-8.53A8.17,8.17,0,0,0,47.73,128H23.92a4,4,0,0,1-3.87-5c12-43.84,49.66-77.13,95.52-82.28a4,4,0,0,1,4.43,4V72a8,8,0,0,0,8.53,8A8.17,8.17,0,0,0,136,71.73V44.67a4,4,0,0,1,4.43-4A112.18,112.18,0,0,1,236.23,123a4,4,0,0,1-3.88,5H208.27a8.17,8.17,0,0,0-8.25,7.47,8,8,0,0,0,8,8.53h27.92a4,4,0,0,1,4,3.86C240,149.23,240,150.61,240,152Z","gear":"M216,130.16q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.6,107.6,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.29,107.29,0,0,0-26.25-10.86,8,8,0,0,0-7.06,1.48L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.6,107.6,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z","heart":"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z","heartbeat":"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0c-3.35-1.8-63.55-34.69-92.68-80.89A4,4,0,0,1,34.92,144H72a8,8,0,0,0,6.66-3.56l9.34-14,25.34,38a8,8,0,0,0,9.16,3.16,8.23,8.23,0,0,0,4.28-3.34L140.28,144H160a8,8,0,0,0,8-8.53,8.18,8.18,0,0,0-8.25-7.47H136a8,8,0,0,0-6.66,3.56l-9.34,14-25.34-38a8,8,0,0,0-9.17-3.16,8.25,8.25,0,0,0-4.27,3.34L67.72,128H23.53a4,4,0,0,1-3.83-2.81A76.93,76.93,0,0,1,16,102,62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z","house":"M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z","info":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-4,48a12,12,0,1,1-12,12A12,12,0,0,1,124,72Zm12,112a16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40a8,8,0,0,1,0,16Z","link":"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM115.7,192.49a43.31,43.31,0,0,1-55-66.43l25.37-25.37a43.35,43.35,0,0,1,61.25,0,42.9,42.9,0,0,1,9.95,15.43,8,8,0,1,1-15,5.6A27.33,27.33,0,0,0,97.37,112L72,137.37a27.32,27.32,0,0,0,34.68,41.91,8,8,0,1,1,9,13.21Zm79.61-62.55-25.37,25.37A43,43,0,0,1,139.32,168h0a43.35,43.35,0,0,1-40.53-28.12,8,8,0,1,1,15-5.6A27.35,27.35,0,0,0,139.28,152h0a27.14,27.14,0,0,0,19.32-8L184,118.63a27.32,27.32,0,0,0-34.68-41.91,8,8,0,1,1-9-13.21,43.32,43.32,0,0,1,55,66.43Z","link-break":"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM96,64a8,8,0,0,1,16,0V80a8,8,0,0,1-16,0ZM64,96H80a8,8,0,0,1,0,16H64a8,8,0,0,1,0-16Zm64.08,85.66-7.21,7.21a38,38,0,1,1-53.74-53.74l7.21-7.21a8,8,0,1,1,11.32,11.31l-7.22,7.21a22,22,0,0,0,31.12,31.12l7.21-7.22a8,8,0,1,1,11.31,11.32ZM160,192a8,8,0,0,1-16,0V176a8,8,0,0,1,16,0Zm32-32H176a8,8,0,0,1,0-16h16a8,8,0,0,1,0,16Zm-3.13-39.13-7.21,7.21a8,8,0,1,1-11.32-11.31l7.22-7.21a22,22,0,0,0-31.12-31.12l-7.21,7.22a8,8,0,1,1-11.31-11.32l7.21-7.21a38,38,0,1,1,53.74,53.74Z","lock-simple":"M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96Z","magnifying-glass":"M168,112a56,56,0,1,1-56-56A56,56,0,0,1,168,112Zm61.66,117.66a8,8,0,0,1-11.32,0l-50.06-50.07a88,88,0,1,1,11.32-11.31l50.06,50.06A8,8,0,0,1,229.66,229.66ZM112,184a72,72,0,1,0-72-72A72.08,72.08,0,0,0,112,184Z","map-pin":"M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z","moon":"M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z","person-simple-run":"M120,56a32,32,0,1,1,32,32A32,32,0,0,1,120,56Zm103.28,74.08a8,8,0,0,0-10.6-4c-.25.12-26.71,10.72-72.18-20.19-52.29-35.54-88-7.77-89.51-6.57a8,8,0,1,0,10,12.48c.26-.21,25.12-19.5,64.07,3.27-4.25,13.35-12.76,31.82-25.25,47-18.56,22.48-41.11,32.56-67,30A8,8,0,0,0,31.2,208a92.29,92.29,0,0,0,9.34.47c27.38,0,52-12.38,71.63-36.18.57-.69,1.14-1.4,1.69-2.1C133.31,175.29,168,190.3,168,232a8,8,0,0,0,16,0c0-24.65-10.08-45.35-29.15-59.86a104.29,104.29,0,0,0-31.31-15.81A169.31,169.31,0,0,0,139,124c26.14,16.09,46.84,20,60.69,20,12.18,0,19.06-3,19.67-3.28A8,8,0,0,0,223.28,130.08Z","person-simple-walk":"M120,48a32,32,0,1,1,32,32A32,32,0,0,1,120,48Zm88,88c-28.64,0-41.81-13.3-55.75-27.37-3.53-3.57-7.18-7.26-11-10.58-37-32.14-96.22,22.73-98.72,25.08a8,8,0,0,0,10.95,11.66A163.88,163.88,0,0,1,84,113c13.78-7.38,25.39-10.23,34.7-8.58L64.66,228.81a8,8,0,0,0,4.15,10.52A7.84,7.84,0,0,0,72,240a8,8,0,0,0,7.34-4.81l33.59-77.27L144,180.12V232a8,8,0,0,0,16,0V176a8,8,0,0,0-3.35-6.51l-37.2-26.57L132.88,112c2.64,2.44,5.26,5.07,8,7.84C155.05,134.19,172.69,152,208,152a8,8,0,0,0,0-16Z","phone":"M231.88,175.08A56.26,56.26,0,0,1,176,224C96.6,224,32,159.4,32,80A56.26,56.26,0,0,1,80.92,24.12a16,16,0,0,1,16.62,9.52l21.12,47.15,0,.12A16,16,0,0,1,117.39,96c-.18.27-.37.52-.57.77L96,121.45c7.49,15.22,23.41,31,38.83,38.51l24.34-20.71a8.12,8.12,0,0,1,.75-.56,16,16,0,0,1,15.17-1.4l.13.06,47.11,21.11A16,16,0,0,1,231.88,175.08Z","plus":"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM184,136H136v48a8,8,0,0,1-16,0V136H72a8,8,0,0,1,0-16h48V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z","power":"M128,24A104,104,0,1,0,232,128,104,104,0,0,0,128,24Zm-8,40a8,8,0,0,1,16,0v64a8,8,0,0,1-16,0Zm8,144A80,80,0,0,1,83.55,61.48a8,8,0,1,1,8.9,13.29,64,64,0,1,0,71.1,0,8,8,0,1,1,8.9-13.29A80,80,0,0,1,128,208Z","prohibit":"M200,128a71.69,71.69,0,0,1-15.78,44.91L83.09,71.78A71.95,71.95,0,0,1,200,128ZM56,128a71.95,71.95,0,0,0,116.91,56.22L71.78,83.09A71.69,71.69,0,0,0,56,128Zm180,0A108,108,0,1,1,128,20,108.12,108.12,0,0,1,236,128Zm-20,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z","pulse":"M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm-8,96H188.64L159,188a8,8,0,0,1-6.95,4h-.46a8,8,0,0,1-6.89-4.84L103,89.92,79,132a8,8,0,0,1-7,4H48a8,8,0,0,1,0-16H67.36L97.05,68a8,8,0,0,1,14.3.82L153,166.08l24-42.05a8,8,0,0,1,6.95-4h24a8,8,0,0,1,0,16Z","question":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,168a12,12,0,1,1,12-12A12,12,0,0,1,128,192Zm8-48.72V144a8,8,0,0,1-16,0v-8a8,8,0,0,1,8-8c13.23,0,24-9,24-20s-10.77-20-24-20-24,9-24,20v4a8,8,0,0,1-16,0v-4c0-19.85,17.94-36,40-36s40,16.15,40,36C168,125.38,154.24,139.93,136,143.28Z","ruler":"M235.32,96,96,235.31a16,16,0,0,1-22.63,0L20.68,182.63a16,16,0,0,1,0-22.63l29.17-29.17a4,4,0,0,1,5.66,0l34.83,34.83a8,8,0,0,0,11.71-.43,8.18,8.18,0,0,0-.6-11.09L66.82,119.51a4,4,0,0,1,0-5.65l15-15a4,4,0,0,1,5.66,0l34.83,34.83a8,8,0,0,0,11.71-.43,8.18,8.18,0,0,0-.6-11.09L98.83,87.51a4,4,0,0,1,0-5.65l15-15a4,4,0,0,1,5.65,0l34.83,34.83a8,8,0,0,0,11.72-.43,8.18,8.18,0,0,0-.61-11.09L130.83,55.51a4,4,0,0,1,0-5.65L160,20.69a16,16,0,0,1,22.63,0l52.69,52.68A16,16,0,0,1,235.32,96Z","scroll":"M220.8,169.6A8,8,0,0,0,216,168h-8V64a32,32,0,0,0-32-32H40A32,32,0,0,0,8,64C8,77.61,18.05,85.54,19.2,86.4h0A7.89,7.89,0,0,0,24,88a8,8,0,0,0,4.87-14.33h0C28.83,73.62,24,69.74,24,64a16,16,0,0,1,32,0V192a32,32,0,0,0,32,32H200a32,32,0,0,0,32-32C232,178.39,222,170.46,220.8,169.6ZM104,96h64a8,8,0,0,1,0,16H104a8,8,0,0,1,0-16Zm-8,40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H104A8,8,0,0,1,96,136Zm104,72H107.71A31.82,31.82,0,0,0,112,192a26.92,26.92,0,0,0-1.21-8h102a12.58,12.58,0,0,1,3.23,8A16,16,0,0,1,200,208Z","seal-check":"M225.86,102.82c-3.77-3.94-7.67-8-9.14-11.57-1.36-3.27-1.44-8.69-1.52-13.94-.15-9.76-.31-20.82-8-28.51s-18.75-7.85-28.51-8c-5.25-.08-10.67-.16-13.94-1.52-3.56-1.47-7.63-5.37-11.57-9.14C146.28,23.51,138.44,16,128,16s-18.27,7.51-25.18,14.14c-3.94,3.77-8,7.67-11.57,9.14C88,40.64,82.56,40.72,77.31,40.8c-9.76.15-20.82.31-28.51,8S41,67.55,40.8,77.31c-.08,5.25-.16,10.67-1.52,13.94-1.47,3.56-5.37,7.63-9.14,11.57C23.51,109.72,16,117.56,16,128s7.51,18.27,14.14,25.18c3.77,3.94,7.67,8,9.14,11.57,1.36,3.27,1.44,8.69,1.52,13.94.15,9.76.31,20.82,8,28.51s18.75,7.85,28.51,8c5.25.08,10.67.16,13.94,1.52,3.56,1.47,7.63,5.37,11.57,9.14C109.72,232.49,117.56,240,128,240s18.27-7.51,25.18-14.14c3.94-3.77,8-7.67,11.57-9.14,3.27-1.36,8.69-1.44,13.94-1.52,9.76-.15,20.82-.31,28.51-8s7.85-18.75,8-28.51c.08-5.25.16-10.67,1.52-13.94,1.47-3.56,5.37-7.63,9.14-11.57C232.49,146.28,240,138.44,240,128S232.49,109.73,225.86,102.82Zm-52.2,6.84-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z","shield-check":"M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm-34.32,69.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z","sign-out":"M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40A8,8,0,0,0,176,88v32H112a8,8,0,0,0,0,16h64v32a8,8,0,0,0,13.66,5.66l40-40A8,8,0,0,0,229.66,122.34Z","sneaker-move":"M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z","sparkle":"M208,144a15.78,15.78,0,0,1-10.42,14.94L146,178l-19,51.62a15.92,15.92,0,0,1-29.88,0L78,178l-51.62-19a15.92,15.92,0,0,1,0-29.88L78,110l19-51.62a15.92,15.92,0,0,1,29.88,0L146,110l51.62,19A15.78,15.78,0,0,1,208,144ZM152,48h16V64a8,8,0,0,0,16,0V48h16a8,8,0,0,0,0-16H184V16a8,8,0,0,0-16,0V32H152a8,8,0,0,0,0,16Zm88,32h-8V72a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0V96h8a8,8,0,0,0,0-16Z","spinner-gap":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM48,136a8,8,0,0,1,0-16H72a8,8,0,0,1,0,16Zm46.06,37.25-17,17a8,8,0,0,1-11.32-11.32l17-17a8,8,0,0,1,11.31,11.31Zm0-79.19a8,8,0,0,1-11.31,0l-17-17A8,8,0,0,1,77.09,65.77l17,17A8,8,0,0,1,94.06,94.06ZM136,208a8,8,0,0,1-16,0V184a8,8,0,0,1,16,0Zm0-136a8,8,0,0,1-16,0V48a8,8,0,0,1,16,0Zm54.23,118.23a8,8,0,0,1-11.32,0l-17-17a8,8,0,0,1,11.31-11.31l17,17A8,8,0,0,1,190.23,190.23ZM208,136H184a8,8,0,0,1,0-16h24a8,8,0,0,1,0,16Z","thermometer":"M212,56a28,28,0,1,0,28,28A28,28,0,0,0,212,56Zm0,40a12,12,0,1,1,12-12A12,12,0,0,1,212,96Zm-60,50.08V40a32,32,0,0,0-64,0V146.08a56,56,0,1,0,64,0ZM136,104H104V40a16,16,0,0,1,32,0Z","trash":"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM112,168a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm0-120H96V40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z","user":"M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z","users":"M164.47,195.63a8,8,0,0,1-6.7,12.37H10.23a8,8,0,0,1-6.7-12.37,95.83,95.83,0,0,1,47.22-37.71,60,60,0,1,1,66.5,0A95.83,95.83,0,0,1,164.47,195.63Zm87.91-.15a95.87,95.87,0,0,0-47.13-37.56A60,60,0,0,0,144.7,54.59a4,4,0,0,0-1.33,6A75.83,75.83,0,0,1,147,150.53a4,4,0,0,0,1.07,5.53,112.32,112.32,0,0,1,29.85,30.83,23.92,23.92,0,0,1,3.65,16.47,4,4,0,0,0,3.95,4.64h60.3a8,8,0,0,0,7.73-5.93A8.22,8.22,0,0,0,252.38,195.48Z","warning":"M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z","warning-circle":"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-8,56a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm8,104a12,12,0,1,1,12-12A12,12,0,0,1,128,184Z","watch":"M175.3,63.53l-6.24-34.38A16,16,0,0,0,153.32,16H102.68A16,16,0,0,0,86.94,29.15L80.7,63.53a79.9,79.9,0,0,0,0,128.94l6.24,34.38A16,16,0,0,0,102.68,240h50.64a16,16,0,0,0,15.74-13.15l6.24-34.38a79.9,79.9,0,0,0,0-128.94ZM102.68,32h50.64l3.91,21.55a79.75,79.75,0,0,0-58.46,0Zm50.64,192H102.68l-3.91-21.55a79.75,79.75,0,0,0,58.46,0ZM168,136H128a8,8,0,0,1-8-8V88a8,8,0,0,1,16,0v32h32a8,8,0,0,1,0,16Z","wifi-slash":"M213.92,210.62a8,8,0,1,1-11.84,10.76l-33.67-37-28.1,33.88A15.93,15.93,0,0,1,128,224h0a15.93,15.93,0,0,1-12.31-5.77L11.65,92.8A15.65,15.65,0,0,1,8.11,80.91,15.93,15.93,0,0,1,14.28,70.1,188.26,188.26,0,0,1,46.6,50.35l-4.29-4.72a8.22,8.22,0,0,1,.13-11.38,8,8,0,0,1,11.48.37Zm34-129.71a15.93,15.93,0,0,0-6.17-10.81A186.67,186.67,0,0,0,128,32a191,191,0,0,0-42.49,4.75,4,4,0,0,0-2,6.59L186,156.07a4,4,0,0,0,6-.14L244.35,92.8A15.65,15.65,0,0,0,247.89,80.91Z"},"regular":{"arrow-clockwise":"M240,56v48a8,8,0,0,1-8,8H184a8,8,0,0,1,0-16H211.4L184.81,71.64l-.25-.24a80,80,0,1,0-1.67,114.78,8,8,0,0,1,11,11.63A95.44,95.44,0,0,1,128,224h-1.32A96,96,0,1,1,195.75,60L224,85.8V56a8,8,0,1,1,16,0Z","arrow-square-out":"M224,104a8,8,0,0,1-16,0V59.32l-66.33,66.34a8,8,0,0,1-11.32-11.32L196.68,48H152a8,8,0,0,1,0-16h64a8,8,0,0,1,8,8Zm-40,24a8,8,0,0,0-8,8v72H48V80h72a8,8,0,0,0,0-16H48A16,16,0,0,0,32,80V208a16,16,0,0,0,16,16H176a16,16,0,0,0,16-16V136A8,8,0,0,0,184,128Z","caret-left":"M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z","caret-right":"M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z","caret-up-down":"M181.66,170.34a8,8,0,0,1,0,11.32l-48,48a8,8,0,0,1-11.32,0l-48-48a8,8,0,0,1,11.32-11.32L128,212.69l42.34-42.35A8,8,0,0,1,181.66,170.34Zm-96-84.68L128,43.31l42.34,42.35a8,8,0,0,0,11.32-11.32l-48-48a8,8,0,0,0-11.32,0l-48,48A8,8,0,0,0,85.66,85.66Z","check":"M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z","plus":"M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z","watch":"M208,128a79.94,79.94,0,0,0-32.7-64.47l-6.24-34.38A16,16,0,0,0,153.32,16H102.68A16,16,0,0,0,86.94,29.15L80.7,63.53a79.9,79.9,0,0,0,0,128.94l6.24,34.38A16,16,0,0,0,102.68,240h50.64a16,16,0,0,0,15.74-13.15l6.24-34.38A79.94,79.94,0,0,0,208,128ZM102.68,32h50.64l3.91,21.55a79.75,79.75,0,0,0-58.46,0ZM64,128a64,64,0,1,1,64,64A64.07,64.07,0,0,1,64,128Zm89.32,96H102.68l-3.91-21.55a79.75,79.75,0,0,0,58.46,0ZM120,128V88a8,8,0,0,1,16,0v32h32a8,8,0,0,1,0,16H128A8,8,0,0,1,120,128Z","x":"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"}};
 
 function injectIcons(root = document){
   $$('.phi', root).forEach(el => {
@@ -2939,8 +3400,10 @@ function wire(groupSel, onPick){
   });
 }
 
-const VIEW_PAGE = { me:'page-me', bench:'page-bench', profile:'p-profile',
-                    firmware:'p-firmware' };
+const VIEW_PAGE = { me:'page-me', bench:'page-bench', profile:'p-profile', firmware:'p-firmware',
+                    device:'p-device', goals:'p-goals', monitor:'p-monitor', reminders:'p-reminders',
+                    remdetail:'p-rem-detail', alarm:'p-rem-alarm', find:'p-find', shutter:'p-shutter',
+                    units:'p-units', health:'p-health-sync', faq:'p-faq', about:'p-about' };
 
 /* One way in and out of every screen. An inner page (anything named p-*)
    hides the bottom nav, the way a pushed detail screen does on Android —
@@ -2954,6 +3417,7 @@ function showPage(id){
   syncSaveBar();
   fwSyncBar();
   measureSlot();   // the readout is only valid while the tab is on screen
+  onShowPage(id);  // the band gate, and anything a page stops doing when left
   // keep the panel's radio honest when navigation came from a tap, not a switch
   const key = Object.keys(VIEW_PAGE).find(k => VIEW_PAGE[k] === id);
   const radio = key && $('#viewOpts input[value="' + key + '"]');
@@ -2962,7 +3426,12 @@ function showPage(id){
     $$('label', $('#viewOpts')).forEach(l => l.classList.toggle('on', l.contains(radio)));
   }
 }
-wire('#viewOpts', v => showPage(VIEW_PAGE[v] || 'page-me'));
+wire('#viewOpts', v => {
+  /* two of the pages need setting up before they are shown */
+  if (v === 'remdetail') return openRemDetail('sedentary');
+  if (v === 'alarm')     return openAlarm(null);
+  showPage(VIEW_PAGE[v] || 'page-me');
+});
 
 /* One way to move the device card. S10 needs to drive it too — an install
    in progress shows on the tab as well (§5.3 `updating`) — so this keeps the
@@ -2977,6 +3446,7 @@ function setSlot(v){
     $$('label', $('#slotOpts')).forEach(l => l.classList.toggle('on', l.contains(radio)));
   }
   measureSlot();
+  onSlotChange();  // the band pages and the device page read the same state
 }
 wire('#slotOpts', setSlot);
 
@@ -3024,10 +3494,12 @@ const SHEETS = {
   },
 };
 
-function showSheet(key){
+function showSheet(key, overrides){
   const sheet = $('#liveSheet'), scrim = $('#scrim');
   if (key === 'none'){ sheet.hidden = true; scrim.hidden = true; return; }
-  const cfg = SHEETS[key];
+  /* a caller can retitle a variant — S03 reuses `in-progress` for shutting
+     down, restarting and resetting with its own words each time */
+  const cfg = Object.assign({}, SHEETS[key], overrides || {});
   sheet.setAttribute('data-sheet', key);
   $('#sheetTitle').textContent = cfg.title;
   $('#sheetSub').textContent = cfg.sub;
@@ -3083,12 +3555,6 @@ $('#scrim').addEventListener('click', () => {
   if ($('#liveSheet').getAttribute('data-sheet') !== 'in-progress') closeSheet();
 });
 
-/* the two toggles on the tab actually flip, so the switch can be felt */
-$$('#page-me .switch').forEach(sw => sw.addEventListener('click', () => {
-  const on = !sw.classList.contains('on');
-  sw.classList.toggle('on', on);
-  sw.setAttribute('aria-checked', String(on));
-}));
 
 /* ---- 5. the footprint proof (hard rule 4) -------------------------------
    Acceptance criterion: "Pairing CTA and device card occupy the same
@@ -3433,7 +3899,7 @@ function fillCol(col, items, selectedIndex, onPick){
 }
 
 function showFsBody(which){
-  ['fsWheel','fsCal','fsChoice','fsText','fsActions'].forEach(id => {
+  ['fsWheel','fsCal','fsChoice','fsText','fsActions','fsValues','fsTime'].forEach(id => {
     $('#' + id).hidden = (id !== 'fs' + which);
   });
 }
@@ -3708,12 +4174,8 @@ function leaveProfile(){
 }
 $('#profBack').addEventListener('click', leaveProfile);
 
-/* the Profile row on the tab is the way in. It is the first row in break 2,
-   and the first row in the whole tab that actually navigates. */
-$$('#page-me .row').forEach(r => {
-  if (r.querySelector('.lab') && r.querySelector('.lab').textContent.trim() === 'Profile')
-    r.addEventListener('click', () => showPage('p-profile'));
-});
+/* every row on the tab carries data-page and is opened by the one delegated
+   handler in §8e, so there is no per-row wiring here any more */
 
 /* ---- the review panel's profile switches -------------------------------
    Each one sets up the two copies so the state is real, not painted on:
@@ -4246,8 +4708,6 @@ $('#fwBar').addEventListener('click', e => {
 });
 $('#fwBack').addEventListener('click', () => showPage('page-me'));
 
-/* the Firmware Update row in break 3 is the way in */
-$('#rowFirmware').addEventListener('click', () => showPage('p-firmware'));
 
 /* the review panel's twelve switches. Each one sets the FACTS the state
    needs and then lets fwSet draw it, so nothing is faked: `battery-too-low`
@@ -4267,6 +4727,836 @@ wire('#fwOpts', v => {
   showPage('p-firmware');
 });
 
+
+/* ==========================================================================
+   8. THE REMAINING INNER PAGES  — S03, S05–S09, S11–S14
+   --------------------------------------------------------------------------
+   Reading order:
+     8a. small shared pieces   (row builders, time formatting, the band gate)
+     8b. the two toggle kinds  (band writes go `pending`; app toggles do not)
+     8c. three more sheet bodies (value list · time wheel · generic choice)
+     8d. one section per page, each = its state + one render function
+     8e. wiring: tab rows, back buttons, the panel
+
+   The rule every page follows: state lives in one small object, and ONE
+   render function draws the whole page from it. Nothing is toggled by hand
+   in the DOM — change the object, call render. That is what lets the band
+   gate, the panel and a tap on the phone all agree without coordination.
+   ========================================================================== */
+
+/* ---- 8a. shared pieces --------------------------------------------------- */
+
+/* a navigation row (§5.1). `page` makes it navigate; `pick` marks the value
+   as a choice (accent + caret-up-down) rather than a fact. */
+function rowHTML(o){
+  const tag = o.tag || 'button';
+  return '<' + tag + ' class="row' + (o.sub ? ' two-line' : '') + (o.cls ? ' ' + o.cls : '') + '"' +
+    (tag === 'button' ? ' type="button"' : '') +
+    (o.page ? ' data-page="' + o.page + '"' : '') +
+    (o.act ? ' data-act="' + o.act + '"' : '') +
+    (o.attrs || '') + '>' +
+    (o.glyph ? '<span class="glyph phi" data-ph="' + o.glyph + '" data-weight="fill"></span>' : '') +
+    (o.sub
+      ? '<span class="rbody"><span class="lab">' + o.label + '</span><span class="sub">' + o.sub + '</span></span>'
+      : '<span class="lab">' + o.label + '</span>') +
+    (o.val !== undefined ? '<span class="val' + ((o.pick || o.accent) ? ' pick' : '') + '">' + o.val + '</span>' : '') +
+    (o.pick ? '<span class="phi updown" data-ph="caret-up-down"></span>' : '') +
+    (o.tail || '') +
+    (o.nocaret ? '' : '<span class="phi caret" data-ph="caret-right"></span>') +
+  '</' + tag + '>';
+}
+
+/* a toggle row (§5.2). Its state is read from three places: the value, and
+   whether its key is currently pending or stale. */
+const pendingKeys = new Set(), staleKeys = new Set();
+function trowHTML(o){
+  const st = staleKeys.has(o.key) ? 'stale' : pendingKeys.has(o.key) ? 'pending' : o.on ? 'on' : 'off';
+  const why = st === 'pending' ? 'Saving to the band…'
+            : st === 'stale'   ? '<span class="phi" data-ph="link-break" data-weight="fill"></span>Last known — reconnect to change'
+            : '';
+  return '<div class="trow' + (o.cls ? ' ' + o.cls : '') + '" data-toggle="' + st + '" data-tk="' + o.key + '">' +
+    (o.glyph ? '<span class="glyph phi" data-ph="' + o.glyph + '" data-weight="fill"></span>' : '') +
+    '<span class="tbody">' +
+      (o.labelHTML || '<span class="lab">' + o.label + '</span>') +
+      (o.sub ? '<span class="sub">' + o.sub + '</span>' : '') +
+      '<span class="why">' + why + '</span>' +
+    '</span>' +
+    '<span class="tctrl">' +
+      (o.tail || '') +
+      '<span class="phi spin" data-ph="circle-notch" data-weight="fill"></span>' +
+      '<button class="switch' + (o.on ? ' on' : '') + '" type="button" role="switch" aria-checked="' + !!o.on + '"' +
+        (st === 'stale' ? ' aria-disabled="true"' : '') + ' aria-label="' + (o.label || '') + '"><i></i></button>' +
+    '</span>' +
+  '</div>';
+}
+
+/* times are minutes past midnight; the format follows S11 Units & Format */
+function fmtTime(min){
+  const h = Math.floor(min / 60) % 24, m = min % 60;
+  if (UNITS.time === '12'){
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return N(h12 + ':' + pad2(m)) + ' ' + (h < 12 ? 'AM' : 'PM');
+  }
+  return N(pad2(h) + ':' + pad2(m));
+}
+const DAY_L = ['S','M','T','W','T','F','S'];
+const DAY_S = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function daysSummary(d){
+  const n = d.filter(Boolean).length;
+  if (n === 7) return 'Every day';
+  if (n === 0) return 'Once';
+  if (n === 5 && !d[0] && !d[6]) return 'Weekdays';
+  if (n === 2 && d[0] && d[6]) return 'Weekends';
+  return DAY_S.filter((_, i) => d[i]).join(', ');
+}
+function daysHTML(d, act){
+  return '<div class="days">' + DAY_L.map((l, i) =>
+    '<button class="day" type="button" data-act="' + act + '" data-i="' + i + '" aria-pressed="' + !!d[i] + '" aria-label="' + DAY_S[i] + '">' + l + '</button>'
+  ).join('') + '</div>';
+}
+function segHTML(opts, current, act, wide){
+  return '<div class="seg' + (wide ? ' wide' : '') + '" role="group">' + opts.map(([id, label]) =>
+    '<button type="button" data-act="' + act + '" data-v="' + id + '" aria-pressed="' + (String(id) === String(current)) + '">' + label + '</button>'
+  ).join('') + '</div>';
+}
+
+/* ---- the band gate (§5.5) ------------------------------------------------
+   Every band page reads the DEVICE CARD's state. Pairing CTA showing → there
+   is no band → `no-band`. Disconnected → `offline` (reconnect first). The
+   pages never grey out (hard rule 3); they open the empty state instead. */
+function bandState(){
+  const s = $('#page-me').getAttribute('data-slot');
+  if (s === 'pair' || s === 'pair-bt-off') return 'no-band';
+  if (s === 'disconnected') return 'offline';
+  return 'ok';
+}
+const GATE = {
+  'p-goals':      ['crosshair',        'Daily targets for steps, distance, calories, sleep and active minutes live on the band, so it can buzz you when you reach one.'],
+  'p-monitor':    ['heartbeat',        'Health Monitor samples heart rate, SpO&#8322;, stress, skin temperature and HRV straight from your wrist.'],
+  'p-reminders':  ['bell',             'Sedentary and hydration nudges, alarms and quiet hours all fire on the band, so they need a band to fire on.'],
+  'p-rem-detail': ['bell',             'Sedentary and hydration nudges fire on the band, so they need a band to fire on.'],
+  'p-rem-alarm':  ['alarm',            'Alarms ring on your wrist, not your phone. There has to be a wrist.'],
+  'p-find':       ['magnifying-glass', 'Find Device rings the band you already have. Pair one first — the + on the Me tab does that.'],
+  'p-shutter':    ['camera',           'The band works as a remote shutter for your phone&rsquo;s camera. There has to be a band to press.'],
+};
+function buildGates(){
+  Object.keys(GATE).forEach(id => {
+    const [glyph, what] = GATE[id];
+    const page = $('#' + id);
+    page.querySelector('.gate.g-noband').innerHTML =
+      '<div class="empty" data-empty="no-band">' +
+        '<span class="mark"><span class="phi" data-ph="' + glyph + '" data-weight="fill"></span></span>' +
+        '<div class="h">Pair a band first</div><div class="s">' + what + '</div>' +
+        /* FLAG: S02 Pair a device is not built (slice 4). The button goes back
+           to the tab, where the pairing CTA sits in the device slot. */
+        '<div class="acts"><button class="btn btn--primary btn--m" type="button" data-back="page-me">Pair a device</button></div>' +
+      '</div>';
+    page.querySelector('.gate.g-offline').innerHTML =
+      '<div class="empty" data-empty="reconnect">' +
+        '<span class="mark"><span class="phi" data-ph="link-break" data-weight="fill"></span></span>' +
+        '<div class="h">Pebble Prime is offline</div>' +
+        '<div class="s">Bring the band closer and check it is switched on, then try again.</div>' +
+        '<div class="acts">' +
+          '<button class="btn btn--primary btn--m" type="button" data-act="reconnect"><span class="phi" data-ph="arrow-counter-clockwise" data-weight="fill"></span>Try again</button>' +
+          '<button class="btn btn--tertiary btn--m" type="button" data-back="page-me">Not now</button>' +
+        '</div>' +
+      '</div>';
+    injectIcons(page);
+  });
+}
+function applyBandGate(){
+  const st = bandState();
+  $$('.band-page').forEach(p => {
+    /* T4: Goal Setting is the exception — with the band merely offline it
+       still accepts edits and QUEUES them, so it does not gate on offline. */
+    const eff = (p.id === 'p-goals' && st === 'offline') ? 'ok' : st;
+    p.setAttribute('data-band', eff);
+  });
+  if (st === 'ok') staleKeys.clear();
+  renderGoals();   // its offline banner reads the same state
+}
+
+/* ---- 8b. the two toggle kinds -------------------------------------------- */
+/* Anything that WRITES TO THE BAND flips optimistically and shows `pending`
+   until the write lands (§5.2: never let a toggle look settled while a write
+   is in flight). With the band offline the switch does not move at all — it
+   goes `stale` with the reason, and clears the moment the band is back. */
+function bandToggle(key, get, set, render){
+  if (bandState() !== 'ok'){ staleKeys.add(key); render(); return; }
+  set(!get());
+  pendingKeys.add(key); render();
+  setTimeout(() => { pendingKeys.delete(key); render(); }, 700);
+}
+/* an app-side toggle (consent, Apple Health sharing) needs no band and lands
+   at once */
+function appToggle(get, set, render){ set(!get()); render(); }
+
+/* ---- 8c. three more sheet bodies ------------------------------------------
+   Same §5.6 chrome as every other picker: cancel / title / tick. */
+
+/* the Activity goal picker — one numeral per row, PORTED from index.html */
+function openValues(title, opts, current, fmt, unit, onConfirm){
+  let pick = current;
+  openFieldSheet(title, 'Values', true);
+  const host = $('#fsValues');
+  const paint = () => {
+    host.innerHTML = opts.map(v =>
+      '<button type="button" class="sheet-row' + (v === pick ? ' sel' : '') + '" data-v="' + v + '">' +
+        '<span class="v">' + fmt(v) + '<span class="u">' + unit + '</span></span></button>').join('');
+  };
+  paint();
+  host.onclick = e => { const b = e.target.closest('.sheet-row'); if (!b) return; pick = Number(b.dataset.v); paint(); };
+  fsOnConfirm = () => onConfirm(pick);
+}
+
+/* hours beside minutes, one selection band — the Add Alarm screenshot */
+function openTime(title, minutes, onConfirm){
+  let h = Math.floor(minutes / 60), m = minutes % 60;
+  openFieldSheet(title, 'Time', true);
+  const hours = Array.from({ length:24 }, (_, i) => pad2(i));
+  const mins  = Array.from({ length:60 }, (_, i) => pad2(i));
+  fillCol($('#fsTimeH'), hours, h, i => { h = i; });
+  fillCol($('#fsTimeM'), mins,  m, i => { m = i; });
+  fsOnConfirm = () => onConfirm(h * 60 + m);
+}
+
+/* a generic single-choice list; picking IS confirming, as in S01 */
+function openPick(title, options, current, onPick){
+  openFieldSheet(title, 'Choice', false);
+  const host = $('#fsChoice');
+  host.innerHTML = options.map(o =>
+    '<button class="choice" type="button" data-id="' + o.id + '" aria-pressed="' + (String(o.id) === String(current)) + '">' +
+      '<span class="cbody"><span class="ct">' + o.t + '</span><span class="cd">' + (o.d || '') + '</span></span>' +
+      '<span class="phi tick" data-ph="check"></span></button>').join('');
+  injectIcons(host);
+  host.onclick = e => { const b = e.target.closest('.choice'); if (!b) return; closeFieldSheet(); onPick(b.dataset.id); };
+}
+
+/* ==========================================================================
+   8d. THE PAGES
+   ========================================================================== */
+
+/* ---- S11 · Units & Format — first, because time formatting reads it ------- */
+const UNITS = { distance:'km', temp:'c', time:'24' };
+let unitsPending = false;
+const UNIT_ROWS = [
+  { key:'distance', label:'Distance',    opts:[['km','km'], ['mi','mi']] },
+  { key:'temp',     label:'Temperature', opts:[['c','&deg;C'], ['f','&deg;F']] },
+  { key:'time',     label:'Time format', opts:[['24', N(24) + '-hour'], ['12', N(12) + '-hour']] },
+];
+function unitsLabel(){
+  if (UNITS.distance === 'km' && UNITS.temp === 'c') return 'Metric';
+  if (UNITS.distance === 'mi' && UNITS.temp === 'f') return 'Imperial';
+  return 'Custom';
+}
+function renderUnits(){
+  $('#unitsBody').innerHTML =
+    '<div class="group">' + UNIT_ROWS.map(r =>
+      rowHTML({ tag:'div', cls:'row--ro', label:r.label, nocaret:true,
+                tail: segHTML(r.opts, UNITS[r.key], 'unit:' + r.key) })).join('') +
+    '</div>' +
+    /* propagating-to-band (§6 S11) — the band shows distance and the time in
+       the same units as the app, so a change is a write */
+    '<p class="grp-note" id="unitsNote">' + (unitsPending
+      ? '<span class="phi spinning" data-ph="circle-notch" data-weight="fill" style="width:12px;height:12px;vertical-align:-2px;margin-right:4px"></span>Sending to the band…'
+      : 'The band shows distance and the clock in these units too. Changing one here changes it there.') + '</p>';
+  /* the tab's Units row reads the result: Metric, Imperial, or Custom */
+  $('#unitsVal').textContent = unitsLabel();
+  injectIcons($('#p-units'));
+}
+function setUnit(key, v){
+  UNITS[key] = v;
+  unitsPending = true; renderUnits();
+  setTimeout(() => { unitsPending = false; renderUnits(); }, 800);
+  /* every time on every page re-formats */
+  renderReminders(); renderRemDetail(); renderAlarm(); renderGoals();
+}
+
+/* ---- S05 · Goal Setting -------------------------------------------------
+   The Activity tab's goal page, ported, plus sleep and active minutes.
+   FLAG: the sleep goal here is a DURATION (hours). Bedtime and wake-up
+   themselves stay on the Sleep tab's dial, which already says whether the
+   schedule "meets your 8 hr sleep goal" — this is that 8 hr. */
+const GOAL_OPTS = {
+  steps:    { title:'Steps goal',          glyph:'footprints',        tone:'--metric-steps',    unit:'steps', opts:[6000,8000,10000,12000,14000], fmt:v => v.toLocaleString('en-US') },
+  distance: { title:'Distance goal',       glyph:'map-pin',           tone:'--metric-distance', unit:null,    opts:[4,6,8,10,12],                 fmt:String },
+  calories: { title:'Calories goal',       glyph:'fire',              tone:'--metric-calories', unit:'kcal',  opts:[400,500,600,700,800],         fmt:String },
+  sleep:    { title:'Sleep goal',          glyph:'bed',               tone:'--metric-sleep',    unit:'hr',    opts:[6,6.5,7,7.5,8,8.5,9],         fmt:String },
+  active:   { title:'Active minutes goal', glyph:'person-simple-run', tone:'--metric-activity', unit:'min',   opts:[20,30,45,60,90],              fmt:String },
+};
+const GOAL_LABEL = { steps:'Steps', distance:'Distance', calories:'Calories', sleep:'Sleep', active:'Active minutes' };
+const goalSel = { steps:10000, distance:8, calories:600, sleep:8, active:30 };
+const goalWrite = {};   /* key -> 'pending' | 'queued' | 'saved' */
+function renderGoals(){
+  const offline = bandState() === 'offline';
+  $('#goalsBody').innerHTML =
+    (offline ? '<div class="banner" data-tone="caution"><span class="phi" data-ph="link-break" data-weight="fill"></span><span>Pebble Prime is offline. Changes are kept here and sent to the band the moment it reconnects.</span></div>' : '') +
+    Object.keys(GOAL_OPTS).map(k => {
+      const g = GOAL_OPTS[k], w = goalWrite[k] || '';
+      const unit = k === 'distance' ? UNITS.distance : g.unit;
+      return '<div class="goalwrap" data-w="' + w + '">' +
+        '<button class="goalcard" type="button" data-act="goal" data-k="' + k + '">' +
+          '<span class="phi gi" data-ph="' + g.glyph + '" data-weight="fill" style="color:var(' + g.tone + ')"></span>' +
+          '<span class="nm">' + GOAL_LABEL[k] + '</span>' +
+          '<span class="gv"><span class="gn">' + g.fmt(goalSel[k]) + '</span><span class="gu">' + unit + '</span></span>' +
+          '<span class="phi caret" data-ph="caret-right"></span>' +
+        '</button>' +
+        '<span class="gw">' +
+          (w === 'pending' ? '<span class="phi" data-ph="circle-notch" data-weight="fill"></span>Saving to the band…'
+         : w === 'queued'  ? '<span class="phi" data-ph="clock" data-weight="fill"></span>Queued — sends when the band reconnects'
+         : w === 'saved'   ? '<span class="phi" data-ph="check-circle" data-weight="fill"></span>Saved to the band' : '') +
+        '</span>' +
+      '</div>';
+    }).join('') +
+    '<p class="grp-note">The same goals as the Activity and Sleep tabs — this is a third door to them, not a different set. The band buzzes once when you reach each one.</p>';
+  injectIcons($('#p-goals'));
+}
+function editGoal(k){
+  const g = GOAL_OPTS[k];
+  openValues(g.title, g.opts, goalSel[k], g.fmt, k === 'distance' ? UNITS.distance : g.unit, v => {
+    goalSel[k] = v;
+    if (bandState() === 'offline'){ goalWrite[k] = 'queued'; renderGoals(); return; }
+    goalWrite[k] = 'pending'; renderGoals();
+    setTimeout(() => { goalWrite[k] = 'saved'; renderGoals();
+      setTimeout(() => { if (goalWrite[k] === 'saved'){ delete goalWrite[k]; renderGoals(); } }, 1600); }, 800);
+  });
+}
+
+/* ---- S06 · Health Monitor  (from the screenshot) ------------------------- */
+const MON = { hr:true, interval:10, spo2:true, stress:true, hrv:true, temp:true, hrAlert:true, hrUpper:160 };
+const MON_ROWS = [
+  ['hr',     'Continuous heart rate',   'All-day interval sampling'],
+  ['spo2',   'SpO&#8322; detection',    'Measured automatically during rest and sleep'],
+  ['stress', 'Stress monitoring',       'Measured automatically through the day'],
+  ['hrv',    'HRV monitoring',          'Measured during sleep and rest periods'],
+  ['temp',   'Temperature monitoring',  'Measured during sleep and rest periods'],
+];
+function renderMonitor(){
+  $('#monRows').innerHTML = MON_ROWS.map(([k, label, sub], i) =>
+    trowHTML({ key:'mon:' + k, label, sub, on:MON[k] }) +
+    /* the sampling interval belongs to continuous HR, so it sits right under
+       it and goes inert (dimmed) when that switch is off */
+    (k === 'hr' ? rowHTML({ label:'Sampling interval', val:N(MON.interval) + ' min', pick:true, nocaret:true,
+                            act:'mon:interval', cls: MON.hr ? '' : 'is-off' }) : '')
+  ).join('');
+  $('#monAlerts').innerHTML =
+    trowHTML({ key:'mon:hrAlert', label:'Heart rate warning', sub:'Buzz when your heart rate crosses the limit', on:MON.hrAlert }) +
+    rowHTML({ label:'Upper limit', val:N(MON.hrUpper) + ' bpm', accent:true, act:'mon:hrUpper', cls: MON.hrAlert ? '' : 'is-off' });
+  injectIcons($('#p-monitor'));
+}
+
+/* ---- S07 · Health Reminder  (from the screenshots) ----------------------- */
+const REM = {
+  bedtime: true,
+  sedentary: { on:false, start:9*60,  end:18*60, interval:60, days:[0,1,1,1,1,1,0] },
+  water:     { on:false, start:8*60,  end:22*60, interval:90, days:[1,1,1,1,1,1,1] },
+  alarms:    [],            /* { id, time, days, on } */
+  dnd:       { on:true, from:22*60, until:7*60 },
+};
+const REM_KINDS = {
+  sedentary: { title:'Sedentary Reminder',   glyph:'person-simple-walk', what:'A nudge to get up after sitting still',
+               note:'The band checks for movement across each interval and buzzes once if it found none. It stays quiet while you sleep, whatever the hours say.' },
+  water:     { title:'Drink Water Reminder', glyph:'drop',               what:'A nudge to drink at a steady pace',
+               note:'Buzzes at the interval you set between the start and end times, and only on the days you pick.' },
+};
+const ALARM_CAP = 5;   /* FLAG: invented — no cap was specified; §6 S07 lists an `at-limit` state */
+const TAB = { calls:true };
+let remKind = 'sedentary', alarmDraft = null;
+
+function renderReminders(){
+  const alarms = REM.alarms.slice().sort((a, b) => a.time - b.time);
+  $('#remBody').innerHTML =
+    '<div class="group">' +
+      trowHTML({ key:'rem:bedtime', label:'Smart bedtime reminder', sub:'Wind-down nudge ' + N(30) + ' min before your recommended bedtime', on:REM.bedtime }) +
+    '</div>' +
+    '<div class="group">' +
+      rowHTML({ glyph:REM_KINDS.sedentary.glyph, label:'Sedentary Reminder',   val:REM.sedentary.on ? 'On' : 'Off', act:'rem:open', attrs:' data-k="sedentary"' }) +
+      rowHTML({ glyph:REM_KINDS.water.glyph,     label:'Drink Water Reminder', val:REM.water.on ? 'On' : 'Off',     act:'rem:open', attrs:' data-k="water"' }) +
+    '</div>' +
+    '<div class="sec-h with-act"><span>Alarm</span>' +
+      '<button class="iconbtn" type="button" data-act="alarm:new" aria-label="Add alarm"' + (alarms.length >= ALARM_CAP ? ' disabled style="opacity:.4"' : '') + '><span class="phi" data-ph="plus"></span></button>' +
+    '</div>' +
+    (alarms.length === 0
+      ? '<p class="empty-line">No alarms yet. Tap + to add one.</p>'
+      : '<div class="group">' + alarms.map(a =>
+          trowHTML({ key:'alarm:' + a.id, cls:'alarm', on:a.on, label:'Alarm ' + fmtTimePlain(a.time),
+                     labelHTML:'<button class="lab" type="button" data-act="alarm:edit" data-id="' + a.id + '" style="background:none;border:0;padding:0;text-align:left;cursor:pointer;font-family:inherit;color:inherit">' +
+                               '<span class="at">' + fmtTime(a.time) + '</span><span class="ad">' + daysSummary(a.days) + '</span></button>' })
+        ).join('') + '</div>' +
+        (alarms.length >= ALARM_CAP ? '<p class="grp-note">That is the most alarms the band can hold. Delete one to add another.</p>' : '')) +
+    '<div class="sec-h">Do not disturb</div>' +
+    '<div class="group">' +
+      trowHTML({ key:'dnd', label:'DND window', sub:'Mute band notifications overnight', on:REM.dnd.on }) +
+      rowHTML({ label:'From',  val:fmtTime(REM.dnd.from),  pick:true, nocaret:true, act:'dnd:from',  cls: REM.dnd.on ? '' : 'is-off' }) +
+      rowHTML({ label:'Until', val:fmtTime(REM.dnd.until), pick:true, nocaret:true, act:'dnd:until', cls: REM.dnd.on ? '' : 'is-off' }) +
+    '</div>' +
+    /* FLAG (conflict): the owner earlier settled that Do Not Disturb "stays a
+       toggle with no schedule" on the tab. This screenshot gives it a window
+       here. Both are built and they are ONE switch — this row and the tab's
+       DND row read the same value — so neither can disagree. Whether the tab
+       row stays is the owner's call; see the questions in the changelog. */
+    '<p class="grp-note">The Do Not Disturb switch on the Me tab is this same window &mdash; flipping either one flips both.</p>';
+  injectIcons($('#p-reminders'));
+  renderTabToggles();
+}
+function fmtTimePlain(min){ return pad2(Math.floor(min / 60) % 24) + ':' + pad2(min % 60); }
+
+/* one detail screen for both nudges: on/off, start, end, interval, days */
+function openRemDetail(kind){ remKind = kind; renderRemDetail(); showPage('p-rem-detail'); }
+function renderRemDetail(){
+  const k = remKind, r = REM[k], meta = REM_KINDS[k];
+  $('#remDetailTitle').textContent = meta.title;
+  $('#remDetailBody').innerHTML =
+    '<div class="group">' + trowHTML({ key:'rem:' + k, label:meta.title, sub:meta.what, on:r.on }) + '</div>' +
+    '<div class="sec-h">Active hours</div>' +
+    '<div class="group">' +
+      rowHTML({ label:'Start', val:fmtTime(r.start), pick:true, nocaret:true, act:'rem:start' }) +
+      rowHTML({ label:'End',   val:fmtTime(r.end),   pick:true, nocaret:true, act:'rem:end' }) +
+    '</div>' +
+    '<div class="sec-h">Interval</div>' +
+    '<div class="group" style="padding-top:16px">' +
+      segHTML([[30, N(30) + ' min'], [60, N(60) + ' min'], [90, N(90) + ' min']], r.interval, 'rem:interval', true) +
+    '</div>' +
+    '<div class="sec-h">Repeat</div>' +
+    '<div class="group" style="padding-top:16px">' + daysHTML(r.days, 'rem:day') + '</div>' +
+    '<p class="grp-note">' + meta.note + '</p>';
+  injectIcons($('#p-rem-detail'));
+}
+
+/* add / edit an alarm. The draft is a copy; nothing reaches the list until
+   the primary button is pressed, so back is a free cancel. */
+function openAlarm(id){
+  const a = REM.alarms.find(x => x.id === id);
+  alarmDraft = a ? JSON.parse(JSON.stringify(a)) : { id:null, time:7*60, days:[1,1,1,1,1,1,1], on:true };
+  renderAlarm(); showPage('p-rem-alarm');
+}
+function renderAlarm(){
+  if (!alarmDraft) return;
+  const a = alarmDraft, editing = a.id !== null;
+  $('#alarmTitle').textContent = editing ? 'Edit alarm' : 'Add alarm';
+  $('#alarmBody').innerHTML =
+    '<div class="group">' + rowHTML({ label:'Time', val:fmtTime(a.time), accent:true, act:'alarm:time' }) + '</div>' +
+    '<div class="sec-h">Repeat</div>' +
+    '<div class="group" style="padding-top:16px">' + daysHTML(a.days, 'alarm:day') + '</div>' +
+    '<p class="grp-note">' + daysSummary(a.days) + (a.days.filter(Boolean).length === 0 ? ' — rings the next time it is ' + fmtTimePlain(a.time) + ', then switches itself off.' : '') + '</p>' +
+    '<button class="btn btn--primary" type="button" data-act="alarm:save">' + (editing ? 'Save changes' : 'Add alarm') + '</button>' +
+    (editing ? '<button class="btn btn--destructive btn--m" type="button" data-act="alarm:delete">Delete alarm</button>' : '') +
+    '<p class="grp-note">Alarms ring on the band, not on your phone &mdash; a vibration on your wrist that wakes nobody else.</p>';
+  injectIcons($('#p-rem-alarm'));
+}
+
+/* the two toggles on the TAB itself (break 4) are the same component, drawn
+   from the same state, so DND here and DND on the reminders page agree */
+function renderTabToggles(){
+  $('#tabToggles').innerHTML =
+    trowHTML({ key:'dnd',   glyph:'moon',  label:'Do Not Disturb',    on:REM.dnd.on }) +
+    trowHTML({ key:'calls', glyph:'phone', label:'Call notification', on:TAB.calls });
+  injectIcons($('#tabToggles'));
+}
+
+/* ---- S03 · Device detail, with the system actions ------------------------ */
+const DEVICE = { mac:'D4:3B:0E:7A:11:C2' };
+function renderDevice(){
+  const slot = $('#page-me').getAttribute('data-slot');
+  const chip = {
+    connected:['positive','check-circle','Connected'], disconnected:['negative','link-break','Disconnected'],
+    syncing:['neutral','arrows-clockwise','Syncing'], updating:['caution','download-simple','Updating'],
+    'low-battery':['negative','battery-warning','Low battery'], 'not-worn':['neutral','watch','Not worn'],
+  }[slot] || ['neutral','watch','—'];
+  const batt = slot === 'disconnected' ? '<span class="num" style="color:var(--text-3)">—</span>'
+             : slot === 'low-battery'  ? '<span class="num" style="color:var(--negative-text)">12</span><span style="color:var(--negative-text)">%</span>'
+             : N(82) + '%';
+  const sync = slot === 'disconnected' ? N(2) + 'h ago' : slot === 'syncing' ? 'now' : 'just now';
+  $('#deviceBody').innerHTML =
+    '<div class="dev-hero">' +
+      '<span class="shot"><span class="phi" data-ph="watch" data-weight="fill"></span><img alt="" data-shot="watch"></span>' +
+      '<span class="meta"><span class="name">Pebble Prime</span>' +
+        '<span class="chip" data-tone="' + chip[0] + '"><span class="phi" data-ph="' + chip[1] + '" data-weight="fill"></span>' + chip[2] + '</span>' +
+      '</span>' +
+    '</div>' +
+    '<div class="group">' +
+      rowHTML({ tag:'div', cls:'row--ro', label:'Battery',     val:batt, nocaret:true }) +
+      rowHTML({ label:'Firmware', val:ver(FW.installed), page:'p-firmware',
+                tail: FW.installed !== FW.latest ? '<span class="dot" title="Update available"></span>' : '' }) +
+      rowHTML({ tag:'div', cls:'row--ro', label:'MAC address', val:N(DEVICE.mac), nocaret:true }) +
+      rowHTML({ tag:'div', cls:'row--ro', label:'Last synced', val:sync, nocaret:true }) +
+    '</div>' +
+    /* hard rule 5: the low-battery prompt always fires. The owner moved it
+       here from the tab as a stated always-on line rather than a switch that
+       will not move (see the toggle-row flag in §7 of the CSS). */
+    '<div class="group">' +
+      '<div class="trow" data-toggle="fixed-on">' +
+        '<span class="glyph phi" data-ph="battery-warning" data-weight="fill"></span>' +
+        '<span class="tbody"><span class="lab">Low battery prompt</span><span class="why">Always on, so the band never dies without warning</span></span>' +
+        '<span class="tctrl"><span class="lockpill"><span class="phi" data-ph="lock-simple" data-weight="fill"></span>On</span></span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="sec-h">System</div>' +
+    '<div class="group">' +
+      rowHTML({ cls:'action', glyph:'power',            label:'Shut down', sub:'Stops tracking until you put the band on its charger', act:'dev:shutdown' }) +
+      rowHTML({ cls:'action', glyph:'arrows-clockwise', label:'Restart',   sub:'Reboots the band; connect it to your phone again afterwards', act:'dev:restart' }) +
+      rowHTML({ cls:'action destructive', glyph:'trash', label:'Reset',    sub:'Deletes all data on the band and restores factory settings', act:'dev:reset' }) +
+    '</div>' +
+    /* FLAG: not in the owner's list — §6 S03 requires it, and the consequence
+       sheet was built for it in slice 1 */
+    '<div class="group">' +
+      rowHTML({ cls:'action destructive', glyph:'link-break', label:'Unbind', sub:'Removes this band from your account', act:'dev:unbind' }) +
+    '</div>';
+  paintShot($('#deviceBody img[data-shot]'), DEVICE_SHOT.watch);
+  injectIcons($('#p-device'));
+}
+/* the three confirm sheets the system actions open. Restart reuses the
+   `standard` variant; unbind reuses `consequence`. */
+Object.assign(SHEETS, {
+  shutdown: {
+    title:'Shut down Pebble Prime?',
+    sub:'The band switches off and stops tracking. It wakes up again the moment you put it on its charger.',
+    rows:[['negative', 'Nothing is recorded — steps, sleep or heart rate — until it is back on.']],
+    confirm:'Shut down', cancel:'Keep it on', dismissable:true,
+  },
+  reset: {
+    title:'Reset Pebble Prime?',
+    sub:'Everything on the band is deleted and it goes back to factory settings.',
+    rows:[
+      ['negative', 'All data stored on the band is erased, including anything not yet synced.'],
+      ['negative', 'Reminders, alarms, goals and the band&rsquo;s settings are cleared.'],
+      ['negative', 'The band forgets this phone. You will pair it again from scratch.'],
+      /* same open question as unbind (§8): does synced history survive? */
+      ['positive', 'History already synced to your account stays — assumed, pending your call.'],
+    ],
+    confirm:'Reset band', cancel:'Cancel', dismissable:true,
+  },
+});
+/* restart's meaning, per the owner: you connect the band again afterwards */
+SHEETS.standard.sub = 'The band reboots. Once it is back on, connect it to your phone again — it takes about a minute.';
+
+function confirmDeviceAction(kind){
+  const key = kind === 'restart' ? 'standard' : kind === 'unbind' ? 'consequence' : kind;
+  onSheetConfirm = () => runDeviceAction(kind);
+  showSheet(key);
+}
+/* confirm → the non-dismissable in-progress sheet → the band's new state */
+function runDeviceAction(kind){
+  const copy = { shutdown:['Shutting down…', 'Switching the band off'], restart:['Restarting…', 'Rebooting the band'],
+                 reset:['Resetting…', 'Erasing the band'], unbind:['Unbinding…', 'Clearing the band'] }[kind];
+  let pct = 0;
+  showSheet('in-progress', { title:copy[0], sub:'Keep the band close until this finishes.', prog:[copy[1], 0] });
+  const t = setInterval(() => {
+    pct = Math.min(100, pct + (reduced() ? 25 : 5));
+    $('#sheetBar').style.width = pct + '%'; $('#sheetProgPct').textContent = pct + '%';
+    if (pct >= 100){
+      clearInterval(t); closeSheet();
+      if (kind === 'shutdown'){ setSlot('disconnected'); }
+      if (kind === 'restart') { setSlot('syncing'); setTimeout(() => setSlot('connected'), 1400); }
+      if (kind === 'reset' || kind === 'unbind'){ setSlot('pair'); }
+      showPage('page-me');
+    }
+  }, reduced() ? 300 : 80);
+}
+
+/* ---- S12 · Apple Health -------------------------------------------------- */
+const AH_TYPES = [
+  ['footprints','Steps'], ['map-pin','Walking + running distance'], ['fire','Active energy'],
+  ['heartbeat','Heart rate'], ['heart','Resting heart rate'], ['pulse','Heart rate variability'],
+  ['drop','Blood oxygen'], ['moon','Sleep analysis'], ['thermometer','Body temperature'],
+  ['gauge','Weight'], ['ruler','Height'],
+];
+const AH = { state:'not-connected', shares:{}, denied:{}, pushing:false, pushed:false, firstSync:false };
+AH_TYPES.forEach(([, t]) => { AH.shares[t] = true; });
+function renderHealthSync(){
+  const page = $('#p-health-sync'); page.setAttribute('data-ah', AH.state);
+  const chip = { 'not-connected':['neutral','link','Not connected'], connected:['positive','check-circle','Connected'],
+                 partial:['caution','warning-circle','Some types denied'], revoked:['negative','prohibit','Access revoked'] }[AH.state];
+  const on = AH.state === 'connected' || AH.state === 'partial';
+  $('#ahBody').innerHTML =
+    '<div class="ah-hero">' +
+      /* FLAG: stand-in tile — Apple's real icon goes in as an <img> here */
+      '<span class="ah-logo"><span class="phi" data-ph="heart" data-weight="fill"></span></span>' +
+      '<div class="h">Apple Health</div>' +
+      '<div class="s">' + (AH.state === 'not-connected'
+        ? 'Pebble can write what the band records into Apple Health, so it sits alongside everything else your phone knows about you.'
+        : 'Pebble writes new readings to Health as they sync. It never reads other apps&rsquo; data.') + '</div>' +
+      '<span class="chip" data-tone="' + chip[0] + '"><span class="phi" data-ph="' + chip[1] + '" data-weight="fill"></span>' + chip[2] + '</span>' +
+    '</div>' +
+    (AH.firstSync ? '<div class="banner" data-tone="caution"><span class="phi spinning" data-ph="circle-notch" data-weight="fill"></span><span>First sync running. Today&rsquo;s readings appear in Health within a minute.</span></div>' : '') +
+    (AH.state === 'revoked' ? '<div class="banner" data-tone="negative"><span class="phi" data-ph="prohibit" data-weight="fill"></span><span>Pebble&rsquo;s access was switched off in the Health app. Nothing has been written since. Reconnect to pick up where it left off.</span></div>' : '') +
+    '<div class="sec-h">' + (on ? 'What Pebble shares' : 'What Pebble would share') + '</div>' +
+    '<div class="group">' + AH_TYPES.map(([glyph, t]) => {
+      if (!on) return rowHTML({ tag:'div', cls:'row--ro share', glyph, label:t, nocaret:true,
+                                tail:'<span class="phi tick-only" data-ph="check" ></span>' });
+      if (AH.denied[t]) return '<div class="trow share" data-toggle="blocked"><span class="glyph phi" data-ph="' + glyph + '" data-weight="fill"></span>' +
+        '<span class="tbody"><span class="lab">' + t + '</span><span class="why"><span class="phi" data-ph="prohibit" data-weight="fill"></span>Turned off in the Health app</span></span>' +
+        '<span class="tctrl"><button class="linkout" type="button" data-act="ah:settings">Health<span class="phi" data-ph="arrow-circle-up-right" data-weight="fill"></span></button></span></div>';
+      return trowHTML({ key:'ah:' + t, cls:'share', glyph, label:t, on:AH.shares[t] });
+    }).join('') + '</div>' +
+    (AH.state === 'not-connected'
+      ? '<button class="btn btn--primary" type="button" data-act="ah:connect">Connect Apple Health</button>'
+      : AH.state === 'revoked'
+      ? '<button class="btn btn--primary" type="button" data-act="ah:connect">Reconnect</button>'
+      : '<button class="btn btn--secondary" type="button" data-act="ah:push"' + (AH.pushing || AH.pushed ? ' disabled' : '') + '>' +
+          (AH.pushing ? '<span class="phi spinning" data-ph="circle-notch" data-weight="fill"></span>Sending ' + N(7) + ' days…'
+         : AH.pushed  ? '<span class="phi" data-ph="check" ></span>Past ' + N(7) + ' days sent'
+         : 'Send the past ' + N(7) + ' days') + '</button>' +
+        '<button class="btn btn--destructive btn--m" type="button" data-act="ah:disconnect">Disconnect</button>') +
+    '<p class="grp-note">' + (on
+      ? 'Sending the past ' + N(7) + ' days copies what the band already recorded into Health. It happens once; after that new readings go across on their own.'
+      : 'Connecting opens Apple&rsquo;s permission sheet, where each type can be allowed or refused.') +
+      ' On Android this row is <b>Health Connect</b> &mdash; same data, same switches.</p>';
+  injectIcons(page);
+}
+function setAH(state){
+  AH.state = state; AH.pushed = false; AH.pushing = false; AH.firstSync = false;
+  AH.denied = state === 'partial' ? { 'Heart rate variability':true, 'Blood oxygen':true } : {};
+  renderHealthSync();
+  const radio = $('#ahOpts input[value="' + state + '"]');
+  if (radio && !radio.checked){ radio.checked = true; $$('label', $('#ahOpts')).forEach(l => l.classList.toggle('on', l.contains(radio))); }
+}
+
+/* ---- S14 · About --------------------------------------------------------- */
+const ABOUT = { version:'2.0.1', build:'2026.09.03 (418)', analytics:true, ai:true, taps:0, dev:false };
+let tapTimer = null;
+function renderAbout(){
+  const left = 7 - ABOUT.taps;
+  $('#aboutBody').innerHTML =
+    '<div class="group">' +
+      /* §6 S14: the 7-tap developer unlock lives on the version number */
+      rowHTML({ tag:'div', cls:'row--ro', label:'Version', val:ver(ABOUT.version), nocaret:true, act:'about:tap',
+                attrs:' style="cursor:pointer" role="button" tabindex="0"',
+                sub: ABOUT.dev ? 'Developer options are unlocked' : (ABOUT.taps >= 3 && ABOUT.taps < 7 ? N(left) + ' more tap' + (left === 1 ? '' : 's') + ' to unlock developer options' : '') }) +
+      rowHTML({ tag:'div', cls:'row--ro', label:'Build', val:N(ABOUT.build), nocaret:true }) +
+      (ABOUT.dev ? rowHTML({ glyph:'code', label:'Developer options', tail:'<span class="chip" data-tone="caution">Unlocked</span>', act:'about:dev' }) : '') +
+    '</div>' +
+    '<div class="sec-h">Legal</div>' +
+    '<div class="group">' +
+      rowHTML({ glyph:'shield-check', label:'Privacy Policy',        tail:'<span class="phi caret" data-ph="arrow-square-out"></span>', nocaret:true, act:'about:link' }) +
+      rowHTML({ glyph:'file-text',    label:'User Agreement',        tail:'<span class="phi caret" data-ph="arrow-square-out"></span>', nocaret:true, act:'about:link' }) +
+      rowHTML({ glyph:'scroll',       label:'Open-source licences',  act:'about:link' }) +
+    '</div>' +
+    /* FLAG: the owner called these "radio button actions". Each is one
+       independent yes/no, so they are drawn as switches — the §5.2 component
+       every other on/off in the app uses. A radio group would imply choosing
+       ONE of the two, which is not the case. Easy to swap if radio was meant
+       literally; asked in the changelog. */
+    '<div class="sec-h">Privacy</div>' +
+    '<div class="group">' +
+      trowHTML({ key:'about:analytics', glyph:'chart-bar', label:'Share usage analytics', sub:'Anonymous crash reports and which features are used. Never your health data.', on:ABOUT.analytics }) +
+      trowHTML({ key:'about:ai',        glyph:'sparkle',   label:'AI insights',           sub:'Let Pebble generate personalised insights from what the band records.', on:ABOUT.ai }) +
+    '</div>' +
+    '<p class="grp-note">Both can be changed at any time. Turning AI insights off removes the insight cards from the Health tab the next time it opens.</p>';
+  injectIcons($('#p-about'));
+}
+function tapVersion(){
+  if (ABOUT.dev) return;
+  ABOUT.taps++; clearTimeout(tapTimer);
+  if (ABOUT.taps >= 7) ABOUT.dev = true;
+  else tapTimer = setTimeout(() => { ABOUT.taps = 0; renderAbout(); }, 2000);
+  renderAbout();
+}
+
+/* ---- S08 · Find Device --------------------------------------------------- */
+const FIND = { state:'ready' };   /* ready · searching · ringing */
+let findTimer = null;
+function renderFind(){
+  const s = FIND.state;
+  $('#findBody').innerHTML =
+    '<div class="mini-hero' + (s === 'searching' ? ' busy' : s === 'ringing' ? ' live' : '') + '" data-tone="' + (s === 'ringing' ? 'accent' : 'neutral') + '">' +
+      '<span class="mark"><span class="phi" data-ph="' + (s === 'ringing' ? 'bell-ringing' : s === 'searching' ? 'circle-notch' : 'watch') + '" data-weight="fill"></span></span>' +
+      '<div class="h">' + (s === 'ready' ? 'Find Pebble Prime' : s === 'searching' ? 'Reaching the band…' : 'Ringing') + '</div>' +
+      '<div class="s">' + (s === 'ready' ? 'The band vibrates and lights up for ' + N(30) + ' seconds — even face-down under a cushion.'
+                          : s === 'searching' ? 'Asking the band to make itself known.'
+                          : 'Vibrating and flashing. Tap Stop once you have it, or it stops on its own in ' + N(30) + ' seconds.') + '</div>' +
+      '<div class="acts">' + (s === 'ringing'
+        ? '<button class="btn btn--secondary btn--m" type="button" data-act="find:stop">Stop</button>'
+        : '<button class="btn btn--primary btn--m" type="button" data-act="find:ring"' + (s === 'searching' ? ' disabled' : '') + '><span class="phi" data-ph="bell-ringing" data-weight="fill"></span>Ring my band</button>') +
+      '</div>' +
+    '</div>' +
+    /* §6 S08: distinct from "+", which pairs a NEW band */
+    '<p class="grp-note">This rings the band you already have. To add a new one, use the <b>+</b> on the Me tab.</p>';
+  injectIcons($('#p-find'));
+}
+function setFind(s){
+  clearTimeout(findTimer); FIND.state = s; renderFind();
+  if (s === 'searching') findTimer = setTimeout(() => setFind('ringing'), 900);
+  if (s === 'ringing')   findTimer = setTimeout(() => setFind('ready'), 30000);
+}
+
+/* ---- S09 · Take Picture -------------------------------------------------- */
+const SHUT = { perm:'granted', armed:false };
+function renderShutter(){
+  const denied = SHUT.perm === 'denied';
+  $('#shutterBody').innerHTML =
+    '<div class="mini-hero' + (SHUT.armed ? ' live' : '') + '" data-tone="' + (denied ? 'caution' : SHUT.armed ? 'accent' : 'neutral') + '">' +
+      '<span class="mark"><span class="phi" data-ph="camera" data-weight="fill"></span></span>' +
+      '<div class="h">' + (denied ? 'Camera access needed' : SHUT.armed ? 'Shutter armed' : 'Remote shutter') + '</div>' +
+      '<div class="s">' + (denied ? 'Pebble cannot open the camera until you allow it in your phone&rsquo;s Settings.'
+                          : SHUT.armed ? 'Point your phone. A press on the band&rsquo;s side button takes the photo; a long press starts a ' + N(3) + '-second timer.'
+                          : 'Arm the shutter, then press the band&rsquo;s side button to take a photo with your phone&rsquo;s camera.') + '</div>' +
+      '<div class="acts">' + (denied
+        ? '<button class="btn btn--primary btn--m" type="button" data-act="shutter:settings"><span class="phi" data-ph="arrow-circle-up-right" data-weight="fill"></span>Open Settings</button>'
+        : SHUT.armed
+        ? '<button class="btn btn--secondary btn--m" type="button" data-act="shutter:disarm">Disarm</button>'
+        : '<button class="btn btn--primary btn--m" type="button" data-act="shutter:arm"><span class="phi" data-ph="camera" data-weight="fill"></span>Arm the shutter</button>') +
+      '</div>' +
+    '</div>' +
+    '<p class="grp-note">The camera opens on your phone; the band is only the button. Leaving this page disarms it.</p>';
+  injectIcons($('#p-shutter'));
+}
+
+/* ---- S13 · FAQs ---------------------------------------------------------
+   FLAG (§8): written as BUNDLED articles. If they are fetched instead, this
+   page grows search, no-results and offline states. */
+const FAQ = [
+  ['How long does the battery last?',
+   'About ' + N(7) + ' days with everything in Health Monitor switched on, and closer to ' + N(10) + ' with only heart rate. Continuous SpO&#8322; and stress sampling cost the most. Charging from empty takes about ' + N(90) + ' minutes.'],
+  ['Why is my sleep score missing this morning?',
+   'The band needs roughly ' + N(3) + ' hours of continuous wear overnight to stage sleep. If it was off the wrist, out of battery, or the strap was loose enough to lose contact, there is no score for that night. Check the Sleep tab for a "not worn" gap.'],
+  ['Does Pebble need to be open to sync?',
+   'No. The band stores up to ' + N(7) + ' days on its own and syncs whenever the phone is in range with Bluetooth on, even with Pebble closed. Opening the app just makes it happen immediately.'],
+  ['Can I wear the band in the shower or pool?',
+   'Showers, rain and sweat are fine. Swimming is fine for laps; skip hot tubs and saunas — heat, not water, is what damages the seal. Rinse it in fresh water after the sea or a chlorinated pool.'],
+  ['How accurate is the heart-rate reading?',
+   'At rest and during steady exercise it tracks a chest strap closely. It drifts during activities with a lot of wrist movement — rowing, weights, tennis — and when the strap is loose. Wear it a finger-width above the wrist bone, snug enough not to slide.'],
+  ['How do I change the phone number on my account?',
+   'Not yet possible in the app — your number is verified once at set-up and is how you sign in. This is a known gap and a route to change it is being decided.'],
+];
+let faqOpen = -1;
+function renderFaq(){
+  $('#faqBody').innerHTML =
+    '<div class="group faq">' + FAQ.map(([q, a], i) =>
+      '<button class="row" type="button" data-act="faq:toggle" data-i="' + i + '" aria-expanded="' + (i === faqOpen) + '">' +
+        '<span class="lab">' + q + '</span><span class="phi caret" data-ph="caret-right"></span></button>' +
+      '<div class="ans">' + a + '</div>'
+    ).join('') + '</div>' +
+    '<p class="grp-note">Not answered here? The Pebble team replies to <b>help@pebblecart.com</b> within a working day.</p>';
+  injectIcons($('#p-faq'));
+}
+
+/* ==========================================================================
+   8e. WIRING — one delegated handler for every page, keyed on data-act
+   ========================================================================== */
+function onSlotChange(){ applyBandGate(); renderDevice(); }
+
+/* the band toggles, by key prefix */
+function handleToggle(key){
+  const R = () => { renderMonitor(); renderReminders(); renderRemDetail(); renderAbout(); renderHealthSync(); };
+  const [ns, id] = [key.split(':')[0], key.split(':').slice(1).join(':')];
+  if (ns === 'mon')   return bandToggle(key, () => MON[id], v => { MON[id] = v; }, renderMonitor);
+  if (ns === 'rem'){
+    if (id === 'bedtime') return bandToggle(key, () => REM.bedtime, v => { REM.bedtime = v; }, renderReminders);
+    return bandToggle(key, () => REM[id].on, v => { REM[id].on = v; }, () => { renderReminders(); renderRemDetail(); });
+  }
+  if (ns === 'dnd')   return bandToggle(key, () => REM.dnd.on, v => { REM.dnd.on = v; }, renderReminders);
+  if (ns === 'calls') return bandToggle(key, () => TAB.calls, v => { TAB.calls = v; }, renderTabToggles);
+  if (ns === 'alarm'){
+    const a = REM.alarms.find(x => String(x.id) === id);
+    return a && bandToggle(key, () => a.on, v => { a.on = v; }, renderReminders);
+  }
+  if (ns === 'about') return appToggle(() => ABOUT[id], v => { ABOUT[id] = v; }, renderAbout);
+  if (ns === 'ah')    return appToggle(() => AH.shares[id], v => { AH.shares[id] = v; }, renderHealthSync);
+}
+
+/* every tap on any page lands here; the attribute says what it meant */
+$('.pages').addEventListener('click', e => {
+  const sw = e.target.closest('.trow[data-tk] .switch');
+  if (sw){ handleToggle(sw.closest('.trow').dataset.tk); return; }
+
+  const back = e.target.closest('[data-back]');
+  if (back){ showPage(back.dataset.back); return; }
+
+  const nav = e.target.closest('[data-page]');
+  if (nav && !e.target.closest('[data-act]')){ showPage(nav.dataset.page); return; }
+
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const act = el.dataset.act, d = el.dataset;
+
+  /* the band gate's retry */
+  if (act === 'reconnect'){ setSlot('syncing'); setTimeout(() => setSlot('connected'), 1200); return; }
+
+  /* goals */
+  if (act === 'goal') return editGoal(d.k);
+
+  /* health monitor */
+  if (act === 'mon:interval') return openPick('Sampling interval',
+    [1,5,10,30].map(v => ({ id:v, t:N(v) + ' min', d: v === 1 ? 'Most detail, shortest battery life' : v === 30 ? 'Longest battery life' : '' })),
+    MON.interval, v => { MON.interval = Number(v); renderMonitor(); });
+  if (act === 'mon:hrUpper') return openValues('Upper limit', [120,130,140,150,160,170,180,190,200], MON.hrUpper, String, 'bpm',
+    v => { MON.hrUpper = v; renderMonitor(); });
+
+  /* reminders */
+  if (act === 'rem:open')  return openRemDetail(d.k);
+  if (act === 'rem:start') return openTime('Start', REM[remKind].start, v => { REM[remKind].start = v; renderRemDetail(); });
+  if (act === 'rem:end')   return openTime('End',   REM[remKind].end,   v => { REM[remKind].end = v;   renderRemDetail(); });
+  if (act === 'rem:interval'){ REM[remKind].interval = Number(d.v); renderRemDetail(); return; }
+  if (act === 'rem:day'){ const r = REM[remKind]; r.days[+d.i] = r.days[+d.i] ? 0 : 1; renderRemDetail(); return; }
+  if (act === 'dnd:from')  return openTime('Quiet from',  REM.dnd.from,  v => { REM.dnd.from = v;  renderReminders(); });
+  if (act === 'dnd:until') return openTime('Quiet until', REM.dnd.until, v => { REM.dnd.until = v; renderReminders(); });
+  if (act === 'alarm:new')  return openAlarm(null);
+  if (act === 'alarm:edit') return openAlarm(Number(d.id));
+  if (act === 'alarm:time') return openTime('Alarm time', alarmDraft.time, v => { alarmDraft.time = v; renderAlarm(); });
+  if (act === 'alarm:day'){ alarmDraft.days[+d.i] = alarmDraft.days[+d.i] ? 0 : 1; renderAlarm(); return; }
+  if (act === 'alarm:save'){
+    if (alarmDraft.id === null){ alarmDraft.id = Date.now(); REM.alarms.push(alarmDraft); }
+    else { const i = REM.alarms.findIndex(x => x.id === alarmDraft.id); REM.alarms[i] = alarmDraft; }
+    alarmDraft = null; renderReminders(); showPage('p-reminders'); return;
+  }
+  if (act === 'alarm:delete'){
+    REM.alarms = REM.alarms.filter(x => x.id !== alarmDraft.id);
+    alarmDraft = null; renderReminders(); showPage('p-reminders'); return;
+  }
+
+  /* device */
+  if (act.indexOf('dev:') === 0) return confirmDeviceAction(act.slice(4));
+
+  /* units */
+  if (act.indexOf('unit:') === 0) return setUnit(act.slice(5), d.v);
+
+  /* apple health */
+  if (act === 'ah:connect'){ setAH('connected'); AH.firstSync = true; renderHealthSync(); setTimeout(() => { AH.firstSync = false; renderHealthSync(); }, 2200); return; }
+  if (act === 'ah:disconnect'){ onSheetConfirm = () => setAH('not-connected');
+    showSheet('standard', { title:'Disconnect Apple Health?', sub:'Pebble stops writing to Health. What is already there stays.', confirm:'Disconnect', cancel:'Keep connected' }); return; }
+  if (act === 'ah:push'){ AH.pushing = true; renderHealthSync(); setTimeout(() => { AH.pushing = false; AH.pushed = true; renderHealthSync(); }, 1800); return; }
+  if (act === 'ah:settings') return;   /* would deep-link to the Health app */
+
+  /* about */
+  if (act === 'about:tap') return tapVersion();
+  if (act === 'about:link' || act === 'about:dev') return;   /* external pages — not in scope */
+
+  /* find device · take picture */
+  if (act === 'find:ring') return setFind('searching');
+  if (act === 'find:stop') return setFind('ready');
+  if (act === 'shutter:arm')    { SHUT.armed = true;  renderShutter(); return; }
+  if (act === 'shutter:disarm') { SHUT.armed = false; renderShutter(); return; }
+  if (act === 'shutter:settings') return;
+
+  /* faq */
+  if (act === 'faq:toggle'){ faqOpen = faqOpen === +d.i ? -1 : +d.i; renderFaq(); return; }
+});
+/* the version row is a div, so make Enter work on it too */
+$('#p-about').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset.act === 'about:tap') tapVersion(); });
+
+/* leaving Find Device / Take Picture ends what they were doing */
+function onShowPage(id){
+  if (id !== 'p-find' && FIND.state !== 'ready') setFind('ready');
+  if (id !== 'p-shutter' && SHUT.armed){ SHUT.armed = false; renderShutter(); }
+  applyBandGate();
+}
+
+/* the device card opens S03 (its pointer-events are already off while
+   updating or skeleton, so those states cannot navigate — §5.3) */
+$('#devCard').addEventListener('click', () => showPage('p-device'));
+
+/* the panel */
+wire('#ahOpts', setAH);
+wire('#shutOpts', v => { SHUT.perm = v; SHUT.armed = false; renderShutter(); });
+
+function renderAllPages(){
+  buildGates();
+  renderTabToggles(); renderUnits(); renderGoals(); renderMonitor(); renderReminders();
+  renderRemDetail(); renderDevice(); renderHealthSync(); renderAbout(); renderFind(); renderShutter(); renderFaq();
+  applyBandGate();
+}
+
 /* ---- go ----------------------------------------------------------------- */
 injectIcons();
 paintDeviceShots();
@@ -4274,6 +5564,7 @@ renderDormant(1);
 buildBenchSlots();
 renderProfile();
 fwRender();
+renderAllPages();
 measureSlot();
 // fonts land after first paint and can change the height, so measure again
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureSlot);
