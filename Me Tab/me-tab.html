@@ -536,9 +536,15 @@ body{
    `contain`, not `cover`: this is a cut-out product render on transparency,
    so cropping it to fill the tile would slice the strap off. The 4% margin
    inside the file is what keeps it off the tile's edges. */
+/* No tile behind the photograph (owner, 2026-09-03). The product sits
+   straight on the card: a cut-out render on its own raised square read as a
+   grey box with a watch in it rather than as the device. The box still
+   RESERVES 96x96 so nothing below it moves — only the fill and the radius
+   are gone. The `skeleton` state puts a fill back, because there it is not a
+   photograph but a shimmer placeholder and needs a shape of its own. */
 .devcard .shot{
-  position:relative;flex:0 0 auto;width:96px;height:96px;border-radius:20px;
-  background:var(--surface-raised);display:grid;place-items:center;overflow:hidden;
+  position:relative;flex:0 0 auto;width:96px;height:96px;
+  display:grid;place-items:center;
 }
 .devcard .shot .phi{width:52px;height:52px;color:var(--text-2)}
 /* The glyph is only a fallback now that real photographs have landed. It has
@@ -663,7 +669,10 @@ body{
    device this is, so showing a product shot would be claiming to know. The
    tile stays an empty shimmer with the rest of the skeleton. */
 [data-slot="skeleton"] .devcard .shot img{display:none}
-[data-slot="skeleton"] .devcard .shot{background:var(--surface-raised)}
+/* the radius comes back with the fill: the base rule no longer carries one,
+   and a sharp-cornered grey square is the only skeleton block on the card
+   that would not match the rounded name and chip placeholders beside it */
+[data-slot="skeleton"] .devcard .shot{background:var(--surface-raised);border-radius:20px}
 .skel::after{
   content:"";position:absolute;inset:0;
   background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--surface-fill) 55%,transparent),transparent);

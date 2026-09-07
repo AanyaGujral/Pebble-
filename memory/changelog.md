@@ -1,5 +1,16 @@
 # Changelog
 
+- 2026-09-03 (later still) — Device card: **the grey tile behind the product
+  photograph is gone** (owner). The watch now sits straight on the card. A
+  cut-out render on its own raised square was reading as a grey box with a
+  watch in it rather than as the device itself. The box still reserves its
+  96x96, so nothing below it moved and the slot footprint is unchanged.
+  Two states keep a fill of their own, deliberately: `skeleton`, where the
+  block is a shimmer placeholder rather than a photograph and needs a shape
+  (its 20px radius moved into that override, since the base rule no longer
+  carries one), and the pairing CTA, which shows an ICON — there is no band
+  to photograph — and an icon still needs a surface to sit on.
+
 - 2026-09-03 (later still) — **Real product photographs, replacing the icons.**
   The device card and every device in the paired list now show the actual
   Pebble shots from this repo instead of a Phosphor watch glyph: the round
