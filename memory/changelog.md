@@ -1,5 +1,42 @@
 # Changelog
 
+- 2026-09-03 (later still) — **Real product photographs, replacing the icons.**
+  The device card and every device in the paired list now show the actual
+  Pebble shots from this repo instead of a Phosphor watch glyph: the round
+  watch from `images (1).jpeg` and the band from
+  `0_3_7796ffda-...webp`, both with their studio backdrop cut away (black
+  behind the watch, white behind the band) so each sits on a Pebble surface
+  rather than in a coloured box. Editable versions at
+  `assets/devices/pebble-prime.png` and `pebble-band.png`, documented in
+  `assets/devices/README.md`.
+
+  Mapped per device rather than one photo for all — the owner allowed a
+  single shot for the whole list, but both photographs are real, so a row
+  named Pebble Prime shows the watch and the two band-named rows show the
+  band. Two shots cover four devices.
+
+  Three things this exposed and fixed along the way:
+    • The photographs are **embedded as data: URIs**, not linked. The earlier
+      `src="../assets/devices/..."` was silently broken in BOTH places it
+      had to work — the published artifact blocks images from every other
+      origin, and a page opened over file:// cannot reliably reach a sibling
+      folder either. WebP keeps both to about 43 KB.
+    • `object-fit` moved from `cover` to `contain` on the card and the rows:
+      these are cut-out renders, and cropping them to fill a square sliced
+      the strap off.
+    • The device row's image box went from the navigation row's 32px glyph
+      box to **44px**. A whole product at 32px was a smudge, not a
+      photograph — the band especially. It costs 10px of row height and
+      breaks no column, because the device rows sit in break 1 and the
+      navigation rows in break 2 with a silent break between them.
+
+  Two bugs the real images surfaced: the fallback glyph was bleeding through
+  the transparent corners left by `contain` (now hidden with `:has(img)`,
+  and it comes back if a photograph fails, because the script removes the
+  <img> rather than hiding it); and the `skeleton` card was showing the
+  product face on first load, which claimed to know which device it was
+  before it had resolved one.
+
 - 2026-09-03 (later) — **S10 Firmware Update built** — the Me tab's second
   inner page, and the first band row that navigates. Twelve states, all
   switchable from the review panel: `up-to-date`, `update-available`
