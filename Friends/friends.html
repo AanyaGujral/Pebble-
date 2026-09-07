@@ -85,17 +85,19 @@
   --medal-3:#D96F4A;                         /* color.terracotta.400 */
 
   /* Identity tints — mirrored from `avatarTint` in js/tokens.js, added there
-     first. Each is a ramp's 700 step behind its own 100 step, so an initial
+     first. Each is a ramp's 800 step behind its own 200 step, so an initial
      always clears contrast on its own chip and the six read as one family.
+     One shade duller than the first pass (owner, 2026-09-03): at 700 the
+     chips were the loudest thing in a list whose job is names and numbers.
      Not metrics: never on a bar, a ring or a value (the FLAG in the earlier
      revision asked for exactly this before colouring people, and this is it
      being answered). */
-  --avatar-1-bg:#453C7F;--avatar-1-fg:#D6D4FF;   /* violet     */
-  --avatar-2-bg:#076155;--avatar-2-fg:#C1EDE4;   /* teal       */
-  --avatar-3-bg:#7C142F;--avatar-3-fg:#FFC2C9;   /* crimson    */
-  --avatar-4-bg:#73341D;--avatar-4-fg:#FDCEBE;   /* terracotta */
-  --avatar-5-bg:#215273;--avatar-5-fg:#C4E3FA;   /* sky        */
-  --avatar-6-bg:#663474;--avatar-6-fg:#F1CFFA;   /* orchid     */
+  --avatar-1-bg:#30295E;--avatar-1-fg:#BBB7FC;   /* violet     */
+  --avatar-2-bg:#004239;--avatar-2-fg:#9EE0D3;   /* teal       */
+  --avatar-3-bg:#5D0820;--avatar-3-fg:#FD99A5;   /* crimson    */
+  --avatar-4-bg:#532210;--avatar-4-fg:#F2AF98;   /* terracotta */
+  --avatar-5-bg:#113952;--avatar-5-fg:#A2CFF1;   /* sky        */
+  --avatar-6-bg:#492053;--avatar-6-fg:#E4B1F2;   /* orchid     */
 
   /* surfaces — elevation is lightness, never shadow */
   --surface-app:var(--neutral-900);
@@ -355,14 +357,22 @@ body{
 #p-friends{padding-bottom:196px}
 /* The teal wash (owner, 2026-09-03). Copied from the Health tab's hero in
    index.html — color.teal.400 through --metric-readiness at 10%, fading to
-   the app background by 88% — rather than invented here, so the feature's
-   pages sit inside the app instead of on a flat black sheet. It is on the
-   two full pages of the feature; the sheets and the Home card keep the
-   surfaces they inherit. */
-#p-friends, #p-friend{
+   the app background — rather than invented here, so the feature's pages sit
+   inside the app instead of on a flat black sheet.
+   On the ranking page it is the PANEL's background rather than the page's:
+   the wash and the rounded bottom edge are what separate the podium from the
+   list under it. On the friend profile, which has no podium, it stays a page
+   wash. */
+#p-friend{
   background:linear-gradient(180deg,
     color-mix(in srgb, var(--metric-readiness) 10%, var(--surface-app)) 0%,
     var(--surface-app) 88%);
+}
+.lb-hero{
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--metric-readiness) 12%, var(--surface-app)) 0%,
+    color-mix(in srgb, var(--metric-readiness) 4%, var(--surface-app)) 100%);
+  border-radius:0 0 var(--radius-sheet) var(--radius-sheet);
 }
 .subpage::-webkit-scrollbar{display:none}
 .subpage[hidden]{display:none}
@@ -451,15 +461,17 @@ body{
    The steps glyph at the right end is the unit: hard rule 4 asks every figure
    to carry one, as a word or as a glyph, never bare. */
 .lbrow{
-  display:grid;grid-template-columns:20px 40px minmax(0,1fr) auto 62px;
-  align-items:center;column-gap:10px;row-gap:2px;
-  /* one height for every row, whatever it carries: a cheer, a caption, both
-     or neither. 40px avatar + 10px above and below. */
-  min-height:60px;
-  /* each row is its own card on the page's ground (owner, 2026-09-03), so the
-     list reads as a stack of people rather than as ruled text. */
+  display:grid;grid-template-columns:20px 32px minmax(0,1fr) auto 56px;
+  align-items:center;column-gap:12px;row-gap:2px;
+  /* Owner, 2026-09-03: the 40px chip was the biggest thing in a row that is
+     mostly a name and a number, so it sized the row and left no air in the
+     card. At 32px the chip is still the row's anchor, and the 8px it gives
+     back goes into the padding — the card breathes instead of the photo. */
+  min-height:64px;
+  /* each row is its own card on the page's ground, so the list reads as a
+     stack of people rather than as ruled text. */
   background:var(--surface-card);
-  padding:10px 12px;border-radius:var(--radius-16);
+  padding:14px 16px;border-radius:var(--radius-16);
   transition:background var(--duration-fast) var(--ease-standard),opacity var(--duration-fast) var(--ease-standard);
 }
 /* Every cell names its column. Grid places definite-row items before
@@ -471,7 +483,7 @@ body{
   grid-area:1/1/3/2;justify-self:end;align-self:center;
   font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3);
 }
-.lbrow .av{grid-area:1/2/3/3;align-self:center}
+.lbrow .av{grid-area:1/2/3/3;align-self:center;width:32px;height:32px;font:600 13px/18px var(--font-text)}
 .lbrow .who{grid-area:1/3/2/4;min-width:0;display:flex;align-items:baseline;gap:6px}
 /* only the not-synced and stale rows carry a caption; every other row centres
    its name against the avatar instead of sitting on the top half of the row */
@@ -532,7 +544,9 @@ body{
    below starts at rank 4, so nobody appears both on the podium and in it. */
 .podium{
   display:grid;grid-template-columns:repeat(3,1fr);align-items:end;gap:8px;
-  padding:8px var(--gutter) 4px;
+  /* 20px under the plinths keeps them clear of the panel's rounded corners,
+     which were slicing the outer two diagonally */
+  padding:12px var(--gutter) 20px;
 }
 .pod{
   display:flex;flex-direction:column;align-items:center;gap:6px;
@@ -803,7 +817,7 @@ body{
    into view. */
 .youcard{
   position:absolute;left:16px;right:16px;bottom:88px;z-index:56;
-  padding:10px 12px;border-radius:var(--radius-16);
+  padding:14px 16px;border-radius:var(--radius-16);
   background:color-mix(in srgb, var(--surface-raised) 94%, transparent);
   -webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px);
   border:var(--border-hairline) solid var(--surface-fill);
@@ -812,12 +826,12 @@ body{
      so the card reads as your row, docked, rather than as a different object.
      It carries no cheer column: you cannot cheer yourself, and the 4px of
      padding difference against the rows above is the card's own inset. */
-  display:grid;grid-template-columns:20px 40px minmax(0,1fr) auto 62px;align-items:center;
-  column-gap:10px;
+  display:grid;grid-template-columns:20px 32px minmax(0,1fr) auto 56px;align-items:center;
+  column-gap:12px;
 }
 .youcard[hidden]{display:none}
 .youcard .rank{grid-area:1/1/2/2;justify-self:end;font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3)}
-.youcard .av{grid-area:1/2/3/3;align-self:center}
+.youcard .av{grid-area:1/2/3/3;align-self:center;width:32px;height:32px;font:600 13px/18px var(--font-text)}
 .youcard .nm{grid-area:1/3/2/4;font:600 15px/22px var(--font-text);color:var(--text-1)}
 .youcard .val{grid-area:1/4/2/5;justify-self:end;display:flex;align-items:center;gap:6px}
 .youcard .num{font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
@@ -1029,6 +1043,13 @@ body{
          inner-page header, then the period control pinned under it.
          ───────────────────────────────────────────────────────────────── -->
     <div class="subpage" id="p-friends" hidden>
+      <!-- The header, the state line and the podium are ONE panel (owner,
+           2026-09-03, from the reference screenshot): the teal wash and a
+           rounded bottom edge close it off, and the list starts below on the
+           app ground. The two halves of this screen do different jobs — the
+           podium is a picture of the top, the list is the ranking you scan —
+           and until now only a gap said so. -->
+      <div class="lb-hero">
       <div class="sub-head">
         <button class="backbtn" data-back><span class="phi" data-ph="caret-left"></span></button>
         <!-- the page the Home card opens takes the card's name (owner,
@@ -1062,9 +1083,14 @@ body{
         <div class="statusline" id="lb-status"></div>
       </div>
 
+      <div id="lb-podium"></div>
+      </div><!-- /.lb-hero -->
+
       <div style="padding:0 var(--gutter)" id="lb-mount"></div>
 
-      <div style="padding:16px var(--gutter) 24px" id="lb-foot"></div>
+      <!-- 96px of clearance under the button: the self card docks 88px off the
+           bottom of the screen, and the page's one action cannot sit under it -->
+      <div style="padding:20px var(--gutter) 96px" id="lb-foot"></div>
 
     </div>
 
@@ -1457,6 +1483,7 @@ function renderPodium(top){
 
 function renderLeaderboard(){
   const M=model(), mount=$('#lb-mount'), foot=$('#lb-foot'), status=$('#lb-status'), yc=$('#youcard');
+  $('#lb-podium').innerHTML='';                      /* the panel is empty unless there is a podium */
 
   /* 7.11 · first use. No links yet, so teach the model before asking for
      anything. There is no group to join and none to create — a code makes a
@@ -1510,7 +1537,8 @@ function renderLeaderboard(){
       +'<p>No one on your leaderboard has a figure for '+(S.period==='today'?'today':'this period')
       +'. Ranks appear as bands sync.</p></div>';
   } else {
-    html += renderPodium(R.has.slice(0,3));
+    $('#lb-podium').innerHTML = renderPodium(R.has.slice(0,3));
+    injectIcons($('#lb-podium'));
     /* Owner, 2026-09-03: the podium stays AND the full list comes back.
        Rev 2 started the list at rank 4 so nobody appeared twice, which on a
        four-person board left a podium and an empty screen. The podium is now

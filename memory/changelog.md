@@ -5,6 +5,24 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-03 (rev 7) — Ranking page layout, three owner notes from a reference
+  screenshot: the **podium now sits in a panel with the header and the state
+  line** — the teal wash moved off the page and onto that panel, which closes
+  with a 28px rounded bottom edge, and the list starts below it on the app
+  ground (the two halves do different jobs — a picture of the top, and the
+  ranking you scan — and until now only a gap said so; the podium renders into
+  its own `#lb-podium` mount inside the panel, with 20px under the plinths so
+  the panel's corners stop slicing the outer two);
+  the **list chip drops 40px → 32px** and the 8px it gives back goes into the
+  row's padding (14/16) and height (64px) — the chip was the biggest thing in
+  a row that is mostly a name and a number, so it sized the row and left no
+  air in the card; the docked self card follows the same rhythm;
+  and the **identity tints go one shade duller** in `js/tokens.js` — 800 bg
+  behind a 200 initial, was 700/100 — because at 700 the chips were the
+  loudest thing in a list whose job is names and numbers.
+  Also: the page's one action now reserves 96px so the docked self card cannot
+  cover it.
+
 - 2026-09-03 (rev 6) — Colour and layout round on Family ranking, plus two new
   token groups. **`js/tokens.js` gained `avatarTint` and `medal`** — added
   there first, then mirrored into `Friends/friends.html`, per gate 1.
