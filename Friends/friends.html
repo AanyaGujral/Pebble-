@@ -71,17 +71,31 @@
   --terracotta-400:#D96F4A;
   --gold-100:#F9E8BE;
 
-  /* Podium medals (owner, 2026-09-03). The doctrine below says a rank is not
-     a hue; this is the one place the owner has taken the exception, and it is
-     an exception with a reason — gold / silver / bronze is not a colour scheme
-     invented here, it is a convention every reader of a podium already knows.
-     Named as medals rather than reused metric aliases, so nobody later reads
-     the leader's plinth as "steps": the first is drawn from color.gold, but
-     it arrives through its own name. Keyed to RANK, not position, so a 1-2-2
-     tie shows one gold and two silvers and no bronze at all. */
-  --medal-1:var(--gold-400);
-  --medal-2:var(--neutral-200);
-  --medal-3:var(--terracotta-400);
+  /* Podium medals — mirrored from `medal` in js/tokens.js, added there first
+     (2026-09-03) rather than invented here. The doctrine below says a rank is
+     not a hue; this is its one sanctioned exception, and an exception with a
+     reason: gold / silver / bronze is a convention every reader of a podium
+     already knows. Silver is the one genuinely new value in the system — the
+     neutral ramp had nothing that reads as metal rather than as body text,
+     which is why the first pass looked like only first place was coloured.
+     Keyed to RANK, not position: a 1-2-2 tie takes one gold, two silvers and
+     no bronze. */
+  --medal-1:#F2C64B;                         /* color.gold.400       */
+  --medal-2:#C6D0E0;                         /* new — cool steel     */
+  --medal-3:#D96F4A;                         /* color.terracotta.400 */
+
+  /* Identity tints — mirrored from `avatarTint` in js/tokens.js, added there
+     first. Each is a ramp's 700 step behind its own 100 step, so an initial
+     always clears contrast on its own chip and the six read as one family.
+     Not metrics: never on a bar, a ring or a value (the FLAG in the earlier
+     revision asked for exactly this before colouring people, and this is it
+     being answered). */
+  --avatar-1-bg:#453C7F;--avatar-1-fg:#D6D4FF;   /* violet     */
+  --avatar-2-bg:#076155;--avatar-2-fg:#C1EDE4;   /* teal       */
+  --avatar-3-bg:#7C142F;--avatar-3-fg:#FFC2C9;   /* crimson    */
+  --avatar-4-bg:#73341D;--avatar-4-fg:#FDCEBE;   /* terracotta */
+  --avatar-5-bg:#215273;--avatar-5-fg:#C4E3FA;   /* sky        */
+  --avatar-6-bg:#663474;--avatar-6-fg:#F1CFFA;   /* orchid     */
 
   /* surfaces — elevation is lightness, never shadow */
   --surface-app:var(--neutral-900);
@@ -275,6 +289,10 @@ body{
 .card{background:var(--surface-card);border-radius:var(--radius-card);padding:16px;position:relative}
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .card-title{font:500 17px/22px var(--font-text);color:var(--text-1);white-space:nowrap}
+/* a count that belongs to the title sits inside it, one tier quieter —
+   not stranded at the opposite edge of the head where it reads as a
+   value the card is reporting */
+.card-title .count{color:var(--text-3);font-weight:var(--weight-regular)}
 .card-body{margin-top:16px}
 .subnote,.wo-meta{font:500 11px/16px var(--font-text);color:var(--text-2);white-space:nowrap;font-feature-settings:var(--num-features)}
 .sec{padding:0 var(--gutter);margin-top:20px;display:flex;flex-direction:column;gap:12px}
@@ -335,6 +353,17 @@ body{
 /* the ranking reserves room for the floating nav AND the docked self card, so
    the last row can always be scrolled clear of both */
 #p-friends{padding-bottom:196px}
+/* The teal wash (owner, 2026-09-03). Copied from the Health tab's hero in
+   index.html — color.teal.400 through --metric-readiness at 10%, fading to
+   the app background by 88% — rather than invented here, so the feature's
+   pages sit inside the app instead of on a flat black sheet. It is on the
+   two full pages of the feature; the sheets and the Home card keep the
+   surfaces they inherit. */
+#p-friends, #p-friend{
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--metric-readiness) 10%, var(--surface-app)) 0%,
+    var(--surface-app) 88%);
+}
 .subpage::-webkit-scrollbar{display:none}
 .subpage[hidden]{display:none}
 .sub-head{padding:40px var(--gutter) 0;display:flex;align-items:center;gap:4px}
@@ -427,7 +456,10 @@ body{
   /* one height for every row, whatever it carries: a cheer, a caption, both
      or neither. 40px avatar + 10px above and below. */
   min-height:60px;
-  padding:10px 8px;border-radius:var(--radius-16);
+  /* each row is its own card on the page's ground (owner, 2026-09-03), so the
+     list reads as a stack of people rather than as ruled text. */
+  background:var(--surface-card);
+  padding:10px 12px;border-radius:var(--radius-16);
   transition:background var(--duration-fast) var(--ease-standard),opacity var(--duration-fast) var(--ease-standard);
 }
 /* Every cell names its column. Grid places definite-row items before
@@ -472,11 +504,10 @@ body{
 .lbrow[data-medal="2"]{--medal:var(--medal-2)}
 .lbrow[data-medal="3"]{--medal:var(--medal-3)}
 
-/* state: you — the row is lifted one elevation step and the name goes
-   semibold. No medal ring is removed for it: if you are in the top three you
-   have earned the medal like anyone else. */
-.lbrow[data-you]{background:var(--surface-raised)}
-.lbrow[data-you] .nm{font-weight:var(--weight-semibold)}
+/* state: you — nothing. Owner, 2026-09-03: your row is not highlighted in
+   the list at all. Every row is the same card, and the one place you are
+   called out is the self card docked at the bottom of the page. The name still
+   reads "You", which is the only distinction the row needs. */
 /* state: not-synced — no rank numeral, em-dash figure, reason underneath.
    Hard rule 2: this row has no position, so it gets no number. */
 .lbrow[data-row="nosync"] .nm{color:var(--text-2)}
@@ -531,7 +562,7 @@ body{
 .pod[data-medal] .av{box-shadow:0 0 0 2px var(--medal)}
 .pod[data-medal] .plinth{
   color:var(--medal);
-  background:color-mix(in srgb, var(--medal) 14%, var(--surface-card));
+  background:color-mix(in srgb, var(--medal) 20%, var(--surface-card));
   box-shadow:inset 0 2px 0 0 var(--medal);
 }
 .pod[data-medal="1"]{--medal:var(--medal-1)}
@@ -551,11 +582,13 @@ body{
 /* the ranked list — no break label above it (owner, 2026-09-03): the page is
    the ranking, and a heading repeating the page title is a caption on a
    caption. The "Not synced" break below stays, because that one says
-   something the rows underneath it do not. */
-.lb-list{padding-top:4px}
+   something the rows underneath it do not. Rows are 8px apart and each one
+   is a card, so the break reads as a gap in a stack rather than a rule
+   through a table. */
+.lb-list{padding-top:4px;display:flex;flex-direction:column;gap:8px}
 /* break label between the ranked list and the not-synced group */
 .lb-break{
-  padding:16px 8px 4px;
+  padding:20px 4px 8px;
   font:600 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);
 }
 
@@ -569,13 +602,19 @@ body{
 }
 .av.sm{width:28px;height:28px;font:600 11px/16px var(--font-text)}
 .av.lg{width:56px;height:56px;font:600 20px/26px var(--font-text)}
-/* One chip, one colour: --surface-fill with the initial in --text-1.
-   Rev 2 tinted each person with a different metric alias — readiness for you,
-   sleep for Koms, distance for Rashmi — so the leaderboard taught that green
-   meant something about a person's distance. It did not. People are told
-   apart by their initial and their name; the design system has no identity
-   ramp, and metric aliases are not one (doctrine rule 1, and the FLAG in the
-   token block). */
+/* Each person's chip carries their own tint, from the identity ramp that now
+   exists in js/tokens.js (owner, 2026-09-03). This is the earlier flag being
+   closed the right way round: rev 2 tinted people with METRIC aliases, so the
+   board quietly taught that green said something about a person's distance;
+   the tints are their own token group now, and mean nothing but "this is a
+   different person". The tint is assigned from a stable hash of the person's
+   id, so a chip is the same colour everywhere they appear. */
+.av[data-hue="1"]{background:var(--avatar-1-bg);color:var(--avatar-1-fg)}
+.av[data-hue="2"]{background:var(--avatar-2-bg);color:var(--avatar-2-fg)}
+.av[data-hue="3"]{background:var(--avatar-3-bg);color:var(--avatar-3-fg)}
+.av[data-hue="4"]{background:var(--avatar-4-bg);color:var(--avatar-4-fg)}
+.av[data-hue="5"]{background:var(--avatar-5-bg);color:var(--avatar-5-fg)}
+.av[data-hue="6"]{background:var(--avatar-6-bg);color:var(--avatar-6-fg)}
 
 /* ── 7.3 Cheer control ────────────────────────────────────────────────────
    An action with states, not a counter (hard rule 8). The legacy heart was
@@ -623,6 +662,13 @@ body{
 .cheer[data-cheer="limit"]{opacity:var(--state-inactive);cursor:default}
 /* queued — offline; the cheer is held, not lost */
 .cheer[data-cheer="queued"] .ico{background:var(--surface-raised);color:var(--caution-icon)}
+/* received — your own row: a count of what others gave you, not a control.
+   Filled heart because these are cheers that happened; no chip behind it,
+   no pointer, no press state, because there is nothing here to do. */
+.cheer[data-cheer="received"]{cursor:default}
+.cheer[data-cheer="received"] .ico{color:var(--text-2)}
+.cheer[data-cheer="received"] .fillheart{display:block}
+.cheer[data-cheer="received"] .n{color:var(--text-2)}
 @media (prefers-reduced-motion:reduce){
   .cheer,.cheer .ico,.gbar i,.lbrow,.seg button{transition:none}
 }
@@ -631,6 +677,8 @@ body{
    One instance, six states, one height. --friends-body-h is the whole point:
    friends, none or one, nothing below this card on Home moves. */
 .friends-card .card-body{height:var(--friends-body-h);display:flex;flex-direction:column;overflow:hidden}
+.friends-card .card-head{align-items:center}
+.friends-card .chev{margin-right:2px}
 .fc-rows{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px}
 .fcrow{
   display:grid;grid-template-columns:16px 28px 1fr auto;align-items:center;column-gap:8px;
@@ -764,8 +812,8 @@ body{
      so the card reads as your row, docked, rather than as a different object.
      It carries no cheer column: you cannot cheer yourself, and the 4px of
      padding difference against the rows above is the card's own inset. */
-  display:grid;grid-template-columns:20px 40px minmax(0,1fr) auto;align-items:center;
-  column-gap:10px;row-gap:2px;
+  display:grid;grid-template-columns:20px 40px minmax(0,1fr) auto 62px;align-items:center;
+  column-gap:10px;
 }
 .youcard[hidden]{display:none}
 .youcard .rank{grid-area:1/1/2/2;justify-self:end;font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3)}
@@ -773,8 +821,7 @@ body{
 .youcard .nm{grid-area:1/3/2/4;font:600 15px/22px var(--font-text);color:var(--text-1)}
 .youcard .val{grid-area:1/4/2/5;justify-self:end;display:flex;align-items:center;gap:6px}
 .youcard .num{font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
-.youcard .gap{grid-area:2/3/3/5;font:500 11px/16px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
-.youcard .gap b{font-family:var(--font-number);font-weight:var(--weight-bold);color:var(--text-1)}
+#yc-cheer{grid-area:1/5/2/6;justify-self:end;display:flex;align-items:center}
 
 /* ── friend profile pieces ──────────────────────────────────────────────── */
 .ident{display:flex;align-items:center;gap:12px;padding:4px 0 0}
@@ -964,6 +1011,9 @@ body{
         <div class="card friends-card" id="friends-card" data-tap="friends">
           <div class="card-head">
             <div class="card-title">Family ranking</div>
+            <!-- the chevron the app's other tappable rows carry: the whole
+                 card opens the ranking, and nothing else on Home said so -->
+            <span class="chev"></span>
           </div>
           <div class="card-body" id="fc-body"></div>
         </div>
@@ -1012,7 +1062,7 @@ body{
         <div class="statusline" id="lb-status"></div>
       </div>
 
-      <div style="padding:0 8px" id="lb-mount"></div>
+      <div style="padding:0 var(--gutter)" id="lb-mount"></div>
 
       <div style="padding:16px var(--gutter) 24px" id="lb-foot"></div>
 
@@ -1110,10 +1160,10 @@ body{
        only then (see syncYouCard). -->
   <div class="youcard" id="youcard" data-tap="youcard" hidden>
     <span class="rank" id="yc-rank">4</span>
-    <span class="av">A</span>
+    <span class="av" id="yc-av">A</span>
     <span class="nm">You</span>
     <span class="val"><span class="phi stepglyph" data-ph="footprints" data-weight="fill"></span><span class="num" id="yc-num">7,240</span></span>
-    <span class="gap" id="yc-gap"></span>
+    <span id="yc-cheer"></span>
   </div>
 
   <nav class="pebble-nav">
@@ -1160,9 +1210,13 @@ const ico=(name,w='regular')=>'<span class="phi" data-ph="'+name+'"'+(w==='fill'
    Aanya's own figure (7,240 steps) is the same number Home's Today's goals
    card shows, so the two surfaces agree — the legacy build had no such
    relationship because the leaderboard was effectively a separate app.
-   Deliberately in this data: a TIE (Rashmi and Ankit both on 9,106 today) so
-   the shared-rank rule gets exercised, and two members with nothing synced so
-   hard rule 2 can be seen working. */
+   Deliberately in this data: two members with nothing synced, so hard rule 2
+   can be seen working, and a TIE so the shared-rank rule gets exercised.
+   The tie sits in the bigger board (F6: Rashmi and Meera both on 9,106), not
+   in the baseline — the four-person board is the screen everyone reviews, and
+   with the tie in it the podium could only ever show gold and two silvers, so
+   bronze never appeared and the medals read as "first place is coloured".
+   Both readings are now visible: F4 for 1-2-3, F6 for the tie. */
 const PEOPLE = {
   me:     {id:'me',    name:'You',          initial:'A', you:true,
            today:7240,  week:58110, sync:'14:18', goal:10000,
@@ -1174,13 +1228,13 @@ const PEOPLE = {
            today:9106,  week:61420, sync:'14:06', goal:10000,
            m:{dist:6.4, kcal:512, hr:72, spo2:98, sleep:'7h 12m', sleepScore:84}},
   ankit:  {id:'ankit', name:'Ankit',        initial:'A',
-           today:9106,  week:66980, sync:'13:58', goal:8000,
+           today:8740,  week:66980, sync:'13:58', goal:8000,
            m:{dist:6.5, kcal:498, hr:80, spo2:96, sleep:'5h 51m', sleepScore:58}},
   shash:  {id:'shash', name:'Shashank',     initial:'S',
            today:null,  week:42110, sync:null, since:'Tue', goal:10000,
            m:{dist:null,kcal:null,hr:null,spo2:null,sleep:null,sleepScore:null}},
   meera:  {id:'meera', name:'Meera',        initial:'M',
-           today:10420, week:69850, sync:'14:15', goal:10000,
+           today:9106,  week:69850, sync:'14:15', goal:10000,
            m:{dist:7.3, kcal:560, hr:69, spo2:99, sleep:'7h 48m', sleepScore:89}},
   dev:    {id:'dev',   name:'Dev',          initial:'D',
            today:4180,  week:31240, sync:'12:40', goal:8000,
@@ -1206,7 +1260,7 @@ const FSTATES = [
 /* S.date is the day the friend profile's dropdown is pointing at — {month
    index into CAL_MONTHS, day}. It starts on today, Thu 3 September 2026. */
 let S = {f:'F4', period:'today', friend:'rashmi', date:{mi:1,d:3},
-         cheers:{koms:2, rashmi:4, ankit:1}, cheered:{}};
+         cheers:{koms:2, rashmi:4, ankit:1, meera:3, dev:0, me:5}, cheered:{}};
 
 function model(){
   const f=S.f, p=S.period;
@@ -1240,31 +1294,34 @@ function ranked(list){
   return {has, none:list.filter(m=>m.val==null), leader:has[0]||null};
 }
 
-/* The nearest actionable gap — the person directly above you. Never a total.
-   FLAG: with a tie directly above you this names whichever of the two sorts
-   first. Honest, but arbitrary between equals — flagged, not decided (§9). */
-function gapAbove(has){
-  const i = has.findIndex(m=>m.you);
-  if(i<0) return null;
-  if(i===0){
-    const nxt=has[1];
-    return nxt ? {lead:true, by:has[0].val-nxt.val, who:nxt.name} : null;
-  }
-  return {lead:false, by:has[i-1].val-has[i].val, who:has[i-1].name};
-}
+/* (gapAbove() is gone: the "1,866 steps behind Ankit" sentence came off the
+   Home card and then off the self card, so nothing computes a gap any more.
+   The FLAG in renderYouCard records where it should live if it returns.) */
 
 /* 7.2 · the relative bar — .gbar from Today's goals, scaled to the leader */
 function bar(val, max, hue='var(--metric-steps)'){
   const pct = (val && max) ? Math.max(3, Math.round(val/max*100)) : 0;
   return '<span class="gbar bar"><i style="width:'+pct+'%;background:'+hue+'"></i></span>';
 }
-/* one chip, one tint — see the .av block: people are told apart by initial
-   and name, not by a borrowed metric hue */
-const avatar=(m,size='')=>'<span class="av '+size+'">'+m.initial+'</span>';
+/* the chip's tint is a stable hash of the person's id, not their position in
+   a list — so Rashmi is the same colour on the podium, in the list, on her
+   profile and in the friends list, and adding a person never re-colours
+   everyone below them */
+const hueOf = id => (hash(id)%6)+1;
+const avatar=(m,size='')=>'<span class="av '+size+'" data-hue="'+hueOf(m.id)+'">'+m.initial+'</span>';
 
-/* 7.3 · the cheer control — an action with states, not a counter */
+/* 7.3 · the cheer control — an action with states, not a counter.
+   On your own row it is neither: you cannot cheer yourself, but people cheer
+   you, and rev 5 left that space blank so your row read as the one person
+   nobody had cheered. It now shows the cheers you have RECEIVED, in the same
+   place and the same shape, marked read-only rather than pressable. */
 function cheerBtn(m){
-  if(m.you) return '<span></span>';                  /* you cannot cheer yourself */
+  if(m.you){
+    return '<span class="cheer" data-cheer="received" aria-label="'
+      +(S.cheers.me||0)+' cheers received">'
+      +'<span class="ico"><span class="phi fillheart" data-ph="heart" data-weight="fill"></span></span>'
+      +'<span class="n">'+(S.cheers.me||0)+'</span></span>';
+  }
   let st = S.cheered[m.id] || 'idle';
   if(S.f==='F7' && st==='done') st='queued';
   return '<button class="cheer" data-cheer="'+st+'" data-cheerid="'+m.id+'" aria-label="Cheer '+m.name+'">'
@@ -1432,11 +1489,11 @@ function renderLeaderboard(){
 
   if(M.loading){                                     /* F1 */
     status.textContent='Loading your leaderboard…'; foot.innerHTML=''; yc.hidden=true;
-    mount.innerHTML=[0,1,2,3].map(function(){
+    mount.innerHTML='<div class="lb-list">'+[0,1,2,3].map(function(){
       return '<div class="lbrow" data-row="skeleton"><span class="rank"></span>'
       +'<span class="av" style="background:var(--surface-raised);color:transparent">.</span>'
       +'<span class="sk w1"></span><span class="sk w2"></span><span></span></div>';
-    }).join('');
+    }).join('')+'</div>';
     return;
   }
 
@@ -1480,7 +1537,7 @@ function renderLeaderboard(){
   const none = R.none;
   if(none.length){
     html += '<div class="lb-break">Not synced</div>'
-      + none.map(function(m){
+      + '<div class="lb-list">' + none.map(function(m){
           const why = m.noband ? 'hasn&rsquo;t set up a band'
                     : m.since ? 'last synced '+m.since
                     : 'nothing recorded yet';
@@ -1489,7 +1546,7 @@ function renderLeaderboard(){
             +'<span class="rank"></span>'+avatar(m)
             +'<span class="who"><span class="nm">'+(m.you?'You':m.name)+'</span></span>'
             +figure(null,true)+cheerBtn(m)+'<span class="why">'+why+'</span></div>';
-        }).join('');
+        }).join('') + '</div>';
   }
   mount.innerHTML=html;
 
@@ -1531,14 +1588,18 @@ function renderYouCard(){
   const R=ranked(M.list), me=R.has.find(m=>m.you) || R.none.find(m=>m.you);
   if(!me){ yc.hidden=true; return; }
   yc.hidden=false;
-  const g=gapAbove(R.has);
+  /* Owner, 2026-09-03: no gap sentence here either — the card is your row,
+     docked, balanced exactly like the rows above it, down to the cheers you
+     have been given.
+     FLAG: the gap ("1,866 steps behind Ankit") is now nowhere in the flow. It
+     was §4.1's stated reason to come back to the feature, and the one thing
+     neither a row nor a rank tells you. If it should return, the honest place
+     is one line under the state line at the top of this page, not squeezed
+     into a row. */
   $('#yc-rank').textContent = me.rank || '';
   $('#yc-num').textContent  = me.val!=null ? n(me.val) : '—';
-  $('#yc-gap').innerHTML = me.val==null
-    ? 'Nothing synced yet today'
-    : (g ? (g.lead ? 'Leading by <b>'+n(g.by)+'</b> steps'
-                   : '<b>'+n(g.by)+'</b> steps behind '+g.who)
-         : 'The only figure so far');
+  $('#yc-av').setAttribute('data-hue', hueOf('me'));
+  $('#yc-cheer').innerHTML  = cheerBtn({you:true});
   injectIcons(yc);
   syncYouCard();
 }
@@ -1700,18 +1761,27 @@ function renderFriend(){
 function renderCircle(){
   const M=model(), rows=M.list.filter(m=>!m.you);
   $('#circle-body').innerHTML =
-    '<div class="card"><div class="card-head"><div class="card-title">People</div>'
-    /* FLAG (§9): whether there is a cap at all is unresolved. Under the link
+    /* Owner, 2026-09-03: "Friends", with the count in the title rather than
+       stranded at the far right of the head. A number alone on the right edge
+       reads as a value the card is reporting; inside the title it is what it
+       actually is — how many of the thing the title names.
+       FLAG (§9): whether there is a cap at all is unresolved. Under the link
        model there is no group to be full, so a cap would be a limit on how
        many people may hold a working code — a different question. */
-    +'<span class="subnote">'+rows.length+'</span></div><div class="card-body" style="margin-top:8px">'
+    '<div class="card"><div class="card-head">'
+    +'<div class="card-title">Friends <span class="count">('+rows.length+')</span></div>'
+    +'</div><div class="card-body" style="margin-top:8px">'
     + (rows.length ? '' : '<p class="sheet-sub" style="color:var(--text-3);padding:4px 0 8px">'
         +'Nobody yet. Share your code, or enter a friend&rsquo;s.</p>')
     + rows.map(function(m,i){
         return '<div class="listrow"'+(i===0?' style="border-top:0"':'')+'>'
           +'<span class="lft">'+avatar(m)+'<span class="txt"><span class="t1">'+m.name+'</span>'
           +'<span class="t2">'+(m.noband?'no band paired':m.sync?'synced '+m.sync:m.since?'last synced '+m.since:'never synced')+'</span></span></span>'
-          +'<span class="rgt"><button class="btn btn--tertiary btn--m" style="width:auto;padding:0 8px;font-size:13px" data-confirm="remove" data-id="'+m.id+'">Remove</button></span>'
+          /* destructive tier: the label carries the negative colour and the
+             button is not filled with it — components/button.html, and the
+             acceptance criterion "destructive actions are label-coloured,
+             never red-filled" */
+          +'<span class="rgt"><button class="btn btn--destructive btn--m" style="width:auto;padding:0 8px;font-size:13px" data-confirm="remove" data-id="'+m.id+'">Remove</button></span>'
           +'</div>';
       }).join('')
     +'</div></div>'

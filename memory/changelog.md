@@ -5,6 +5,33 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-03 (rev 6) — Colour and layout round on Family ranking, plus two new
+  token groups. **`js/tokens.js` gained `avatarTint` and `medal`** — added
+  there first, then mirrored into `Friends/friends.html`, per gate 1.
+  `avatarTint` is six identity pairs (each ramp's 700 step behind its own 100
+  step) for avatar chips, which closes the flag left in rev 3: people are
+  coloured by their own token group now, never by borrowed metric aliases, and
+  the tint comes from a stable hash of the person's id so a chip is the same
+  colour everywhere. `medal` holds gold / silver / bronze; silver is the one
+  genuinely new value in the system, because the neutral ramp had nothing that
+  reads as metal rather than as body text — which is why the first medal pass
+  looked like only first place was coloured. Plinth tint also went 14% → 20%,
+  and the sample data moved its tie out of the four-person baseline into F6, so
+  the default board demonstrates 1-2-3 and F6 still exercises the shared-rank
+  rule. Also: the **teal.400 wash** from the Health tab's hero
+  (`--metric-readiness` at 10%, fading by 88%) now backs both full pages of the
+  feature; a **chevron** on the Home card, which nothing else said was
+  tappable; **every leaderboard row is its own card** 8px apart and **your row
+  is no longer highlighted** — the docked self card is the only call-out; the
+  self card **lost its gap sentence** so it is balanced exactly like a row
+  (flagged: the gap is now nowhere in the flow, and the honest place for it if
+  it returns is one line under the state line, not inside a row); **cheers you
+  have received show on your own row and card**, read-only rather than a
+  button, since you cannot cheer yourself but people cheer you; and the friends
+  list card is **"Friends (3)"** with the count inside the title instead of
+  stranded at the right edge, with **Remove in the destructive tier**
+  (label-coloured, never red-filled).
+
 - 2026-09-03 (rev 5) — Ranking page tidy-up, four owner notes:
   the **"Ranking" break label came off** the list (the page is the ranking; a
   heading repeating the page title is a caption on a caption — "Not synced"

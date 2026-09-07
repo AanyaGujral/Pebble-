@@ -166,6 +166,35 @@ export const metric = {
   skinTemp: '#C873DE'
 };
 
+/** Identity tints — avatar chips only.
+ *  Added 2026-09-03 for the Family ranking flow, which needs to tell six
+ *  people apart in a 40px circle. These are NOT metrics: never put one on a
+ *  bar, a ring, a chart line or a value. Each pair is an existing ramp's 700
+ *  step behind its own 100 step, so the initial always clears contrast on the
+ *  tint and the set reads as one family.
+ *  Assign by a stable hash of the person, never by their position in a list. */
+export const avatarTint = {
+  '1': { bg: '#453C7F', fg: '#D6D4FF' },   /* violet 700 / 100     */
+  '2': { bg: '#076155', fg: '#C1EDE4' },   /* teal 700 / 100       */
+  '3': { bg: '#7C142F', fg: '#FFC2C9' },   /* crimson 700 / 100    */
+  '4': { bg: '#73341D', fg: '#FDCEBE' },   /* terracotta 700 / 100 */
+  '5': { bg: '#215273', fg: '#C4E3FA' },   /* sky 700 / 100        */
+  '6': { bg: '#663474', fg: '#F1CFFA' }    /* orchid 700 / 100     */
+};
+
+/** Podium medals — placings only, on the Family ranking podium and its list.
+ *  Added 2026-09-03. The one sanctioned exception to "a hue means a metric":
+ *  gold / silver / bronze is a convention every reader of a podium already
+ *  knows. Gold and bronze are existing ramp steps; silver is a new value —
+ *  the neutral ramp had nothing that reads as metal rather than as body text,
+ *  so this is neutral.100 cooled toward sky. Keyed to rank, never to position:
+ *  a 1-2-2 tie takes one gold and two silvers, and no bronze. */
+export const medal = {
+  gold: '#F2C64B',                         /* color.gold.400       */
+  silver: '#C6D0E0',                       /* new — cool steel     */
+  bronze: '#D96F4A'                        /* color.terracotta.400 */
+};
+
 /** Semantic states — glyphs and badges only, never chart lines or fills. */
 export const semantic = {
   positive: {
@@ -445,7 +474,7 @@ export const borderWidth = {
 };
 
 const tokens = {
-  color, neutral, surface, textColor, metric, semantic,
+  color, neutral, surface, textColor, metric, avatarTint, medal, semantic,
   fontFamily, fontWeight, typeText, typeNumeric,
   radius, spacing, borderWidth,
 };
