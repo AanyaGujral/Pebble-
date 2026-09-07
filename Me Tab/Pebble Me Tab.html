@@ -1,4 +1,32 @@
-<title>Pebble Me Tab</title>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pebble &mdash; Me Tab</title>
+
+<!-- The Me tab of the Pebble app: its header, the device slot and the five
+     silent row groups, all six shared components in every state, and two full
+     inner pages - Profile, and Firmware Update with the whole download,
+     install and restart flow. The panel on the left switches every state so
+     each one can be seen without having to reach it.
+
+     Double-click this file. It needs no server and no build step.
+
+     GENERATED - do not hand-edit. It is "Me Tab/me-tab.html" wrapped in a
+     real HTML document; edit that file and re-run "Me Tab/build-standalone.py",
+     which explains why the two exist. -->
+
+<style>
+/* Mirrors the small reset the artifact host injects, so the file you
+   double-click and the published page render identically rather than nearly.
+   The host's own background and text colour are left out on purpose: this
+   prototype paints both from js/tokens.js a few rules further down, which is
+   also why there is no hex value anywhere in here. */
+body{margin:0;padding:0;font-size:14px}
+img{max-width:100%}
+[hidden]:not([hidden=until-found]){display:none!important}
+</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- The SAME font request as index.html and Activity Tab/Workout Tab.html,
@@ -4252,3 +4280,6 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureSlo
 window.addEventListener('resize', measureSlot);
 </script>
 
+
+</body>
+</html>
