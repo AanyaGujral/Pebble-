@@ -746,6 +746,7 @@ body{
 .fc-slot .big{font:700 24px/28px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
 .fc-slot .btn{max-width:200px}
 
+
 /* ── 7.6 Compare strip (friend profile) ───────────────────────────────────
    Two bars and one sentence. The sentence is the component; the bars
    illustrate it. This is why the profile page exists — the legacy one
@@ -1094,20 +1095,20 @@ body{
              2026-09-03). A card and its destination with two different names
              is how the legacy build ended up feeling like two apps. -->
         <div class="t">Family ranking</div>
-        <!-- Two actions on the right, share and join (owner, 2026-09-03).
-             They are the two ways into the same mutual link: give your code,
-             or use someone else's.
-             FLAG: the app's Phosphor set has no `share-network` or `sign-in`,
-             which are the two glyphs this pair actually wants. arrow-circle-up
-             and plus are the closest it carries, and the pairing is weaker
-             than it should be — a person cannot tell from the icons alone
-             which one hands out a code and which one takes one. Add the two
-             real glyphs to the icon set and swap them in; until then both
-             buttons carry an aria-label and both destinations name themselves
-             in their first line. Raised in §9. -->
-        <button class="act" data-sheet="share" aria-label="Share your code"><span class="phi" data-ph="arrow-circle-up" data-weight="fill"></span></button>
-        <button class="act" data-open="p-join" aria-label="Enter a code"><span class="phi" data-ph="plus"></span></button>
-        <button class="act" data-open="p-circle" style="margin-right:-12px" aria-label="Your friends"><span class="phi" data-ph="dots-three-vertical"></span></button>
+        <!-- ONE action in the header (owner, 2026-09-03), and the header is
+             the way IN: + takes a code from someone. Giving yours out is the
+             CTA at the bottom of the page, so the two directions are one each
+             and neither is duplicated.
+             What came off: the share glyph, which the bottom CTA now carries
+             and says in words rather than with an icon nobody can read; and
+             the ⋯, which went straight into a page — a three-dot is a menu
+             affordance, and pointing it at a single destination taught the
+             wrong thing about every other ⋯ in the app. Your friends is
+             reached from the row under the CTA instead, at the end of the
+             list of people, which is where you would look for it.
+             This also closes the §9 FLAG about the share/join icon pair: with
+             one glyph left there is no ambiguous pair to resolve. -->
+        <button class="act" data-open="p-join" style="margin-right:-12px" aria-label="Enter a friend's code"><span class="phi" data-ph="plus"></span></button>
       </div>
 
       <!-- The Today / 7 days segmented control came out (owner, 2026-09-03):
@@ -1175,14 +1176,16 @@ body{
       </div>
     </div>
 
-    <!-- S06 · CIRCLE MEMBERS -->
-    <div class="subpage" id="p-circle" hidden>
-      <div class="sub-head">
-        <button class="backbtn" data-back><span class="phi" data-ph="caret-left"></span></button>
-        <div class="t">Your friends</div>
-      </div>
-      <div class="sub-body" id="circle-body"></div>
-    </div>
+    <!-- S06 · the friends list page is GONE (owner, 2026-09-03), not hidden
+         behind a flag — it was a roster with a Remove button on each row, and
+         both halves of it now live where they belong: you see who is on your
+         ranking BY READING THE RANKING, and you remove someone from their own
+         page, where you can see who they are before you do it.
+         What came off with it: the "Your code / Rotate Code" card, which was
+         the only route to rotating a code. Rotation moved into the share
+         sheet, since that sheet is now where your code lives — see openSheet.
+         Nothing else on that page had a second home, and nothing else on it
+         was missed. -->
 
     <!-- the month-scroll calendar, shared with the Activity / Sleep tabs -->
     <div class="scrim" id="cal-scrim" hidden data-close="cal"></div>
@@ -1216,11 +1219,15 @@ body{
     <div class="sheet" id="menu-sheet" hidden>
       <div class="sheet-grab"><span></span></div>
       <div class="sheet-body">
-        <!-- Report came out (owner, 2026-09-03). §9 asked whether there was a
-             route behind it; there is not, and a menu entry that leads nowhere
-             is worse than no entry. It goes back in when reporting exists. -->
+        <!-- Mute and remove, both aimed at the person whose page you are on
+             (owner, 2026-09-03). This is where removing lives now, and the
+             ONLY place: the friends list page it briefly moved to is gone, so
+             there is one route and one confirm flow to keep honest.
+             Report is still out — §9 asked whether there was a route behind
+             it; there is not, and an entry that leads nowhere is worse than
+             no entry. -->
         <button class="btn btn--tertiary btn--m" style="justify-content:flex-start;padding:0 8px">Mute Cheers From <span id="mute-name">Rashmi</span></button>
-        <button class="btn btn--destructive btn--m" style="justify-content:flex-start;padding:0 8px" data-confirm="remove">Remove Friend</button>
+        <button class="btn btn--destructive btn--m" style="justify-content:flex-start;padding:0 8px" id="menu-remove" data-confirm="remove">Remove Friend</button>
       </div>
     </div>
   </div>
@@ -1643,14 +1650,17 @@ function renderLeaderboard(){
   }
   mount.innerHTML=html;
 
-  /* One action per screen — and on a populated board this was the second:
-     the header already carries share, and this copy of it sat under the
-     docked self card until you scrolled. It stays in the states where sharing
-     IS the screen's job (solo, first use); on a ranked board the header is
-     the route. */
-  foot.innerHTML = M.solo
-    ? '<button class="btn btn--primary" data-sheet="share">Share Your Code</button>'
-    : '';
+  /* The foot of the ranking (owner, 2026-09-03): giving your code out is a
+     named action in words, not an icon in the header — so it lives here, at
+     the end of the people it adds to. Under it, the route to Your friends
+     that the ⋯ used to be: a tertiary row, so the screen still has exactly
+     one primary. */
+  /* The foot of the ranking is one action: giving your code out, named in
+     words at the end of the people it adds to. The "Your friends" row went
+     with the page it opened (owner, 2026-09-03) — see the note where S06 used
+     to be. */
+  foot.innerHTML =
+    '<button class="btn btn--primary" data-sheet="share">Share My Code</button>';
 
   injectIcons(mount); injectIcons(foot);
   renderYouCard();
@@ -1783,6 +1793,9 @@ function renderFriend(){
   $('#fr-title').textContent = isMe ? 'Your profile' : p.name;
   $('#fr-menu').hidden = isMe;
   $('#mute-name').textContent = p.name;
+  /* the confirm sheet names the person; the menu carries the id so it does
+     not have to guess from whatever was last rendered */
+  $('#menu-remove').dataset.id = p.id;
   $('#cal-who').innerHTML = isMe ? 'Your history' : p.name+'&rsquo;s history';
 
   /* the identity block answers the ranking you arrived from — but only for
@@ -1884,48 +1897,10 @@ function renderFriend(){
   injectIcons($('#fr-body'));
 }
 
-/* ═══ S06 · CIRCLE MEMBERS ════════════════════════════════════════════════ */
-function renderCircle(){
-  const M=model(), rows=M.list.filter(m=>!m.you);
-  $('#circle-body').innerHTML =
-    /* Owner, 2026-09-03: "Friends", with the count in the title rather than
-       stranded at the far right of the head. A number alone on the right edge
-       reads as a value the card is reporting; inside the title it is what it
-       actually is — how many of the thing the title names.
-       FLAG (§9): whether there is a cap at all is unresolved. Under the link
-       model there is no group to be full, so a cap would be a limit on how
-       many people may hold a working code — a different question. */
-    '<div class="card"><div class="card-head">'
-    +'<div class="card-title">Friends <span class="count">('+rows.length+')</span></div>'
-    +'</div><div class="card-body" style="margin-top:8px">'
-    + (rows.length ? '' : '<p class="sheet-sub" style="color:var(--text-3);padding:4px 0 8px">'
-        +'Nobody yet. Share your code, or enter a friend&rsquo;s.</p>')
-    + rows.map(function(m,i){
-        return '<div class="listrow"'+(i===0?' style="border-top:0"':'')+'>'
-          +'<span class="lft">'+avatar(m)+'<span class="txt"><span class="t1">'+m.name+'</span>'
-          +'<span class="t2">'+(m.noband?'no band paired':m.sync?'synced '+m.sync:m.since?'last synced '+m.since:'never synced')+'</span></span></span>'
-          /* destructive tier: the label carries the negative colour and the
-             button is not filled with it — components/button.html, and the
-             acceptance criterion "destructive actions are label-coloured,
-             never red-filled" */
-          +'<span class="rgt"><button class="btn btn--destructive btn--m" style="width:auto;padding:0 8px;font-size:13px" data-confirm="remove" data-id="'+m.id+'">Remove</button></span>'
-          +'</div>';
-      }).join('')
-    +'</div></div>'
-    +'<div class="card"><div class="card-head"><div class="card-title">Your code</div></div>'
-    +'<div class="card-body"><div class="codebox"><span>K7M4Q2</span></div>'
-    +'<div class="btnrow" style="margin-top:12px"><button class="btn btn--secondary btn--m">Share</button>'
-    +'<button class="btn btn--tertiary btn--m">Rotate Code</button></div>'
-    /* §9: a permanent code that grants health-data access can never be
-       un-shared, so rev 1 assumes it rotates. Confirm the lifetime. */
-    +'<p class="sheet-sub" style="margin-top:8px;color:var(--text-3);font:400 11px/16px var(--font-text)">'
-    +'Rotating stops the old code working. Friends you already have stay.</p></div></div>'
-    /* No "leave" action: v1 creates no group, so there is nothing to leave.
-       You remove friends one at a time, and each removal is mutual. */
-    +'<p class="sheet-sub" style="color:var(--text-3);font:400 11px/16px var(--font-text);padding:0 4px">'
-    +'Removing a friend drops you from their leaderboard too.</p>';
-  injectIcons($('#circle-body'));
-}
+/* ═══ S06 · gone ══════════════════════════════════════════════════════════════════════
+   The friends list page and its renderer are deleted rather than left
+   behind a flag — see the note where its markup used to be for where its
+   two jobs went. */
 
 /* ═══ 7.7 · S04 ADD PEOPLE + the confirm sheets ═══════════════════════════ */
 /* The disclosure is a requirement, not copy garnish (§4.3): v1 shares every
@@ -1937,7 +1912,7 @@ const DISCLOSURE = 'You&rsquo;ll each be able to see the other&rsquo;s <b>activi
 function openSheet(kind, arg){
   const t=$('#sheet-title'), b=$('#sheet-body');
   if(kind==='share'){
-    t.textContent='Share your code';
+    t.textContent='Share my code';
     b.innerHTML =
       '<span class="sheet-label">Anyone who enters this sees your steps</span>'
       /* The disclosure is a requirement, not copy garnish. Rev 1 shares
@@ -1947,9 +1922,18 @@ function openSheet(kind, arg){
       +'<div class="codebox"><span>K7M4Q2</span></div>'
       +'<div class="btnrow"><button class="btn btn--primary btn--m">Share</button>'
       +'<button class="btn btn--tertiary btn--m">Copy</button></div>'
+      /* Rotation moved here with the code when the friends list page was
+         deleted (owner, 2026-09-03). It is not decoration: §9 says a
+         permanent code granting health-data access can never be un-shared,
+         so rev 1 assumes it rotates, and this is the only place that assumes
+         anything about it. Confirm the lifetime. */
       +'<hr class="sheet-rule">'
-      +'<span class="sheet-label">Have a code?</span>'
-      +'<button class="btn btn--tertiary btn--m" data-open="p-join">Enter Code</button>';
+      +'<button class="btn btn--tertiary btn--m" style="justify-content:flex-start;padding:0 8px">Rotate Code</button>'
+      +'<p class="sheet-sub" style="color:var(--text-3);font:400 11px/16px var(--font-text);padding:0 8px">'
+      +'Rotating stops the old code working. Friends you already have stay.</p>';
+    /* no "Have a code?" row any more: the + in the header is that route, and
+       one sheet offering both directions was what made the header need two
+       icons in the first place */
   }
   if(kind==='remove'){
     const who=(PEOPLE[arg]||{}).name||'this person';
@@ -2109,7 +2093,7 @@ function renderGallery(){
 /* ═══ RENDER + NAVIGATION ═════════════════════════════════════════════════ */
 function renderAll(){
   renderRings(); renderGoals(); renderFriendsCard();
-  renderLeaderboard(); renderFriend(); renderCircle(); renderCal(); renderGallery();
+  renderLeaderboard(); renderFriend(); renderCal(); renderGallery();
   injectIcons();
 }
 
@@ -2122,7 +2106,6 @@ $('#screens').innerHTML = [
   ['page-home','Home','The Family ranking card, after the Start Workout button.'],
   ['p-friends','Ranking','S02 — podium, full list, sticky you-card while your row is away.'],
   ['p-friend','Friend profile','S03 — Home&rsquo;s cards, read-only.'],
-  ['p-circle','Your friends','S06 — remove is mutual, and there is nothing to leave.'],
   ['page-gallery','Components','Every state from §7, for review.']
 ].map(function(s,i){
   return '<label'+(i===0?' class="on"':'')+'><input type="radio" name="scr" value="'+s[0]+'"'
@@ -2136,12 +2119,46 @@ $$('#fstates input').forEach(function(r){
     renderAll();
   });
 });
-function showScreen(id){
-  $$('.subpage').forEach(s=>s.hidden=true);
-  $$('.page').forEach(p=>p.classList.remove('active'));
+/* ── Where back goes ──────────────────────────────────────────────────────
+   There was no history: every inner page was a sibling of the others, and
+   Back just hid whichever one was open, which uncovered Home. Two levels in —
+   ranking → a friend's profile, ranking → your friends, ranking → enter a
+   code — Back skipped the ranking you came from and dropped you at Home.
+
+   NAV is the trail of inner pages you actually walked. Opening one pushes;
+   Back pops and re-shows the one underneath; landing on a tab clears it.
+   Re-entering a page already in the trail unwinds to it rather than stacking
+   a second copy, so a loop cannot grow the history forever.
+   A page revealed by Back keeps its scroll position — it is the page you
+   left, not a new one.                                                      */
+let NAV = [];
+
+function showScreen(id, reset){
   closeSheets(); $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true;
-  if(id.indexOf('page-')===0){ $('#'+id).classList.add('active'); }
-  else { $('#page-home').classList.add('active'); $('#'+id).hidden=false; $('#'+id).scrollTop=0; }
+  if(id.indexOf('page-')===0){
+    NAV=[];
+    $$('.subpage').forEach(s=>s.hidden=true);
+    $$('.page').forEach(p=>p.classList.remove('active'));
+    $('#'+id).classList.add('active');
+  } else {
+    /* Home stays mounted behind every inner page — it is the tab you are in */
+    $$('.page').forEach(p=>p.classList.remove('active'));
+    $('#page-home').classList.add('active');
+    if(reset) NAV=[];
+    const at = NAV.indexOf(id);
+    if(at>=0) NAV.length = at+1; else NAV.push(id);
+    $$('.subpage').forEach(s=>{ s.hidden = (s.id!==id); });
+    $('#'+id).scrollTop = 0;
+  }
+  syncChrome();
+  renderYouCard();
+}
+
+/* Back: one step down the trail, not all the way out. */
+function goBack(){
+  NAV.pop();
+  const prev = NAV[NAV.length-1];
+  $$('.subpage').forEach(s=>{ s.hidden = (s.id!==prev); });   /* no scrollTop reset */
   syncChrome();
   renderYouCard();
 }
@@ -2155,7 +2172,7 @@ function syncChrome(){
 $$('#screens input').forEach(function(r){
   r.addEventListener('change',function(){
     $$('#screens label').forEach(l=>l.classList.toggle('on', l.contains(r)));
-    showScreen(r.value);
+    showScreen(r.value, true);      /* the picker jumps, it does not walk */
   });
 });
 
@@ -2187,9 +2204,7 @@ document.addEventListener('click', function(e){
   if(confirmEl){ openSheet(confirmEl.dataset.confirm, confirmEl.dataset.id); return; }
 
   if(t.closest('[data-close]')){ closeSheets(); $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true; return; }
-  if(t.closest('[data-back]')){
-    t.closest('.subpage').hidden=true; syncChrome(); syncYouCard(); return;
-  }
+  if(t.closest('[data-back]')){ goBack(); return; }
   if(t.closest('[data-nav]')){ showScreen('page-home'); return; }
   if(t.closest('[data-cal]')){ $('#cal-sheet').hidden=false; $('#cal-scrim').hidden=false; renderCal(); return; }
 
