@@ -207,7 +207,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .card.tap .card-title .caret{width:14px;height:14px;color:var(--text-3)}
 
 /* chart bits — shared by every chart in this file */
-.chartmount{margin-top:16px}
+.chartmount{margin-top:0} /* spacing comes from .card-body, as on the Activity tab */
 .chart{position:relative;touch-action:none;cursor:crosshair}
 .chart svg{display:block;width:100%;height:auto}
 .axis{font-family:var(--font-number);font-size:10px;line-height:12px;font-weight:500;letter-spacing:0.01em;font-feature-settings:var(--num-features);fill:var(--text-3)}
@@ -242,47 +242,42 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .seg4 button:hover{color:var(--text-1)}
 .seg4 button.active{background:var(--surface-raised);color:var(--text-1)}
 
-/* headline card */
-.dhead{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
-.dhead .overline{font:600 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2)}
-.dhead .big{display:flex;align-items:baseline;gap:6px;margin-top:4px}
-/* numXl (42/46) — the reference shows the figure a full step above the
-   24px card figure, and this page has one number, so it earns the size */
-.dhead .num{font:700 42px/46px var(--font-number);letter-spacing:-0.01em;font-feature-settings:var(--num-features);color:var(--text-1)}
-.dhead .num.dash{color:var(--text-3)}
-/* FLAG: the reference prints the unit lowercase at ~17px; the system's unit
-   style everywhere else (chart cards, StatTile, Health monitor) is
-   overlineMedium uppercase on text-3, so that is used here for consistency */
-.dhead .unit{font:500 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
-.dhead .sub{margin-top:4px;font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features);white-space:nowrap}
-.dhead .sub.scrubbing{font-family:var(--font-number);font-weight:500}
-.dhead .sub .sep{margin:0 6px;color:var(--text-3)}
-.pill{flex:0 0 auto;padding:5px 12px;border-radius:var(--radius-pill);font:600 13px/18px var(--font-text)}
+/* headline card — the Activity tab's chart-card layout (owner, 2026-09-08:
+   "chart layouts and the 3 tiles will be the same as the Activity tab"):
+   title on the left, figure + trend line on the right, chart below.
+   The zone pill sits under the title — the Activity pages have no status,
+   so this is the one addition; flagged. */
+.dleft{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0}
+.pill{flex:0 0 auto;padding:3px 10px;border-radius:var(--radius-pill);font:600 11px/16px var(--font-text)}
 .pill[hidden]{display:none}
+.card-metric .trend.scrubbing{font-family:var(--font-number)}
+.trend .sep{margin:0 4px;color:var(--text-3)}
 .legend{display:flex;align-items:center;gap:8px;margin-top:12px;font:400 13px/18px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
 .legend .sw{width:20px;height:12px;border-radius:3px;background:var(--surface-raised);border:var(--border-hairline) solid var(--neutral-600);flex:0 0 auto}
 .note{margin-top:8px;font:400 13px/18px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
 .note[hidden]{display:none}
 
-/* stat strip — three equal columns in ONE card, hairline dividers between.
-   FLAG: the reference prints value ABOVE label; the design-system StatTile
-   (components/StatTile_preview.html) prints label above value. The
-   reference wins here because it is the prototype being matched — flip
-   the two lines in .tile if the StatTile order should rule instead. */
-.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:0}
-.tile{padding:16px 8px;text-align:center;border-left:var(--border-hairline) solid var(--divider);min-width:0}
-.tile:first-child{border-left:0}
-.tile .figure{display:flex;align-items:baseline;justify-content:center;gap:4px;white-space:nowrap}
-.tile .value{font:700 24px/28px var(--font-number);letter-spacing:-0.005em;font-feature-settings:var(--num-features);color:var(--text-1)}
-.tile .value.dash{color:var(--text-3)}
-.tile .unit{font:500 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
-.tile .label{margin-top:4px;font:400 13px/18px var(--font-text);color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* stat tiles — the Activity tab's detail-page StatTile chips, verbatim:
+   three equal tiles, 20px radius, no hairline, overline label ABOVE the
+   num-m value, small light unit (owner, 2026-09-08: same as Activity tab) */
+.sumchips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stattile{border-radius:20px;background:var(--surface-card);border:0;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.stattile .label{font:500 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.stattile .figure{display:flex;align-items:baseline;justify-content:center;gap:4px;white-space:nowrap}
+.stattile .value{font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.stattile .value.dash{color:var(--text-3)}
+.stattile .unit{font:500 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
 
 /* Time in range — stacked bar + one row per zone */
-.tir-bar{margin-top:12px;height:12px;border-radius:var(--radius-pill);background:var(--surface-raised);display:flex;gap:2px;overflow:hidden}
-.tir-bar i{display:block;height:100%;border-radius:var(--radius-pill);min-width:0;transition:width var(--duration-slow) var(--ease-standard)}
+/* one continuous bar: the zone sections butt against each other with no
+   gap and no per-section rounding; only the bar's own ends are round
+   (owner, 2026-09-08). No separator under the bar — the first row has no
+   rule, the rows below keep theirs. */
+.tir-bar{margin-top:12px;height:12px;border-radius:var(--radius-pill);background:var(--surface-raised);display:flex;overflow:hidden}
+.tir-bar i{display:block;height:100%;min-width:0;transition:width var(--duration-slow) var(--ease-standard)}
 .tir-rows{margin-top:8px}
 .tir-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-top:var(--border-hairline) solid var(--divider);font:400 15px/22px var(--font-text);color:var(--text-1)}
+.tir-row:first-child{border-top:0}
 .tir-row:last-child{padding-bottom:0}
 .tir-row .zdot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
 .tir-row .pct{margin-left:auto;font:500 15px/22px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-2)}
@@ -394,17 +389,23 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
             <button data-period="year" role="tab" aria-selected="false">Y</button>
           </div>
 
+          <!-- chart card — same skeleton as the Activity tab's Steps / Distance
+               pages: .card-head (title | figure + trend) then .card-body chart -->
           <div class="card" id="dCard">
-            <div class="dhead">
-              <div id="dHeadL"></div>
-              <span class="pill" id="dPill" hidden>Good</span>
+            <div class="card-head">
+              <div class="dleft">
+                <div class="card-title" id="dOver">Latest</div>
+                <span class="pill" id="dPill" hidden>Good</span>
+              </div>
+              <div class="card-metric" id="dHeadR"></div>
             </div>
-            <div class="chartmount" id="dMount"></div>
+            <div class="card-body"><div class="chartmount" id="dMount"></div></div>
             <div class="legend" id="dLegend"><span class="sw"></span><span id="dLegendText">Healthy 50–75 bpm</span></div>
             <div class="note" id="dNote" hidden></div>
           </div>
 
-          <div class="card tiles" id="dTiles"></div>
+          <!-- stat tiles — the Activity tab's .sumchips / .stattile row -->
+          <div class="sumchips" id="dTiles"></div>
 
           <div class="card" id="dTir">
             <h3 class="card-title">Time in range</h3>
@@ -511,15 +512,15 @@ const hhmm = mins => { const m = mins % 1440; return String(Math.floor(m/60)).pa
 const PERIODS = {
   home: {
     day:   { n:48, ticks:['00:00','6:00','12:00','18:00','24:00'], stamp:i => hhmm(i*30), over:'Latest', sub:'Today', missing:[20,21,22,23,24,25,26,27], gapNote:'Sensor gap 10:00 – 13:30' },
-    week:  { n:7,  ticks:['M','T','W','T','F','S','S'], tickIdx:[0,1,2,3,4,5,6], stamp:i => WEEK_NAMES[i], over:'7-day average', sub:'This week', missing:[2,5], unit:'days' },
-    month: { n:30, ticks:['1','5','9','13','17','21','25','29'], tickIdx:[0,4,8,12,16,20,24,28], stamp:i => 'Day ' + (i+1), over:'30-day average', sub:'Last 30 days', missing:[3,4,11,17,18,26], unit:'days' },
-    year:  { n:12, ticks:['J','F','M','A','M','J','J','A','S','O','N','D'], tickIdx:[0,1,2,3,4,5,6,7,8,9,10,11], stamp:i => MONTH_SHORT[i], over:'12-month average', sub:'Last 12 months', missing:[7], unit:'months' }
+    week:  { n:7,  ticks:['M','T','W','T','F','S','S'], tickIdx:[0,1,2,3,4,5,6], stamp:i => WEEK_NAMES[i], over:'Average', sub:'This week', missing:[2,5], unit:'days' },
+    month: { n:30, ticks:['1','5','9','13','17','21','25','29'], tickIdx:[0,4,8,12,16,20,24,28], stamp:i => 'Day ' + (i+1), over:'Average', sub:'Last 30 days', missing:[3,4,11,17,18,26], unit:'days' },
+    year:  { n:12, ticks:['J','F','M','A','M','J','J','A','S','O','N','D'], tickIdx:[0,1,2,3,4,5,6,7,8,9,10,11], stamp:i => MONTH_SHORT[i], over:'Average', sub:'Last 12 months', missing:[7], unit:'months' }
   },
   sleep: {
     day:   { n:17, ticks:['23:00','1:00','3:00','5:00','7:00'], stamp:i => hhmm(23*60 + i*30), over:'Last night', sub:'23:00 – 07:00', missing:[6,7,8,9], gapNote:'Sensor gap 02:00 – 03:30' },
-    week:  { n:7,  ticks:['M','T','W','T','F','S','S'], tickIdx:[0,1,2,3,4,5,6], stamp:i => WEEK_NAMES[i] + ' night', over:'7-night average', sub:'This week', missing:[2,5], unit:'nights' },
-    month: { n:30, ticks:['1','5','9','13','17','21','25','29'], tickIdx:[0,4,8,12,16,20,24,28], stamp:i => 'Night ' + (i+1), over:'30-night average', sub:'Last 30 nights', missing:[3,4,11,17,18,26], unit:'nights' },
-    year:  { n:12, ticks:['J','F','M','A','M','J','J','A','S','O','N','D'], tickIdx:[0,1,2,3,4,5,6,7,8,9,10,11], stamp:i => MONTH_SHORT[i], over:'12-month average', sub:'Last 12 months', missing:[7], unit:'months' }
+    week:  { n:7,  ticks:['M','T','W','T','F','S','S'], tickIdx:[0,1,2,3,4,5,6], stamp:i => WEEK_NAMES[i] + ' night', over:'Average', sub:'This week', missing:[2,5], unit:'nights' },
+    month: { n:30, ticks:['1','5','9','13','17','21','25','29'], tickIdx:[0,4,8,12,16,20,24,28], stamp:i => 'Night ' + (i+1), over:'Average', sub:'Last 30 nights', missing:[3,4,11,17,18,26], unit:'nights' },
+    year:  { n:12, ticks:['J','F','M','A','M','J','J','A','S','O','N','D'], tickIdx:[0,1,2,3,4,5,6,7,8,9,10,11], stamp:i => MONTH_SHORT[i], over:'Average', sub:'Last 12 months', missing:[7], unit:'months' }
   }
 };
 
@@ -678,7 +679,8 @@ let gradId = 0;
    dotted run bridges the gap, exactly like the line-chart component's
    "sensor gap" treatment. */
 function drawLine(mount, m, values, scale, ticks, opts = {}){
-  const H = opts.H || 190, TOP = 12, BOT = H - 36, tickY = H - 10;
+  // Activity-tab geometry: plot 12→94, labels at H-7 (130 on detail pages, 120 on entry cards)
+  const H = opts.H || 130, TOP = 12, BOT = 94, tickY = H - 7;
   const svg = svgEl('svg', { viewBox:`0 0 ${VIEW_W} ${H}`, role:'img', 'aria-label': m.name + ' line chart' });
   const y = v => BOT - (v - scale.min) / (scale.max - scale.min) * (BOT - TOP);
   const n = values.length, x = i => i / (n - 1) * PLOT_W;
@@ -743,7 +745,7 @@ function drawLine(mount, m, values, scale, ticks, opts = {}){
    by zone, a dotted line at the overall average, the healthy band behind,
    three y labels (top · average · bottom) and one x label per bar. */
 function drawRange(mount, m, items, ticks, tickIdx, fallbackScale){
-  const H = 190, TOP = 12, BOT = H - 36, tickY = H - 10;
+  const H = 130, TOP = 12, BOT = 94, tickY = H - 7; // same frame as the Day line
   const svg = svgEl('svg', { viewBox:`0 0 ${VIEW_W} ${H}`, role:'img', 'aria-label': m.name + ' range chart' });
   const live = items.filter(b => b);
   const step = m.dec ? 0.1 : 1;
@@ -800,7 +802,7 @@ function drawRange(mount, m, items, ticks, tickIdx, fallbackScale){
 }
 
 /* Skeleton chart for the loading state — a frame-sized block */
-function drawSkeleton(mount, h = 190){
+function drawSkeleton(mount, h = 130){
   mount.classList.remove('chart');
   const d = document.createElement('div');
   d.className = 'skel'; d.style.height = (h * 328 / 296 | 0) + 'px';
@@ -908,7 +910,7 @@ function renderSleep(){
     // FLAG: the Sleep tab's skin-temperature card marks the night's high and
     // low with dots; not reproduced on this entry card (the detail page's
     // Highest / Lowest tiles carry that information).
-    const chart = drawLine(mount, m, st === 'empty' ? s.values.map(() => null) : s.values, m.scale.sleep, PERIODS.sleep.day.ticks, { H:130, band:false });
+    const chart = drawLine(mount, m, st === 'empty' ? s.values.map(() => null) : s.values, m.scale.sleep, PERIODS.sleep.day.ticks, { H:120, band:false });
     mount.classList.remove('chart'); // no scrubbing on the entry cards: a press opens the page
   });
   $$('[data-open]', stack).forEach(b => b.addEventListener('click', () => openDetail(b.dataset.open, 'sleep')));
@@ -927,18 +929,16 @@ function renderDetail(){
   $('#dScope').hidden = scope !== 'sleep';
   $$('#dSeg button').forEach(b => { const on = b.dataset.period === period; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
 
-  // ---- headline ----
-  // Day on the Home scope reads the LATEST reading (it matches the Home
-  // card); every other view — including "Last night" — is an average
-  const headVal = (period === 'day' && scope === 'home') ? stt.latest : stt.avg;
-  const rangeTxt = empty ? '' : `<span class="sep">•</span>${fmtN(m, stt.min)} – ${fmtN(m, stt.max)}${unitSuffix(m)}`;
-  const headL = $('#dHeadL');
+  // ---- header: title + pill on the left, figure + trend on the right ----
+  const headVal = (period === 'day' && scope === 'home') ? stt.latest : stt.avg; // Day on Home = latest reading (matches the Home card); everything else an average
+  $('#dOver').textContent = P.over;
+  const rangeTxt = empty ? '' : `<span class="sep">·</span>${fmtN(m, stt.min)} – ${fmtN(m, stt.max)}${unitSuffix(m)}`;
+  const headR = $('#dHeadR');
   if (loading){
-    headL.innerHTML = '<div class="skel" style="width:120px;height:12px;margin-top:2px"></div><div class="skel" style="width:96px;height:40px;margin-top:8px"></div><div class="skel" style="width:160px;height:12px;margin-top:8px"></div>';
+    headR.innerHTML = '<div class="skel" style="width:72px;height:24px;margin-left:auto"></div><div class="skel" style="width:140px;height:12px;margin:8px 0 0 auto"></div>';
   } else {
-    headL.innerHTML = `<div class="overline">${P.over}</div>`
-      + `<div class="big">${empty ? '<span class="num dash">—</span>' : `<span class="num" id="dVal">${fmtN(m, headVal)}</span>`}${m.unit ? `<span class="unit">${m.unit}</span>` : ''}</div>`
-      + `<div class="sub" id="dSub">${empty ? 'No readings yet' : P.sub + rangeTxt}</div>`;
+    headR.innerHTML = `<div class="val">${empty ? '<span class="num dash">—</span>' : `<span class="num" id="dVal">${fmtN(m, headVal)}</span>`}${m.unit ? `<span class="unit">${m.unit}</span>` : ''}</div>`
+      + `<div class="trend" id="dSub"><span>${empty ? 'No readings yet' : P.sub + rangeTxt}</span></div>`;
   }
   const pill = $('#dPill');
   if (loading || empty){ pill.hidden = true; }
@@ -971,20 +971,20 @@ function renderDetail(){
     attachScrub(mount, chart,
       (i, d) => {
         subEl.classList.add('scrubbing');
-        if (chart.kind === 'line'){ valEl.textContent = fmtN(m, d); subEl.textContent = P.stamp(i); }
-        else { valEl.textContent = fmtN(m, d.avg); subEl.innerHTML = `${P.stamp(i)}<span class="sep">•</span>${fmtN(m, d.lo)} – ${fmtN(m, d.hi)}${unitSuffix(m)}`; }
+        if (chart.kind === 'line'){ valEl.textContent = fmtN(m, d); subEl.innerHTML = `<span>${P.stamp(i)}</span>`; }
+        else { valEl.textContent = fmtN(m, d.avg); subEl.innerHTML = `<span>${P.stamp(i)}<span class="sep">·</span>${fmtN(m, d.lo)} – ${fmtN(m, d.hi)}${unitSuffix(m)}</span>`; }
       },
       () => { valEl.textContent = restVal; subEl.innerHTML = restSub; subEl.classList.remove('scrubbing'); });
   }
 
-  // ---- stat strip ----
+  // ---- stat tiles (Activity-tab StatTile chips: label above value) ----
   const tiles = $('#dTiles');
   if (loading){
-    tiles.innerHTML = [0,1,2].map(() => '<div class="tile"><div class="skel" style="width:56px;height:24px;margin:2px auto 0"></div><div class="skel" style="width:64px;height:12px;margin:10px auto 0"></div></div>').join('');
+    tiles.innerHTML = [0,1,2].map(() => '<section class="stattile"><div class="skel" style="width:56px;height:12px"></div><div class="skel" style="width:48px;height:20px;margin-top:4px"></div></section>').join('');
   } else {
     tiles.innerHTML = m.tiles(stt).map(([lab, v, unit, mode]) => {
       const txt = empty || v == null ? null : (mode === 'signed' ? fmtSigned(m, v) : (unit === '%' && m.unit !== '%' ? String(Math.round(v)) : fmtN(m, v)));
-      return `<div class="tile"><div class="figure">${txt == null ? '<span class="value dash">—</span>' : `<span class="value">${txt}</span>${unit ? `<span class="unit">${unit}</span>` : ''}`}</div><div class="label">${lab}</div></div>`;
+      return `<section class="stattile"><div class="label">${lab}</div><div class="figure">${txt == null ? '<span class="value dash">—</span>' : `<span class="value">${txt}</span>${unit ? `<span class="unit">${unit}</span>` : ''}`}</div></section>`;
     }).join('');
   }
 

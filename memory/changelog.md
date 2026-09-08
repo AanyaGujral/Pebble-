@@ -5,6 +5,17 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-08 (later) — Health metrics, owner round one: the detail chart
+  card now uses the Activity tab's Steps / Distance layout (title left,
+  figure + trend right, 130px chart) instead of the reference's big-figure
+  header; the zone pill sits under the title. The three tiles are the
+  Activity tab's StatTile chips (label above value, separate 20px tiles).
+  Time in range is one continuous bar with sections filled by share — no
+  2px gaps, no per-section rounding — and the hairline under the bar is
+  gone. Sleep-scope "Last night" headline reads the night average, not the
+  07:00 reading. HRV "Good" starts at 56 ms so the year view matches the
+  reference's 8% / 92% split.
+
 - 2026-09-08 — Health metrics detail pages built as a standalone flow at
   `Health Metrics/health-metrics.html` (owner: "the homepage is the entry
   point, don't add the whole prototype"). Reproduces only the two entry

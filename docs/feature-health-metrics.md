@@ -11,10 +11,11 @@ temperature, Blood oxygen (SpO₂) — each with:
 
 1. **D / W / M / Y period switcher** (the homepage's `.seg4` pill). Pages
    always open on Day.
-2. **Headline card** — overline (`LATEST` on Day, `7-DAY AVERAGE`,
-   `30-DAY AVERAGE`, `12-MONTH AVERAGE`), the figure in numXl, unit, a
-   sub-line with the period and its min–max range, and a zone status pill
-   (Good / Fair / Low, etc.).
+2. **Chart card** — the Activity tab's Steps / Distance card layout
+   (owner, 2026-09-08): title on the left (`Latest` on the Home Day view,
+   `Last night` on the Sleep Day view, `Average` otherwise) with the zone
+   status pill under it, the figure + unit on the right with a trend line
+   giving the period and its min–max range (`Last 12 months · 40 – 66 ms`).
 3. **Chart** — Day is a line chart with the metric's area fill (the homepage's
    `drawLine`); Week / Month / Year are range bars per the owner's reference
    screenshot: grey low→high bar, zone-coloured average tick, dotted line at
@@ -24,13 +25,15 @@ temperature, Blood oxygen (SpO₂) — each with:
    header (Day: value + time; W/M/Y: that bar's average + its range). Line
    charts light a dashed guide + dot; range bars dim the rest and run the
    dotted line from the bar top (as the approved bar-chart component).
-5. **Stat strip** — three columns in one card, value above label:
+5. **Stat tiles** — the Activity tab's three StatTile chips (label above
+   value, 20px radius, no hairline):
    - Heart rate: Resting · Average · Max
    - HRV: Average · Highest · Lowest
    - Stress: Average · Highest · Time relaxed
    - Skin temperature: Average · Baseline · Deviation
    - SpO₂: Average · Lowest · Below 95%
-6. **Time in range** — stacked bar plus one row per zone with its share.
+6. **Time in range** — one continuous bar whose sections fill by share (no
+   gaps, no rule under the bar), then one row per zone with its percentage.
 
 **Removed on purpose:** the bottom tabs that let a reader jump from one
 metric's page to another (owner, 2026-09-08). Back → tap is the only route.
@@ -79,9 +82,9 @@ overnight card, so it has no sleep entry.
 - Zone ticks and the Time-in-range bar use the semantic *icon* steps — a
   deliberate exception to "semantic colours never on chart fills", limited to
   status marks, because the reference screenshot encodes zone by colour.
-- Stat strip prints value above label (reference) rather than the StatTile's
-  label-above-value.
-- Units use the system's overline style, not the reference's lowercase 17px.
+- The chart card, chart height and tiles follow the Activity tab (owner call,
+  2026-09-08) rather than the reference screenshot's large-figure header;
+  the zone pill is the one element the Activity pages do not have.
 - Skin temperature uses the Home card's 36.x °C scale everywhere; the Sleep
   tab card's 33.2 °C is untouched and inconsistent.
 - Measure All is visual-only in this file; the reading scene lives in the
