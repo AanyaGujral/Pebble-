@@ -5,6 +5,21 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-03 (rev 12) — **Remove Friend is back in the friend's own ⋯ menu**,
+  and that is now its only home: the menu carries the person's id so the
+  confirm sheet names them ("Remove Koms?") instead of guessing from whatever
+  was last rendered. **The friends list page is deleted** — markup, renderer
+  and control-panel entry, not hidden behind a flag (owner, 2026-09-03). It was
+  a roster with a Remove button on each row, and both halves now live where
+  they belong: you see who is on your ranking by reading the ranking, and you
+  remove someone from their own page, where you can see who they are first.
+  The **"Your friends" row under the CTA went with it**, so the foot of the
+  ranking is one action again. One thing did need rehoming rather than
+  deleting: the page carried the only **Rotate Code** control, which §9 needs
+  because a permanent code granting health-data access can never be un-shared
+  — it moved into the share sheet, where your code now lives, with its
+  "rotating stops the old code working" copy intact.
+
 - 2026-09-03 (rev 11) — Ranking header cut to one action, sharing given a name.
   The **⋯ came off**: it went straight into a page, and a three-dot pointed at
   a single destination teaches the wrong thing about every other ⋯ in the app.
