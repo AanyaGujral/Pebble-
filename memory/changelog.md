@@ -5,6 +5,27 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-08 — Health metrics detail pages built as a standalone flow at
+  `Health Metrics/health-metrics.html` (owner: "the homepage is the entry
+  point, don't add the whole prototype"). Reproduces only the two entry
+  points — the Home tab's Health monitor section and the Sleep tab's four
+  overnight vitals cards — and the five pages they open (Heart rate, HRV,
+  Stress, Skin temperature, SpO₂). Each page: D/W/M/Y pill, headline card
+  (overline · numXl figure · range sub-line · zone pill), Day line chart /
+  W-M-Y range bars with zone-coloured average tick, dotted overall average
+  and shaded healthy band (per the owner's HRV·Y reference screenshot),
+  press-drag scrubbing, the agreed three stat tiles per metric, and a Time
+  in range card. Sleep-tab entries scope everything to the sleep window
+  ("During sleep" chip; per-night bars). The bottom metric-to-metric tabs
+  are deliberately absent (owner). Control panel: Default · Partial data ·
+  No data · Loading, plus Home / Sleep entry switch. Flags in code: zone
+  marks use semantic icon steps (exception to "never chart fills"), stat
+  strip prints value above label (reference vs StatTile), units in system
+  overline style, skin temp on the Home 36.x scale while the Sleep card
+  says 33.2. `metric.stress` added to js/tokens.js — the homepage had read
+  it since 2026-08-27 but it was never written to the token file. Spec at
+  docs/feature-health-metrics.md.
+
 - 2026-09-03 (rev 2.2) — Owner round of eight on the leaderboard.
   (1) Hero band is now the Pebble green — built from the teal ramp
   (teal.400 wash over a teal.500 → surface.card gradient) rather than the

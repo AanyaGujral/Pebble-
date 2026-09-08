@@ -1,5 +1,17 @@
 # Session Handoff
 
+> **2026-09-08 — Health metrics flow.** The five health-monitor detail pages
+> (HR · HRV · Stress · Skin temp · SpO₂) are built as a STANDALONE file at
+> `Health Metrics/health-metrics.html` — the owner asked for the homepage as
+> the entry point without re-embedding the whole prototype. It reproduces
+> the Home tab's Health monitor section and the Sleep tab's overnight cards
+> as entry points, with a control panel for Default / Partial / No data /
+> Loading. Spec: `docs/feature-health-metrics.md`. Next step: owner reviews
+> the artifact preview → fold the pages into the homepage file (wire
+> `data-open` on the Health monitor cards and the Sleep vitals cards to
+> these pages) once the UX is approved. `metric.stress` was added to
+> `js/tokens.js`.
+
 > **2026-08-10 — read this first.** `index.html` is now the MERGED source of
 > truth: it adopts the parallel session's build (metric details pages with a
 > D/W/M/Y period switcher; control panel reduced to Default + No data and

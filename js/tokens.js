@@ -163,7 +163,13 @@ export const metric = {
   readiness: '#45C7B3',
   spo2: '#58A8DF',
   sleep: '#8A7CEC',
-  skinTemp: '#C873DE'
+  skinTemp: '#C873DE',
+  /* Added 2026-09-08: the homepage's Health monitor has read
+     --metric-stress since 2026-08-27 (owner chose emerald-400) but the
+     token was never written here. Flag: emerald-400 is also metric.distance;
+     the owner accepted the shared hue because the two never sit side by
+     side. Revisit if Stress and Distance ever meet on one screen. */
+  stress: '#43B476'
 };
 
 /** Semantic states — glyphs and badges only, never chart lines or fills. */
