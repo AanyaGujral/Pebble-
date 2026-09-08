@@ -5,6 +5,25 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-08-30 (scrim strengthened) — The gradient added earlier the same day
+  ran from the bottom edge to exactly the mark's top line, which meant it was
+  fully TRANSPARENT precisely where the mark sits. Rendered against a bright
+  stand-in for the footage, the logo and the dimmed first headline line were
+  close to invisible — the opposite of the point.
+  The ramp now starts 124px above the mark (y=395, height 400) instead of at
+  it, so it is ~55% dense by the mark and ~80% by the headline, with the top
+  124px a gentle fade so there is no visible edge. Deliberate, flagged
+  deviation from "bottom till the logo": a gradient that reaches zero at the
+  logo cannot make the logo legible.
+  Also gave it an rgba fallback ahead of the color-mix version. A gradient
+  built only from color-mix() is dropped WHOLE by a browser that does not
+  support it, taking the legibility with it — the one failure mode where the
+  fallback matters most.
+  Verified by measuring, not by eye: composited the scrim over a bright plate
+  and sampled the real pixels beside each element. Mark 3.77:1 (WCAG needs 3
+  for a non-text graphic), dimmed headline 6.91:1, lit headline 14.18:1,
+  legal line 4.5:1. All pass, and the stand-in is harsher than the footage.
+
 - 2026-08-30 (chunking + scrim) — Two changes to the onboarding screen.
   TEXT CHUNKED TO THE FOOTAGE. The headlines were on an even 7/3 = 2.33s
   split, which I had flagged as not derived from the video. The cuts are not
