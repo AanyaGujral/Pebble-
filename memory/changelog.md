@@ -5,6 +5,21 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-08 (round two) — Health metrics: chart titles are averages on
+  every view ("Today's average", "Week's average", "Month's average",
+  "Year's average"; "Last night's average" on the Sleep scope) — no more
+  "Latest". Healthy band + legend removed from every chart. Date selector
+  under the period pill (‹ › steppers, label opens the month-scroll
+  calendar for Day or a value sheet for week / month / year). 3-dot menu
+  with About <metric> (how measured, zones, one tip) and Measurement
+  settings built on the Me tab's Health Monitor page (switch + sampling
+  interval per metric; heart rate also warning switch + upper limit).
+  Measure CTA at the bottom of each page runs the homepage's Measure All
+  flow for one metric — measuring fill, reading scene, readings sheet,
+  49 s cooldown. Flags: earlier dates are the present series nudged by a
+  seeded factor; a reading does not change the charts; all metrics got a
+  settings switch + interval, only HR the alert.
+
 - 2026-09-08 (later) — Health metrics, owner round one: the detail chart
   card now uses the Activity tab's Steps / Distance layout (title left,
   figure + trend right, 130px chart) instead of the reference's big-figure

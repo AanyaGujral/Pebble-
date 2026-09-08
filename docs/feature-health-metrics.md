@@ -11,29 +11,43 @@ temperature, Blood oxygen (SpO₂) — each with:
 
 1. **D / W / M / Y period switcher** (the homepage's `.seg4` pill). Pages
    always open on Day.
-2. **Chart card** — the Activity tab's Steps / Distance card layout
-   (owner, 2026-09-08): title on the left (`Latest` on the Home Day view,
-   `Last night` on the Sleep Day view, `Average` otherwise) with the zone
-   status pill under it, the figure + unit on the right with a trend line
-   giving the period and its min–max range (`Last 12 months · 40 – 66 ms`).
-3. **Chart** — Day is a line chart with the metric's area fill (the homepage's
+2. **Date selector** — under the period pill: ‹ › step one day / week /
+   month / year back or forward (forward stops at today); the label opens a
+   picker — the homepage's month-scroll calendar for Day, a value sheet
+   listing recent weeks, months or years otherwise.
+3. **Chart card** — the Activity tab's Steps / Distance card layout: title
+   on the left (`Today's average`, `Week's average`, `Month's average`,
+   `Year's average`; `Last night's average` on the Sleep Day view) with the
+   zone status pill under it, the figure + unit on the right with a trend
+   line giving the period and its min–max range (`Today · 53 – 126 bpm`).
+   No healthy band or legend on any chart (owner, 2026-09-08).
+4. **Chart** — Day is a line chart with the metric's area fill (the homepage's
    `drawLine`); Week / Month / Year are range bars per the owner's reference
    screenshot: grey low→high bar, zone-coloured average tick, dotted line at
-   the overall average, shaded healthy band with a legend
-   ("Healthy 50–90 ms"), three y labels (top · average · bottom).
-4. **Press-drag scrubbing** — reads the value under the finger into the
+   the overall average, three y labels (top · average · bottom).
+5. **Press-drag scrubbing** — reads the value under the finger into the
    header (Day: value + time; W/M/Y: that bar's average + its range). Line
    charts light a dashed guide + dot; range bars dim the rest and run the
    dotted line from the bar top (as the approved bar-chart component).
-5. **Stat tiles** — the Activity tab's three StatTile chips (label above
+6. **Stat tiles** — the Activity tab's three StatTile chips (label above
    value, 20px radius, no hairline):
    - Heart rate: Resting · Average · Max
    - HRV: Average · Highest · Lowest
    - Stress: Average · Highest · Time relaxed
    - Skin temperature: Average · Baseline · Deviation
    - SpO₂: Average · Lowest · Below 95%
-6. **Time in range** — one continuous bar whose sections fill by share (no
+7. **Time in range** — one continuous bar whose sections fill by share (no
    gaps, no rule under the bar), then one row per zone with its percentage.
+8. **Measure CTA** — at the bottom of every page, the Health monitor's
+   Measure All button for one metric: idle → measuring (the button fills for
+   the length of the reading while the homepage's reading scene plays over
+   the blurred page) → the readings sheet with this metric's row and Done →
+   a 49 s cooldown ("Measure again in 00:49") → idle.
+9. **3-dot menu** — *About <metric>* (how it is measured, what the zones
+   mean, one thing worth knowing) and *Measurement settings*, built on the
+   Me tab's Health Monitor page: the sensor's on/off switch with its sampling
+   interval (inert when off); heart rate also gets the warning switch and
+   the upper limit (120–200 bpm). Values are shared across pages.
 
 **Removed on purpose:** the bottom tabs that let a reader jump from one
 metric's page to another (owner, 2026-09-08). Back → tap is the only route.
@@ -54,15 +68,15 @@ overnight card, so it has no sleep entry.
 | No data | — and "No readings yet"; CTA "Take your first reading" | — headline, empty chart frame (gridlines + labels), — tiles, empty range bar |
 | Loading | Skeleton figures, "Syncing…" | Skeleton header, chart, tiles and rows |
 
-## Zones and bands (sample thresholds — flagged for review)
+## Zones (sample thresholds — flagged for review)
 
-| Metric | Zones (best first) | Healthy band |
-|---|---|---|
-| Heart rate | Good < 75 · Elevated 75–90 · High ≥ 90 bpm | 50–75 bpm |
-| HRV | Good ≥ 56 · Fair 40–56 · Low < 40 ms | 50–90 ms |
-| Stress | Low < 40 · Medium 40–70 · High ≥ 70 | 0–40 |
-| Skin temperature | Normal 36.0–37.2 · Below < 36.0 · Above ≥ 37.2 °C | 36.0–37.2 °C |
-| SpO₂ | Normal ≥ 95 · Low 90–95 · Very low < 90 % | 95–100 % |
+| Metric | Zones (best first) |
+|---|---|
+| Heart rate | Good < 75 · Elevated 75–90 · High ≥ 90 bpm |
+| HRV | Good ≥ 56 · Fair 40–56 · Low < 40 ms |
+| Stress | Low < 40 · Medium 40–70 · High ≥ 70 |
+| Skin temperature | Normal 36.0–37.2 · Below < 36.0 · Above ≥ 37.2 °C |
+| SpO₂ | Normal ≥ 95 · Low 90–95 · Very low < 90 % |
 
 ## Acceptance criteria
 
@@ -72,6 +86,9 @@ overnight card, so it has no sleep entry.
 - [x] Scrubbing reads into the header and snaps back on release
 - [x] Stat strip and Time in range recompute per period and scope
 - [x] Default · Partial · No data · Loading states on every screen
+- [x] Date selector per period with calendar / list pickers
+- [x] Measure CTA with the homepage's reading scene and readings sheet
+- [x] 3-dot menu → About and Measurement settings pages
 - [x] No metric-to-metric tabs on the detail page
 - [x] All colours and fonts from `js/tokens.js` (mirrored as CSS variables)
 - [x] Opens standalone; `prefers-reduced-motion` disables the skeleton pulse, the page slide and the bar transition
@@ -87,8 +104,13 @@ overnight card, so it has no sleep entry.
   the zone pill is the one element the Activity pages do not have.
 - Skin temperature uses the Home card's 36.x °C scale everywhere; the Sleep
   tab card's 33.2 °C is untouched and inconsistent.
-- Measure All is visual-only in this file; the reading scene lives in the
-  homepage file.
+- Home's Measure All stays visual-only; the per-metric Measure CTA runs the
+  ported scene. A fresh reading shows the Home card's figure and does not
+  alter the charts (sample data).
+- Earlier dates show the present series nudged by a seeded factor (sample
+  data), so stepping back visibly changes the page.
+- Every metric's settings page gets a switch + interval; only heart rate has
+  the alert + upper limit, per the Me tab's page.
 - `metric.stress` added to `js/tokens.js` (it was referenced but missing).
 
 ## Dependencies

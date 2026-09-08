@@ -168,24 +168,37 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .hm .card{height:132px;display:flex;flex-direction:column;text-align:left;width:100%;border:0;cursor:pointer;font-family:inherit;color:inherit}
 .hm .card:hover{background:var(--surface-raised)}
 .hm .tile-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.hm .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
-.hm .label{font:600 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hm .figure{display:flex;align-items:baseline;gap:4px}
-.hm .value{font:700 24px/28px var(--font-number);letter-spacing:-0.005em;color:var(--text-1);font-feature-settings:var(--num-features)}
+.hm .dot,.hm-sheet .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.hm .label,.hm-sheet .label{font:600 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hm .figure,.hm-sheet .figure{display:flex;align-items:baseline;gap:4px}
+.hm .value,.hm-sheet .value{font:700 24px/28px var(--font-number);letter-spacing:-0.005em;color:var(--text-1);font-feature-settings:var(--num-features)}
 .hm .value.dash{color:var(--text-3)}
-.hm .unit{font:500 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
-.hm .tri{align-self:center;margin-left:4px;flex:0 0 auto;display:block}
+.hm .unit,.hm-sheet .unit{font:500 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.hm .tri,.hm-sheet .tri{align-self:center;margin-left:4px;flex:0 0 auto;display:block}
 .hm .card-foot{margin-top:auto;padding-top:12px;font:400 13px/18px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
 .hm .card .caret{position:absolute;right:12px;top:14px;width:14px;height:14px;color:var(--text-3)}
-/* Measure All — visual only here. FLAG: the animated reading scene, the
-   readings sheet and the 49 s cooldown live in the homepage file; this
-   flow only needs the CTA in place so the section reads as the homepage. */
-.hm .cta{
-  width:100%;height:var(--cta-height);margin-top:16px;border:0;border-radius:var(--radius-pill);
+/* CTA — the Health monitor's Measure All button (homepage component v4),
+   shared by the Home section and each detail page's "Measure …" button.
+   Three states: idle → measuring (the button is its own progress surface,
+   filling left to right for the length of the reading) → disabled with a
+   live cooldown countdown. Home's Measure All is visual-only here (its full
+   scene lives in the homepage file); the per-metric CTA runs the real flow. */
+.cta{
+  width:100%;height:var(--cta-height);margin-top:16px;border:0;border-radius:var(--radius-pill);position:relative;overflow:hidden;
   display:flex;align-items:center;justify-content:center;gap:8px;
-  font:600 15px/22px var(--font-text);background:var(--metric-readiness);color:var(--neutral-900);cursor:default;
+  font:600 15px/22px var(--font-text);background:var(--metric-readiness);color:var(--neutral-900);cursor:pointer;
+  transition:background var(--duration-fast) var(--ease-standard),color var(--duration-fast) var(--ease-standard);
 }
-.hm .cta .ico{width:20px;height:20px;display:block}
+.cta:active{background:var(--teal-500)}
+.cta .ico{width:20px;height:20px;display:block;position:relative;z-index:1}
+.cta .txt{position:relative;z-index:1;font-feature-settings:var(--num-features)}
+.cta.is-measuring{background:var(--surface-raised);color:var(--text-1);cursor:default}
+.cta.is-measuring .ico{animation:pulse 1.4s ease-in-out infinite}
+.cta .fill{position:absolute;inset:0 auto 0 0;width:0;z-index:0;background:var(--metric-readiness);opacity:.28}
+.cta.is-disabled{background:var(--surface-card);color:var(--text-3);cursor:default}
+.cta[aria-disabled="true"]:not(.is-measuring):not(.is-disabled){cursor:default}
+.hm .cta{cursor:default}
+.measure{margin-top:4px}
 
 /* Sleep tab overnight vitals — the homepage's chart-card format */
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
@@ -230,10 +243,10 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .sub-head .backbtn{width:40px;height:40px;margin-left:-12px;display:flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer;border-radius:999px;color:var(--text-1)}
 .sub-head .backbtn:hover{background:var(--surface-raised)}
 .sub-head .backbtn .phi{width:20px;height:20px}
-.sub-head .t{font:500 20px/26px var(--font-text);letter-spacing:-0.005em;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub-head .t{flex:1;min-width:0;font:500 20px/26px var(--font-text);letter-spacing:-0.005em;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* "During sleep" chip — marks the pages opened from the Sleep tab, which
    show the sleep window only (owner, 2026-09-08) */
-.scopechip{margin-left:auto;flex:0 0 auto;padding:4px 10px;border-radius:var(--radius-pill);background:var(--surface-raised);color:var(--metric-sleep);font:600 11px/16px var(--font-text);letter-spacing:0.02em}
+.scopechip{flex:0 0 auto;padding:4px 10px;border-radius:var(--radius-pill);background:var(--surface-raised);color:var(--metric-sleep);font:600 11px/16px var(--font-text);letter-spacing:0.02em}
 .sub-body{padding:16px 16px 0;display:flex;flex-direction:column;gap:12px}
 
 /* D / W / M / Y period switcher — the homepage's .seg4, unchanged */
@@ -252,8 +265,6 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .pill[hidden]{display:none}
 .card-metric .trend.scrubbing{font-family:var(--font-number)}
 .trend .sep{margin:0 4px;color:var(--text-3)}
-.legend{display:flex;align-items:center;gap:8px;margin-top:12px;font:400 13px/18px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
-.legend .sw{width:20px;height:12px;border-radius:3px;background:var(--surface-raised);border:var(--border-hairline) solid var(--neutral-600);flex:0 0 auto}
 .note{margin-top:8px;font:400 13px/18px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
 .note[hidden]{display:none}
 
@@ -282,6 +293,137 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .tir-row .zdot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
 .tir-row .pct{margin-left:auto;font:500 15px/22px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-2)}
 .tir-row .pct.dash{color:var(--text-3)}
+
+
+/* ==========================================================================
+   4b. DETAIL PAGE EXTRAS (owner round two, 2026-09-08): date selector,
+   3-dot menu, About + Measurement settings pages, pickers, Measure flow
+   ========================================================================== */
+/* 3-dot button + dropdown — the homepage's .dots-btn / .menu, unchanged */
+.dots-btn{width:44px;height:44px;margin-right:-12px;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:0;cursor:pointer;border-radius:999px}
+.dots-btn span{width:3px;height:3px;border-radius:50%;background:var(--text-2)}
+.dots-btn:hover{background:var(--surface-raised)}
+.menu{position:absolute;right:16px;top:84px;z-index:40;width:212px;background:var(--surface-card);border:var(--border-hairline) solid var(--surface-fill);border-radius:20px;padding:8px;display:none}
+.menu.open{display:block}
+.menu button{width:100%;text-align:left;background:none;border:0;padding:8px 12px;border-radius:12px;cursor:pointer;font:500 13px/18px var(--font-text);color:var(--text-2)}
+.menu button:hover{background:var(--surface-raised);color:var(--text-1)}
+
+/* date selector — ‹ label ▾ › under the period pill. The label is the
+   homepage's .date-btn (13/18 medium, text-2, 14px radius, chevron caret);
+   the steppers move one period back / forward, forward stops at today. */
+.daterow{display:flex;align-items:center;justify-content:space-between;gap:4px;margin:-4px 0}
+.daterow .step{width:36px;height:36px;border:0;border-radius:999px;background:none;color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.daterow .step .phi{width:16px;height:16px}
+.daterow .step:hover{background:var(--surface-raised)}
+.daterow .step[disabled]{opacity:.3;cursor:default;background:none}
+.date-btn{display:flex;align-items:center;gap:6px;background:none;border:0;padding:6px 10px;border-radius:14px;cursor:pointer;font:500 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
+.date-btn:hover{background:color-mix(in srgb, var(--neutral-0) 8%, transparent)}
+.date-btn .caret{width:6px;height:6px;border-right:1.2px solid var(--text-3);border-bottom:1.2px solid var(--text-3);transform:rotate(45deg);margin-bottom:3px;display:inline-block}
+
+/* scrim + sheets — homepage patterns (history calendar, goal-value sheet) */
+.scrim{position:absolute;inset:0;z-index:69;background:color-mix(in srgb, var(--neutral-900) 62%, transparent)}
+#calModal[hidden],#pickSheet[hidden]{display:none}
+.cal-sheet{position:absolute;left:0;right:0;top:96px;bottom:0;z-index:70;background:var(--surface-card);border-radius:24px 24px 0 0;display:flex;flex-direction:column;overflow:hidden}
+.cal-grab{padding:8px 0 0;display:flex;justify-content:center;flex:0 0 auto}
+.cal-grab span{width:36px;height:4px;border-radius:999px;background:var(--surface-fill)}
+.cal-head{flex:0 0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cal-head .t{font:500 20px/26px var(--font-text);letter-spacing:-0.005em;color:var(--text-1)}
+.iconbtn{width:36px;height:36px;border-radius:999px;background:var(--surface-raised);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--text-1)}
+.iconbtn:hover{background:var(--surface-fill)}
+.iconbtn .phi{width:16px;height:16px}
+.cal-week{flex:0 0 auto;padding:0 16px 8px;display:grid;grid-template-columns:repeat(7,1fr);border-bottom:var(--border-hairline) solid var(--surface-raised)}
+.cal-week span{text-align:center;font:500 11px/16px var(--font-text);color:var(--text-3)}
+.cal-scrollwrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+.cal-scroll{flex:1;min-height:0;overflow-y:auto;padding:0 16px 88px;scrollbar-width:none}
+.cal-scroll::-webkit-scrollbar{display:none}
+.cal-fade{position:absolute;top:0;left:0;right:0;height:68px;pointer-events:none;background:linear-gradient(180deg, var(--surface-card) 0%, var(--surface-card) 30%, transparent 100%)}
+.cal-month{padding-top:24px}
+.cal-month .mt{text-align:center;font:500 17px/22px var(--font-text);color:var(--text-1)}
+.cal-grid{margin-top:16px;display:grid;grid-template-columns:repeat(7,1fr);row-gap:16px;column-gap:2px}
+.cal-day{width:100%;min-height:44px;background:none;border:0;padding:0;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px}
+.cal-day .dn{font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.cal-day.future{opacity:.35;cursor:default}
+.sheet{position:absolute;left:8px;right:8px;bottom:8px;z-index:70;background:var(--surface-card);border-radius:24px;padding:16px 16px 24px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sheet-head .t{font:500 17px/22px var(--font-text);color:var(--text-1)}
+.sheet-rows{margin-top:16px;display:flex;flex-direction:column;gap:2px;max-height:360px;overflow-y:auto;scrollbar-width:none}
+.sheet-rows::-webkit-scrollbar{display:none}
+.sheet-row{width:100%;background:none;border:0;padding:10px;border-radius:12px;cursor:pointer;font-family:inherit;display:flex;justify-content:center}
+.sheet-row .v{font:500 15px/20px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3);position:relative;white-space:nowrap}
+.sheet-row.sel{background:var(--surface-raised)}
+.sheet-row.sel .v{font-size:20px;line-height:24px;font-weight:700;color:var(--text-1)}
+.sheet-row .u{display:none;position:absolute;left:100%;margin-left:8px;top:50%;transform:translateY(-50%);font:500 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2)}
+.sheet-row.sel .u{display:block}
+
+/* About + Settings pages sit over the detail page */
+.subpage.over{z-index:31}
+.sub-body .card p{margin:8px 0 0;font:400 13px/18px var(--font-text);color:var(--text-2)}
+.scorerow{display:flex;align-items:baseline;gap:12px}
+.scorerow .rng{width:72px;flex:0 0 auto;font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.scorerow .dsc{font:400 13px/18px var(--font-text);color:var(--text-2)}
+.scorerow .zd{width:8px;height:8px;border-radius:50%;flex:0 0 auto;align-self:center}
+
+/* Measurement settings — the Me tab's Health Monitor page (S06) chrome:
+   .sec-h / .group / .row / .trow / .switch, geometry verbatim */
+.pbody{padding:4px 16px 24px;display:flex;flex-direction:column;gap:12px}
+.sec-h{padding:10px 4px 0;font:600 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.pbody > .sec-h:first-child{padding-top:4px}
+.group{background:var(--surface-card);border-radius:var(--radius-card);overflow:hidden}
+.row,.trow{position:relative;width:100%;display:flex;align-items:center;gap:8px;padding:16px;border:none;background:none;font-family:inherit;text-align:left;color:inherit;transition:background var(--duration-fast) ease,opacity var(--duration-fast) ease}
+.row{cursor:pointer}
+.row + .row::after,.row + .trow::after,.trow + .row::after,.trow + .trow::after{content:"";position:absolute;top:0;left:16px;right:16px;height:var(--border-hairline);background:var(--divider)}
+.row:hover{background:var(--surface-raised)}
+.row .lab,.trow .lab{flex:1;min-width:0;font:500 13px/18px var(--font-text);color:var(--text-1);display:block}
+.trow .tbody{flex:1;min-width:0}
+.row .sub,.trow .sub{display:block;margin-top:2px;font:400 11px/16px var(--font-text);color:var(--text-3)}
+.row .val{flex:none;font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
+.row .val.accent{color:var(--metric-readiness)}
+.row .caret-ic{flex:none;width:16px;height:16px;color:var(--text-3)}
+.row.is-off{opacity:.45;pointer-events:none}
+.switch{width:46px;height:28px;flex:0 0 auto;border:0;border-radius:999px;cursor:pointer;padding:4px;display:flex;justify-content:flex-start;align-items:center;background:var(--surface-fill);transition:background var(--duration-base) ease}
+.switch i{width:20px;height:20px;border-radius:999px;background:var(--text-1);display:block;transition:transform var(--duration-base) ease}
+.switch.on{justify-content:flex-end;background:var(--metric-readiness)}
+.switch.on i{background:var(--neutral-900)}
+.grp-note{margin:2px 4px 0;font:400 11px/16px var(--font-text);color:var(--text-3)}
+
+/* ---- MEASURE — the owner's reading scene (Measure_All_Metrics.html),
+   ported from the homepage file verbatim, one metric at a time. Every cue
+   time, easing and value is the authored one; the blurred backdrop is the
+   detail page instead of the Home tab. ---- */
+.ma-scene{position:absolute;inset:0;z-index:69;overflow:hidden}
+.ma-scene[hidden]{display:none}
+#detail.ma-behind{filter:blur(13px)}
+.ma-veil{position:absolute;inset:0;background:var(--surface-app);opacity:var(--ma-dim,.58)}
+.ma-veil2{position:absolute;inset:0;background:color-mix(in srgb, var(--neutral-900) 55%, transparent);opacity:var(--ma-veil2,0)}
+.ma-orb{position:absolute;left:50%;top:39%;width:0;height:0;opacity:var(--ma-orb-o,0);transform:scale(var(--ma-orb-zoom,1));transform-origin:50% 50%}
+.ma-orb i{display:block;position:absolute;border-radius:50%}
+.ma-halo{left:-240px;top:-240px;width:480px;height:480px;background:radial-gradient(circle, color-mix(in srgb, var(--teal-500) 58%, transparent) 0%, color-mix(in srgb, var(--teal-600) 30%, transparent) 38%, transparent 70%);filter:blur(38px);opacity:.75;transform:scale(var(--ma-breathe,1))}
+.ma-cres{left:-100px;top:-100px;width:200px;height:200px;-webkit-mask-image:radial-gradient(closest-side, transparent 58%, #000 66%, #000 100%);mask-image:radial-gradient(closest-side, transparent 58%, #000 66%, #000 100%)}
+.ma-cres1{background:conic-gradient(from 0deg, transparent 0deg, color-mix(in srgb, var(--teal-500) 90%, transparent) 70deg, color-mix(in srgb, var(--teal-200) 88%, transparent) 135deg, color-mix(in srgb, var(--teal-300) 50%, transparent) 190deg, transparent 250deg);filter:blur(8px);opacity:.8;transform:rotate(calc(var(--ma-spin,0) * 1deg)) scale(var(--ma-breathe,1))}
+.ma-cres2{background:conic-gradient(from 150deg, transparent 0deg, color-mix(in srgb, var(--teal-500) 90%, transparent) 70deg, color-mix(in srgb, var(--teal-200) 88%, transparent) 135deg, color-mix(in srgb, var(--teal-300) 50%, transparent) 190deg, transparent 250deg);filter:blur(14px);opacity:.55;transform:rotate(calc(var(--ma-spin,0) * -0.62deg)) scale(calc(var(--ma-breathe,1) * 1.12))}
+.ma-lobe{left:-74px;top:-86px;width:148px;height:172px;background:radial-gradient(circle at 55% 45%, color-mix(in srgb, var(--teal-200) 82%, transparent) 0%, color-mix(in srgb, var(--teal-500) 40%, transparent) 55%, transparent 78%);filter:blur(22px);transform:rotate(calc(var(--ma-spin,0) * 0.35deg)) scale(var(--ma-breathe,1))}
+.ma-core{left:-70px;top:-70px;width:140px;height:140px;background:radial-gradient(circle at 48% 46%, var(--teal-200) 0%, var(--teal-300) 22%, color-mix(in srgb, var(--teal-400) 80%, transparent) 48%, transparent 74%);filter:blur(16px);transform:scale(var(--ma-core,1))}
+.ma-ring{position:absolute;left:-130px;top:-130px;transform:rotate(-90deg)}
+.ma-cap{position:absolute;left:0;right:0;top:67%;text-align:center;display:flex;flex-direction:column;gap:4px;opacity:var(--ma-cap,0)}
+.ma-cap .t{font:600 17px/22px var(--font-text);color:var(--text-1)}
+.ma-cap .s{font:400 13px/18px var(--font-text);color:var(--text-2)}
+.ma-flash{position:absolute;inset:0;pointer-events:none;opacity:var(--ma-flash,0);background:radial-gradient(circle at 50% 47%, color-mix(in srgb, var(--teal-200) 90%, transparent) 0%, color-mix(in srgb, var(--teal-300) 80%, transparent) 28%, color-mix(in srgb, var(--teal-500) 38%, transparent) 55%, transparent 80%)}
+.hm-sheet{position:absolute;left:8px;right:8px;bottom:8px;border-radius:24px;overflow:hidden;opacity:var(--ma-sheet-o,0);transform:translateY(var(--ma-sheet-y,120px));background:radial-gradient(120% 70% at 12% 4%, color-mix(in srgb, var(--teal-400) 16%, transparent) 0%, transparent 58%),radial-gradient(90% 50% at 92% 96%, color-mix(in srgb, var(--teal-600) 14%, transparent) 0%, transparent 60%),var(--surface-card);border:var(--border-hairline) solid var(--border-card);padding:24px 20px 20px;display:flex;flex-direction:column;gap:12px}
+.hm-sheet .head{text-align:center;display:flex;flex-direction:column;gap:4px;padding-bottom:4px}
+.hm-sheet h3{margin:0;font:600 17px/22px var(--font-text);color:var(--text-1)}
+.hm-sheet .when{margin:0;padding:0 8px;font:400 13px/18px var(--font-text);color:var(--text-2);text-wrap:pretty}
+.hm-sheet .rows{display:flex;flex-direction:column;gap:8px}
+.hm-sheet .rd{display:flex;align-items:center;justify-content:space-between;height:54px;padding:0 16px;border-radius:12px;background:color-mix(in srgb, var(--surface-raised) 15%, transparent);border:var(--border-hairline) solid var(--border-card);opacity:var(--o,0);transform:translateY(var(--y,14px))}
+.hm-sheet .rd .who{display:flex;align-items:center;gap:8px}
+.hm-sheet .done{margin-top:8px;width:100%;height:var(--cta-height);border-radius:var(--radius-pill);border:1px solid var(--metric-readiness);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font:500 15px/22px var(--font-text);color:var(--metric-readiness);opacity:var(--ma-done-o,0);transform:translateY(var(--ma-done-y,10px))}
+.hm-sheet .done:active{background:var(--neutral-800)}
+@media (prefers-reduced-motion:reduce){
+  .cta,.cta .fill{transition:none !important}
+  .cta.is-measuring .ico{animation:none}
+  #detail.ma-behind{filter:none}
+  .ma-orb,.ma-cap,.ma-flash{display:none}
+  .switch,.switch i{transition:none}
+}
 
 /* ==========================================================================
    5. STATES — driven by data-state on #app (default · partial · empty ·
@@ -323,7 +465,10 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
   <ul>
     <li>Tap a card → its page opens on the Day view.</li>
     <li>D / W / M / Y switches the chart: Day is a line, the rest are range bars with the average tick.</li>
+    <li>‹ › steps the date; the label opens a picker (calendar for Day).</li>
     <li>Press-drag on any chart reads a value into the header.</li>
+    <li>Measure … at the bottom runs the reading scene and lands on the readings sheet.</li>
+    <li>3-dot menu → About, Measurement settings (toggle, interval; HR also alert + upper limit).</li>
     <li>No bottom tabs for jumping between metrics (owner, 2026-09-08).</li>
   </ul>
 </aside>
@@ -380,6 +525,12 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
           <button class="backbtn" id="btnBack" aria-label="Back"><span class="phi" data-ph="caret-left"></span></button>
           <span class="t" id="dTitle">Heart rate</span>
           <span class="scopechip" id="dScope" hidden>During sleep</span>
+          <!-- 3-dot menu: About + Measurement settings (owner, 2026-09-08) -->
+          <button class="dots-btn" id="dDots" type="button" aria-label="More" aria-haspopup="menu"><span></span><span></span><span></span></button>
+        </div>
+        <div class="menu" id="dMenu" role="menu">
+          <button type="button" data-act="about" id="dMenuAbout">About heart rate</button>
+          <button type="button" data-act="settings">Measurement settings</button>
         </div>
         <div class="sub-body">
           <div class="seg4" id="dSeg" role="tablist" aria-label="Period">
@@ -387,6 +538,13 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
             <button data-period="week" role="tab" aria-selected="false">W</button>
             <button data-period="month" role="tab" aria-selected="false">M</button>
             <button data-period="year" role="tab" aria-selected="false">Y</button>
+          </div>
+          <!-- date selector — one row per period: a day, a week, a month or a
+               year. Steppers move back / forward; the label opens a picker. -->
+          <div class="daterow">
+            <button class="step" id="dPrev" type="button" aria-label="Earlier"><span class="phi" data-ph="caret-left"></span></button>
+            <button class="date-btn" id="dDate" type="button"><span id="dDateLabel">Today, Aug 6</span><span class="caret"></span></button>
+            <button class="step" id="dNext" type="button" aria-label="Later" disabled><span class="phi" data-ph="caret-right"></span></button>
           </div>
 
           <!-- chart card — same skeleton as the Activity tab's Steps / Distance
@@ -400,7 +558,6 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
               <div class="card-metric" id="dHeadR"></div>
             </div>
             <div class="card-body"><div class="chartmount" id="dMount"></div></div>
-            <div class="legend" id="dLegend"><span class="sw"></span><span id="dLegendText">Healthy 50–75 bpm</span></div>
             <div class="note" id="dNote" hidden></div>
           </div>
 
@@ -412,9 +569,90 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
             <div class="tir-bar" id="tirBar"></div>
             <div class="tir-rows" id="tirRows"></div>
           </div>
+
+          <!-- Measure CTA — the Measure All button for one metric; runs the
+               reading scene and lands on the readings sheet -->
+          <div id="dMeasureSlot"></div>
         </div>
       </div>
 
+      <!-- ABOUT <metric> — reached from the 3-dot menu; filled by renderAbout() -->
+      <div class="subpage over" id="about" hidden>
+        <div class="sub-head">
+          <button class="backbtn" data-close="about" aria-label="Back"><span class="phi" data-ph="caret-left"></span></button>
+          <span class="t" id="aTitle">About heart rate</span>
+        </div>
+        <div class="sub-body" id="aBody"></div>
+      </div>
+
+      <!-- MEASUREMENT SETTINGS — the Me tab's Health Monitor page (S06), one
+           metric at a time; filled by renderSettings() -->
+      <div class="subpage over" id="settings" hidden>
+        <div class="sub-head">
+          <button class="backbtn" data-close="settings" aria-label="Back"><span class="phi" data-ph="caret-left"></span></button>
+          <span class="t" id="sTitle">Heart rate settings</span>
+        </div>
+        <div class="pbody" id="sBody"></div>
+      </div>
+
+    </div><!-- /.pages -->
+
+    <!-- HISTORY CALENDAR — the homepage's month-scroll modal (Day picker) -->
+    <div id="calModal" hidden>
+      <div class="scrim" data-calclose></div>
+      <div class="cal-sheet">
+        <div class="cal-grab"><span></span></div>
+        <div class="cal-head">
+          <span class="t" id="calTitle">Pick a day</span>
+          <button class="iconbtn" data-calclose aria-label="Close"><span class="phi" data-ph="x"></span></button>
+        </div>
+        <div class="cal-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+        <div class="cal-scrollwrap">
+          <div class="cal-scroll" id="calScroll"></div>
+          <div class="cal-fade" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VALUE SHEET — the homepage's goal-setting sheet, reused for the
+         week / month / year pickers and the settings values -->
+    <div id="pickSheet" hidden>
+      <div class="scrim" data-pickcancel></div>
+      <div class="sheet">
+        <div class="sheet-head">
+          <button class="iconbtn" data-pickcancel aria-label="Cancel"><span class="phi" data-ph="x"></span></button>
+          <span class="t" id="pickTitle">Pick</span>
+          <button class="iconbtn" id="pickConfirm" aria-label="Confirm"><span class="phi" data-ph="check" style="width:18px;height:18px"></span></button>
+        </div>
+        <div class="sheet-rows" id="pickRows"></div>
+      </div>
+    </div>
+
+    <!-- MEASURE — the reading scene + readings sheet (homepage, verbatim) -->
+    <div class="ma-scene" id="maScene" hidden role="dialog" aria-modal="true" aria-labelledby="maShTitle">
+      <div class="ma-veil"></div>
+      <div class="ma-veil2"></div>
+      <div class="ma-orb" id="maOrb">
+        <i class="ma-halo"></i>
+        <i class="ma-cres ma-cres1"></i>
+        <i class="ma-cres ma-cres2"></i>
+        <i class="ma-lobe"></i>
+        <i class="ma-core"></i>
+        <svg class="ma-ring" width="260" height="260" viewBox="0 0 260 260" aria-hidden="true">
+          <circle cx="130" cy="130" r="113" fill="none" stroke="var(--neutral-700)" stroke-width="2" opacity="0.55"/>
+          <circle id="maRing" cx="130" cy="130" r="113" fill="none" stroke="var(--teal-400)" stroke-width="2" stroke-linecap="round" stroke-dasharray="710" stroke-dashoffset="710" opacity="0.9"/>
+        </svg>
+      </div>
+      <div class="ma-cap"><div class="t" id="maCapTitle">Measuring heart rate</div><div class="s">Keep your hand still</div></div>
+      <div class="ma-flash"></div>
+      <div class="hm-sheet" id="maSheet">
+        <div class="head">
+          <h3 id="maShTitle">Reading complete</h3>
+          <p class="when" id="maShNote"></p>
+        </div>
+        <div class="rows" id="maShList"></div>
+        <button class="done" type="button" id="maShDone">Done</button>
+      </div>
     </div>
   </div>
 </div>
@@ -440,6 +678,8 @@ function svgEl(name, attrs, parent){
 const PH = {
   'caret-left': 'M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z',
   'caret-right': 'M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z',
+  'x': 'M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z',
+  'check': 'M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z',
   'pulse': 'M232,128a8,8,0,0,1-8,8H184a8,8,0,0,1-7.16-4.42L165.57,109,140.94,175.4a8,8,0,0,1-7.09,5.2h-.4a8,8,0,0,1-7.24-4.62L94.31,107.6,79.16,131.58A8,8,0,0,1,72,136H32a8,8,0,0,1,0-16H67.58l20.7-32.77a8,8,0,0,1,14-.36l31.13,66.4,24.13-65a8,8,0,0,1,7.1-5.2,7.94,7.94,0,0,1,7.5,4.42L188.94,120H224A8,8,0,0,1,232,128Z'
 };
 const icon = (name, cls = 'phi') => `<span class="${cls}"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="${PH[name]}"/></svg></span>`;
@@ -509,34 +749,40 @@ const hhmm = mins => { const m = mins % 1440; return String(Math.floor(m/60)).pa
 
 /* Period metadata per scope. `missing` = the indices the Partial state
    blanks out; `over` = the headline overline; `sub` = its first clause. */
+/* Titles read "<period>'s average" on every view (owner, 2026-09-08 — no
+   "Latest"). The date selector below decides which day / week / month /
+   year the page shows; `sub` is the wording for the present period. */
 const PERIODS = {
   home: {
-    day:   { n:48, ticks:['00:00','6:00','12:00','18:00','24:00'], stamp:i => hhmm(i*30), over:'Latest', sub:'Today', missing:[20,21,22,23,24,25,26,27], gapNote:'Sensor gap 10:00 – 13:30' },
-    week:  { n:7,  ticks:['M','T','W','T','F','S','S'], tickIdx:[0,1,2,3,4,5,6], stamp:i => WEEK_NAMES[i], over:'Average', sub:'This week', missing:[2,5], unit:'days' },
-    month: { n:30, ticks:['1','5','9','13','17','21','25','29'], tickIdx:[0,4,8,12,16,20,24,28], stamp:i => 'Day ' + (i+1), over:'Average', sub:'Last 30 days', missing:[3,4,11,17,18,26], unit:'days' },
-    year:  { n:12, ticks:['J','F','M','A','M','J','J','A','S','O','N','D'], tickIdx:[0,1,2,3,4,5,6,7,8,9,10,11], stamp:i => MONTH_SHORT[i], over:'Average', sub:'Last 12 months', missing:[7], unit:'months' }
+    day:   { n:48, ticks:['00:00','6:00','12:00','18:00','24:00'], stamp:i => hhmm(i*30), over:"Today's average", sub:'Today', missing:[20,21,22,23,24,25,26,27], gapNote:'Sensor gap 10:00 – 13:30' },
+    week:  { n:7,  ticks:['M','T','W','T','F','S','S'], tickIdx:[0,1,2,3,4,5,6], stamp:i => WEEK_NAMES[i], over:"Week's average", sub:'This week', missing:[2,5], unit:'days' },
+    month: { n:30, ticks:['1','5','9','13','17','21','25','29'], tickIdx:[0,4,8,12,16,20,24,28], stamp:i => 'Day ' + (i+1), over:"Month's average", sub:'This month', missing:[3,4,11,17,18,26], unit:'days' },
+    year:  { n:12, ticks:['J','F','M','A','M','J','J','A','S','O','N','D'], tickIdx:[0,1,2,3,4,5,6,7,8,9,10,11], stamp:i => MONTH_SHORT[i], over:"Year's average", sub:'This year', missing:[7], unit:'months' }
   },
   sleep: {
-    day:   { n:17, ticks:['23:00','1:00','3:00','5:00','7:00'], stamp:i => hhmm(23*60 + i*30), over:'Last night', sub:'23:00 – 07:00', missing:[6,7,8,9], gapNote:'Sensor gap 02:00 – 03:30' },
-    week:  { n:7,  ticks:['M','T','W','T','F','S','S'], tickIdx:[0,1,2,3,4,5,6], stamp:i => WEEK_NAMES[i] + ' night', over:'Average', sub:'This week', missing:[2,5], unit:'nights' },
-    month: { n:30, ticks:['1','5','9','13','17','21','25','29'], tickIdx:[0,4,8,12,16,20,24,28], stamp:i => 'Night ' + (i+1), over:'Average', sub:'Last 30 nights', missing:[3,4,11,17,18,26], unit:'nights' },
-    year:  { n:12, ticks:['J','F','M','A','M','J','J','A','S','O','N','D'], tickIdx:[0,1,2,3,4,5,6,7,8,9,10,11], stamp:i => MONTH_SHORT[i], over:'Average', sub:'Last 12 months', missing:[7], unit:'months' }
+    // FLAG: the owner named "today's average" for Day; on the Sleep scope the
+    // day is a night, so it reads "Last night's average"
+    day:   { n:17, ticks:['23:00','1:00','3:00','5:00','7:00'], stamp:i => hhmm(23*60 + i*30), over:"Last night's average", sub:'Last night', missing:[6,7,8,9], gapNote:'Sensor gap 02:00 – 03:30' },
+    week:  { n:7,  ticks:['M','T','W','T','F','S','S'], tickIdx:[0,1,2,3,4,5,6], stamp:i => WEEK_NAMES[i] + ' night', over:"Week's average", sub:'This week', missing:[2,5], unit:'nights' },
+    month: { n:30, ticks:['1','5','9','13','17','21','25','29'], tickIdx:[0,4,8,12,16,20,24,28], stamp:i => 'Night ' + (i+1), over:"Month's average", sub:'This month', missing:[3,4,11,17,18,26], unit:'nights' },
+    year:  { n:12, ticks:['J','F','M','A','M','J','J','A','S','O','N','D'], tickIdx:[0,1,2,3,4,5,6,7,8,9,10,11], stamp:i => MONTH_SHORT[i], over:"Year's average", sub:'This year', missing:[7], unit:'months' }
   }
 };
 
 /* --------------------------------------------------------------------------
    METRIC CONFIGS. zones are ordered best-first for the Time-in-range list;
-   a value belongs to the first zone with min <= v < max. `band` is the
-   shaded healthy range on every chart (the "Healthy 50–90 ms" legend).
-   `scale` is the Day line's fixed y-axis (4 gridlines, evenly spaced).
+   a value belongs to the first zone with min <= v < max. The healthy band and its
+   legend were removed on every chart (owner, 2026-09-08). `scale` is the Day line's fixed y-axis (4 gridlines, evenly spaced).
    -------------------------------------------------------------------------- */
 const METRICS = {
   hr: {
     name:'Heart rate', card:'Heart Rate', sleepCard:'Heart rate', unit:'bpm', dec:0,
     color:'var(--metric-heart-rate)',
     home:{ v:'72', foot:'Resting · just now', tri:{d:'down',tone:'pos'} },
+    sheetNote:'Your heart rate says you\u2019re calm and rested, Aanya',
+    settings:{ label:'Continuous heart rate', sub:'All-day interval sampling', intervals:[1,5,10,30] },
+    about:{ how:'Your band shines green light into the skin on your wrist and reads how much bounces back — every pulse changes it. Continuous monitoring samples at the interval you set in Measurement settings; a manual reading takes about half a minute. Readings are estimates, not clinical measurements.', zones:['Typical resting range for an adult', 'Stress, caffeine, heat or a poor night can lift it here', 'Worth a rest — or a check if it stays here at rest'], tip:'Compare resting readings taken at the same time of day. A resting heart rate that drifts up over a week often shows up before you feel run down.' },
     sleep:{ trend:'<span class="tri-down-good"></span><span>3% down from last night</span>' },
-    band:{ lo:50, hi:75, label:'Healthy 50–75 bpm' },
     zones:[ {k:'good',label:'Good',tone:'pos',min:-Infinity,max:75}, {k:'elev',label:'Elevated',tone:'cau',min:75,max:90}, {k:'high',label:'High',tone:'neg',min:90,max:Infinity} ],
     scale:{ home:{min:40,max:130}, sleep:{min:50,max:80} },
     data:{
@@ -552,8 +798,10 @@ const METRICS = {
     name:'Heart rate variability', card:'HRV', sleepCard:'Heart rate variability', unit:'ms', dec:0,
     color:'var(--metric-hrv)',
     home:{ v:'57', foot:'7-day avg 54 ms', tri:{d:'up',tone:'pos'} },
+    sheetNote:'Your recovery looks steady today, Aanya',
+    settings:{ label:'HRV monitoring', sub:'Measured during sleep and rest periods', intervals:[5,10,30,60] },
+    about:{ how:'The gap between one heartbeat and the next changes with every breath. HRV is how much it varies, in milliseconds, read from the optical sensor while you are still and while you sleep. Higher usually means better recovery — compare against your own baseline, not other people.', zones:['Recovered — a good day to push', 'Normal for you — keep the day moderate', 'Under-recovered — ease off and sleep early'], tip:'One low night means little. A run of low nights alongside a rising resting heart rate is the pattern to act on.' },
     sleep:{ trend:'<span class="tri-up"></span><span>8% up from last night</span>' },
-    band:{ lo:50, hi:90, label:'Healthy 50–90 ms' },
     // Good from 56 ms: with the reference's twelve monthly averages this puts
     // exactly one month (May, 58) in Good — the 8% / 92% split the screenshot shows
     zones:[ {k:'good',label:'Good',tone:'pos',min:56,max:Infinity}, {k:'fair',label:'Fair',tone:'cau',min:40,max:56}, {k:'low',label:'Low',tone:'neg',min:-Infinity,max:40} ],
@@ -570,7 +818,9 @@ const METRICS = {
     name:'Stress', card:'Stress', unit:'', dec:0,
     color:'var(--metric-stress)',
     home:{ v:'38', foot:'Below your baseline', tri:{d:'down',tone:'pos'} },
-    band:{ lo:0, hi:40, label:'Low 0–40' },
+    sheetNote:'Your body reads relaxed right now, Aanya',
+    settings:{ label:'Stress monitoring', sub:'Measured automatically through the day', intervals:[5,10,30,60] },
+    about:{ how:'A 0–100 index built from heart rate variability, heart rate and movement. Low readings mean your nervous system is in a rest state; high readings show sustained arousal. Exercise raises it too, so read it alongside what you were doing.', zones:['Relaxed — rest state', 'Engaged — a normal working day', 'Strained — take a breather when you can'], tip:'Two minutes of slow breathing usually pulls a Medium reading down within a quarter of an hour. Take a manual reading before and after to see it.' },
     zones:[ {k:'low',label:'Low',tone:'pos',min:-Infinity,max:40}, {k:'med',label:'Medium',tone:'cau',min:40,max:70}, {k:'high',label:'High',tone:'neg',min:70,max:Infinity} ],
     scale:{ home:{min:0,max:90}, sleep:{min:0,max:45} },
     data:{
@@ -586,8 +836,10 @@ const METRICS = {
     name:'Skin temperature', card:'Skin Temp', sleepCard:'Skin temperature', unit:'°C', dec:1,
     color:'var(--metric-skin-temp)',
     home:{ v:'36.4', foot:'Same as baseline', tri:{d:'up',tone:'pos'} },
+    sheetNote:'Right on your baseline, Aanya',
+    settings:{ label:'Temperature monitoring', sub:'Measured during sleep and rest periods', intervals:[10,30,60] },
+    about:{ how:'Read from the skin of your wrist, so it sits below your core temperature and moves with the room. The number that matters is the change from your own baseline, which the band learns over the first two weeks of nights.', zones:['Within your normal range', 'Cooler than your baseline — a cold room or poor circulation', 'Warmer than your baseline — can precede illness or follow a late workout'], tip:'A sustained rise of half a degree over two or three nights is worth noticing before you feel it.' },
     sleep:{ trend:'<span class="dot-flat"></span><span>Same as last night</span>' },
-    band:{ lo:36.0, hi:37.2, label:'Normal 36.0–37.2 °C' },
     zones:[ {k:'normal',label:'Normal',tone:'pos',min:36.0,max:37.2}, {k:'below',label:'Below',tone:'cau',min:-Infinity,max:36.0}, {k:'above',label:'Above',tone:'neg',min:37.2,max:Infinity} ],
     scale:{ home:{min:35.6,max:37.4}, sleep:{min:35.4,max:36.9} },
     baseline:36.3,
@@ -604,8 +856,10 @@ const METRICS = {
     name:'Blood oxygen', card:'SpO₂', sleepCard:'Blood oxygen', unit:'%', dec:0,
     color:'var(--metric-spo2)',
     home:{ v:'97', foot:'Overnight low 95%', tri:{d:'up',tone:'pos'} },
+    sheetNote:'Your blood oxygen is where it should be, Aanya',
+    settings:{ label:'SpO\u2082 detection', sub:'Measured automatically during rest and sleep', intervals:[10,30,60] },
+    about:{ how:'Red and infrared light estimate how much of the haemoglobin in your blood is carrying oxygen. Healthy readings sit between 95 and 100%. Brief dips during sleep are normal; repeated dips are worth mentioning to a doctor.', zones:['Normal saturation', 'Lower than usual — altitude, congestion or a poor sensor fit', 'Very low — if it repeats at rest, see a doctor'], tip:'Wear the band snug and a finger-width above the wrist bone for the most reliable overnight readings.' },
     sleep:{ trend:'<span class="tri-down-bad"></span><span>1% down from last night</span>' },
-    band:{ lo:95, hi:100, label:'Healthy 95–100%' },
     zones:[ {k:'normal',label:'Normal',tone:'pos',min:95,max:Infinity}, {k:'low',label:'Low',tone:'cau',min:90,max:95}, {k:'vlow',label:'Very low',tone:'neg',min:-Infinity,max:90} ],
     scale:{ home:{min:88,max:100}, sleep:{min:88,max:100} },
     data:{
@@ -634,7 +888,19 @@ function getSeries(m, scope, period, state){
   const raw = m.data[scope][period]();
   const kind = period === 'day' ? 'line' : 'range';
   const P = PERIODS[scope][period];
-  const values = raw.map((v, i) => (state === 'partial' && P.missing.includes(i)) ? null : v);
+  // SAMPLE DATA: an earlier day / week / month / year is the present series
+  // nudged by a seeded factor, so stepping back visibly changes the page
+  const back = S.back[period] || 0;
+  let shift = v => v;
+  if (back){
+    const r = seeded(back * 7 + ['day','week','month','year'].indexOf(period) + 1);
+    const f = 1 + (r() - 0.5) * 0.14, add = (r() - 0.5) * 0.5;
+    shift = m.dec ? (v => v + add) : (v => v * f);
+  }
+  const values = raw.map((v, i) => {
+    if (state === 'partial' && P.missing.includes(i)) return null;
+    return kind === 'line' ? shift(v) : { lo:shift(v.lo), hi:shift(v.hi), avg:shift(v.avg) };
+  });
   return { kind, values, P };
 }
 function stats(m, s){
@@ -674,8 +940,7 @@ function stats(m, s){
 const VIEW_W = 296, PLOT_W = 262;
 let gradId = 0;
 
-/* Day view — line with a soft area fill (the homepage's drawLine) plus the
-   healthy band. Points may be null (sensor gap): the line breaks and a
+/* Day view — line with a soft area fill (the homepage's drawLine). Points may be null (sensor gap): the line breaks and a
    dotted run bridges the gap, exactly like the line-chart component's
    "sensor gap" treatment. */
 function drawLine(mount, m, values, scale, ticks, opts = {}){
@@ -685,11 +950,6 @@ function drawLine(mount, m, values, scale, ticks, opts = {}){
   const y = v => BOT - (v - scale.min) / (scale.max - scale.min) * (BOT - TOP);
   const n = values.length, x = i => i / (n - 1) * PLOT_W;
 
-  // healthy band, clipped to the plot
-  if (m.band && opts.band !== false){
-    const y1 = y(Math.min(m.band.hi, scale.max)), y2 = y(Math.max(m.band.lo, scale.min));
-    if (y2 > y1) svgEl('rect', { x:0, y:y1, width:PLOT_W, height:y2 - y1, fill:'var(--surface-raised)', opacity:0.55 }, svg);
-  }
   // 4 gridlines + right-side labels
   for (let k = 0; k < 4; k++){
     const v = scale.min + (scale.max - scale.min) * k / 3, gy = y(v);
@@ -742,8 +1002,7 @@ function drawLine(mount, m, values, scale, ticks, opts = {}){
 
 /* Week / Month / Year — range bars, from the owner's reference: a grey bar
    from each period's low to its high, a short tick at its average coloured
-   by zone, a dotted line at the overall average, the healthy band behind,
-   three y labels (top · average · bottom) and one x label per bar. */
+   by zone, a dotted line at the overall average, three y labels (top · average · bottom) and one x label per bar. */
 function drawRange(mount, m, items, ticks, tickIdx, fallbackScale){
   const H = 130, TOP = 12, BOT = 94, tickY = H - 7; // same frame as the Day line
   const svg = svgEl('svg', { viewBox:`0 0 ${VIEW_W} ${H}`, role:'img', 'aria-label': m.name + ' range chart' });
@@ -759,11 +1018,6 @@ function drawRange(mount, m, items, ticks, tickIdx, fallbackScale){
   const y = v => BOT - (v - lo) / (hi - lo) * (BOT - TOP);
   const n = items.length, slot = PLOT_W / n, bw = Math.min(12, slot * 0.45);
 
-  // healthy band
-  if (m.band){
-    const y1 = y(Math.min(m.band.hi, hi)), y2 = y(Math.max(m.band.lo, lo));
-    if (y2 > y1) svgEl('rect', { x:0, y:y1, width:PLOT_W, height:y2 - y1, fill:'var(--surface-raised)', opacity:0.55 }, svg);
-  }
   // frame: top + bottom hairlines with labels
   [[hi, TOP], [lo, BOT]].forEach(([v, gy]) => {
     svgEl('line', { x1:0, x2:PLOT_W, y1:gy, y2:gy, stroke:'var(--gridline)', 'stroke-width':0.5 }, svg);
@@ -855,7 +1109,7 @@ function attachScrub(mount, chart, onShow, onHide){
 /* --------------------------------------------------------------------------
    APP STATE + RENDERERS
    -------------------------------------------------------------------------- */
-const S = { entry:'home', state:'default', metric:null, scope:'home', period:'day' };
+const S = { entry:'home', state:'default', metric:null, scope:'home', period:'day', back:{ day:0, week:0, month:0, year:0 } };
 const app = $('#app');
 
 /* soft triangle indicator — the Health monitor component's own glyph */
@@ -910,7 +1164,7 @@ function renderSleep(){
     // FLAG: the Sleep tab's skin-temperature card marks the night's high and
     // low with dots; not reproduced on this entry card (the detail page's
     // Highest / Lowest tiles carry that information).
-    const chart = drawLine(mount, m, st === 'empty' ? s.values.map(() => null) : s.values, m.scale.sleep, PERIODS.sleep.day.ticks, { H:120, band:false });
+    const chart = drawLine(mount, m, st === 'empty' ? s.values.map(() => null) : s.values, m.scale.sleep, PERIODS.sleep.day.ticks, { H:120 });
     mount.classList.remove('chart'); // no scrubbing on the entry cards: a press opens the page
   });
   $$('[data-open]', stack).forEach(b => b.addEventListener('click', () => openDetail(b.dataset.open, 'sleep')));
@@ -930,15 +1184,19 @@ function renderDetail(){
   $$('#dSeg button').forEach(b => { const on = b.dataset.period === period; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
 
   // ---- header: title + pill on the left, figure + trend on the right ----
-  const headVal = (period === 'day' && scope === 'home') ? stt.latest : stt.avg; // Day on Home = latest reading (matches the Home card); everything else an average
+  const headVal = stt.avg; // every view is an average (owner, 2026-09-08 — no "Latest")
   $('#dOver').textContent = P.over;
   const rangeTxt = empty ? '' : `<span class="sep">·</span>${fmtN(m, stt.min)} – ${fmtN(m, stt.max)}${unitSuffix(m)}`;
+  const when = S.back[period] ? dateInfo(period, S.back[period], scope).label : P.sub;
+  $('#dDateLabel').textContent = dateInfo(period, S.back[period] || 0, scope).full;
+  $('#dNext').disabled = !S.back[period];
+  $('#dMenuAbout').textContent = 'About ' + m.name.toLowerCase();
   const headR = $('#dHeadR');
   if (loading){
     headR.innerHTML = '<div class="skel" style="width:72px;height:24px;margin-left:auto"></div><div class="skel" style="width:140px;height:12px;margin:8px 0 0 auto"></div>';
   } else {
     headR.innerHTML = `<div class="val">${empty ? '<span class="num dash">—</span>' : `<span class="num" id="dVal">${fmtN(m, headVal)}</span>`}${m.unit ? `<span class="unit">${m.unit}</span>` : ''}</div>`
-      + `<div class="trend" id="dSub"><span>${empty ? 'No readings yet' : P.sub + rangeTxt}</span></div>`;
+      + `<div class="trend" id="dSub"><span>${empty ? 'No readings yet' : when + rangeTxt}</span></div>`;
   }
   const pill = $('#dPill');
   if (loading || empty){ pill.hidden = true; }
@@ -952,12 +1210,10 @@ function renderDetail(){
   let chart = null;
   if (loading){ drawSkeleton(mount); }
   else if (s.kind === 'line'){
-    chart = drawLine(mount, m, empty ? s.values.map(() => null) : s.values, m.scale[scope], P.ticks);
+    chart = drawLine(mount, m, empty ? s.values.map(() => null) : s.values, m.scale[scope], P.ticks, {});
   } else {
     chart = drawRange(mount, m, empty ? s.values.map(() => null) : s.values, P.ticks, P.tickIdx, m.scale[scope]);
   }
-  $('#dLegend').hidden = loading;
-  $('#dLegendText').textContent = m.band.label;
   const note = $('#dNote');
   if (st === 'partial'){
     note.hidden = false;
@@ -988,6 +1244,8 @@ function renderDetail(){
     }).join('');
   }
 
+  renderMeasureCta();
+
   // ---- time in range ----
   const bar = $('#tirBar'), rows = $('#tirRows');
   if (loading){
@@ -1007,12 +1265,12 @@ function renderDetail(){
    -------------------------------------------------------------------------- */
 const detail = $('#detail');
 function openDetail(metric, scope){
-  S.metric = metric; S.scope = scope; S.period = 'day';
+  S.metric = metric; S.scope = scope; S.period = 'day'; S.back = { day:0, week:0, month:0, year:0 };
   renderDetail();
   detail.hidden = false; detail.scrollTop = 0;
   requestAnimationFrame(() => detail.classList.add('in'));
 }
-function closeDetail(){ detail.classList.remove('in'); detail.hidden = true; S.metric = null; }
+function closeDetail(){ detail.classList.remove('in'); detail.hidden = true; S.metric = null; closeMenu(); ['about','settings'].forEach(id => { const el = $('#' + id); el.classList.remove('in'); el.hidden = true; }); maStop(); }
 $('#btnBack').addEventListener('click', closeDetail);
 $('#dSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ S.period = b.dataset.period; renderDetail(); } });
 
@@ -1029,12 +1287,299 @@ function renderJump(){
   $$('[data-jump]').forEach(b => b.addEventListener('click', () => openDetail(b.dataset.jump, S.entry)));
 }
 
+
+/* --------------------------------------------------------------------------
+   DATE SELECTOR — which day / week / month / year the page shows.
+   S.back[period] counts periods back from the present (0 = today / this
+   week / this month / this year). Weeks run Monday → Sunday; "today" is the
+   prototype's fixed date, Thu 6 Aug 2026 (same as the homepage).
+   -------------------------------------------------------------------------- */
+const TODAY = new Date(Date.UTC(2026, 7, 6));
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const addDays = (d, n) => new Date(d.getTime() + n * 86400000);
+const md = d => MONTH_SHORT[d.getUTCMonth()] + ' ' + d.getUTCDate();
+function dateInfo(period, back, scope){
+  if (period === 'day'){
+    const d = addDays(TODAY, -back);
+    if (scope === 'sleep'){
+      return back === 0 ? { label:'Last night', full:'Last night, ' + md(addDays(d, -1)) + ' – ' + d.getUTCDate(), d }
+                        : { label:'Night of ' + md(addDays(d, -1)), full:DAY_SHORT[d.getUTCDay()] + ', night of ' + md(addDays(d, -1)), d };
+    }
+    return back === 0 ? { label:'Today', full:'Today, ' + md(d), d } : { label:DAY_SHORT[d.getUTCDay()] + ', ' + md(d), full:DAY_SHORT[d.getUTCDay()] + ', ' + md(d), d };
+  }
+  if (period === 'week'){
+    const monday = addDays(TODAY, -((TODAY.getUTCDay() + 6) % 7) - back * 7), sunday = addDays(monday, 6);
+    const same = monday.getUTCMonth() === sunday.getUTCMonth();
+    const span = same ? MONTH_SHORT[monday.getUTCMonth()] + ' ' + monday.getUTCDate() + ' – ' + sunday.getUTCDate() : md(monday) + ' – ' + md(sunday);
+    return { label:span, full:(back === 0 ? 'This week, ' : '') + span, monday };
+  }
+  if (period === 'month'){
+    let m = TODAY.getUTCMonth() - back, y = TODAY.getUTCFullYear();
+    while (m < 0){ m += 12; y--; }
+    return { label:MONTH_NAMES[m] + ' ' + y, full:MONTH_NAMES[m] + ' ' + y, y, m };
+  }
+  const y = TODAY.getUTCFullYear() - back;
+  return { label:String(y), full:String(y), y };
+}
+$('#dPrev').addEventListener('click', () => { S.back[S.period]++; renderDetail(); });
+$('#dNext').addEventListener('click', () => { if (S.back[S.period] > 0){ S.back[S.period]--; renderDetail(); } });
+
+/* the label opens a picker: a calendar for Day, a list for the rest */
+$('#dDate').addEventListener('click', () => {
+  const p = S.period;
+  if (p === 'day') return openCalendar();
+  const opts = [];
+  const n = p === 'week' ? 12 : (p === 'month' ? 12 : 3);
+  for (let b = 0; b < n; b++){ const info = dateInfo(p, b, S.scope); opts.push({ v:b, label:(b === 0 ? (p === 'week' ? 'This week · ' : p === 'month' ? 'This month · ' : 'This year · ') : '') + info.label }); }
+  openPick(p === 'week' ? 'Pick a week' : (p === 'month' ? 'Pick a month' : 'Pick a year'), opts, S.back[p], v => { S.back[p] = v; renderDetail(); });
+});
+
+/* history calendar — the homepage's month-scroll modal. Rings carry the
+   metric's own hue; a day's ring length is a sample "how complete was the
+   day's monitoring" figure, like the tab calendars. */
+function dayScore(d, m){ const x = Math.sin(d*12.9898 + (m+3)*78.233) * 43758.5453; return 52 + Math.round((x - Math.floor(x)) * 44); }
+function openCalendar(){
+  const m = METRICS[S.metric], scroll = $('#calScroll'), C = 2 * Math.PI * 10.5;
+  const sel = dateInfo('day', S.back.day, S.scope).d;
+  $('#calTitle').textContent = S.scope === 'sleep' ? 'Pick a night' : 'Pick a day';
+  scroll.innerHTML = '';
+  for (let k = 3; k >= 0; k--){
+    let mo = TODAY.getUTCMonth() - k, y = TODAY.getUTCFullYear();
+    while (mo < 0){ mo += 12; y--; }
+    const first = new Date(Date.UTC(y, mo, 1)).getUTCDay(), days = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate();
+    const month = document.createElement('div'); month.className = 'cal-month';
+    month.innerHTML = `<div class="mt">${MONTH_NAMES[mo]} ${y}</div>`;
+    const grid = document.createElement('div'); grid.className = 'cal-grid';
+    for (let i = 0; i < first; i++) grid.append(Object.assign(document.createElement('div'), { style:'min-height:44px' }));
+    for (let d = 1; d <= days; d++){
+      const date = new Date(Date.UTC(y, mo, d));
+      const future = date > TODAY, isSel = date.getTime() === sel.getTime();
+      const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'cal-day' + (future ? ' future' : '');
+      const dash = (dayScore(d, mo)/100*C).toFixed(1) + ' ' + C.toFixed(1);
+      btn.innerHTML = `<span class="dn" style="color:${isSel ? m.color : 'var(--text-1)'}">${d}</span>`
+        + (future ? '<svg width="28" height="28" viewBox="0 0 28 28"></svg>'
+                  : `<svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="10.5" fill="none" stroke-width="3" stroke="var(--surface-raised)"/><circle cx="14" cy="14" r="10.5" fill="none" stroke-width="3" stroke="${m.color}" opacity="${isSel ? 1 : 0.55}" stroke-linecap="round" stroke-dasharray="${dash}" transform="rotate(-90 14 14)"/></svg>`);
+      if (!future) btn.addEventListener('click', () => { S.back.day = Math.round((TODAY - date) / 86400000); closeCalendar(); renderDetail(); });
+      grid.append(btn);
+    }
+    month.append(grid); scroll.append(month);
+  }
+  $('#calModal').hidden = false;
+  scroll.scrollTop = scroll.scrollHeight;
+}
+function closeCalendar(){ $('#calModal').hidden = true; }
+$$('[data-calclose]').forEach(el => el.addEventListener('click', closeCalendar));
+
+/* value sheet — pick one option, confirm with ✓, cancel with ✕ */
+let pickOn = null, pickVal = null;
+function openPick(title, opts, current, onPick, unit){
+  pickOn = onPick; pickVal = current;
+  $('#pickTitle').textContent = title;
+  const rows = $('#pickRows'); rows.innerHTML = '';
+  opts.forEach(o => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.className = 'sheet-row' + (o.v === current ? ' sel' : '');
+    b.innerHTML = `<span class="v">${o.label}${unit ? `<span class="u">${unit}</span>` : ''}</span>`;
+    b.addEventListener('click', () => { pickVal = o.v; $$('.sheet-row', rows).forEach(x => x.classList.remove('sel')); b.classList.add('sel'); });
+    rows.append(b);
+  });
+  $('#pickSheet').hidden = false;
+  const selRow = $('.sheet-row.sel', rows); if (selRow) selRow.scrollIntoView({ block:'center' });
+}
+function closePick(){ $('#pickSheet').hidden = true; pickOn = null; }
+$$('[data-pickcancel]').forEach(el => el.addEventListener('click', closePick));
+$('#pickConfirm').addEventListener('click', () => { const fn = pickOn, v = pickVal; closePick(); if (fn) fn(v); });
+
+/* --------------------------------------------------------------------------
+   3-DOT MENU → About <metric> · Measurement settings
+   -------------------------------------------------------------------------- */
+const menu = $('#dMenu');
+function closeMenu(){ menu.classList.remove('open'); }
+$('#dDots').addEventListener('click', e => { e.stopPropagation(); menu.classList.toggle('open'); });
+document.addEventListener('click', closeMenu);
+menu.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  closeMenu();
+  if (b.dataset.act === 'about') openAbout(); else openSettings();
+});
+function openOver(id){ const el = $('#' + id); el.hidden = false; el.scrollTop = 0; requestAnimationFrame(() => el.classList.add('in')); }
+$$('[data-close]').forEach(b => b.addEventListener('click', () => { const el = $('#' + b.dataset.close); el.classList.remove('in'); el.hidden = true; }));
+
+/* zone range text for the About page — "< 75", "75 – 90", "≥ 90" */
+function zoneRange(m, z){
+  const u = unitSuffix(m);
+  if (z.min === -Infinity) return '< ' + fmtN(m, z.max) + u;
+  if (z.max === Infinity)  return '≥ ' + fmtN(m, z.min) + u;
+  return fmtN(m, z.min) + ' – ' + fmtN(m, z.max) + u;
+}
+function openAbout(){
+  const m = METRICS[S.metric];
+  $('#aTitle').textContent = 'About ' + m.name.toLowerCase();
+  $('#aBody').innerHTML =
+    `<div class="card"><h3 class="card-title">How it is measured</h3><p>${m.about.how}</p></div>`
+    + `<div class="card"><h3 class="card-title">What the zones mean</h3><div style="margin-top:12px;display:flex;flex-direction:column;gap:10px">`
+    + m.zones.map((z, i) => `<div class="scorerow"><span class="zd" style="background:${TONES[z.tone].ink}"></span><span class="rng">${zoneRange(m, z)}</span><span class="dsc"><b style="color:var(--text-1);font-weight:500">${z.label}</b> — ${m.about.zones[i]}</span></div>`).join('')
+    + `</div></div>`
+    + `<div class="card"><h3 class="card-title">Worth knowing</h3><p>${m.about.tip}</p></div>`
+    + `<p class="grp-note">Readings are estimates for wellness use, not a medical device. Talk to a doctor about anything that worries you.</p>`;
+  openOver('about');
+}
+
+/* --------------------------------------------------------------------------
+   MEASUREMENT SETTINGS — the Me tab's Health Monitor page (S06), scoped to
+   one metric: the sensor's on/off switch with its sampling interval (the
+   interval row goes inert when the switch is off), and for heart rate the
+   warning switch + upper limit. One shared model, so the same value shows
+   on every page that reads it.
+   -------------------------------------------------------------------------- */
+const MON = {
+  hr:{ on:true, interval:10 }, hrv:{ on:true, interval:30 }, stress:{ on:true, interval:10 },
+  skin:{ on:true, interval:30 }, spo2:{ on:true, interval:30 },
+  hrAlert:true, hrUpper:160
+};
+function switchHTML(on, act){ return `<button class="switch${on ? ' on' : ''}" type="button" role="switch" aria-checked="${on}" data-act="${act}"><i></i></button>`; }
+function openSettings(){
+  const m = METRICS[S.metric]; if (!m) return;
+  $('#sTitle').textContent = m.name + ' settings';
+  renderSettings();
+  openOver('settings');
+}
+function renderSettings(){
+  const k = S.metric, m = METRICS[k], c = MON[k];
+  let html = '<div class="sec-h">Monitoring</div><div class="group">'
+    + `<div class="trow"><span class="tbody"><span class="lab">${m.settings.label}</span><span class="sub">${m.settings.sub}</span></span>${switchHTML(c.on, 'toggle')}</div>`
+    + `<button class="row${c.on ? '' : ' is-off'}" type="button" data-act="interval"><span class="lab">Sampling interval</span><span class="val">${c.interval} min</span>${icon('caret-right', 'phi caret-ic')}</button>`
+    + '</div>';
+  if (k === 'hr'){
+    html += '<div class="sec-h">Alerts</div><div class="group">'
+      + `<div class="trow"><span class="tbody"><span class="lab">Heart rate warning</span><span class="sub">Buzz when your heart rate crosses the limit</span></span>${switchHTML(MON.hrAlert, 'alert')}</div>`
+      + `<button class="row${MON.hrAlert ? '' : ' is-off'}" type="button" data-act="upper"><span class="lab">Upper limit</span><span class="val accent">${MON.hrUpper} bpm</span>${icon('caret-right', 'phi caret-ic')}</button>`
+      + '</div>';
+  }
+  html += `<p class="grp-note">${c.on ? 'Keeps this sensor sampling every ' + c.interval + ' minutes. Shorter intervals mean a shorter time between charges — roughly a day less for every step down.' : 'Switched off — the band only measures ' + m.name.toLowerCase() + ' when you tap Measure on this page.'}</p>`;
+  $('#sBody').innerHTML = html;
+}
+$('#sBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const k = S.metric, c = MON[k], m = METRICS[k];
+  if (b.dataset.act === 'toggle'){ c.on = !c.on; renderSettings(); }
+  else if (b.dataset.act === 'alert'){ MON.hrAlert = !MON.hrAlert; renderSettings(); }
+  else if (b.dataset.act === 'interval') openPick('Sampling interval', m.settings.intervals.map(v => ({ v, label:String(v) })), c.interval, v => { c.interval = v; renderSettings(); }, 'min');
+  else if (b.dataset.act === 'upper') openPick('Upper limit', [120,130,140,150,160,170,180,190,200].map(v => ({ v, label:String(v) })), MON.hrUpper, v => { MON.hrUpper = v; renderSettings(); }, 'bpm');
+});
+
+/* --------------------------------------------------------------------------
+   MEASURE — one metric's reading. The CTA is the Health monitor's Measure
+   All button (idle → measuring → cooldown); tapping it plays the owner's
+   reading scene and lands on the readings sheet with this metric's row.
+   Everything below is the homepage's HEALTH MONITOR / READING SCENE code
+   with the metric list reduced to one entry. FLAG: the fresh reading is the
+   Home card's figure; the charts do not change after a reading (sample data).
+   -------------------------------------------------------------------------- */
+const HM_COOLDOWN = 49; // seconds before another reading is offered
+const hmReduced = matchMedia('(prefers-reduced-motion: reduce)');
+const meas = { state:'idle', remaining:HM_COOLDOWN, cd:null };
+function hmFmt(s){ const m = Math.floor(s / 60), r = s % 60; return `${m < 10 ? '0' : ''}${m}:${r < 10 ? '0' : ''}${r}`; }
+function renderMeasureCta(){
+  const m = METRICS[S.metric]; if (!m) return;
+  const inert = S.state === 'empty' || S.state === 'loading';
+  const label = meas.state === 'measuring' ? 'Measuring…'
+              : meas.state === 'disabled'  ? `Measure again in ${hmFmt(meas.remaining)}`
+              : (S.state === 'empty' ? 'Take your first reading' : 'Measure ' + m.name.toLowerCase());
+  const cls = meas.state === 'measuring' ? ' is-measuring' : (meas.state === 'disabled' ? ' is-disabled' : '');
+  $('#dMeasureSlot').innerHTML = `<button class="cta measure${cls}" type="button" id="dMeasure"${(meas.state !== 'idle' || inert) ? ' aria-disabled="true"' : ''}><span class="fill" id="maFill"></span>${icon('pulse','ico')}<span class="txt">${label}</span></button>`;
+  $('#dMeasure').addEventListener('click', () => { if (meas.state === 'idle' && !inert) hmSetState('measuring'); });
+}
+function hmClearTimers(){ clearInterval(meas.cd); meas.cd = null; }
+function hmSetState(k){
+  hmClearTimers(); meas.state = k;
+  if (k === 'disabled') meas.remaining = HM_COOLDOWN;
+  renderMeasureCta();
+  if (k === 'measuring') hmStartRun();
+  if (k === 'disabled') meas.cd = setInterval(() => {
+    meas.remaining--;
+    if (meas.remaining <= 0){ hmSetState('idle'); return; }
+    const t = $('#dMeasure .txt'); if (t) t.textContent = `Measure again in ${hmFmt(meas.remaining)}`;
+  }, 1000);
+}
+function hmStartRun(){
+  const f = $('#maFill');
+  if (f){
+    if (hmReduced.matches) f.style.width = '100%';
+    else requestAnimationFrame(() => { f.style.transition = `width ${HM_RUN_MS}ms linear`; f.style.width = '100%'; });
+  }
+  maPlay();
+}
+
+/* the reading scene — authored cue times, easings and values, unchanged */
+const MA_CUE = { orbit:2.8, bloom:7.0, reveal:9.0, settle:11.6 };
+const MA_SPEED = 1, MA_END = MA_CUE.reveal + 1.7, HM_RUN_MS = (MA_CUE.reveal / MA_SPEED) * 1000;
+const maEase = {
+  enter: t => 1 - Math.pow(1 - t, 3),
+  glide: t => -(Math.cos(Math.PI * t) - 1) / 2,
+  pop:   t => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); }
+};
+function maAt(T, from, to, start, end, ease){ const t = Math.min(1, Math.max(0, (T - start) / (end - start))); return from + (to - from) * maEase[ease](t); }
+let maRAF = null, maT0 = 0;
+const scene = $('#maScene');
+function maPlay(){
+  const m = METRICS[S.metric];
+  $('#maCapTitle').textContent = 'Measuring ' + m.name.toLowerCase();
+  $('#maShNote').textContent = m.sheetNote;
+  $('#maShList').innerHTML = '<div class="rd">'
+    + `<span class="who"><span class="dot" style="background:${m.color}"></span><span class="label">${m.card}</span></span>`
+    + `<div class="figure"><span class="value">${m.home.v}</span>${m.unit ? `<span class="unit">${m.unit}</span>` : ''}${hmTri(m.home.tri)}</div>`
+    + '</div>';
+  scene.hidden = false;
+  detail.classList.add('ma-behind');
+  if (hmReduced.matches){ maFrame(MA_END); return; }
+  maT0 = performance.now();
+  cancelAnimationFrame(maRAF);
+  const step = now => { const T = (now - maT0) / 1000 * MA_SPEED; maFrame(Math.min(T, MA_END)); if (T < MA_END) maRAF = requestAnimationFrame(step); else maRAF = null; };
+  maRAF = requestAnimationFrame(step);
+}
+function maStop(){ cancelAnimationFrame(maRAF); maRAF = null; scene.hidden = true; detail.classList.remove('ma-behind'); }
+function maFrame(T){
+  const s = scene.style, R = MA_CUE.reveal;
+  const p = maAt(T, 0, 1, MA_CUE.orbit - 0.3, MA_CUE.bloom + 0.6, 'glide');
+  const breathe = 1 + Math.sin(T * 1.5) * 0.035 + maAt(T, 0, 0.22, MA_CUE.bloom, MA_CUE.bloom + 1.4, 'glide');
+  const core = 1 + Math.sin(T * 1.9 + 1) * 0.05 + maAt(T, 0, 3.2, MA_CUE.bloom + 0.15, R - 0.1, 'glide');
+  const orbIn = maAt(T, 0, 1, 0.15, 1.1, 'enter'), orbOut = maAt(T, 0, 1, R - 0.3, R + 0.2, 'glide');
+  s.setProperty('--ma-spin', (T * 26 + p * 260).toFixed(2));
+  s.setProperty('--ma-breathe', breathe.toFixed(4));
+  s.setProperty('--ma-core', core.toFixed(4));
+  s.setProperty('--ma-orb-o', (orbIn * (1 - orbOut) * 0.9).toFixed(4));
+  s.setProperty('--ma-orb-zoom', (1 + maAt(T, 0, 2.4, R - 2, R - 0.1, 'glide')).toFixed(4));
+  const ring = maAt(T, 0, 1, 0.5, MA_CUE.bloom, 'glide');
+  $('#maRing').setAttribute('stroke-dashoffset', (710 * (1 - ring)).toFixed(1));
+  s.setProperty('--ma-cap', (maAt(T, 0, 1, 0.5, 1.2, 'enter') - maAt(T, 0, 1, MA_CUE.bloom - 0.6, MA_CUE.bloom, 'glide')).toFixed(4));
+  const flash = maAt(T, 0, 1, R - 0.6, R - 0.12, 'glide') - maAt(T, 0, 1, R - 0.05, R + 0.7, 'glide');
+  s.setProperty('--ma-flash', Math.min(1, Math.max(0, flash)).toFixed(4));
+  const revealDim = maAt(T, 0, 1, R - 0.2, R + 0.6, 'glide');
+  s.setProperty('--ma-dim', (1 - (0.42 - 0.24 * revealDim) * (1 - 0.5 * p)).toFixed(4));
+  s.setProperty('--ma-veil2', revealDim.toFixed(4));
+  s.setProperty('--ma-sheet-y', maAt(T, 120, 0, R - 0.05, R + 0.8, 'enter').toFixed(2) + 'px');
+  s.setProperty('--ma-sheet-o', maAt(T, 0, 1, R - 0.05, R + 0.3, 'enter').toFixed(4));
+  $$('#maShList .rd').forEach((row, i) => {
+    const st = R + 0.4 + i * 0.11;
+    row.style.setProperty('--o', maAt(T, 0, 1, st, st + 0.32, 'enter').toFixed(4));
+    row.style.setProperty('--y', maAt(T, 14, 0, st, st + 0.42, 'enter').toFixed(2) + 'px');
+  });
+  s.setProperty('--ma-done-o', maAt(T, 0, 1, R + 1.05, R + 1.45, 'enter').toFixed(4));
+  s.setProperty('--ma-done-y', maAt(T, 10, 0, R + 1.05, R + 1.6, 'pop').toFixed(2) + 'px');
+}
+$('#maShDone').addEventListener('click', () => { maStop(); hmSetState('disabled'); });
+// tapping outside the sheet dismisses it, same as Done — only once the sheet is there
+scene.addEventListener('click', e => { if (e.target.closest('.hm-sheet') || maRAF) return; maStop(); hmSetState('disabled'); });
+
 /* --------------------------------------------------------------------------
    CONTROL PANEL — data state + entry point
    -------------------------------------------------------------------------- */
 function renderAll(){ renderHome(); renderSleep(); if (S.metric) renderDetail(); }
 $$('#stateOpts input').forEach(r => r.addEventListener('change', () => {
   S.state = r.value; app.dataset.state = r.value;
+  if (meas.state !== 'idle'){ hmClearTimers(); meas.state = 'idle'; maStop(); }
   $$('#stateOpts label').forEach(l => l.classList.toggle('on', $('input', l).value === r.value));
   renderAll();
 }));
