@@ -5,6 +5,159 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-03 (rev 2.2) — Owner round of eight on the leaderboard.
+  (1) Hero band is now the Pebble green — built from the teal ramp
+  (teal.400 wash over a teal.500 → surface.card gradient) rather than the
+  metric.readiness alias, because the aliases stand for body signals and this
+  is brand chrome; flagged in code and in §9.
+  (2) Today / 7 days segmented control removed — this build has no period
+  switch. S.period is pinned to 'today'. FLAG: the week figures and the
+  "7 days" labels on the friend profile still exist in the model.
+  (3) Placings are ordinal — 1 · 2 · 3 down the board, never 1 · 2 · 2. Rev 2
+  shared a rank between equal figures, which left the podium with no third
+  place. FLAG: equal figures now take adjacent numbers and the order between
+  them comes from the sort, which is arbitrary; a real tie-break needs a field
+  in the model (sync time is the obvious one).
+  (4) Steps glyph on the Home card is white (text.1), not the steps hue.
+  (5) Fixed the sticky you-card surviving onto Home: the back tap hid the
+  subpage without telling the card, so it floated over the Health tab. Back
+  now calls renderYouCard(). The card is leaderboard-only, as specced.
+  (6) "Friends" → "Family ranking" everywhere it is user-facing: page title,
+  sub-header, Home card title, the solo-state card.
+  (7) The date row replaces the period pill — "Today · 4 of 4 synced ·
+  updated 14:20" with a chevron on the right; the whole row opens the
+  month-scroll calendar the other tabs already use.
+  (8) Leaderboard row rebuilt as one flex line. The row was a two-row grid
+  and both the avatar and the cheer button spanned both rows, so row 2 existed
+  even with no reason line and rank / name / figure sat 13px above the row's
+  real middle — measured, not guessed. Everything now centres on one line, the
+  reason line moved inside .who under the name, and the chip is the shipped
+  28px .av.sm ("profile circle can be smaller") — no new size added. The
+  you-card took the same 28px chip so your row matches the others.
+  Row height is still set by the cheer control's heart-over-count stack
+  (50px); left as specced rather than laid out horizontally, since that would
+  change component 7.3.
+  Not touched: docs/feature-family-ranking.md still describes the period
+  control, the shared-rank tie rule and no hero band — three deltas to fold in
+  when the spec next gets a pass.
+
+- 2026-09-03 (rev 2.1) — Leaderboard UI pass on owner feedback ("the rows are
+  crammed", "make the top half a background colour that works for dark mode",
+  "make the list distinct with spacing"), with two reference boards supplied.
+  Three changes: (1) new `.lb-hero` band holds the header, period control and
+  podium on one tinted surface — surface.raised → surface.card gradient with a
+  radial wash of metric.steps at 17%, curving off at radius.sheet so the list
+  reads as a separate region (the references use a flat bright fill; at that
+  brightness in dark mode it would fight every numeral on it, so the band is
+  the same idea one notch down, and the hue is the metric the board ranks on).
+  (2) Podium columns now stretch to equal height, so avatar/name/figure land
+  on one baseline and the winner's figure no longer collides with the plinth
+  beside it; plinths 68/56/48 and nearly touching, first place marked by a
+  metric.steps ring on the avatar as well as the plinth. (3) Every list row is
+  its own surface.card card at 14px padding with 10px between them (`.lb-list`),
+  not-synced rows a step quieter, and the sticky you-card carries a
+  metric.readiness tint so your own row is findable without reading it — the
+  green "You" row in the reference. Podium moved to its own mount (#lb-podium)
+  so the band can own its background. All colours mixed from tokens; no new
+  token added.
+
+- 2026-09-03 (rev 2) — Reworked the Friends flow after an owner review, and
+  updated `docs/feature-family-ranking.md` to rev 2 alongside the prototype so
+  the two do not drift.
+
+  The change that drove the rest: **v1 creates no group.** A code is a personal
+  handle — someone who enters yours appears on your leaderboard and you appear
+  on theirs, and nothing exists that you both belong to. So "circle" is out
+  everywhere, along with "group", "member", "join a…" and "leave". Consequences
+  written into §3: leaderboards are personal and two friends' boards differ, so
+  no copy may imply one shared standing; there is nothing to leave, so the Leave
+  action and its confirm sheet are cut and removal is instead **mutual**, which
+  the remove confirm now says out loud; sharing a code and entering one are the
+  same act from two ends; and the disclosure is symmetrical ("you'll each be
+  able to see…"), which is also what makes the exchange feel fair. Rev 1's
+  join preview announced "Koms's circle · 5 people" — it asserted a group the
+  product does not have and would have set the wrong expectation about who can
+  see you. It now previews the one person the code belongs to.
+
+  Also from the review: an **educational first-use state** (§4.6) that teaches
+  the model in three numbered lines, puts the user's code in the open rather
+  than behind a sheet, and offers both ways in; a **1-2-3 podium** at the top of
+  the leaderboard, replacing the legacy decorative photo hero; **no progress
+  bars** on leaderboard or Home card rows — figure plus the steps glyph at the
+  right end instead, the glyph acting as the unit; the **sticky you-card is now
+  always on** rather than appearing only when your row scrolled away, and you
+  are no longer rendered in the scrolling list at all, so the card *is* your
+  row; and **two header actions** (share your code / enter a friend's code)
+  restored on the right of the leaderboard header.
+
+  Two things flagged rather than quietly accepted. Rev 1 collapsed those two
+  header icons into one on purpose, because the legacy screen's pair was
+  indistinguishable; the app's Phosphor set has no `share-network` or `sign-in`,
+  and the closest glyphs it carries (`arrow-circle-up`, `plus`) are not
+  distinguishable enough — both buttons carry aria-labels and both destinations
+  name themselves, but the real glyphs need adding before this ships. And
+  whether a code is transitive — if two people use mine, do they see each other?
+  — is now the top open item in §9, because the join preview copy depends on it.
+
+  New hard rule 2, found by building it: **the podium holds the top three
+  people, not the ranks 1/2/3.** With a tie those are different things. Ranks
+  1, 2, 2 has no third place, and reserving a plinth for one dropped the second
+  second-placer off the screen entirely — too high for a list starting at rank
+  4, with no plinth to stand on. Plinths now carry each person's own rank
+  numeral, which may repeat, and the list picks up from the fourth *person*.
+  The headless pass now asserts that every person with a figure appears exactly
+  once across podium, list and sticky card, in every state, ties included;
+  that check is what caught it.
+
+  Other fixes from the same pass: the Home card's fixed footprint was a
+  `min-height`, so the solo state's copy wrapped to an extra line and pushed it
+  18px taller — it is a fixed height now, since hard rule 10 means copy has to
+  fit the card rather than the reverse; "You" was showing in the friends list
+  (and as "You (you)"), which stopped making sense once there was no group to
+  be a member of; and the 1st-place plinth's tinted fill read as olive-brown
+  over the near-black surface, so height and the larger avatar carry the placing
+  and the plinth only names it. Not pushed.
+
+- 2026-09-03 (later) — Built `Friends/friends.html`, the prototype of the
+  Friends flow, to `docs/feature-family-ranking.md` rev 1. Six screens (Home
+  with the Friends card at the end of the Activity monitor section, leaderboard,
+  friend profile, add-people sheet, join, circle members), eight components with
+  every state, and a control panel that switches all nine F-states. Reuses
+  rather than rebuilds: `.card`/`.card-head`, the `.gbar` bar from Today's
+  goals, `.listrow`/`.chev`, the `.seg4` period pill, the 40px chip from the
+  Workouts card, the month-scroll calendar, the onboarding OTP boxes, the Me-tab
+  sheet pattern, and the four button tiers. Phosphor path data copied verbatim
+  from the Homepage prototype; the regular-weight heart is the only new glyph
+  and is flagged for verification against @phosphor-icons/core.
+
+  Verified against §10 of the spec with a headless-browser pass rather than by
+  eye: exactly one you-row in all seven states that have a circle, zero rank
+  numerals on not-synced rows, ties rendering 1-2-2-4, the Friends card at 246px
+  in all six of its states, the period control pinned at full scroll, cheer
+  going idle → pending → done, your own row not opening a friend profile, no
+  email or self-affordance anywhere on a friend's page, and no hex value outside
+  the token block.
+
+  Six real bugs found and fixed in that pass: (1) grid places definite-row items
+  before auto-placed ones, so the cheer button was claiming column 3 and
+  dropping each name on top of its figure — every leaderboard cell now names its
+  column; (2) the identity block and the resolved-circle preview stacked their
+  lines as inline spans, running name, rank and sync together; (3) inner-page
+  content sat under the floating nav; (4) "you" was a data state, so in F5 your
+  own row lost its highlight in the Not synced break — it is now an identity
+  flag that composes with the data state; (5) the you-bar was a child of the
+  scrolling page, so `bottom:88px` measured from the content box and the bar
+  scrolled away — it now belongs to the screen and docks above the nav pill,
+  and its visibility test uses the page's own scroll geometry instead of
+  viewport rects; (6) the scroll listener that drives it was lost when the
+  script was written in chunks, so the bar had never once appeared. Also
+  demoted two teal buttons that broke the one-primary-per-screen rule (the
+  Home no-circle CTA and Copy in the invite sheet) and named the real
+  `--metric-stress` / `--metric-skin-temp` tokens instead of borrowing
+  neighbouring aliases. Sample data carries a deliberate tie and two unsynced
+  members so those rules are visible rather than asserted. Spec's §9 open items
+  are flagged in code comments at the point of decision. Not pushed.
+
 - 2026-09-03 — Wrote `docs/feature-family-ranking.md` (rev 1, UX proposed): a
   restructure of the legacy Family Ranking flow into **Friends**. Diagnosed the
   two legacy screens (duplicated you-row, ranks assigned to zeroed data,

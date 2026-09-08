@@ -2,7 +2,9 @@
 
 Reference spec for the social comparison flow: the Home card, the leaderboard,
 a friend's profile, and the invite/join routes.
-Status: **UX proposed (rev 1, 2026-09-03). Not yet approved. UI not specified.**
+Status: **UX proposed (rev 2, 2026-09-03). Not yet approved.**
+Prototype: **`Friends/friends.html`** — built to this spec, all nine F-states
+and all eight components switchable from the control panel beside the phone.
 
 > Read this file before writing any Friends code. It is the source of truth for
 > structure, states and naming. It does **not** specify layout, spacing or type
@@ -24,7 +26,8 @@ Status: **UX proposed (rev 1, 2026-09-03). Not yet approved. UI not specified.**
 | 5 | `Homepage + measurel all + start workout flow.html` | Home's card order, Today's goals `.gbar` bars, the Workouts 40px icon chips |
 | 6 | `Onboarding/onboarding.html` | the OTP code-entry component — **reused** for Join |
 | 7 | `docs/feature-me-tab.md` | the sheet, empty-state and confirm patterns this spec inherits |
-| 8 | `memory/session-handoff.md` | where the last session left off |
+| 8 | `Friends/friends.html` | the prototype this spec describes — open it before changing anything here |
+| 9 | `memory/session-handoff.md` | where the last session left off |
 
 ---
 
@@ -81,50 +84,107 @@ Home that opens**; the code entry is **the OTP component from onboarding**.
 
 Invariants. Breaking one is a bug, not a variation.
 
-1. **You appear exactly once.** Your row lives in the ranked list, highlighted.
-   The sticky bar in §4.2 is a *scroll affordance* that exists only while your
-   row is off-screen — it is never a second row and never renders alongside it.
-2. **Never rank absent data.** A member with no synced figure for the selected
+1. **You appear exactly once in the list region.** Rev 2 keeps you out of the
+   scrolling list entirely: the **sticky you-card** at the bottom of the
+   leaderboard *is* your row — always on screen, never duplicated below.
+   If you place in the top three you also appear on the podium; that is a
+   placing celebrated in a different visual register, not a second list row,
+   and it is the one intentional double appearance in the feature.
+   *(Rev 1 made the card a scroll affordance that appeared only when your row
+   scrolled away. The owner asked for it always-on, which is stronger: the one
+   thing permanently on screen becomes the one thing you came to find out.)*
+2. **Nobody is lost between the podium and the list.** The podium holds the top
+   three *people*, not the ranks 1/2/3 — with a tie those are different things.
+   Ranks 1, 2, 2 has no third place, and reserving a plinth for one drops the
+   second second-placer off the screen entirely: too high for a list that
+   starts at rank 4, with no plinth to stand on. Plinths carry each person's
+   own rank numeral, which may repeat, and the list picks up from the fourth
+   **person**.
+3. **Never rank absent data.** A member with no synced figure for the selected
    period gets no rank numeral and no position. They sit in the Not synced
    break (§4.2) with their last-sync time. If **nobody** has synced, the screen
    says so; it does not order five zeroes.
-3. **The period is always on screen.** Every figure on every Friends surface is
+4. **The period is always on screen.** Every figure on every Friends surface is
    qualified by the selected period, stated in the header, never implied.
-4. **Every figure carries a unit.** `8,412 steps`, not `8,412`.
-5. **A friend's profile reuses Home's components.** Same cards, same order,
+5. **Every figure carries a unit.** `8,412 steps`, not `8,412`. On the
+   leaderboard the unit is the **steps glyph** at the right end of the figure
+   rather than the word — a glyph is a unit, a bare number is not.
+6. **A friend's profile reuses Home's components.** Same cards, same order,
    same date control, same empty marks. If a metric card needs a change for
    this page, change it on Home too or don't change it.
-6. **No self-affordances on someone else's page.** No background setter, no
+7. **No self-affordances on someone else's page.** No background setter, no
    edit, no goal control, no email. A control that would write to your account
    does not render on a page about another person.
-7. **The leaderboard never opens a second copy of your own data.** Tapping your
+8. **The leaderboard never opens a second copy of your own data.** Tapping your
    own row routes to the Activity tab at the selected period (§5.3). Home and
    the Activity tab are already your profile; a third one is the bug in item 9.
-8. **Cheering is an action with a state, not a counter.** It has idle, pending,
+9. **Cheering is an action with a state, not a counter.** It has idle, pending,
    done and at-limit states, and a stated per-period limit.
-9. **The card slot on Home never changes footprint.** Circle, no circle, or
-   solo — the Friends card occupies the same height so nothing below it moves.
-   (Same rule as the Me tab's pairing CTA.)
-10. **Tokens only.** No hex values, no font names, no raw px colours. If a token
+10. **The card slot on Home never changes footprint.** Friends, none, or one —
+   the Friends card occupies the same height so nothing below it moves (same
+   rule as the Me tab's pairing CTA). The height is **fixed**, not a minimum:
+   a state whose copy wraps to an extra line has copy that is too long, not a
+   card that may grow.
+11. **Tokens only.** No hex values, no font names, no raw px colours. If a token
     is missing, add it to `js/tokens.js` first and flag it in a comment.
-11. **Flag, don't decide.** Anything §9 leaves open gets a code comment at the
+12. **Flag, don't decide.** Anything §9 leaves open gets a code comment at the
     point of decision, not a silent choice.
 
 ---
 
-## 3 · Naming
+## 3 · The model — codes make links, not groups
+
+Settled with the owner, 2026-09-03, and it governs every string in the feature.
+
+**v1 creates no group.** A code is a personal handle. When someone enters your
+code, the two of you are linked: they appear on your leaderboard and you appear
+on theirs. Nothing is created that both of you belong to.
+
+Four consequences, none of them cosmetic:
+
+1. **Leaderboards are personal and they differ.** If Rashmi and Ankit both
+   enter your code, your board has both of them; their boards each have only
+   you. Your rank on your board is not your rank on theirs. No copy may imply
+   one shared standing — "you're 2nd" is always *on your leaderboard*.
+2. **There is nothing to leave.** Rev 1 had a Leave-circle action and a
+   consequence sheet for it. Both are cut. You remove friends one at a time,
+   and **removal is mutual** — you drop off their board as they drop off
+   yours. The remove confirm has to say so; someone who thinks they are only
+   tidying their own list will be surprised otherwise.
+3. **Sharing and entering a code are the same act from two ends.** Both produce
+   an identical link. First use presents them as two ways in, not two features.
+4. **The disclosure is symmetrical**, which is also what makes the exchange
+   feel fair: *you'll each be able to see the other's activity, heart rate,
+   sleep and blood oxygen*. Rev 1's one-directional wording described a group
+   handover that does not happen.
+
+> **Open, and load-bearing (§9):** if Rashmi and Ankit both use *your* code, do
+> they see each other? This spec says **no** — a code creates one link per use,
+> which is what the owner's description says. If the answer is yes, the code is
+> a group id, this section is wrong, and the join preview must name everyone
+> the new person is about to become visible to, not just the code's owner.
+
+---
+
+## 3b · Naming
 
 The legacy surface is called **Family Ranking** and the join unit is a *family*.
-Neither survives contact with the feature: you join by sharing a six-character
-code with anyone, and the app's own copy elsewhere ("Good morning, Aanya") is
-personal, not familial.
+Neither survives contact with the feature: you swap a six-character code with
+anyone, and the app's own copy elsewhere ("Good morning, Aanya") is personal,
+not familial.
 
-**Proposed:** the feature is **Friends**. The group noun is a **circle** —
-"your circle", "join a circle", "3 people in your circle". The verb is
-**cheer**, not like.
+**The feature is Friends.** There is no group noun, because there is no group
+(§3) — people are your **friends**, the thing they appear on is **your
+leaderboard**, and the code is **your code**. The verb is **cheer**, not like.
+
+> Rev 1 proposed *circle*. Cut: it names a bounded thing everyone shares and
+> sees identically, which is the one thing v1 does not build. Every string that
+> used it was quietly asserting the wrong model.
 
 Vocabulary to retire, wherever it appears in strings: *Family*, *Family
-Ranking*, *My Homepage* (as a title on another person's page), *like*.
+Ranking*, *circle*, *group*, *member*, *join* (as in joining a thing — you
+enter a code), *leave*, *My Homepage* (as a title on another person's page),
+*like*.
 
 > Naming may be pinned by backend strings or an OEM contract — see §9. If it is,
 > keep `Family` in the API and translate at the view layer; do not push the API
@@ -155,19 +215,26 @@ engagement reasons, that is a product call, not a structural one — see §9.)*
   Friends card         rank · top rows · your gap        → S02
 ```
 
+**First use (F2).** The card slot holds the same footprint with a one-line
+explanation and a way through to the educational screen. The teaching happens
+on S02, not in a card two thirds of the way down Home.
+
 **Card content, populated state (F4):**
 
 ```
 ┌────────────────────────────────────────────┐
 │ Friends                      Today      ›  │   card-head + period
 │                                            │
-│  1  ◍ Koms          12,480 steps  ▓▓▓▓▓▓▓  │   leader
-│  2  ◍ Rashmi         9,106 steps  ▓▓▓▓▓    │   ← the row above you
-│  3  ◍ You            7,240 steps  ▓▓▓▓     │   highlighted
+│  1  ◍ Koms                    12,480 👣    │   leader
+│  2  ◍ Ankit                    9,106 👣    │   ← the person above you
+│  4  ◍ You                      7,240 👣    │   highlighted
 │                                            │
 │  1,866 steps behind Rashmi                 │   the reason to come back
 └────────────────────────────────────────────┘
 ```
+
+No bars here either: these are miniature leaderboard rows and must not teach a
+different reading from the screen they open.
 
 Rules for the card: it shows **at most three rows** — the leader, the person
 directly above you, and you. If you *are* the leader, it shows you, second and
@@ -176,44 +243,80 @@ above you, or "You're leading by N steps"). Tapping anywhere opens S02.
 
 ### 4.2 Leaderboard — S02
 
-No photographic hero. The header is the app's standard inner-page header
-(back · title · action), and the period control sits directly under it, pinned.
+No photographic hero: the podium is what makes the top of this screen worth
+looking at, and unlike a stock photo it is about the people on it. Header, then
+the period control pinned under it, then podium, list, sticky card.
 
 ```
-‹   Friends                                    [ + ]
+‹   Friends                          [ ↑ ]  [ + ]  [ ⋯ ]
+                                      share  code  friends
 
   [ Today ]  [ 7 days ]                        ← segmented, pinned
-  3 of 5 synced · updated 14:20                ← honest state line
+  6 of 8 synced · updated 14:20                ← honest state line
 
-── ranked ────────────────────────────────────────────────
-  1  ◍  Koms                          12,480 steps    ♡ 2
-        ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  2  ◍  Rashmi                         9,106 steps    ♥ 4
-        ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  3  ◍  You                            7,240 steps
-        ▓▓▓▓▓▓▓▓▓▓▓▓▓▓                                  ← --surface-raised
+── podium · the top three people ─────────────────────────
+              ( K )
+     ( M )    Koms      ( R )
+     Meera   12,480 👣  Rashmi
+    10,420 👣           9,106 👣
+     ┌───┐   ┌─────┐   ┌───┐
+     │ 2 │   │  1  │   │ 3 │            ← each plinth carries that
+     └───┘   └─────┘   └───┘               person's own rank
+
+── the list · from the fourth person ─────────────────────
+  3  ◍  Ankit                         9,106 👣        ♡ 1
+  6  ◍  Dev                           4,180 👣        ♡ 0
 
 ── not synced ────────────────────────────────────────────
-     ◍  Ankit                                   —      last synced Tue
-     ◍  ankitkaushik                            —      hasn't synced yet
+     ◍  Shashank                          — 👣        ♡ 0
+        last synced Tue
+     ◍  ankitkaushik                      — 👣        ♡ 0
+        hasn't set up a band
 
-              [ Invite someone ]                        ← primary, one per screen
+              [ Share your code ]
+
+  ┌──────────────────────────────────────────────────┐
+  │ 5  ◍  You                          7,240 👣      │   ← sticky, always
+  │       1,866 steps behind Ankit                   │
+  └──────────────────────────────────────────────────┘
 ```
 
-- **Bars are relative to the leader**, using the `.gbar` fill pattern from
-  Today's goals. They are what makes five numbers readable as a ranking.
-- **Ties share a rank** and the next rank skips (1, 2, 2, 4).
-- **The Not synced break has no rank numerals**, values are `—`, and each row
-  states why in `--text-3`.
-- **Sticky you-bar**: when your row scrolls out of view, a one-line bar docks to
-  the bottom of the viewport with your rank, figure and gap. Tapping it scrolls
-  your row back into view. It disappears the moment your row is visible again.
-  It is never a second row (hard rule 1).
-- **`+` opens one sheet**, S04 — not two icons (§4.4).
+**Rows carry no progress bar** (rev 2, owner). The figure sits at the right end
+with the steps glyph as its unit. The bars were doing comparison work that the
+podium now does better: five bars all sitting at roughly 70% of the leader told
+you less than five numbers do, and they made a list you scan look like a chart
+you read.
 
-**Period control.** `Today` (default) and `7 days`. On `7 days` the figure is the
-total across the last seven complete days plus today, and the state line names
-the range (`Aug 28 – Sep 3`). Ranks recompute. Nothing else changes.
+**Ties share a rank and the next rank skips** (1, 2, 2, 4) — and the podium
+takes the first three *people*, so a tie fills all three plinths and strands
+nobody (hard rule 2).
+
+**The Not synced break has no rank numerals**, figures are `—`, and each row
+states why in `--text-3`.
+
+**The sticky you-card** is always present and you are not in the list above it.
+It carries your rank, your figure and the gap sentence, so the one thing
+permanently on screen is the one thing you came to find out. When you have
+nothing synced it says so rather than showing a zero.
+
+**Period control.** `Today` (default) and `7 days`. On `7 days` the figure is
+the total across the last seven days and the state line names the range
+(`Aug 28 – Sep 3`). Ranks recompute. Nothing else changes.
+
+**Two actions on the right of the header** (rev 2, owner): **share your code**
+and **enter a friend's code** — the two ends of the same link (§3), which is
+why they sit together. A third, quieter `⋯` opens your friends list.
+
+> **Flagged:** rev 1 deliberately collapsed these into one `+` because the
+> legacy screen's two unlabelled header icons were indistinguishable (item 6 of
+> §1). Two icons are back at the owner's request, so the risk returns and has
+> to be managed rather than ignored: the app's Phosphor set has no
+> `share-network` or `sign-in`, which are the glyphs this pair actually wants.
+> The prototype uses `arrow-circle-up` and `plus`, the closest it carries, and
+> they are **not** distinguishable enough — a person cannot tell from the icons
+> alone which hands out a code and which takes one. Add the two real glyphs to
+> the icon set before this ships. Until then both buttons carry an aria-label
+> and both destinations name themselves in their first line.
 
 ### 4.3 Friend profile — S03
 
@@ -264,40 +367,88 @@ resting heart rate and sleep to whoever holds that code, so the **join and
 invite sheets must state plainly what a member will be able to see** before the
 code is accepted. That statement is not optional copy.
 
-### 4.4 Invite and Join — S04, S05
+### 4.4 Share your code — S04, and enter a code — S05
 
-One entry point (`+`), one sheet, two clearly different tiers.
+Two ends of one act (§3), reachable from either header icon and from first use.
 
 ```
-   Add people                                   ✕
+   Share your code                              ✕
 
-   Invite someone to your circle
-   They'll see your activity, heart rate,
-   sleep and blood oxygen.                      ← required disclosure
+   Anyone who enters this sees your steps
+   ⓘ You'll each be able to see the other's
+     activity, heart rate, sleep and blood
+     oxygen — for any day, not just today.      ← required disclosure
 
-        K 7 M 4 Q 2                             ← your code, --font-number
-        [ Share ]     [ Copy ]
+        K 7 M 4 Q 2
+        [ Share ]     Copy
 
    ───────────────────────────────────────
-
    Have a code?
-   [ Join a circle ]                            ← tertiary → S05
+   [ Enter a friend's code ]                    ← tertiary → S05
 ```
 
-**S05 · Join** reuses the **OTP code-entry component from onboarding** — same
-boxes, same paste handling, same error treatment. It restates the disclosure
-above the boxes, keyed to the circle being joined once the code resolves
-("Joining Koms's circle · 4 people · they'll see your activity, heart rate,
-sleep and blood oxygen"), and the confirm action is the last step, never the
-sixth character.
+**S05 · Enter a code** reuses the **OTP component from onboarding** — same
+boxes, same paste handling, same error treatment. Once the code resolves it
+previews **the one person** it belongs to, not a group, restates the mutual
+disclosure, and only then offers the confirm. The sixth character is never the
+commit.
 
-### 4.5 Circle members — S06
+Error states worth naming: your own code (offer Share instead), an expired
+code, and a person you are already linked to.
 
-Reached from the leaderboard's `⋯` (or `+` sheet footer — see §9). A flat list
-of members with a trailing remove for each, and **Leave circle** at the bottom
-as a destructive tertiary row. Leaving uses the *consequence* variant of the
-confirm sheet (Me tab §5.6): it names exactly what is lost and what the others
-stop seeing.
+### 4.5 Your friends — S06
+
+A flat list of the people on your leaderboard, each with a trailing **Remove**.
+You are not in it — it is a list of your friends, not of a group's members.
+
+There is **no Leave action**, because there is nothing to leave (§3). Remove
+uses the *consequence* variant of the confirm sheet (Me tab §5.6) and its copy
+must state that removal is mutual: they disappear from your leaderboard and you
+disappear from theirs.
+
+The page also holds your code, with **Share** and **Rotate**. Rotating stops the
+old code working while existing friends stay — see §9, a permanent code that
+grants health-data access can never be un-shared.
+
+### 4.6 First use — the educational state
+
+Nobody has used this before and the model is not guessable, so S02 teaches it
+before asking for anything.
+
+```
+   Compare your steps
+   Swap codes with friends and family.
+   Everyone keeps their own leaderboard.       ← the model, in one line
+
+   ① Share your code. Anyone who enters it shows up on
+     your leaderboard, and you show up on theirs.
+   ② Or enter a friend's code. Same result — it works
+     from either side.
+   ③ You'll each see the other's day — activity, heart
+     rate, sleep and blood oxygen, for any date. Remove
+     someone and you both disappear from each other's list.
+
+   YOUR CODE
+        K 7 M 4 Q 2                            ← in the open, not behind a sheet
+
+   [ Share your code ]                         ← primary
+     Enter a friend's code                     ← tertiary
+```
+
+Three things this has to get right, and the legacy build got none of them
+because it had no empty state at all:
+
+- **It names the unit of the thing.** Not "invite people to a group" — a code,
+  and what happens when someone uses it.
+- **It says sharing and entering are equivalent** (§3), so nobody hunts for the
+  "right" one.
+- **It states the cost before the ask.** Step 3 is the disclosure, in the
+  educational flow rather than only in a sheet that a person may skim. Removal
+  being mutual is stated here too, because it is a property of the link, and
+  first use is when the link is being explained.
+
+The code is on the screen rather than behind the share button: the entire
+first-use task is getting it to someone.
 
 ---
 
@@ -307,29 +458,29 @@ Naming convention follows the shipped prototypes: inner pages are
 `id="p-<slug>"`, `class="page"`.
 
 ### S01 · Friends card (on Home) → `card-friends`
-`populated` · `solo` · `no-circle (CTA)` · `nobody-synced` · `skeleton`
-· `stale` · `offline`
+`populated` · `solo` · `first-use (CTA)` · `nobody-synced` · `skeleton`
+· `stale` · `offline` — all at one fixed height
 
 ### S02 · Leaderboard → `p-friends`
-`ranked` · `partial (some not synced)` · `nobody-synced` · `solo` · `no-circle`
-· `loading` · `offline — last known` · `refresh-failed`
+`ranked` · `partial (some not synced)` · `nobody-synced` · `solo`
+· `first-use (the educational state, §4.6)` · `loading`
+· `offline — last known` · `refresh-failed`
 
 ### S03 · Friend profile → `p-friend`
 `day-with-data` · `day-no-data` · `not-synced-today` · `no-band`
 · `left-the-circle (row goes read-only, then out)` · `loading` · `offline`
 
-### S04 · Add people sheet → `sheet-add-people`
+### S04 · Share your code → `sheet-share`
 `default` · `code-loading` · `code-refresh-failed` · `share-unavailable`
-· `at-cap`
 
-### S05 · Join a circle → `p-join`
-`empty` · `partial` · `validating` · `resolved (circle preview + disclosure)`
-· `invalid-code` · `expired-code` · `already-a-member` · `circle-full`
+### S05 · Enter a code → `p-join`
+`empty` · `partial` · `validating` · `resolved (person preview + disclosure)`
+· `invalid-code` · `expired-code` · `your-own-code` · `already-linked`
 · `offline`
 
-### S06 · Circle members → `p-circle`
-`list` · `removing (pending)` · `remove-failed` · `leave (confirm, consequence)`
-· `you-are-the-last-member`
+### S06 · Your friends → `p-circle`
+`list` · `nobody-yet` · `removing (pending)` · `remove-failed`
+· `remove (confirm, consequence — states that removal is mutual)`
 
 ---
 
@@ -343,15 +494,18 @@ state is switchable for review.
 
 | ID | Trigger | Home card | Leaderboard | Friend profile |
 |----|---------|-----------|-------------|----------------|
-| **F1** first load | circle not resolved | skeleton rows at full footprint | skeleton rows, no ranks, period control live | skeleton cards |
-| **F2** no circle | never joined / left | CTA in the card slot, same footprint | invite/join screen in place of the list | n/a |
-| **F3** solo | circle of one | your figure + "Invite someone to compare" | your row, no ranks, invite CTA promoted | n/a |
-| **F4** populated | baseline | 3 rows + gap line | ranked list | full |
-| **F5** nobody synced | all members `—` | figure + "Nothing to rank yet" | Not-synced break only, no ranked section | n/a |
+| **F1** first load | leaderboard not resolved | skeleton rows at full footprint | skeleton rows, no podium, no sticky card, period control live | skeleton cards |
+| **F2** first use | no friends yet | one-line explanation + a way through, same footprint | the educational state (§4.6) in place of the list; no sticky card | n/a |
+| **F3** solo | one friend, nothing on their side | your figure + "Share your code to compare" | sticky card only, no podium, share promoted to primary | n/a |
+| **F4** populated | baseline | 3 rows + gap line | podium + list + sticky card | full |
+| **F5** nobody synced | everyone `—` | "Nothing to rank yet" | no podium; Not-synced break only; sticky card says nothing is synced | n/a |
 | **F6** partial sync | some stale | ranks from synced members only; state line counts them | ranked + Not synced breaks | last-sync caption in the identity block |
 | **F7** offline | no network | last-known figures, stale marker, no ranks recomputed | last-known + retry; **cheers queue and show pending** | last-known; cheer queues |
 | **F8** your band offline | your own data stale | your row marked stale, still ranked on last-known | same | n/a |
 | **F9** friend has no band | they never paired | they sit in Not synced permanently | row states "hasn't set up a band" | profile shows the band-required empty state, not blank cards |
+
+The sticky you-card is present in every state that has a leaderboard (F3–F9)
+and absent in the two that do not (F1, F2).
 
 **F6 is the dominant secondary state.** In a five-person circle, someone is
 almost always unsynced. Build the Not-synced break properly and early — it is
@@ -361,25 +515,25 @@ what stops hard rule 2 from being quietly broken.
 
 ## 7 · Components
 
-Eight components. Everything in the flow is assembled from them; a state missing
+Ten components. Everything in the flow is assembled from them; a state missing
 here is a state missing several times over. Build these first (§8 slice 1) with
 every state switchable.
 
 ### 7.1 Leaderboard row — the workhorse
-`ranked` · `you` (`--surface-raised` fill, name reads "You") · `leader`
-· `not-synced` (no numeral, `—`, reason caption) · `stale` · `pressed`
-(opacity only, per the button spec)
+`ranked` · `not-synced` (no numeral, `—`, reason caption) · `stale`
+· `pressed` (opacity only, per the button spec) · `skeleton`.
+There is no `you` state: you are never a row in this list (hard rule 1).
 
-Anatomy, left → right: rank numeral (`--type-num-s`, `--text-3`) · avatar
-(40px chip, following the Workouts card convention; initial letter on
-`--surface-raised` when there's no photo) · name (`--type-p1`) over the relative
-bar · figure (`--type-num-m` + unit in `--type-p3`, `--text-3`) · cheer control.
+Anatomy, left → right, on one line: rank numeral (`--type-num-s`, `--text-3`)
+· avatar (40px chip, following the Workouts card convention; initial letter on
+`--surface-raised` when there's no photo) · name (`--type-p1`) · figure
+(`--type-num-m`) with the **steps glyph** as its unit at the right end · cheer
+control. A second line appears only to carry a reason (`stale`, `not-synced`).
 
-### 7.2 Relative bar
-The `.gbar` fill from Today's goals, scaled to the leader's figure, edge-to-edge
-within the row. `filled` · `you` · `zero` · `stale`. Fill uses
-`--metric-steps`; your own row uses the same fill (you are not a different
-metric).
+### 7.2 ~~Relative bar~~ — cut in rev 2
+Leaderboard rows and the Home card carry no bar. The one place a bar survives
+is the compare strip (7.6), where there are exactly two values and the bars are
+the picture its sentence describes.
 
 ### 7.3 Cheer control — one per row, plus the profile's primary
 `idle` (regular-weight heart, `--text-3`, transparent chip) · `pending`
@@ -411,16 +565,35 @@ sentence. The sentence is the component, the bars are the illustration.
 `invite` variant (code + Share + Copy + disclosure) · `join` variant (OTP
 component + resolved-circle preview + disclosure). States per S04/S05.
 
+### 7.9 Podium — 1 instance
+`three` · `two (third plinth empty)` · `tie (two 2nds, no 3rd)` · `you-placed`
+· `absent (fewer than two figures)`.
+Holds the top three **people**. Plinth height carries the placing, the numeral
+names each person's own rank. Tiles tap through like rows; your own tile routes
+per hard rule 8.
+
+### 7.10 Sticky you-card — 1 instance
+`ranked` · `leading` · `only-figure` · `not-synced` · `hidden (F1, F2)`.
+Always on when there is a leaderboard, and the only place you appear in the
+list region. Carries rank, figure and the gap sentence.
+
+### 7.11 First-use education — 1 instance
+`default` · `code-loading` · `code-unavailable`.
+Three numbered lines, the code in the open, and the two ways in.
+
 ### 7.8 Empty / member-required state — reused across S02, S03, S06
-`no-circle` (what a circle does, routes to S04) · `nobody-synced`
-· `friend-has-no-band` · `friend-left`. Same shape as the Me tab's
+`nobody-synced` · `friend-has-no-band` · `friend-left` · `nobody-yet` (S06).
+First use is **not** one of these — it is its own component (7.11), because an
+empty state that has to teach a model is a different job from one that reports
+an absence. Same shape as the Me tab's
 band-required empty state (§5.5 there) — do not invent a second empty-state
 component.
 
 **Reused, not rebuilt:** the OTP boxes (onboarding), the month-scroll calendar
 (Activity/Sleep), the confirm sheet `#sheetTitle` / `#sheetRows` /
 `#sheetConfirm` (Me tab), the button tiers (`components/button.html`), the
-`.gbar` bar (Today's goals), the 40px icon/avatar chip (Workouts card).
+`.seg4` pill (metric detail pages), the `.gbar` bar (Today's goals — compare
+strip only now), the 40px icon/avatar chip (Workouts card).
 
 ---
 
@@ -476,10 +649,20 @@ code comment and ask.
 - [ ] **Period.** `Today` + `7 days` proposed. Is there a case for a resetting
       weekly competition (Mon–Sun) rather than a rolling 7 days? They behave
       very differently on a Monday morning.
-- [ ] **Member cap.** Decides whether `+` disappears at the cap, whether S05 has
-      a `circle-full` state, and whether the leaderboard ever needs pagination.
-- [ ] **One circle or many?** Rev 1 assumes exactly one. If a person can be in
-      several, the Home card needs a selector and §4.1 changes shape.
+- [ ] **Is there a cap?** Under the link model nothing can be "full", so a cap
+      would be a limit on how many people may hold a working code — a different
+      question, and one that decides whether the leaderboard needs pagination.
+- [ ] **Is a code transitive?** The one that matters most. If Rashmi and Ankit
+      both use *your* code, do they see each other? §3 says no — one link per
+      use. If the answer is yes, the code is a group id, §3 is wrong, and the
+      join preview has to name everyone the new person becomes visible to.
+- [ ] **Does everyone get one code, or one per friend?** One code is simpler and
+      is what rev 2 assumes. Per-friend codes make revocation surgical instead
+      of all-or-nothing, which matters given what a code shares.
+- [ ] **Two header icons.** Restored at the owner's request. The app has no
+      `share-network` / `sign-in` glyph, and the closest two it carries are not
+      distinguishable enough — see the flag in §4.2. Add the real glyphs, or
+      accept a labelled two-button row instead of icons.
 
 **Privacy — needs an owner decision, not a default**
 - [ ] **The disclosure is load-bearing.** Rev 1 shares all metrics (owner's
@@ -489,9 +672,12 @@ code comment and ask.
 - [ ] **Codes should expire and be revocable.** A permanent code that grants
       health-data access can't be un-shared. Rev 1 assumes a rotatable code —
       confirm, and decide the lifetime.
-- [ ] **Does a removed member lose historical access?** Drives the S06 remove
-      confirm copy and whether a friend profile can show a date from before
-      you joined.
+- [ ] **Does a removed friend lose historical access?** Drives the S06 remove
+      confirm copy and whether a friend profile can show a date from before you
+      linked.
+- [ ] **Is removal really mutual?** Rev 2 says yes, because the link is one
+      object. A one-sided removal would mean they still see you while you no
+      longer see them, which is the worst of both. Confirm.
 - [ ] **Report / block.** The `⋯` menu lists Report. Is there a route behind it,
       or should it come out of rev 1?
 - [ ] **Minors.** If a child account can join a circle, the disclosure and the
@@ -511,21 +697,29 @@ code comment and ask.
 
 ## 10 · Acceptance criteria
 
-- [ ] You render exactly once on the leaderboard; the sticky bar never
-      coexists with your row
+- [ ] You are never a row in the scrolling list; the sticky card is your row
+- [ ] The sticky card is present in F3–F9 and absent in F1 and F2
+- [ ] Every person with a figure appears exactly once — on the podium or in the
+      list — in every state, ties included
 - [ ] No rank numeral is ever attached to a member with no figure for the period
 - [ ] The period is visible on every Friends surface without scrolling
 - [ ] Every figure has a unit
 - [ ] The friend profile uses Home's metric cards, in Home's order, read-only
 - [ ] No email, background setter, share icon or edit control on a friend's page
 - [ ] Tapping your own row does not open a second copy of your own profile
-- [ ] The Home card is the same height in all six of its states
+- [ ] The Home card is the same height in all six of its states — a fixed
+      height, so no state can push it
 - [ ] Cheer has pending, failed and at-limit states, and a stated limit
-- [ ] Ties share a rank and the next rank skips
+- [ ] Ties share a rank and the next rank skips, and fill all three plinths
+- [ ] No leaderboard row or Home card row carries a progress bar
+- [ ] Every figure on the leaderboard carries the steps glyph
+- [ ] The words circle, group, member and leave appear nowhere in the UI
+- [ ] The remove confirm states that removal is mutual
+- [ ] First use states the model, shows the code, and offers both ways in
 - [ ] The invite and join sheets state what a member will be able to see,
       before the code is accepted
 - [ ] All nine F-states switchable from the control panel
-- [ ] All eight §7 components built with every listed state
+- [ ] All ten §7 components built with every listed state
 - [ ] OTP boxes, month-scroll calendar, confirm sheet, button tiers, `.gbar` and
       the 40px chip are reused, not reimplemented
 - [ ] All colours and fonts from `js/tokens.js`; no hex, no font names
@@ -538,8 +732,18 @@ code comment and ask.
 
 ---
 
-*Rev 1 — 2026-09-03. Supersedes the legacy Family Ranking screens (leaderboard +
-"My Homepage" profile), which were inputs, not targets. Reverses the rev-3 Me-tab
+*Rev 2 — 2026-09-03. Supersedes rev 1 of the same day. Changes: §3 settles that
+v1 creates no group — a code makes a mutual link — which retires "circle" and
+the Leave action and makes removal mutual and the disclosure symmetrical; §4.6
+adds an educational first-use state; §4.2 adds the podium, drops the row bars in
+favour of a figure plus the steps glyph, makes the you-card always-on and takes
+you out of the list, and restores two header actions (share / enter a code) with
+the icon-legibility risk flagged rather than assumed away. Hard rule 2 is new and
+came out of building it: the podium must hold the top three people, not the ranks
+1/2/3, or a tie silently drops someone off the screen.*
+
+*Rev 1 — 2026-09-03. Superseded the legacy Family Ranking screens (leaderboard +
+"My Homepage" profile), which were inputs, not targets. Reversed the rev-3 Me-tab
 cut of Family Ranking by relocating it to Home rather than restoring the Me-tab
 row. Step 2 will add UI: layout, spacing, type sizes and per-screen component
 specs.*
