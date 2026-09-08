@@ -5,6 +5,17 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-03 (rev 10) — **Back goes one level, not all the way out.** There was
+  no history in the flow: every inner page was a sibling of the others, and
+  Back simply hid whichever was open, which uncovered Home. Two levels in —
+  ranking → a friend's profile, ranking → your friends, ranking → enter a code
+  — it skipped the ranking you came from. `NAV` is now the trail of inner pages
+  actually walked: opening one pushes, Back pops and re-shows the one beneath,
+  landing on a tab clears it, and re-entering a page already in the trail
+  unwinds to it rather than stacking a second copy. A page revealed by Back
+  keeps its scroll position, because it is the page you left. The control
+  panel's screen picker passes `reset` — it jumps rather than walks.
+
 - 2026-09-03 (rev 9) — Four owner notes. **F8 "your band is behind" is gone**,
   with the offline state it belonged to; a member who last synced earlier is
   described by their row, not by a tab-level state. **Your own profile opens

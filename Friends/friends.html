@@ -2136,12 +2136,46 @@ $$('#fstates input').forEach(function(r){
     renderAll();
   });
 });
-function showScreen(id){
-  $$('.subpage').forEach(s=>s.hidden=true);
-  $$('.page').forEach(p=>p.classList.remove('active'));
+/* ── Where back goes ──────────────────────────────────────────────────────
+   There was no history: every inner page was a sibling of the others, and
+   Back just hid whichever one was open, which uncovered Home. Two levels in —
+   ranking → a friend's profile, ranking → your friends, ranking → enter a
+   code — Back skipped the ranking you came from and dropped you at Home.
+
+   NAV is the trail of inner pages you actually walked. Opening one pushes;
+   Back pops and re-shows the one underneath; landing on a tab clears it.
+   Re-entering a page already in the trail unwinds to it rather than stacking
+   a second copy, so a loop cannot grow the history forever.
+   A page revealed by Back keeps its scroll position — it is the page you
+   left, not a new one.                                                      */
+let NAV = [];
+
+function showScreen(id, reset){
   closeSheets(); $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true;
-  if(id.indexOf('page-')===0){ $('#'+id).classList.add('active'); }
-  else { $('#page-home').classList.add('active'); $('#'+id).hidden=false; $('#'+id).scrollTop=0; }
+  if(id.indexOf('page-')===0){
+    NAV=[];
+    $$('.subpage').forEach(s=>s.hidden=true);
+    $$('.page').forEach(p=>p.classList.remove('active'));
+    $('#'+id).classList.add('active');
+  } else {
+    /* Home stays mounted behind every inner page — it is the tab you are in */
+    $$('.page').forEach(p=>p.classList.remove('active'));
+    $('#page-home').classList.add('active');
+    if(reset) NAV=[];
+    const at = NAV.indexOf(id);
+    if(at>=0) NAV.length = at+1; else NAV.push(id);
+    $$('.subpage').forEach(s=>{ s.hidden = (s.id!==id); });
+    $('#'+id).scrollTop = 0;
+  }
+  syncChrome();
+  renderYouCard();
+}
+
+/* Back: one step down the trail, not all the way out. */
+function goBack(){
+  NAV.pop();
+  const prev = NAV[NAV.length-1];
+  $$('.subpage').forEach(s=>{ s.hidden = (s.id!==prev); });   /* no scrollTop reset */
   syncChrome();
   renderYouCard();
 }
@@ -2155,7 +2189,7 @@ function syncChrome(){
 $$('#screens input').forEach(function(r){
   r.addEventListener('change',function(){
     $$('#screens label').forEach(l=>l.classList.toggle('on', l.contains(r)));
-    showScreen(r.value);
+    showScreen(r.value, true);      /* the picker jumps, it does not walk */
   });
 });
 
@@ -2187,9 +2221,7 @@ document.addEventListener('click', function(e){
   if(confirmEl){ openSheet(confirmEl.dataset.confirm, confirmEl.dataset.id); return; }
 
   if(t.closest('[data-close]')){ closeSheets(); $('#cal-sheet').hidden=true; $('#cal-scrim').hidden=true; return; }
-  if(t.closest('[data-back]')){
-    t.closest('.subpage').hidden=true; syncChrome(); syncYouCard(); return;
-  }
+  if(t.closest('[data-back]')){ goBack(); return; }
   if(t.closest('[data-nav]')){ showScreen('page-home'); return; }
   if(t.closest('[data-cal]')){ $('#cal-sheet').hidden=false; $('#cal-scrim').hidden=false; renderCal(); return; }
 
