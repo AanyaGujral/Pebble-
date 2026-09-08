@@ -5,6 +5,24 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-03 (rev 11) — Ranking header cut to one action, sharing given a name.
+  The **⋯ came off**: it went straight into a page, and a three-dot pointed at
+  a single destination teaches the wrong thing about every other ⋯ in the app.
+  The **share glyph came off with it** — the header is now the way IN (`+`
+  takes someone's code) and giving yours out is a **"Share My Code" primary CTA
+  at the foot of the ranking**, in words rather than an icon nobody can read,
+  at the end of the people it adds to. Under it, a tertiary row **"Your friends
+  · 3 ›"** carries the route the ⋯ used to be, hidden when the count is zero.
+  One primary per screen still holds. The share sheet drops its "Have a code?"
+  row, since offering both directions in one sheet is what made the header need
+  two icons in the first place. **Remove Friend came off the friend profile's
+  menu** — removing happens on the friends page, where you can see everyone you
+  are removing yourself from at once, and a destructive action offered from two
+  places is two confirm flows to keep honest. That leaves Mute as the menu's
+  one entry, which is the right size for what it is: something you do to this
+  person, from their page. Closes the §9 FLAG about the share/join icon pair —
+  with one glyph left there is no ambiguous pair to resolve.
+
 - 2026-09-03 (rev 10) — **Back goes one level, not all the way out.** There was
   no history in the flow: every inner page was a sibling of the others, and
   Back simply hid whichever was open, which uncovered Home. Two levels in —

@@ -746,6 +746,12 @@ body{
 .fc-slot .big{font:700 24px/28px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
 .fc-slot .btn{max-width:200px}
 
+/* the row under the ranking's CTA: a tertiary button that reads as a row —
+   label left, count and chevron right, like the settings rows on the Me tab */
+.footrow{margin-top:4px;display:flex;align-items:center;justify-content:space-between;padding:0 8px}
+.footrow .rgt{display:flex;align-items:center;gap:8px}
+.footrow .rnum{font:500 13px/18px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3)}
+
 /* ── 7.6 Compare strip (friend profile) ───────────────────────────────────
    Two bars and one sentence. The sentence is the component; the bars
    illustrate it. This is why the profile page exists — the legacy one
@@ -1094,20 +1100,20 @@ body{
              2026-09-03). A card and its destination with two different names
              is how the legacy build ended up feeling like two apps. -->
         <div class="t">Family ranking</div>
-        <!-- Two actions on the right, share and join (owner, 2026-09-03).
-             They are the two ways into the same mutual link: give your code,
-             or use someone else's.
-             FLAG: the app's Phosphor set has no `share-network` or `sign-in`,
-             which are the two glyphs this pair actually wants. arrow-circle-up
-             and plus are the closest it carries, and the pairing is weaker
-             than it should be — a person cannot tell from the icons alone
-             which one hands out a code and which one takes one. Add the two
-             real glyphs to the icon set and swap them in; until then both
-             buttons carry an aria-label and both destinations name themselves
-             in their first line. Raised in §9. -->
-        <button class="act" data-sheet="share" aria-label="Share your code"><span class="phi" data-ph="arrow-circle-up" data-weight="fill"></span></button>
-        <button class="act" data-open="p-join" aria-label="Enter a code"><span class="phi" data-ph="plus"></span></button>
-        <button class="act" data-open="p-circle" style="margin-right:-12px" aria-label="Your friends"><span class="phi" data-ph="dots-three-vertical"></span></button>
+        <!-- ONE action in the header (owner, 2026-09-03), and the header is
+             the way IN: + takes a code from someone. Giving yours out is the
+             CTA at the bottom of the page, so the two directions are one each
+             and neither is duplicated.
+             What came off: the share glyph, which the bottom CTA now carries
+             and says in words rather than with an icon nobody can read; and
+             the ⋯, which went straight into a page — a three-dot is a menu
+             affordance, and pointing it at a single destination taught the
+             wrong thing about every other ⋯ in the app. Your friends is
+             reached from the row under the CTA instead, at the end of the
+             list of people, which is where you would look for it.
+             This also closes the §9 FLAG about the share/join icon pair: with
+             one glyph left there is no ambiguous pair to resolve. -->
+        <button class="act" data-open="p-join" style="margin-right:-12px" aria-label="Enter a friend's code"><span class="phi" data-ph="plus"></span></button>
       </div>
 
       <!-- The Today / 7 days segmented control came out (owner, 2026-09-03):
@@ -1216,11 +1222,18 @@ body{
     <div class="sheet" id="menu-sheet" hidden>
       <div class="sheet-grab"><span></span></div>
       <div class="sheet-body">
-        <!-- Report came out (owner, 2026-09-03). §9 asked whether there was a
-             route behind it; there is not, and a menu entry that leads nowhere
-             is worse than no entry. It goes back in when reporting exists. -->
+        <!-- What is not in this menu, and why:
+             · Report — §9 asked whether there was a route behind it; there is
+               not, and an entry that leads nowhere is worse than no entry.
+             · Remove Friend — removing happens on the friends page (owner,
+               2026-09-03), where you can see everyone you are removing
+               yourself from at once. A destructive action offered from two
+               places is a destructive action with two different confirm
+               flows to keep honest.
+             That leaves one entry, which is the right size for what this menu
+             is actually for: something you do to this person, from their
+             page. -->
         <button class="btn btn--tertiary btn--m" style="justify-content:flex-start;padding:0 8px">Mute Cheers From <span id="mute-name">Rashmi</span></button>
-        <button class="btn btn--destructive btn--m" style="justify-content:flex-start;padding:0 8px" data-confirm="remove">Remove Friend</button>
       </div>
     </div>
   </div>
@@ -1643,14 +1656,20 @@ function renderLeaderboard(){
   }
   mount.innerHTML=html;
 
-  /* One action per screen — and on a populated board this was the second:
-     the header already carries share, and this copy of it sat under the
-     docked self card until you scrolled. It stays in the states where sharing
-     IS the screen's job (solo, first use); on a ranked board the header is
-     the route. */
-  foot.innerHTML = M.solo
-    ? '<button class="btn btn--primary" data-sheet="share">Share Your Code</button>'
-    : '';
+  /* The foot of the ranking (owner, 2026-09-03): giving your code out is a
+     named action in words, not an icon in the header — so it lives here, at
+     the end of the people it adds to. Under it, the route to Your friends
+     that the ⋯ used to be: a tertiary row, so the screen still has exactly
+     one primary. */
+  const friendCount = M.list.filter(m=>!m.you).length;
+  foot.innerHTML =
+      '<button class="btn btn--primary" data-sheet="share">Share My Code</button>'
+    /* the row only exists when there is a list behind it — "Your friends 0"
+       is a door onto an empty room */
+    + (friendCount ? '<button class="btn btn--tertiary btn--m footrow" data-open="p-circle">'
+    +   '<span>Your friends</span>'
+    +   '<span class="rgt"><span class="rnum">'+friendCount+'</span>'
+    +   '<span class="chev"></span></span></button>' : '');
 
   injectIcons(mount); injectIcons(foot);
   renderYouCard();
@@ -1937,7 +1956,7 @@ const DISCLOSURE = 'You&rsquo;ll each be able to see the other&rsquo;s <b>activi
 function openSheet(kind, arg){
   const t=$('#sheet-title'), b=$('#sheet-body');
   if(kind==='share'){
-    t.textContent='Share your code';
+    t.textContent='Share my code';
     b.innerHTML =
       '<span class="sheet-label">Anyone who enters this sees your steps</span>'
       /* The disclosure is a requirement, not copy garnish. Rev 1 shares
@@ -1946,10 +1965,10 @@ function openSheet(kind, arg){
       +'<div class="disclose">'+ico('info','fill')+'<p>'+DISCLOSURE+'</p></div>'
       +'<div class="codebox"><span>K7M4Q2</span></div>'
       +'<div class="btnrow"><button class="btn btn--primary btn--m">Share</button>'
-      +'<button class="btn btn--tertiary btn--m">Copy</button></div>'
-      +'<hr class="sheet-rule">'
-      +'<span class="sheet-label">Have a code?</span>'
-      +'<button class="btn btn--tertiary btn--m" data-open="p-join">Enter Code</button>';
+      +'<button class="btn btn--tertiary btn--m">Copy</button></div>';
+    /* no "Have a code?" row any more: the + in the header is that route, and
+       one sheet offering both directions was what made the header need two
+       icons in the first place */
   }
   if(kind==='remove'){
     const who=(PEOPLE[arg]||{}).name||'this person';
