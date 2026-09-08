@@ -81,7 +81,10 @@
   --num-features:'tnum' 1,'lnum' 1;
 
   /* radii, spacing, motion, borders */
-  --radius-card:20px;--radius-pill:999px;--radius-8:8px;--radius-12:12px;
+  --radius-card:20px;--radius-pill:999px;--radius-8:8px;--radius-12:12px;--radius-16:16px;--radius-20:20px;--radius-24:24px;
+  --control-h-l:52px;--control-h-m:44px;   /* controlHeight.l / .m — components/button.html */
+  --text-on-accent:var(--neutral-900);      /* textColor.onAccent */
+  --border-thin:1px;
   --space-4:4px;--space-8:8px;--space-12:12px;--space-16:16px;--space-20:20px;--space-24:24px;--space-32:32px;
   --border-hairline:0.5px;
   --cta-height:48px;
@@ -118,7 +121,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .panel .hint{margin:8px 0 12px;font:400 11px/16px var(--font-text);color:var(--text-3)}
 .panel .opts{display:flex;flex-direction:column;gap:4px;margin-top:8px}
 .panel label{
-  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;cursor:pointer;
+  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-12);cursor:pointer;
   font:500 13px/18px var(--font-text);color:var(--text-2);
 }
 .panel label:hover{background:var(--surface-raised)}
@@ -272,7 +275,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
    three equal tiles, 20px radius, no hairline, overline label ABOVE the
    num-m value, small light unit (owner, 2026-09-08: same as Activity tab) */
 .sumchips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.stattile{border-radius:20px;background:var(--surface-card);border:0;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.stattile{border-radius:var(--radius-20);background:var(--surface-card);border:0;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
 .stattile .label{font:500 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .stattile .figure{display:flex;align-items:baseline;justify-content:center;gap:4px;white-space:nowrap}
 .stattile .value{font:700 20px/24px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
@@ -296,6 +299,35 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 
 
 /* ==========================================================================
+   BUTTON — components/button.html, verbatim. Four tiers share one 52px pill;
+   hierarchy is colour only, every state is opacity. Labels are Title Case.
+   ========================================================================== */
+.btn{-webkit-appearance:none;appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-sizing:border-box;width:100%;height:var(--control-h-l);padding:0 24px;border:none;border-radius:var(--radius-pill);background:transparent;box-shadow:none;font:600 15px/22px var(--font-text);letter-spacing:0;text-align:center;white-space:nowrap;cursor:pointer;transition:opacity var(--duration-fast) ease;position:relative;overflow:hidden}
+.btn--m{height:var(--control-h-m)}
+.btn--primary{background:var(--metric-readiness);color:var(--text-on-accent)}
+.btn--secondary{background:transparent;border:var(--border-thin) solid var(--metric-readiness);color:var(--metric-readiness)}
+.btn--tertiary{background:transparent;border:none;color:var(--text-2);font-weight:500}
+.btn--destructive{background:transparent;border:none;color:var(--negative-text);font-weight:500}
+.btn--primary:not([disabled]):hover{opacity:.9}
+.btn--primary:not([disabled]):active{opacity:.8}
+.btn--secondary:not([disabled]):hover{opacity:.75}
+.btn--secondary:not([disabled]):active{opacity:.6}
+.btn--tertiary:not([disabled]):hover,.btn--destructive:not([disabled]):hover{opacity:.7}
+.btn--tertiary:not([disabled]):active,.btn--destructive:not([disabled]):active{opacity:.55}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn:focus-visible{outline:2px solid var(--metric-readiness);outline-offset:4px}
+.btn .phi{width:18px;height:18px;position:relative;z-index:1}
+.btn .txt{position:relative;z-index:1;font-feature-settings:var(--num-features)}
+/* Measure — SECONDARY tier (owner, 2026-09-08: it must not out-pull the
+   charts). FLAG: the component reserves secondary for "a genuine alternative
+   path"; tertiary is the quieter tier but reads as dismiss / skip, which a
+   measuring action is not, so secondary is the closest fit. While a reading
+   runs the outline fills left-to-right, like the Measure All button. */
+.btn .fill{position:absolute;inset:0 auto 0 0;width:0;z-index:0;background:var(--metric-readiness);opacity:.22}
+.btn.is-measuring{cursor:default;color:var(--text-1);border-color:var(--surface-fill)}
+.btn.is-measuring .phi{animation:pulse 1.4s ease-in-out infinite}
+
+/* ==========================================================================
    4b. DETAIL PAGE EXTRAS (owner round two, 2026-09-08): date selector,
    3-dot menu, About + Measurement settings pages, pickers, Measure flow
    ========================================================================== */
@@ -303,9 +335,9 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .dots-btn{width:44px;height:44px;margin-right:-12px;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:0;cursor:pointer;border-radius:999px}
 .dots-btn span{width:3px;height:3px;border-radius:50%;background:var(--text-2)}
 .dots-btn:hover{background:var(--surface-raised)}
-.menu{position:absolute;right:16px;top:84px;z-index:40;width:212px;background:var(--surface-card);border:var(--border-hairline) solid var(--surface-fill);border-radius:20px;padding:8px;display:none}
+.menu{position:absolute;right:16px;top:84px;z-index:40;width:212px;background:var(--surface-card);border:var(--border-hairline) solid var(--surface-fill);border-radius:var(--radius-20);padding:8px;display:none}
 .menu.open{display:block}
-.menu button{width:100%;text-align:left;background:none;border:0;padding:8px 12px;border-radius:12px;cursor:pointer;font:500 13px/18px var(--font-text);color:var(--text-2)}
+.menu button{width:100%;text-align:left;background:none;border:0;padding:8px 12px;border-radius:var(--radius-12);cursor:pointer;font:500 13px/18px var(--font-text);color:var(--text-2)}
 .menu button:hover{background:var(--surface-raised);color:var(--text-1)}
 
 /* date selector — ‹ label ▾ › under the period pill. The label is the
@@ -316,44 +348,89 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .daterow .step .phi{width:16px;height:16px}
 .daterow .step:hover{background:var(--surface-raised)}
 .daterow .step[disabled]{opacity:.3;cursor:default;background:none}
-.date-btn{display:flex;align-items:center;gap:6px;background:none;border:0;padding:6px 10px;border-radius:14px;cursor:pointer;font:500 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
+.date-btn{display:flex;align-items:center;gap:6px;background:none;border:0;padding:6px 10px;border-radius:var(--radius-12); /* FLAG: homepage uses 14px — not a token step */cursor:pointer;font:500 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
 .date-btn:hover{background:color-mix(in srgb, var(--neutral-0) 8%, transparent)}
 .date-btn .caret{width:6px;height:6px;border-right:1.2px solid var(--text-3);border-bottom:1.2px solid var(--text-3);transform:rotate(45deg);margin-bottom:3px;display:inline-block}
 
-/* scrim + sheets — homepage patterns (history calendar, goal-value sheet) */
+/* scrim + sheet chrome — the onboarding file's value / date-of-birth sheets
+   (themselves copied from the Workout tab's goal sheet): 36px filled circles
+   behind ✕ and ✓, 17/22 title, 24px card at 8px from the screen edges */
 .scrim{position:absolute;inset:0;z-index:69;background:color-mix(in srgb, var(--neutral-900) 62%, transparent)}
-#calModal[hidden],#pickSheet[hidden]{display:none}
-.cal-sheet{position:absolute;left:0;right:0;top:96px;bottom:0;z-index:70;background:var(--surface-card);border-radius:24px 24px 0 0;display:flex;flex-direction:column;overflow:hidden}
-.cal-grab{padding:8px 0 0;display:flex;justify-content:center;flex:0 0 auto}
-.cal-grab span{width:36px;height:4px;border-radius:999px;background:var(--surface-fill)}
-.cal-head{flex:0 0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.cal-head .t{font:500 20px/26px var(--font-text);letter-spacing:-0.005em;color:var(--text-1)}
-.iconbtn{width:36px;height:36px;border-radius:999px;background:var(--surface-raised);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--text-1)}
-.iconbtn:hover{background:var(--surface-fill)}
-.iconbtn .phi{width:16px;height:16px}
-.cal-week{flex:0 0 auto;padding:0 16px 8px;display:grid;grid-template-columns:repeat(7,1fr);border-bottom:var(--border-hairline) solid var(--surface-raised)}
-.cal-week span{text-align:center;font:500 11px/16px var(--font-text);color:var(--text-3)}
-.cal-scrollwrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
-.cal-scroll{flex:1;min-height:0;overflow-y:auto;padding:0 16px 88px;scrollbar-width:none}
-.cal-scroll::-webkit-scrollbar{display:none}
-.cal-fade{position:absolute;top:0;left:0;right:0;height:68px;pointer-events:none;background:linear-gradient(180deg, var(--surface-card) 0%, var(--surface-card) 30%, transparent 100%)}
-.cal-month{padding-top:24px}
-.cal-month .mt{text-align:center;font:500 17px/22px var(--font-text);color:var(--text-1)}
-.cal-grid{margin-top:16px;display:grid;grid-template-columns:repeat(7,1fr);row-gap:16px;column-gap:2px}
-.cal-day{width:100%;min-height:44px;background:none;border:0;padding:0;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:4px}
-.cal-day .dn{font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
-.cal-day.future{opacity:.35;cursor:default}
-.sheet{position:absolute;left:8px;right:8px;bottom:8px;z-index:70;background:var(--surface-card);border-radius:24px;padding:16px 16px 24px}
+#dateSheet[hidden],#drumSheet[hidden]{display:none}
+.sheet{position:absolute;left:8px;right:8px;bottom:8px;z-index:70;background:var(--surface-card);border-radius:var(--radius-24);padding:16px 16px 24px}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .sheet-head .t{font:500 17px/22px var(--font-text);color:var(--text-1)}
-.sheet-rows{margin-top:16px;display:flex;flex-direction:column;gap:2px;max-height:360px;overflow-y:auto;scrollbar-width:none}
-.sheet-rows::-webkit-scrollbar{display:none}
-.sheet-row{width:100%;background:none;border:0;padding:10px;border-radius:12px;cursor:pointer;font-family:inherit;display:flex;justify-content:center}
-.sheet-row .v{font:500 15px/20px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3);position:relative;white-space:nowrap}
-.sheet-row.sel{background:var(--surface-raised)}
-.sheet-row.sel .v{font-size:20px;line-height:24px;font-weight:700;color:var(--text-1)}
-.sheet-row .u{display:none;position:absolute;left:100%;margin-left:8px;top:50%;transform:translateY(-50%);font:500 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2)}
-.sheet-row.sel .u{display:block}
+.iconbtn{width:36px;height:36px;border-radius:var(--radius-pill);background:var(--surface-raised);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--text-1)}
+.iconbtn:hover{background:var(--surface-fill)}
+.iconbtn .phi{width:16px;height:16px}
+
+/* DATE PICKER — the onboarding profile's date-of-birth calendar (owner,
+   2026-09-08: "a calendar view, not a scroll selection"). Mode 1 is a month
+   grid; tapping the month name flips to mode 2, the month + year wheel.
+   Here it also serves Week (tap a day → its Mon–Sun week), Month (a 3×4
+   grid of months) and Year (a 3×4 grid of years).
+   FLAG: the reference grid starts the week on Sunday; this file starts it
+   on Monday so a selected week is one unbroken row, matching the Mon → Sun
+   week the charts use. */
+.cal-head{margin-top:16px;display:flex;align-items:center;justify-content:space-between}
+.cal-title{all:unset;display:flex;align-items:center;gap:6px;cursor:pointer;font:500 17px/22px var(--font-text);color:var(--metric-readiness)}
+.cal-title.static{cursor:default;color:var(--text-1)}
+.cal-title .cv{width:14px;height:14px;transition:transform 160ms ease}
+.cal-title.static .cv{display:none}
+.cal-head.wheel .cal-title .cv{transform:rotate(-90deg)}
+.cal-nav{display:flex;align-items:center;gap:16px}
+.cal-nav button{all:unset;width:28px;height:28px;display:grid;place-items:center;cursor:pointer;color:var(--metric-readiness);border-radius:var(--radius-pill)}
+.cal-nav button .phi{width:18px;height:18px}
+.cal-nav button:hover{background:var(--surface-raised)}
+.cal-nav button[disabled]{opacity:.3;cursor:default;background:none}
+.cal-head.wheel .cal-nav{visibility:hidden}
+.cal-week{margin-top:12px;display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-week span{text-align:center;font:500 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.cal-grid{margin-top:4px;display:grid;grid-template-columns:repeat(7,1fr);gap:2px 0;min-height:228px;align-content:start}
+.cal-grid.months,.cal-grid.years{grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;min-height:0}
+/* FLAG: the reference draws day numbers at 16/20 — not a step of the numeric
+   scale (numS 13/16, numM 20/24). This file uses numS, the size the homepage
+   history calendar already prints its day numbers in. */
+.cal-grid .d{all:unset;box-sizing:border-box;height:36px;width:36px;display:grid;place-items:center;cursor:pointer;border-radius:var(--radius-pill);justify-self:center;font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.cal-grid .d:hover{background:var(--surface-raised)}
+.cal-grid .d.sel{background:var(--metric-readiness);color:var(--surface-app);font-weight:700}
+.cal-grid .d.sel:hover{background:var(--metric-readiness)}
+.cal-grid .d.blank{visibility:hidden;pointer-events:none}
+.cal-grid .d.future{opacity:.3;cursor:default}
+.cal-grid .d.future:hover{background:none}
+/* week mode: the seven cells of the picked week share one band */
+.cal-grid.weeks .d{width:100%;justify-self:stretch;border-radius:0}
+.cal-grid.weeks .d.inwk{background:color-mix(in srgb, var(--metric-readiness) 22%, transparent);color:var(--text-1)}
+.cal-grid.weeks .d.inwk.first{border-radius:var(--radius-pill) 0 0 var(--radius-pill)}
+.cal-grid.weeks .d.inwk.last{border-radius:0 var(--radius-pill) var(--radius-pill) 0}
+.cal-grid.weeks .d.inwk:hover{background:color-mix(in srgb, var(--metric-readiness) 30%, transparent)}
+/* month / year cells — words and years in the same pill language */
+.cal-grid .m{all:unset;box-sizing:border-box;height:44px;display:grid;place-items:center;cursor:pointer;border-radius:var(--radius-12);font:500 15px/22px var(--font-text);color:var(--text-1)}
+.cal-grid.years .m{font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features)}
+.cal-grid .m:hover{background:var(--surface-raised)}
+.cal-grid .m.sel{background:var(--metric-readiness);color:var(--surface-app);font-weight:700}
+.cal-grid .m.future{opacity:.3;cursor:default}
+.cal-grid .m.future:hover{background:none}
+#calGridWrap[hidden],#calWheel[hidden],#calWeek[hidden]{display:none}
+
+/* DRUM PICKER — the onboarding profile's height / weight sheet ("the
+   measurement flow"): 5 rows of 44px, a band over the middle one, a number
+   column and a unit column. Used for the settings values (sampling interval,
+   upper limit) and for the calendar's month + year wheel.
+   FLAG: the reference's resting row type is 15/20 — not a numeric-scale step;
+   kept verbatim because this is the owner's component. */
+.picker{position:relative;margin-top:16px;height:220px;display:flex}
+.picker .band{position:absolute;left:0;right:0;top:88px;height:44px;border-radius:var(--radius-12);background:var(--surface-raised);pointer-events:none;z-index:0}
+.picker .col{flex:1 1 0;height:100%;overflow-y:auto;position:relative;z-index:1;scroll-snap-type:y mandatory;scrollbar-width:none;-ms-overflow-style:none}
+.picker .col::-webkit-scrollbar{display:none}
+.picker .col .pad{height:88px}
+.picker .col .opt{height:44px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;cursor:pointer;font:500 15px/20px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3);transition:color var(--duration-fast) ease,font-size var(--duration-fast) ease}
+.picker .col .opt.on{font-size:20px;font-weight:700;color:var(--text-1)}
+.picker .col.words .opt{font-family:var(--font-text);font-size:15px}
+.picker .col.words .opt.on{font-size:18px}
+.picker .col.units{flex:0 0 96px}
+.picker .col.units .opt{font:500 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+.picker .col.units .opt.on{font-size:11px;font-weight:500;color:var(--text-2)}
 
 /* About + Settings pages sit over the detail page */
 .subpage.over{z-index:31}
@@ -408,18 +485,18 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .ma-cap .t{font:600 17px/22px var(--font-text);color:var(--text-1)}
 .ma-cap .s{font:400 13px/18px var(--font-text);color:var(--text-2)}
 .ma-flash{position:absolute;inset:0;pointer-events:none;opacity:var(--ma-flash,0);background:radial-gradient(circle at 50% 47%, color-mix(in srgb, var(--teal-200) 90%, transparent) 0%, color-mix(in srgb, var(--teal-300) 80%, transparent) 28%, color-mix(in srgb, var(--teal-500) 38%, transparent) 55%, transparent 80%)}
-.hm-sheet{position:absolute;left:8px;right:8px;bottom:8px;border-radius:24px;overflow:hidden;opacity:var(--ma-sheet-o,0);transform:translateY(var(--ma-sheet-y,120px));background:radial-gradient(120% 70% at 12% 4%, color-mix(in srgb, var(--teal-400) 16%, transparent) 0%, transparent 58%),radial-gradient(90% 50% at 92% 96%, color-mix(in srgb, var(--teal-600) 14%, transparent) 0%, transparent 60%),var(--surface-card);border:var(--border-hairline) solid var(--border-card);padding:24px 20px 20px;display:flex;flex-direction:column;gap:12px}
+.hm-sheet{position:absolute;left:8px;right:8px;bottom:8px;border-radius:var(--radius-24);overflow:hidden;opacity:var(--ma-sheet-o,0);transform:translateY(var(--ma-sheet-y,120px));background:radial-gradient(120% 70% at 12% 4%, color-mix(in srgb, var(--teal-400) 16%, transparent) 0%, transparent 58%),radial-gradient(90% 50% at 92% 96%, color-mix(in srgb, var(--teal-600) 14%, transparent) 0%, transparent 60%),var(--surface-card);border:var(--border-hairline) solid var(--border-card);padding:24px 20px 20px;display:flex;flex-direction:column;gap:12px}
 .hm-sheet .head{text-align:center;display:flex;flex-direction:column;gap:4px;padding-bottom:4px}
 .hm-sheet h3{margin:0;font:600 17px/22px var(--font-text);color:var(--text-1)}
 .hm-sheet .when{margin:0;padding:0 8px;font:400 13px/18px var(--font-text);color:var(--text-2);text-wrap:pretty}
 .hm-sheet .rows{display:flex;flex-direction:column;gap:8px}
-.hm-sheet .rd{display:flex;align-items:center;justify-content:space-between;height:54px;padding:0 16px;border-radius:12px;background:color-mix(in srgb, var(--surface-raised) 15%, transparent);border:var(--border-hairline) solid var(--border-card);opacity:var(--o,0);transform:translateY(var(--y,14px))}
+.hm-sheet .rd{display:flex;align-items:center;justify-content:space-between;height:54px;padding:0 16px;border-radius:var(--radius-12);background:color-mix(in srgb, var(--surface-raised) 15%, transparent);border:var(--border-hairline) solid var(--border-card);opacity:var(--o,0);transform:translateY(var(--y,14px))}
 .hm-sheet .rd .who{display:flex;align-items:center;gap:8px}
-.hm-sheet .done{margin-top:8px;width:100%;height:var(--cta-height);border-radius:var(--radius-pill);border:1px solid var(--metric-readiness);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font:500 15px/22px var(--font-text);color:var(--metric-readiness);opacity:var(--ma-done-o,0);transform:translateY(var(--ma-done-y,10px))}
-.hm-sheet .done:active{background:var(--neutral-800)}
+.hm-sheet .done{margin-top:8px;opacity:var(--ma-done-o,0);transform:translateY(var(--ma-done-y,10px))}
 @media (prefers-reduced-motion:reduce){
-  .cta,.cta .fill{transition:none !important}
-  .cta.is-measuring .ico{animation:none}
+  .cta,.cta .fill,.btn,.btn .fill{transition:none !important}
+  .cta.is-measuring .ico,.btn.is-measuring .phi{animation:none}
+  .cal-title .cv,.picker .col .opt{transition:none}
   #detail.ma-behind{filter:none}
   .ma-orb,.ma-cap,.ma-flash{display:none}
   .switch,.switch i{transition:none}
@@ -465,9 +542,9 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
   <ul>
     <li>Tap a card → its page opens on the Day view.</li>
     <li>D / W / M / Y switches the chart: Day is a line, the rest are range bars with the average tick.</li>
-    <li>‹ › steps the date; the label opens a picker (calendar for Day).</li>
+    <li>‹ › steps the date; the label opens the calendar (day, week, month or year view).</li>
     <li>Press-drag on any chart reads a value into the header.</li>
-    <li>Measure … at the bottom runs the reading scene and lands on the readings sheet.</li>
+    <li>Measure … (secondary button) runs the reading scene and lands on the readings sheet.</li>
     <li>3-dot menu → About, Measurement settings (toggle, interval; HR also alert + upper limit).</li>
     <li>No bottom tabs for jumping between metrics (owner, 2026-09-08).</li>
   </ul>
@@ -597,34 +674,51 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 
     </div><!-- /.pages -->
 
-    <!-- HISTORY CALENDAR — the homepage's month-scroll modal (Day picker) -->
-    <div id="calModal" hidden>
-      <div class="scrim" data-calclose></div>
-      <div class="cal-sheet">
-        <div class="cal-grab"><span></span></div>
-        <div class="cal-head">
-          <span class="t" id="calTitle">Pick a day</span>
-          <button class="iconbtn" data-calclose aria-label="Close"><span class="phi" data-ph="x"></span></button>
+    <!-- DATE SHEET — the onboarding profile's date-of-birth calendar, serving
+         Day / Week / Month / Year. ✕ cancels, ✓ confirms the draft. -->
+    <div id="dateSheet" hidden>
+      <div class="scrim" data-datecancel></div>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="dateTitle">
+        <div class="sheet-head">
+          <button class="iconbtn" data-datecancel aria-label="Cancel"><span class="phi" data-ph="x"></span></button>
+          <span class="t" id="dateTitle">Pick a day</span>
+          <button class="iconbtn" id="dateConfirm" aria-label="Confirm"><span class="phi" data-ph="check" style="width:18px;height:18px"></span></button>
         </div>
-        <div class="cal-week"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
-        <div class="cal-scrollwrap">
-          <div class="cal-scroll" id="calScroll"></div>
-          <div class="cal-fade" aria-hidden="true"></div>
+        <div class="cal-head" id="calHead">
+          <button class="cal-title" id="calTitle" type="button" aria-expanded="false"><span id="calTitleText">August 2026</span><span class="phi cv" data-ph="caret-down"></span></button>
+          <div class="cal-nav">
+            <button id="calPrev" type="button" aria-label="Previous"><span class="phi" data-ph="caret-left"></span></button>
+            <button id="calNext" type="button" aria-label="Next"><span class="phi" data-ph="caret-right"></span></button>
+          </div>
+        </div>
+        <div id="calGridWrap">
+          <div class="cal-week" id="calWeek" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+          <div class="cal-grid" id="calGrid" role="grid"></div>
+        </div>
+        <!-- mode 2: month + year wheel — the drum picker component -->
+        <div class="picker" id="calWheel" hidden>
+          <div class="band" aria-hidden="true"></div>
+          <div class="col words" id="calMonths" role="listbox" aria-label="Month" tabindex="0"></div>
+          <div class="col" id="calYears" role="listbox" aria-label="Year" tabindex="0"></div>
         </div>
       </div>
     </div>
 
-    <!-- VALUE SHEET — the homepage's goal-setting sheet, reused for the
-         week / month / year pickers and the settings values -->
-    <div id="pickSheet" hidden>
-      <div class="scrim" data-pickcancel></div>
-      <div class="sheet">
+    <!-- DRUM SHEET — the onboarding profile's height / weight value sheet,
+         reused for the settings values (interval, upper limit) -->
+    <div id="drumSheet" hidden>
+      <div class="scrim" data-drumcancel></div>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="drumTitle">
         <div class="sheet-head">
-          <button class="iconbtn" data-pickcancel aria-label="Cancel"><span class="phi" data-ph="x"></span></button>
-          <span class="t" id="pickTitle">Pick</span>
-          <button class="iconbtn" id="pickConfirm" aria-label="Confirm"><span class="phi" data-ph="check" style="width:18px;height:18px"></span></button>
+          <button class="iconbtn" data-drumcancel aria-label="Cancel"><span class="phi" data-ph="x"></span></button>
+          <span class="t" id="drumTitle">Sampling interval</span>
+          <button class="iconbtn" id="drumConfirm" aria-label="Confirm"><span class="phi" data-ph="check" style="width:18px;height:18px"></span></button>
         </div>
-        <div class="sheet-rows" id="pickRows"></div>
+        <div class="picker">
+          <div class="band" aria-hidden="true"></div>
+          <div class="col values" id="drumVals" role="listbox" aria-label="Value" tabindex="0"></div>
+          <div class="col units" id="drumUnits" role="listbox" aria-label="Unit" tabindex="0"></div>
+        </div>
       </div>
     </div>
 
@@ -651,7 +745,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
           <p class="when" id="maShNote"></p>
         </div>
         <div class="rows" id="maShList"></div>
-        <button class="done" type="button" id="maShDone">Done</button>
+        <button class="btn btn--secondary done" type="button" id="maShDone">Done</button>
       </div>
     </div>
   </div>
@@ -679,6 +773,7 @@ const PH = {
   'caret-left': 'M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z',
   'caret-right': 'M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z',
   'x': 'M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z',
+  'caret-down': 'M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z',
   'check': 'M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z',
   'pulse': 'M232,128a8,8,0,0,1-8,8H184a8,8,0,0,1-7.16-4.42L165.57,109,140.94,175.4a8,8,0,0,1-7.09,5.2h-.4a8,8,0,0,1-7.24-4.62L94.31,107.6,79.16,131.58A8,8,0,0,1,72,136H32a8,8,0,0,1,0-16H67.58l20.7-32.77a8,8,0,0,1,14-.36l31.13,66.4,24.13-65a8,8,0,0,1,7.1-5.2,7.94,7.94,0,0,1,7.5,4.42L188.94,120H224A8,8,0,0,1,232,128Z'
 };
@@ -1136,7 +1231,7 @@ function renderHome(){
       + `<div class="card-foot">${empty ? 'No readings yet' : m.home.foot}</div>`
       + icon('caret-right', 'phi caret') + '</button>';
   }).join('');
-  $('#hmCtaSlot').innerHTML = `<button class="cta" type="button" aria-disabled="true" title="Visual only in this flow — the reading scene lives in the homepage file">${icon('pulse','ico')}<span>${st === 'empty' ? 'Take your first reading' : 'Measure All'}</span></button>`;
+  $('#hmCtaSlot').innerHTML = `<button class="cta" type="button" aria-disabled="true" title="Visual only in this flow — the reading scene lives in the homepage file">${icon('pulse','ico')}<span>${st === 'empty' ? 'Take Your First Reading' : 'Measure All'}</span></button>`;
   $('#hmUpd').textContent = st === 'empty' ? '' : (st === 'loading' ? 'Syncing…' : 'Updated 14:20');
   $$('[data-open]', $('#hmGrid')).forEach(b => b.addEventListener('click', () => openDetail(b.dataset.open, 'home')));
 }
@@ -1270,7 +1365,7 @@ function openDetail(metric, scope){
   detail.hidden = false; detail.scrollTop = 0;
   requestAnimationFrame(() => detail.classList.add('in'));
 }
-function closeDetail(){ detail.classList.remove('in'); detail.hidden = true; S.metric = null; closeMenu(); ['about','settings'].forEach(id => { const el = $('#' + id); el.classList.remove('in'); el.hidden = true; }); maStop(); }
+function closeDetail(){ detail.classList.remove('in'); detail.hidden = true; S.metric = null; closeMenu(); ['about','settings'].forEach(id => { const el = $('#' + id); el.classList.remove('in'); el.hidden = true; }); maStop(); closeCalendar(); closeDrum(); }
 $('#btnBack').addEventListener('click', closeDetail);
 $('#dSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ S.period = b.dataset.period; renderDetail(); } });
 
@@ -1325,71 +1420,148 @@ function dateInfo(period, back, scope){
 $('#dPrev').addEventListener('click', () => { S.back[S.period]++; renderDetail(); });
 $('#dNext').addEventListener('click', () => { if (S.back[S.period] > 0){ S.back[S.period]--; renderDetail(); } });
 
-/* the label opens a picker: a calendar for Day, a list for the rest */
-$('#dDate').addEventListener('click', () => {
-  const p = S.period;
-  if (p === 'day') return openCalendar();
-  const opts = [];
-  const n = p === 'week' ? 12 : (p === 'month' ? 12 : 3);
-  for (let b = 0; b < n; b++){ const info = dateInfo(p, b, S.scope); opts.push({ v:b, label:(b === 0 ? (p === 'week' ? 'This week · ' : p === 'month' ? 'This month · ' : 'This year · ') : '') + info.label }); }
-  openPick(p === 'week' ? 'Pick a week' : (p === 'month' ? 'Pick a month' : 'Pick a year'), opts, S.back[p], v => { S.back[p] = v; renderDetail(); });
-});
-
-/* history calendar — the homepage's month-scroll modal. Rings carry the
-   metric's own hue; a day's ring length is a sample "how complete was the
-   day's monitoring" figure, like the tab calendars. */
-function dayScore(d, m){ const x = Math.sin(d*12.9898 + (m+3)*78.233) * 43758.5453; return 52 + Math.round((x - Math.floor(x)) * 44); }
+/* --------------------------------------------------------------------------
+   CALENDAR SHEET — the onboarding profile's date-of-birth picker, in four
+   modes. A draft is held until ✓; ✕ or the scrim discards it.
+     day   → month grid, tap a day
+     week  → month grid, tap any day to take its Mon–Sun week
+     month → 3×4 grid of months for the shown year
+     year  → 3×4 grid of years
+   The month title flips the day / week grid to the month + year wheel (the
+   drum picker), exactly as the reference does.
+   -------------------------------------------------------------------------- */
+const cal = { mode:'day', y:2026, m:7, draft:null, wheel:false };   // m is 0-based; draft = a Date (day/week) or {y,m} / {y}
+const daysInMonth = (y, m) => new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+const mondayOf = d => addDays(d, -((d.getUTCDay() + 6) % 7));
+const YEAR_MIN = TODAY.getUTCFullYear() - 6;   // sample history depth
 function openCalendar(){
-  const m = METRICS[S.metric], scroll = $('#calScroll'), C = 2 * Math.PI * 10.5;
-  const sel = dateInfo('day', S.back.day, S.scope).d;
-  $('#calTitle').textContent = S.scope === 'sleep' ? 'Pick a night' : 'Pick a day';
-  scroll.innerHTML = '';
-  for (let k = 3; k >= 0; k--){
-    let mo = TODAY.getUTCMonth() - k, y = TODAY.getUTCFullYear();
-    while (mo < 0){ mo += 12; y--; }
-    const first = new Date(Date.UTC(y, mo, 1)).getUTCDay(), days = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate();
-    const month = document.createElement('div'); month.className = 'cal-month';
-    month.innerHTML = `<div class="mt">${MONTH_NAMES[mo]} ${y}</div>`;
-    const grid = document.createElement('div'); grid.className = 'cal-grid';
-    for (let i = 0; i < first; i++) grid.append(Object.assign(document.createElement('div'), { style:'min-height:44px' }));
-    for (let d = 1; d <= days; d++){
-      const date = new Date(Date.UTC(y, mo, d));
-      const future = date > TODAY, isSel = date.getTime() === sel.getTime();
-      const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'cal-day' + (future ? ' future' : '');
-      const dash = (dayScore(d, mo)/100*C).toFixed(1) + ' ' + C.toFixed(1);
-      btn.innerHTML = `<span class="dn" style="color:${isSel ? m.color : 'var(--text-1)'}">${d}</span>`
-        + (future ? '<svg width="28" height="28" viewBox="0 0 28 28"></svg>'
-                  : `<svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="10.5" fill="none" stroke-width="3" stroke="var(--surface-raised)"/><circle cx="14" cy="14" r="10.5" fill="none" stroke-width="3" stroke="${m.color}" opacity="${isSel ? 1 : 0.55}" stroke-linecap="round" stroke-dasharray="${dash}" transform="rotate(-90 14 14)"/></svg>`);
-      if (!future) btn.addEventListener('click', () => { S.back.day = Math.round((TODAY - date) / 86400000); closeCalendar(); renderDetail(); });
-      grid.append(btn);
+  const p = S.period, back = S.back[p] || 0, info = dateInfo(p, back, S.scope);
+  cal.mode = p; cal.wheel = false;
+  if (p === 'day'){ cal.draft = info.d; cal.y = info.d.getUTCFullYear(); cal.m = info.d.getUTCMonth(); }
+  else if (p === 'week'){ cal.draft = info.monday; cal.y = info.monday.getUTCFullYear(); cal.m = info.monday.getUTCMonth(); }
+  else if (p === 'month'){ cal.draft = { y:info.y, m:info.m }; cal.y = info.y; }
+  else { cal.draft = { y:info.y }; cal.y = info.y - (info.y % 12) + 0; }
+  $('#dateTitle').textContent = p === 'day' ? (S.scope === 'sleep' ? 'Pick a night' : 'Pick a day') : p === 'week' ? 'Pick a week' : p === 'month' ? 'Pick a month' : 'Pick a year';
+  $('#dateSheet').hidden = false;
+  paintCal();
+}
+function closeCalendar(){ $('#dateSheet').hidden = true; }
+function paintCal(){
+  const grid = $('#calGrid'), title = $('#calTitle'), head = $('#calHead');
+  const gridMode = cal.mode === 'day' || cal.mode === 'week';
+  $('#calWeek').hidden = !gridMode;
+  grid.className = 'cal-grid' + (cal.mode === 'week' ? ' weeks' : cal.mode === 'month' ? ' months' : cal.mode === 'year' ? ' years' : '');
+  title.classList.toggle('static', !gridMode);
+  head.classList.toggle('wheel', cal.wheel);
+  title.setAttribute('aria-expanded', String(cal.wheel));
+  $('#calGridWrap').hidden = cal.wheel;
+  $('#calWheel').hidden = !cal.wheel;
+  let html = '';
+  if (gridMode){
+    $('#calTitleText').textContent = MONTH_NAMES[cal.m] + ' ' + cal.y;
+    const first = (new Date(Date.UTC(cal.y, cal.m, 1)).getUTCDay() + 6) % 7, total = daysInMonth(cal.y, cal.m);
+    const wkStart = cal.mode === 'week' ? cal.draft : null, wkEnd = wkStart ? addDays(wkStart, 6) : null;
+    for (let i = 0; i < first; i++) html += '<span class="d blank"></span>';
+    for (let d = 1; d <= total; d++){
+      const date = new Date(Date.UTC(cal.y, cal.m, d)), future = date > TODAY;
+      let cls = 'd';
+      if (future) cls += ' future';
+      if (cal.mode === 'day' && cal.draft && date.getTime() === cal.draft.getTime()) cls += ' sel';
+      if (wkStart && date >= wkStart && date <= wkEnd){ cls += ' inwk'; if (date.getTime() === wkStart.getTime()) cls += ' first'; if (date.getTime() === wkEnd.getTime()) cls += ' last'; }
+      html += `<button type="button" class="${cls}" data-d="${d}" role="gridcell"${future ? ' disabled' : ''}>${d}</button>`;
     }
-    month.append(grid); scroll.append(month);
+    $('#calPrev').disabled = cal.y === YEAR_MIN && cal.m === 0;
+    $('#calNext').disabled = cal.y === TODAY.getUTCFullYear() && cal.m === TODAY.getUTCMonth();
+  } else if (cal.mode === 'month'){
+    $('#calTitleText').textContent = String(cal.y);
+    for (let m = 0; m < 12; m++){
+      const future = cal.y === TODAY.getUTCFullYear() && m > TODAY.getUTCMonth();
+      const sel = cal.draft.y === cal.y && cal.draft.m === m;
+      html += `<button type="button" class="m${sel ? ' sel' : ''}${future ? ' future' : ''}" data-m="${m}"${future ? ' disabled' : ''}>${MONTH_SHORT[m]}</button>`;
+    }
+    $('#calPrev').disabled = cal.y <= YEAR_MIN; $('#calNext').disabled = cal.y >= TODAY.getUTCFullYear();
+  } else {
+    const y0 = cal.y;
+    $('#calTitleText').textContent = y0 + ' – ' + (y0 + 11);
+    for (let y = y0; y < y0 + 12; y++){
+      const future = y > TODAY.getUTCFullYear();
+      html += `<button type="button" class="m${cal.draft.y === y ? ' sel' : ''}${future ? ' future' : ''}" data-y="${y}"${future ? ' disabled' : ''}>${y}</button>`;
+    }
+    $('#calPrev').disabled = y0 <= YEAR_MIN; $('#calNext').disabled = y0 + 12 > TODAY.getUTCFullYear();
   }
-  $('#calModal').hidden = false;
-  scroll.scrollTop = scroll.scrollHeight;
+  grid.innerHTML = html;
+  $$('.d[data-d]', grid).forEach(b => b.addEventListener('click', () => {
+    const date = new Date(Date.UTC(cal.y, cal.m, +b.dataset.d));
+    cal.draft = cal.mode === 'week' ? mondayOf(date) : date;
+    paintCal();
+  }));
+  $$('.m[data-m]', grid).forEach(b => b.addEventListener('click', () => { cal.draft = { y:cal.y, m:+b.dataset.m }; paintCal(); }));
+  $$('.m[data-y]', grid).forEach(b => b.addEventListener('click', () => { cal.draft = { y:+b.dataset.y }; paintCal(); }));
 }
-function closeCalendar(){ $('#calModal').hidden = true; }
-$$('[data-calclose]').forEach(el => el.addEventListener('click', closeCalendar));
+/* stepping: a month for the day / week grids, a year for months, twelve years for years */
+function stepCal(delta){
+  if (cal.mode === 'day' || cal.mode === 'week'){
+    let m = cal.m + delta, y = cal.y;
+    if (m < 0){ m = 11; y--; } if (m > 11){ m = 0; y++; }
+    if (y < YEAR_MIN || y > TODAY.getUTCFullYear() || (y === TODAY.getUTCFullYear() && m > TODAY.getUTCMonth())) return;
+    cal.m = m; cal.y = y;
+  } else if (cal.mode === 'month'){ cal.y = Math.min(TODAY.getUTCFullYear(), Math.max(YEAR_MIN, cal.y + delta)); }
+  else { const y = cal.y + delta * 12; if (y > TODAY.getUTCFullYear() || y + 11 < YEAR_MIN) return; cal.y = y; }
+  paintCal();
+}
+$('#calPrev').addEventListener('click', () => stepCal(-1));
+$('#calNext').addEventListener('click', () => stepCal(1));
+/* the month name toggles grid ↔ wheel (day / week modes only) */
+$('#calTitle').addEventListener('click', () => {
+  if (!(cal.mode === 'day' || cal.mode === 'week')) return;
+  cal.wheel = !cal.wheel; paintCal();
+  if (!cal.wheel) return;
+  const years = []; for (let y = YEAR_MIN; y <= TODAY.getUTCFullYear(); y++) years.push(y);
+  fillCol($('#calMonths'), MONTH_NAMES, cal.m, i => { cal.m = i; $('#calTitleText').textContent = MONTH_NAMES[cal.m] + ' ' + cal.y; });
+  fillCol($('#calYears'), years.map(String), years.indexOf(cal.y), i => { cal.y = years[i]; $('#calTitleText').textContent = MONTH_NAMES[cal.m] + ' ' + cal.y; });
+});
+$$('[data-datecancel]').forEach(el => el.addEventListener('click', closeCalendar));
+$('#dateConfirm').addEventListener('click', () => {
+  const p = cal.mode;
+  if (p === 'day') S.back.day = Math.max(0, Math.round((TODAY - cal.draft) / 86400000));
+  else if (p === 'week') S.back.week = Math.max(0, Math.round((mondayOf(TODAY) - cal.draft) / (7 * 86400000)));
+  else if (p === 'month') S.back.month = (TODAY.getUTCFullYear() - cal.draft.y) * 12 + (TODAY.getUTCMonth() - cal.draft.m);
+  else S.back.year = TODAY.getUTCFullYear() - cal.draft.y;
+  closeCalendar(); renderDetail();
+});
+$('#dDate').addEventListener('click', openCalendar);
 
-/* value sheet — pick one option, confirm with ✓, cancel with ✕ */
-let pickOn = null, pickVal = null;
-function openPick(title, opts, current, onPick, unit){
-  pickOn = onPick; pickVal = current;
-  $('#pickTitle').textContent = title;
-  const rows = $('#pickRows'); rows.innerHTML = '';
-  opts.forEach(o => {
-    const b = document.createElement('button'); b.type = 'button';
-    b.className = 'sheet-row' + (o.v === current ? ' sel' : '');
-    b.innerHTML = `<span class="v">${o.label}${unit ? `<span class="u">${unit}</span>` : ''}</span>`;
-    b.addEventListener('click', () => { pickVal = o.v; $$('.sheet-row', rows).forEach(x => x.classList.remove('sel')); b.classList.add('sel'); });
-    rows.append(b);
-  });
-  $('#pickSheet').hidden = false;
-  const selRow = $('.sheet-row.sel', rows); if (selRow) selRow.scrollIntoView({ block:'center' });
+/* --------------------------------------------------------------------------
+   DRUM PICKER — the onboarding profile's height / weight sheet, one scroll
+   implementation for the settings values and the calendar's wheel.
+   Selection follows the scroll position: whatever sits in the band wins.
+   -------------------------------------------------------------------------- */
+const ROW = 44;
+function fillCol(col, items, selectedIndex, onPick){
+  col.innerHTML = '<div class="pad"></div>' + items.map((it, i) => `<div class="opt${i === selectedIndex ? ' on' : ''}" role="option" aria-selected="${i === selectedIndex}" data-i="${i}">${it}</div>`).join('') + '<div class="pad"></div>';
+  $$('.opt', col).forEach(o => o.onclick = () => col.scrollTo({ top:Number(o.dataset.i) * ROW, behavior: hmReduced.matches ? 'auto' : 'smooth' }));
+  let raf = null;
+  col.onscroll = () => {
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      const i = Math.max(0, Math.min(items.length - 1, Math.round(col.scrollTop / ROW)));
+      $$('.opt', col).forEach((o, k) => { o.classList.toggle('on', k === i); o.setAttribute('aria-selected', String(k === i)); });
+      onPick(i);
+    });
+  };
+  col.scrollTop = selectedIndex * ROW;
 }
-function closePick(){ $('#pickSheet').hidden = true; pickOn = null; }
-$$('[data-pickcancel]').forEach(el => el.addEventListener('click', closePick));
-$('#pickConfirm').addEventListener('click', () => { const fn = pickOn, v = pickVal; closePick(); if (fn) fn(v); });
+let drumOn = null, drumVal = null;
+function openDrum(title, values, unit, current, onPick){
+  drumOn = onPick; drumVal = current;
+  $('#drumTitle').textContent = title;
+  $('#drumSheet').hidden = false;   // visible first, or scrollTop lands nowhere
+  fillCol($('#drumVals'), values.map(String), Math.max(0, values.indexOf(current)), i => { drumVal = values[i]; });
+  fillCol($('#drumUnits'), [unit], 0, () => {});
+}
+function closeDrum(){ $('#drumSheet').hidden = true; drumOn = null; }
+$$('[data-drumcancel]').forEach(el => el.addEventListener('click', closeDrum));
+$('#drumConfirm').addEventListener('click', () => { const fn = drumOn, v = drumVal; closeDrum(); if (fn) fn(v); });
 
 /* --------------------------------------------------------------------------
    3-DOT MENU → About <metric> · Measurement settings
@@ -1465,8 +1637,8 @@ $('#sBody').addEventListener('click', e => {
   const k = S.metric, c = MON[k], m = METRICS[k];
   if (b.dataset.act === 'toggle'){ c.on = !c.on; renderSettings(); }
   else if (b.dataset.act === 'alert'){ MON.hrAlert = !MON.hrAlert; renderSettings(); }
-  else if (b.dataset.act === 'interval') openPick('Sampling interval', m.settings.intervals.map(v => ({ v, label:String(v) })), c.interval, v => { c.interval = v; renderSettings(); }, 'min');
-  else if (b.dataset.act === 'upper') openPick('Upper limit', [120,130,140,150,160,170,180,190,200].map(v => ({ v, label:String(v) })), MON.hrUpper, v => { MON.hrUpper = v; renderSettings(); }, 'bpm');
+  else if (b.dataset.act === 'interval') openDrum('Sampling interval', m.settings.intervals, 'min', c.interval, v => { c.interval = v; renderSettings(); });
+  else if (b.dataset.act === 'upper') openDrum('Upper limit', [120,130,140,150,160,170,180,190,200], 'bpm', MON.hrUpper, v => { MON.hrUpper = v; renderSettings(); });
 });
 
 /* --------------------------------------------------------------------------
@@ -1478,17 +1650,20 @@ $('#sBody').addEventListener('click', e => {
    Home card's figure; the charts do not change after a reading (sample data).
    -------------------------------------------------------------------------- */
 const HM_COOLDOWN = 49; // seconds before another reading is offered
+const titleCase = t => t.replace(/\b([a-z])/g, c => c.toUpperCase()); // button labels are Title Case (components/button.html)
 const hmReduced = matchMedia('(prefers-reduced-motion: reduce)');
 const meas = { state:'idle', remaining:HM_COOLDOWN, cd:null };
 function hmFmt(s){ const m = Math.floor(s / 60), r = s % 60; return `${m < 10 ? '0' : ''}${m}:${r < 10 ? '0' : ''}${r}`; }
 function renderMeasureCta(){
   const m = METRICS[S.metric]; if (!m) return;
   const inert = S.state === 'empty' || S.state === 'loading';
+  // Title Case labels, per components/button.html
   const label = meas.state === 'measuring' ? 'Measuring…'
-              : meas.state === 'disabled'  ? `Measure again in ${hmFmt(meas.remaining)}`
-              : (S.state === 'empty' ? 'Take your first reading' : 'Measure ' + m.name.toLowerCase());
-  const cls = meas.state === 'measuring' ? ' is-measuring' : (meas.state === 'disabled' ? ' is-disabled' : '');
-  $('#dMeasureSlot').innerHTML = `<button class="cta measure${cls}" type="button" id="dMeasure"${(meas.state !== 'idle' || inert) ? ' aria-disabled="true"' : ''}><span class="fill" id="maFill"></span>${icon('pulse','ico')}<span class="txt">${label}</span></button>`;
+              : meas.state === 'disabled'  ? `Measure Again In ${hmFmt(meas.remaining)}`
+              : (S.state === 'empty' ? 'Take Your First Reading' : 'Measure ' + titleCase(m.name));
+  const cls = meas.state === 'measuring' ? ' is-measuring' : '';
+  const disabled = meas.state === 'disabled' || inert;
+  $('#dMeasureSlot').innerHTML = `<button class="btn btn--secondary measure${cls}" type="button" id="dMeasure"${disabled ? ' disabled' : ''}${meas.state === 'measuring' ? ' aria-disabled="true"' : ''}><span class="fill" id="maFill"></span>${icon('pulse')}<span class="txt">${label}</span></button>`;
   $('#dMeasure').addEventListener('click', () => { if (meas.state === 'idle' && !inert) hmSetState('measuring'); });
 }
 function hmClearTimers(){ clearInterval(meas.cd); meas.cd = null; }
@@ -1500,7 +1675,7 @@ function hmSetState(k){
   if (k === 'disabled') meas.cd = setInterval(() => {
     meas.remaining--;
     if (meas.remaining <= 0){ hmSetState('idle'); return; }
-    const t = $('#dMeasure .txt'); if (t) t.textContent = `Measure again in ${hmFmt(meas.remaining)}`;
+    const t = $('#dMeasure .txt'); if (t) t.textContent = `Measure Again In ${hmFmt(meas.remaining)}`;
   }, 1000);
 }
 function hmStartRun(){

@@ -5,6 +5,20 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-08 (round three) — Health metrics: buttons now use the design
+  system's button component (components/button.html) with Title Case labels;
+  Measure is the SECONDARY tier so it no longer out-pulls the charts, the
+  readings sheet's Done is secondary too. The date picker is the onboarding
+  profile's date-of-birth calendar in four modes (day grid, tap-a-day week
+  band, month grid, year grid; month title flips to the month + year wheel),
+  replacing the month-scroll and list pickers. Settings values (interval,
+  upper limit) use the onboarding profile's drum sheet (number + unit
+  columns). Design-system audit of the flow file: radii moved to tokens
+  (12 / 20 / 24), the date pill's off-token 14px flagged and set to 12,
+  calendar day numbers on numS. Flags: secondary vs the component's
+  "parallel route" rule; Monday-first calendar vs the reference's
+  Sunday-first; the drum's 15/20 resting row kept verbatim (owner component).
+
 - 2026-09-08 (round two) — Health metrics: chart titles are averages on
   every view ("Today's average", "Week's average", "Month's average",
   "Year's average"; "Last night's average" on the Sleep scope) — no more

@@ -12,9 +12,12 @@ temperature, Blood oxygen (SpO₂) — each with:
 1. **D / W / M / Y period switcher** (the homepage's `.seg4` pill). Pages
    always open on Day.
 2. **Date selector** — under the period pill: ‹ › step one day / week /
-   month / year back or forward (forward stops at today); the label opens a
-   picker — the homepage's month-scroll calendar for Day, a value sheet
-   listing recent weeks, months or years otherwise.
+   month / year back or forward (forward stops at today); the label opens the
+   onboarding profile's date-of-birth calendar in four modes: a month grid
+   for Day, the same grid with tap-a-day → its Mon–Sun week for Week, a 3×4
+   month grid for Month, a 3×4 year grid for Year. The month title flips the
+   day / week grid to the month + year wheel (the drum picker). ✓ confirms,
+   ✕ discards.
 3. **Chart card** — the Activity tab's Steps / Distance card layout: title
    on the left (`Today's average`, `Week's average`, `Month's average`,
    `Year's average`; `Last night's average` on the Sleep Day view) with the
@@ -38,16 +41,19 @@ temperature, Blood oxygen (SpO₂) — each with:
    - SpO₂: Average · Lowest · Below 95%
 7. **Time in range** — one continuous bar whose sections fill by share (no
    gaps, no rule under the bar), then one row per zone with its percentage.
-8. **Measure CTA** — at the bottom of every page, the Health monitor's
-   Measure All button for one metric: idle → measuring (the button fills for
-   the length of the reading while the homepage's reading scene plays over
-   the blurred page) → the readings sheet with this metric's row and Done →
-   a 49 s cooldown ("Measure again in 00:49") → idle.
+8. **Measure button** — at the bottom of every page, the design-system
+   button (components/button.html) in the SECONDARY tier so it sits below
+   the charts in emphasis, label in Title Case ("Measure Heart Rate"): idle →
+   measuring (the outline fills for the length of the reading while the
+   homepage's reading scene plays over the blurred page) → the readings
+   sheet with this metric's row and Done → a 49 s disabled cooldown
+   ("Measure Again In 00:49") → idle.
 9. **3-dot menu** — *About <metric>* (how it is measured, what the zones
    mean, one thing worth knowing) and *Measurement settings*, built on the
    Me tab's Health Monitor page: the sensor's on/off switch with its sampling
    interval (inert when off); heart rate also gets the warning switch and
-   the upper limit (120–200 bpm). Values are shared across pages.
+   the upper limit (120–200 bpm). Values are picked in the onboarding
+   profile's drum sheet (number column + unit column) and shared across pages.
 
 **Removed on purpose:** the bottom tabs that let a reader jump from one
 metric's page to another (owner, 2026-09-08). Back → tap is the only route.
@@ -111,6 +117,13 @@ overnight card, so it has no sleep entry.
   data), so stepping back visibly changes the page.
 - Every metric's settings page gets a switch + interval; only heart rate has
   the alert + upper limit, per the Me tab's page.
+- Measure uses the secondary tier although the component reserves it for a
+  parallel route; tertiary reads as dismiss / skip, so secondary is the
+  closest fit for a de-emphasised action.
+- The calendar starts the week on Monday (the reference starts on Sunday) so
+  a picked week is one unbroken row; day numbers use numS 13/16 instead of
+  the reference's off-scale 16/20.
+- The date pill radius is the 12px token; the homepage's is 14px (no token).
 - `metric.stress` added to `js/tokens.js` (it was referenced but missing).
 
 ## Dependencies
