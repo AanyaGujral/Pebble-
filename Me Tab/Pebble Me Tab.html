@@ -1537,21 +1537,31 @@ body{
 .row .tapnote{display:none}
 .row[data-taps] .tapnote{display:block}
 
-/* ---- FAQ accordion ------------------------------------------------------- */
-.faq .row{align-items:flex-start}
-.faq .row .lab{white-space:normal}
-.faq .row .caret{margin-top:1px;transition:transform var(--duration-base) ease}
-.faq .row[aria-expanded="true"] .caret{transform:rotate(90deg)}
-.faq .ans{
-  display:none;padding:0 16px 16px 16px;margin-top:-6px;
-  font-size:13px;line-height:19px;font-weight:400;color:var(--text-2);
-}
-.faq .row[aria-expanded="true"] + .ans{display:block}
-/* the answer needs the same inset hairline the rows give each other */
-.faq .ans + .row::after{
+/* ---- FAQ accordion -------------------------------------------------------
+   Fixed (owner, 2026-09-08): "the answer opens under the question". The
+   answer used to be a sibling of the row pulled up with a negative margin,
+   so its first line sat inside the row's box and the row's raised background
+   painted over it. Now each question + answer is ONE item: the row is the
+   header, the answer sits below it inside the same item, and the raised
+   background covers the whole open item rather than just the question. The
+   hairline moves from the row to the item, so it still runs between
+   questions and never between a question and its own answer. */
+.faq .item{position:relative}
+.faq .item + .item::after{
   content:"";position:absolute;top:0;left:16px;right:16px;
   height:var(--border-hairline);background:var(--divider);
 }
+.faq .item[data-open="true"]{background:var(--surface-raised)}
+.faq .item[data-open="true"] .row:hover{background:transparent}
+.faq .row{align-items:flex-start}
+.faq .row .lab{white-space:normal}
+.faq .row .caret{margin-top:1px;transition:transform var(--duration-base) ease}
+.faq .item[data-open="true"] .caret{transform:rotate(90deg)}
+.faq .ans{
+  display:none;padding:0 16px 16px 16px;
+  font-size:13px;line-height:19px;font-weight:400;color:var(--text-2);
+}
+.faq .item[data-open="true"] .ans{display:block}
 
 /* ---- the simple hero used by Find Device and Take Picture ---------------- */
 .mini-hero{
@@ -5673,9 +5683,13 @@ let faqOpen = -1;
 function renderFaq(){
   $('#faqBody').innerHTML =
     '<div class="group faq">' + FAQ.map(([q, a], i) =>
-      '<button class="row" type="button" data-act="faq:toggle" data-i="' + i + '" aria-expanded="' + (i === faqOpen) + '">' +
-        '<span class="lab">' + q + '</span><span class="phi caret" data-ph="caret-right"></span></button>' +
-      '<div class="ans">' + a + '</div>'
+      /* one item per question: the row is the header, the answer lives INSIDE
+         the same item so it can never be covered by the row (see the CSS) */
+      '<div class="item" data-open="' + (i === faqOpen) + '">' +
+        '<button class="row" type="button" data-act="faq:toggle" data-i="' + i + '" aria-expanded="' + (i === faqOpen) + '" aria-controls="faqAns' + i + '">' +
+          '<span class="lab">' + q + '</span><span class="phi caret" data-ph="caret-right"></span></button>' +
+        '<div class="ans" id="faqAns' + i + '">' + a + '</div>' +
+      '</div>'
     ).join('') + '</div>' +
     '<p class="grp-note">Not answered here? The Pebble team replies to <b>help@pebblecart.com</b> within a working day.</p>';
   injectIcons($('#p-faq'));

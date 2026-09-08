@@ -1,5 +1,14 @@
 # Changelog
 
+- 2026-09-08 — **FAQ accordion fixed** (owner: "the answer opens under the
+  question"). The answer was a sibling of the question row pulled up with a
+  negative margin, so its first line sat inside the row's box and the row's
+  raised background painted over it. Each question + answer is now ONE
+  `.item`: the row is the header, the answer sits below it inside the item,
+  the raised background covers the whole open item, and the hairline moved
+  from the row to the item so it runs between questions only. Standalone
+  `Me Tab/Pebble Me Tab.html` regenerated and artifact republished.
+
 - 2026-09-03 (late) — **Feedback round on the inner pages** (owner):
     • **S02 Pair a device is in**, PORTED from `Pebble Onboarding.html` §4j —
       the same rings, tips card, device list, connecting screen and success
