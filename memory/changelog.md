@@ -5,6 +5,13 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-09 (evening) — Health metrics: the Sleep-tab entry and its
+  sleep-window scope are removed from the flow (owner: "remove the sleep
+  tab from this flow") — the Home tab's Health monitor is the only entry.
+  Gone with it: the overnight cards, the "During sleep" chip, the per-night
+  series and scales, the entry switch in the control panel. The standalone
+  HTML was handed to the owner as a file.
+
 - 2026-09-09 (later still) — Health metrics: pages opened from the Sleep
   tab no longer show the one-tap Measure button (owner) — overnight
   readings come from the band's schedule. Sleep-tab card titles can now

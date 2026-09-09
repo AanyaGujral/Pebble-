@@ -2,7 +2,7 @@
 
 **File:** `Health Metrics/health-metrics.html` (standalone; opens by double-click)
 **Status:** Prototype built to the owner's 2026-09-08 brief — awaiting UX review
-**Entry points:** Home tab → Health monitor cards · Sleep tab → overnight vitals cards
+**Entry point:** Home tab → Health monitor cards (the Sleep-tab entry was removed on 2026-09-09)
 
 ## What it does
 
@@ -20,7 +20,7 @@ temperature, Blood oxygen (SpO₂) — each with:
    ✕ discards.
 3. **Chart card** — the Activity tab's Steps / Distance card layout: title
    on the left (`Today's average`, `Week's average`, `Month's average`,
-   `Year's average`; `Last night's average` on the Sleep Day view) with the
+   `Year's average`) with the
    zone status pill under it, the figure + unit on the right with a trend
    line giving the period and its min–max range (`Today · 53 – 126 bpm`).
    No healthy band or legend on any chart (owner, 2026-09-08).
@@ -59,17 +59,9 @@ temperature, Blood oxygen (SpO₂) — each with:
 **Removed on purpose:** the bottom tabs that let a reader jump from one
 metric's page to another (owner, 2026-09-08). Back → tap is the only route.
 
-## Sleep-tab scope
-
-Pages opened from the Sleep tab carry a "During sleep" chip and show the
-sleep window only: Day = 23:00–07:00, W/M/Y = one range bar per night
-(titles read `Last night's average`, `Week's average`, …). There is no
-Measure button on these pages (owner, 2026-09-09). Stress has no overnight
-card, so it has no sleep entry.
-
 ## States (control panel beside the phone)
 
-| State | Home / Sleep cards | Detail page |
+| State | Home cards | Detail page |
 |---|---|---|
 | Default | Live figures | Full page |
 | Partial data | Live figures | Sensor gap in the Day line (dotted bridge), missing bars in W/M/Y, note "5 of 7 days measured" |
@@ -89,10 +81,9 @@ card, so it has no sleep entry.
 ## Acceptance criteria
 
 - [x] Tapping any Health monitor card opens its page on Day
-- [x] Tapping a Sleep-tab vitals card opens the same page scoped to the sleep window
 - [x] D / W / M / Y switch the chart; Day line, W/M/Y range bars
 - [x] Scrubbing reads into the header and snaps back on release
-- [x] Stat strip and Time in range recompute per period and scope
+- [x] Stat tiles and Time in range recompute per period
 - [x] Default · Partial · No data · Loading states on every screen
 - [x] Date selector per period with calendar / list pickers
 - [x] Measure CTA with the homepage's reading scene and readings sheet
@@ -110,8 +101,8 @@ card, so it has no sleep entry.
 - The chart card, chart height and tiles follow the Activity tab (owner call,
   2026-09-08) rather than the reference screenshot's large-figure header;
   the zone pill is the one element the Activity pages do not have.
-- Skin temperature uses the Home card's 36.x °C scale everywhere; the Sleep
-  tab card's 33.2 °C is untouched and inconsistent.
+- Skin temperature uses the Home card's 36.x °C scale; the Sleep tab card in
+  the homepage file says 33.2 °C, which is inconsistent.
 - Home's Measure All stays visual-only; the per-metric Measure CTA runs the
   ported scene. A fresh reading shows the Home card's figure and does not
   alter the charts (sample data).

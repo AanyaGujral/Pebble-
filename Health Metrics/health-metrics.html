@@ -14,13 +14,13 @@
    --------------------------------------------------------------------------
    What this file is: the health-monitor detail pages, built as their own
    standalone prototype (owner, 2026-09-08: "the homepage is the entry point,
-   don't add the whole prototype"). It reproduces ONLY the two entry points:
-     1. the Home tab's "Health monitor" section (five cards + Measure All),
-     2. the Sleep tab's four overnight vitals cards,
-   and the five detail pages they open. Everything else in the app lives in
+   don't add the whole prototype"). It reproduces ONLY the entry point — the
+   Home tab's "Health monitor" section (five cards + Measure All) — and the
+   five detail pages it opens. The Sleep-tab entry built earlier was removed
+   on 2026-09-09 (owner: "remove the sleep tab from this flow"). Everything else in the app lives in
    "Homepage + measurel all + start workout flow.html" at the repo root.
 
-   How to read it:  1. TOKENS   2. PAGE + PHONE   3. ENTRY PAGES
+   How to read it:  1. TOKENS   2. PAGE + PHONE   3. ENTRY PAGE
                     4. DETAIL PAGE   5. STATES   6. SCRIPT (bottom)
 
    Opens by double-clicking (no server, no build step).
@@ -156,8 +156,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .phi svg{width:100%;height:100%;display:block;fill:currentColor}
 
 /* ==========================================================================
-   3. ENTRY PAGES — the Home tab's Health monitor section, and the Sleep
-   tab's overnight vitals. Both reuse the homepage's classes verbatim.
+   3. ENTRY PAGE — the Home tab's Health monitor section, reusing the
+   homepage's classes verbatim.
    ========================================================================== */
 .screen-head{padding:44px 0 0;display:flex;align-items:flex-start;justify-content:space-between}
 .screen-title{font:500 20px/26px var(--font-text);letter-spacing:-0.005em;color:var(--text-1);margin:0}
@@ -204,7 +204,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .hm .cta{cursor:default}
 .measure{margin-top:4px}
 
-/* Sleep tab overnight vitals — the homepage's chart-card format */
+/* chart-card header pieces (the homepage's format) — the detail card's .card-head / .card-metric */
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .card-title{font:500 17px/22px var(--font-text);color:var(--text-1);white-space:nowrap;margin:0}
 .card-head .card-metric{flex:0 0 auto;max-width:100%}
@@ -214,16 +214,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .card-metric .num.dash{color:var(--text-3)}
 .card-metric .unit{font:500 11px/16px var(--font-text);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
 .trend{margin-top:4px;display:flex;align-items:center;justify-content:flex-end;gap:4px;font:500 11px/16px var(--font-text);color:var(--text-2);white-space:nowrap}
-.tri-up{width:7px;height:5px;background:var(--positive-icon);clip-path:polygon(50% 0,100% 100%,0 100%)}
-.tri-down-bad{width:7px;height:5px;background:var(--negative-icon);clip-path:polygon(0 0,100% 0,50% 100%)}
-.tri-down-good{width:7px;height:5px;background:var(--positive-icon);clip-path:polygon(0 0,100% 0,50% 100%)}
-.dot-flat{width:6px;height:6px;border-radius:50%;background:var(--text-3)}
 .card-body{margin-top:16px}
-.card.tap{cursor:pointer;border:0;width:100%;text-align:left;font-family:inherit;color:inherit;display:block}
-.card.tap:hover{background:var(--surface-raised)}
-.card.tap .card-title{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
-.card.tap .card-title .tt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.card.tap .card-title .caret{width:14px;height:14px;color:var(--text-3)}
 
 /* chart bits — shared by every chart in this file */
 .chartmount{margin-top:0} /* spacing comes from .card-body, as on the Activity tab */
@@ -250,9 +241,6 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .sub-head .backbtn:hover{background:var(--surface-raised)}
 .sub-head .backbtn .phi{width:20px;height:20px}
 .sub-head .t{flex:1;min-width:0;font:500 20px/26px var(--font-text);letter-spacing:-0.005em;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* "During sleep" chip — marks the pages opened from the Sleep tab, which
-   show the sleep window only (owner, 2026-09-08) */
-.scopechip{flex:0 0 auto;padding:4px 10px;border-radius:var(--radius-pill);background:var(--surface-raised);color:var(--metric-sleep);font:600 11px/16px var(--font-text);letter-spacing:0.02em}
 .sub-body{padding:16px 16px 0;display:flex;flex-direction:column;gap:12px}
 
 /* D / W / M / Y period switcher — the homepage's .seg4, unchanged */
@@ -640,16 +628,11 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
     <label><input type="radio" name="st" value="empty"><span>No data<span class="desc">New user, nothing synced yet</span></span></label>
     <label><input type="radio" name="st" value="loading"><span>Loading<span class="desc">First open, sync in progress</span></span></label>
   </div>
-  <h2>Entry point</h2>
-  <div class="opts" id="entryOpts">
-    <label class="on"><input type="radio" name="en" value="home" checked><span>Home tab<span class="desc">Health monitor · full day</span></span></label>
-    <label><input type="radio" name="en" value="sleep"><span>Sleep tab<span class="desc">Overnight vitals · sleep window only</span></span></label>
-  </div>
   <h2>Jump to a page</h2>
   <div class="links" id="jumpLinks"></div>
   <h2>What to check</h2>
   <ul>
-    <li>Tap a card → its page opens on the Day view.</li>
+    <li>Tap a Health monitor card → its page opens on the Day view.</li>
     <li>D / W / M / Y switches the chart: Day is a line, the rest are range bars with the average tick.</li>
     <li>‹ › steps the date; the label opens the calendar (day, week, month or year view).</li>
     <li>Press-drag on any chart reads a value into the header.</li>
@@ -691,26 +674,11 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
         </div>
       </section>
 
-      <!-- SLEEP entry — the four overnight vitals cards from the Sleep tab.
-           Tapping one opens the same detail page scoped to the sleep window
-           (owner, 2026-09-08: "charts of heart rate in the sleep duration
-           only"). Stress has no overnight card, so it has no sleep entry. -->
-      <section class="page" id="page-sleep">
-        <div class="screen-head">
-          <div>
-            <h1 class="screen-title">Sleep</h1>
-            <div class="subnote" style="margin-top:4px">Last night · 23:00 – 07:00 · 7h 24m</div>
-          </div>
-        </div>
-        <div class="stack" id="sleepStack"></div>
-      </section>
-
       <!-- DETAIL page — one template, filled by renderDetail() -->
       <div class="subpage" id="detail" hidden>
         <div class="sub-head">
           <button class="backbtn" id="btnBack" aria-label="Back"><span class="phi" data-ph="caret-left"></span></button>
           <span class="t" id="dTitle">Heart rate</span>
-          <span class="scopechip" id="dScope" hidden>During sleep</span>
           <!-- 3-dot menu: About + Measurement settings (owner, 2026-09-08) -->
           <button class="dots-btn" id="dDots" type="button" aria-label="More" aria-haspopup="menu"><span></span><span></span><span></span></button>
         </div>
@@ -865,7 +833,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 /* ==========================================================================
    6. SCRIPT
    Sections: helpers · sample data · metric configs · chart drawing ·
-   scrubbing · renderers (home, sleep, detail) · navigation · state panel
+   scrubbing · renderers (home, detail) · navigation · state panel
    ========================================================================== */
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -902,12 +870,9 @@ const TONES = {
    - the Day headline ("Latest") equals the Home card figure (HR 72, HRV 57,
      stress 38, skin 36.4 °C, SpO₂ 97) — the Home tab is the entry point, so
      its numbers rule (owner default, 2026-09-08).
-   - the sleep-scope Day series are the Sleep tab's own overnight arrays
-     (HR / HRV / SpO₂ verbatim from the homepage file).
    FLAG: the Sleep tab prints skin temperature as 33.2 °C (wrist skin) while
-   the Home card says 36.4 °C. This file keeps the Home scale everywhere so
-   Day and Week never jump by 3 degrees; the Sleep tab card itself is not
-   touched. Say which scale is right and the other gets fixed.
+   the Home card says 36.4 °C; this file uses the Home scale. Say which is
+   right and the other gets fixed.
    -------------------------------------------------------------------------- */
 function seeded(seed){ let s = (seed * 9301 + 49297) % 233280; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
 function interp(anchors, h){
@@ -941,9 +906,6 @@ function ranges(n, base, wig, dn, up, seed, avgs, cap){
   }
   return out;
 }
-const HR_NIGHT   = [62,60,58,56,55,54,53,54,55,53,52,54,56,55,57,59,61];
-const HRV_NIGHT  = [38,40,43,45,48,50,52,51,49,52,54,53,50,48,46,44,42];
-const SPO2_NIGHT = [97,97,96,96,95,95,94,95,96,96,97,96,96,95,96,97,97];
 // HRV year averages read off the reference screenshot (12-month avg 53, range 43–63)
 const HRV_YEAR_AVGS = [53,54,52,52,58,52,50,51,53,50,55,52];
 
@@ -951,7 +913,7 @@ const WEEK_NAMES  = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturda
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const hhmm = mins => { const m = mins % 1440; return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); };
 
-/* Period metadata per scope. `missing` = the indices the Partial state
+/* Period metadata. `missing` = the indices the Partial state
    blanks out; `over` = the headline overline; `sub` = its first clause. */
 /* Titles read "<period>'s average" on every view (owner, 2026-09-08 — no
    "Latest"). The date selector below decides which day / week / month /
@@ -961,14 +923,6 @@ const PERIODS = {
     day:   { n:48, ticks:['00:00','6:00','12:00','18:00','24:00'], stamp:i => hhmm(i*30), over:"Today's average", sub:'Today', missing:[20,21,22,23,24,25,26,27], gapNote:'Sensor gap 10:00 – 13:30' },
     week:  { n:7,  ticks:['M','T','W','T','F','S','S'], tickIdx:[0,1,2,3,4,5,6], stamp:i => WEEK_NAMES[i], over:"Week's average", sub:'This week', missing:[2,5], unit:'days' },
     month: { n:30, ticks:['1','5','9','13','17','21','25','29'], tickIdx:[0,4,8,12,16,20,24,28], stamp:i => 'Day ' + (i+1), over:"Month's average", sub:'This month', missing:[3,4,11,17,18,26], unit:'days' },
-    year:  { n:12, ticks:['J','F','M','A','M','J','J','A','S','O','N','D'], tickIdx:[0,1,2,3,4,5,6,7,8,9,10,11], stamp:i => MONTH_SHORT[i], over:"Year's average", sub:'This year', missing:[7], unit:'months' }
-  },
-  sleep: {
-    // FLAG: the owner named "today's average" for Day; on the Sleep scope the
-    // day is a night, so it reads "Last night's average"
-    day:   { n:17, ticks:['23:00','1:00','3:00','5:00','7:00'], stamp:i => hhmm(23*60 + i*30), over:"Last night's average", sub:'Last night', missing:[6,7,8,9], gapNote:'Sensor gap 02:00 – 03:30' },
-    week:  { n:7,  ticks:['M','T','W','T','F','S','S'], tickIdx:[0,1,2,3,4,5,6], stamp:i => WEEK_NAMES[i] + ' night', over:"Week's average", sub:'This week', missing:[2,5], unit:'nights' },
-    month: { n:30, ticks:['1','5','9','13','17','21','25','29'], tickIdx:[0,4,8,12,16,20,24,28], stamp:i => 'Night ' + (i+1), over:"Month's average", sub:'This month', missing:[3,4,11,17,18,26], unit:'nights' },
     year:  { n:12, ticks:['J','F','M','A','M','J','J','A','S','O','N','D'], tickIdx:[0,1,2,3,4,5,6,7,8,9,10,11], stamp:i => MONTH_SHORT[i], over:"Year's average", sub:'This year', missing:[7], unit:'months' }
   }
 };
@@ -980,41 +934,35 @@ const PERIODS = {
    -------------------------------------------------------------------------- */
 const METRICS = {
   hr: {
-    name:'Heart rate', card:'Heart Rate', sleepCard:'Heart rate', unit:'bpm', dec:0,
+    name:'Heart rate', card:'Heart Rate', unit:'bpm', dec:0,
     color:'var(--metric-heart-rate)',
     home:{ v:'72', foot:'Resting · just now', tri:{d:'down',tone:'pos'} },
     sheetNote:'Your heart rate says you\u2019re calm and rested, Aanya',
     settings:{ label:'Continuous heart rate', sub:'All-day interval sampling', intervals:[1,5,10,30] },
     about:{ how:'Your band shines green light into the skin on your wrist and reads how much bounces back — every pulse changes it. Continuous monitoring samples at the interval you set in Measurement settings; a manual reading takes about half a minute. Readings are estimates, not clinical measurements.', zones:['Typical resting range for an adult', 'Stress, caffeine, heat or a poor night can lift it here', 'Worth a rest — or a check if it stays here at rest'], tip:'Compare resting readings taken at the same time of day. A resting heart rate that drifts up over a week often shows up before you feel run down.' },
-    sleep:{ trend:'<span class="tri-down-good"></span><span>3% down from last night</span>' },
     zones:[ {k:'good',label:'Good',tone:'pos',min:-Infinity,max:75}, {k:'elev',label:'Elevated',tone:'cau',min:75,max:90}, {k:'high',label:'High',tone:'neg',min:90,max:Infinity} ],
-    scale:{ home:{min:40,max:130}, sleep:{min:50,max:80} },
+    scale:{min:40,max:130},
     data:{
       home:{ day: () => curve(48, 23.5, [[0,58],[3,54],[5,55],[7,68],[9,74],[12,78],[14,72],[17,76],[18,118],[18.5,124],[19,96],[20,74],[22,68],[23.5,72]], 3, 11, true),
-             week: () => ranges(7, 71, 4, 16, 44, 12), month: () => ranges(30, 71, 4, 16, 44, 13), year: () => ranges(12, 70, 3, 17, 46, 14) },
-      sleep:{ day: () => HR_NIGHT.slice(),
-             week: () => ranges(7, 55, 2, 5, 9, 15), month: () => ranges(30, 55, 2, 5, 9, 16), year: () => ranges(12, 55, 1.5, 5, 9, 17) }
+             week: () => ranges(7, 71, 4, 16, 44, 12), month: () => ranges(30, 71, 4, 16, 44, 13), year: () => ranges(12, 70, 3, 17, 46, 14) }
     },
     // Resting = 10th percentile of the day's samples; for range views the mean of the daily lows
     tiles: st => [ ['Resting', st.resting, 'bpm'], ['Average', st.avg, 'bpm'], ['Max', st.max, 'bpm'] ]
   },
   hrv: {
-    name:'Heart rate variability', card:'HRV', sleepCard:'Heart rate variability', unit:'ms', dec:0,
+    name:'Heart rate variability', card:'HRV', unit:'ms', dec:0,
     color:'var(--metric-hrv)',
     home:{ v:'57', foot:'7-day avg 54 ms', tri:{d:'up',tone:'pos'} },
     sheetNote:'Your recovery looks steady today, Aanya',
     settings:{ label:'HRV monitoring', sub:'Measured during sleep and rest periods', intervals:[5,10,30,60] },
     about:{ how:'The gap between one heartbeat and the next changes with every breath. HRV is how much it varies, in milliseconds, read from the optical sensor while you are still and while you sleep. Higher usually means better recovery — compare against your own baseline, not other people.', zones:['Recovered — a good day to push', 'Normal for you — keep the day moderate', 'Under-recovered — ease off and sleep early'], tip:'One low night means little. A run of low nights alongside a rising resting heart rate is the pattern to act on.' },
-    sleep:{ trend:'<span class="tri-up"></span><span>8% up from last night</span>' },
     // Good from 56 ms: with the reference's twelve monthly averages this puts
     // exactly one month (May, 58) in Good — the 8% / 92% split the screenshot shows
     zones:[ {k:'good',label:'Good',tone:'pos',min:56,max:Infinity}, {k:'fair',label:'Fair',tone:'cau',min:40,max:56}, {k:'low',label:'Low',tone:'neg',min:-Infinity,max:40} ],
-    scale:{ home:{min:20,max:80}, sleep:{min:30,max:60} },
+    scale:{min:20,max:80},
     data:{
       home:{ day: () => curve(48, 23.5, [[0,62],[3,68],[6,64],[8,52],[12,46],[15,44],[18,50],[21,55],[23.5,57]], 4, 21, true),
-             week: () => ranges(7, 54, 4, 10, 11, 22, [55,52,58,49,54,57,53]), month: () => ranges(30, 54, 5, 10, 11, 23), year: () => ranges(12, 53, 3, 10, 10, 24, HRV_YEAR_AVGS) },
-      sleep:{ day: () => HRV_NIGHT.slice(),
-             week: () => ranges(7, 48, 3, 8, 9, 25), month: () => ranges(30, 48, 3, 8, 9, 26), year: () => ranges(12, 48, 2, 8, 9, 27) }
+             week: () => ranges(7, 54, 4, 10, 11, 22, [55,52,58,49,54,57,53]), month: () => ranges(30, 54, 5, 10, 11, 23), year: () => ranges(12, 53, 3, 10, 10, 24, HRV_YEAR_AVGS) }
     },
     tiles: st => [ ['Average', st.avg, 'ms'], ['Highest', st.max, 'ms'], ['Lowest', st.min, 'ms'] ]
   },
@@ -1026,61 +974,52 @@ const METRICS = {
     settings:{ label:'Stress monitoring', sub:'Measured automatically through the day', intervals:[5,10,30,60] },
     about:{ how:'A 0–100 index built from heart rate variability, heart rate and movement. Low readings mean your nervous system is in a rest state; high readings show sustained arousal. Exercise raises it too, so read it alongside what you were doing.', zones:['Relaxed — rest state', 'Engaged — a normal working day', 'Strained — take a breather when you can'], tip:'Two minutes of slow breathing usually pulls a Medium reading down within a quarter of an hour. Take a manual reading before and after to see it.' },
     zones:[ {k:'low',label:'Low',tone:'pos',min:-Infinity,max:40}, {k:'med',label:'Medium',tone:'cau',min:40,max:70}, {k:'high',label:'High',tone:'neg',min:70,max:Infinity} ],
-    scale:{ home:{min:0,max:90}, sleep:{min:0,max:45} },
+    scale:{min:0,max:90},
     data:{
       home:{ day: () => curve(48, 23.5, [[0,18],[5,14],[7,30],[9,42],[11,48],[13,36],[15,68],[16,62],[18,40],[21,30],[23.5,38]], 5, 31, true),
-             week: () => ranges(7, 38, 6, 20, 32, 32), month: () => ranges(30, 38, 7, 20, 32, 33), year: () => ranges(12, 37, 5, 20, 32, 34) },
-      sleep:{ day: () => curve(17, 8, [[0,26],[2,18],[4,14],[6,16],[8,24]], 3, 35, true),
-             week: () => ranges(7, 18, 3, 6, 8, 36), month: () => ranges(30, 18, 3, 6, 8, 37), year: () => ranges(12, 18, 2, 6, 8, 38) }
+             week: () => ranges(7, 38, 6, 20, 32, 32), month: () => ranges(30, 38, 7, 20, 32, 33), year: () => ranges(12, 37, 5, 20, 32, 34) }
     },
     // Time relaxed = share of samples (or of days) in the Low zone
     tiles: st => [ ['Average', st.avg, ''], ['Highest', st.max, ''], ['Time relaxed', st.shares.low, '%'] ]
   },
   skin: {
-    name:'Skin temperature', card:'Skin Temp', sleepCard:'Skin temperature', unit:'°C', dec:1,
+    name:'Skin temperature', card:'Skin Temp', unit:'°C', dec:1,
     color:'var(--metric-skin-temp)',
     home:{ v:'36.4', foot:'Same as baseline', tri:{d:'up',tone:'pos'} },
     sheetNote:'Right on your baseline, Aanya',
     settings:{ label:'Temperature monitoring', sub:'Measured during sleep and rest periods', intervals:[10,30,60] },
     about:{ how:'Read from the skin of your wrist, so it sits below your core temperature and moves with the room. The number that matters is the change from your own baseline, which the band learns over the first two weeks of nights.', zones:['Within your normal range', 'Cooler than your baseline — a cold room or poor circulation', 'Warmer than your baseline — can precede illness or follow a late workout'], tip:'A sustained rise of half a degree over two or three nights is worth noticing before you feel it.' },
-    sleep:{ trend:'<span class="dot-flat"></span><span>Same as last night</span>' },
     zones:[ {k:'normal',label:'Normal',tone:'pos',min:36.0,max:37.2}, {k:'below',label:'Below',tone:'cau',min:-Infinity,max:36.0}, {k:'above',label:'Above',tone:'neg',min:37.2,max:Infinity} ],
-    scale:{ home:{min:35.6,max:37.4}, sleep:{min:35.4,max:36.9} },
+    scale:{min:35.6,max:37.4},
     baseline:36.3,
     data:{
       home:{ day: () => curve(48, 23.5, [[0,36.1],[4,36.0],[7,36.2],[10,36.4],[13,36.5],[16,36.6],[19,36.5],[22,36.4],[23.5,36.4]], 0.1, 41),
-             week: () => ranges(7, 36.35, 0.1, 0.35, 0.35, 42), month: () => ranges(30, 36.35, 0.12, 0.35, 0.35, 43), year: () => ranges(12, 36.35, 0.08, 0.35, 0.35, 44) },
-      sleep:{ day: () => curve(17, 8, [[0,36.4],[2,36.2],[4,36.0],[6,36.1],[8,36.3]], 0.08, 45),
-             week: () => ranges(7, 36.15, 0.08, 0.2, 0.25, 46), month: () => ranges(30, 36.15, 0.1, 0.2, 0.25, 47), year: () => ranges(12, 36.15, 0.06, 0.2, 0.25, 48) }
+             week: () => ranges(7, 36.35, 0.1, 0.35, 0.35, 42), month: () => ranges(30, 36.35, 0.12, 0.35, 0.35, 43), year: () => ranges(12, 36.35, 0.08, 0.35, 0.35, 44) }
     },
     // Deviation = average minus the personal baseline, signed
     tiles: st => [ ['Average', st.avg, '°C'], ['Baseline', 36.3, '°C'], ['Deviation', st.avg == null ? null : st.avg - 36.3, '°C', 'signed'] ]
   },
   spo2: {
-    name:'Blood oxygen', card:'SpO₂', sleepCard:'Blood oxygen', unit:'%', dec:0,
+    name:'Blood oxygen', card:'SpO₂', unit:'%', dec:0,
     color:'var(--metric-spo2)',
     home:{ v:'97', foot:'Overnight low 95%', tri:{d:'up',tone:'pos'} },
     sheetNote:'Your blood oxygen is where it should be, Aanya',
     settings:{ label:'SpO\u2082 detection', sub:'Measured automatically during rest and sleep', intervals:[10,30,60] },
     about:{ how:'Red and infrared light estimate how much of the haemoglobin in your blood is carrying oxygen. Healthy readings sit between 95 and 100%. Brief dips during sleep are normal; repeated dips are worth mentioning to a doctor.', zones:['Normal saturation', 'Lower than usual — altitude, congestion or a poor sensor fit', 'Very low — if it repeats at rest, see a doctor'], tip:'Wear the band snug and a finger-width above the wrist bone for the most reliable overnight readings.' },
-    sleep:{ trend:'<span class="tri-down-bad"></span><span>1% down from last night</span>' },
     zones:[ {k:'normal',label:'Normal',tone:'pos',min:95,max:Infinity}, {k:'low',label:'Low',tone:'cau',min:90,max:95}, {k:'vlow',label:'Very low',tone:'neg',min:-Infinity,max:90} ],
-    scale:{ home:{min:88,max:100}, sleep:{min:88,max:100} },
+    scale:{min:88,max:100},
     data:{
       home:{ day: () => curve(48, 23.5, [[0,96],[3,95],[6,96],[9,97],[12,98],[15,97],[18,97],[21,96],[23.5,97]], 1, 51, true),
-             week: () => ranges(7, 96.6, 0.4, 2.5, 2, 52, null, 100), month: () => ranges(30, 96.6, 0.5, 2.5, 2, 53, null, 100), year: () => ranges(12, 96.6, 0.3, 2.5, 2, 54, null, 100) },
-      sleep:{ day: () => SPO2_NIGHT.slice(),
-             week: () => ranges(7, 96, 0.4, 2, 2, 55, null, 100), month: () => ranges(30, 96, 0.5, 2, 2, 56, null, 100), year: () => ranges(12, 96, 0.3, 2, 2, 57, null, 100) }
+             week: () => ranges(7, 96.6, 0.4, 2.5, 2, 52, null, 100), month: () => ranges(30, 96.6, 0.5, 2.5, 2, 53, null, 100), year: () => ranges(12, 96.6, 0.3, 2.5, 2, 54, null, 100) }
     },
     // Below 95% = share of samples under 95 (Day) / share of days or nights that dipped under 95
     tiles: st => [ ['Average', st.avg, '%'], ['Lowest', st.min, '%'], ['Below 95%', st.below95, '%'] ]
   }
 };
-const HOME_ORDER  = ['hrv','hr','stress','skin','spo2']; // Health monitor card order (homepage)
-const SLEEP_ORDER = ['hr','hrv','skin','spo2'];          // Sleep tab card order (homepage)
+const HOME_ORDER = ['hrv','hr','stress','skin','spo2']; // Health monitor card order (homepage)
 
 /* --------------------------------------------------------------------------
-   DATA HELPERS — fetch a series for (metric, scope, period), apply the
+   DATA HELPERS — fetch a series for (metric, period), apply the
    Partial state's gaps, and reduce it to the stats the page prints.
    -------------------------------------------------------------------------- */
 const fmtN = (m, v) => v == null ? '—' : (m.dec ? v.toFixed(m.dec) : String(Math.round(v)));
@@ -1088,10 +1027,10 @@ const fmtSigned = (m, v) => v == null ? '—' : ((v >= 0 ? '+' : '−') + Math.a
 const unitSuffix = m => m.unit ? ' ' + m.unit : '';
 const zoneOf = (m, v) => m.zones.find(z => v >= z.min && v < z.max) || m.zones[0];
 
-function getSeries(m, scope, period, state){
-  const raw = m.data[scope][period]();
+function getSeries(m, period, state){
+  const raw = m.data.home[period]();
   const kind = period === 'day' ? 'line' : 'range';
-  const P = PERIODS[scope][period];
+  const P = PERIODS.home[period];
   // SAMPLE DATA: an earlier day / week / month / year is the present series
   // nudged by a seeded factor, so stepping back visibly changes the page
   const back = S.back[period] || 0;
@@ -1313,7 +1252,7 @@ function attachScrub(mount, chart, onShow, onHide){
 /* --------------------------------------------------------------------------
    APP STATE + RENDERERS
    -------------------------------------------------------------------------- */
-const S = { entry:'home', state:'default', metric:null, scope:'home', period:'day', back:{ day:0, week:0, month:0, year:0 } };
+const S = { state:'default', metric:null, period:'day', back:{ day:0, week:0, month:0, year:0 } };
 const app = $('#app');
 
 /* soft triangle indicator — the Health monitor component's own glyph */
@@ -1342,57 +1281,27 @@ function renderHome(){
   }).join('');
   $('#hmCtaSlot').innerHTML = `<button class="cta" type="button" aria-disabled="true" title="Visual only in this flow — the reading scene lives in the homepage file">${icon('pulse','ico')}<span>${st === 'empty' ? 'Take Your First Reading' : 'Measure All'}</span></button>`;
   $('#hmUpd').textContent = st === 'empty' ? '' : (st === 'loading' ? 'Syncing…' : 'Updated 14:20');
-  $$('[data-open]', $('#hmGrid')).forEach(b => b.addEventListener('click', () => openDetail(b.dataset.open, 'home')));
-}
-
-/* SLEEP — four overnight vitals cards, each with its night line chart. */
-function renderSleep(){
-  const st = S.state, stack = $('#sleepStack');
-  stack.innerHTML = SLEEP_ORDER.map(key => {
-    const m = METRICS[key];
-    const s = getSeries(m, 'sleep', 'day', st);
-    const stt = stats(m, s);
-    const val = st === 'empty' ? '<span class="num dash">—</span>' : (st === 'loading' ? '<span class="skel" style="display:inline-block;width:48px;height:24px"></span>' : `<span class="num">${fmtN(m, stt.avg)}</span>`);
-    const trend = st === 'empty' ? '<span>No readings yet</span>' : (st === 'loading' ? '<span class="skel" style="display:inline-block;width:110px;height:12px"></span>' : m.sleep.trend);
-    return `<button class="card tap" type="button" data-open="${key}" aria-label="${m.sleepCard} details">
-      <div class="card-head">
-        <h3 class="card-title"><span class="tt">${m.sleepCard}</span>${icon('caret-right','phi caret')}</h3>
-        <div class="card-metric"><div class="val">${val}<span class="unit">${m.unit}</span></div><div class="trend">${trend}</div></div>
-      </div>
-      <div class="card-body"><div class="chartmount" data-key="${key}"></div></div></button>`;
-  }).join('');
-  $$('.chartmount', stack).forEach(mount => {
-    const m = METRICS[mount.dataset.key];
-    if (st === 'loading'){ drawSkeleton(mount, 120); return; }
-    const s = getSeries(m, 'sleep', 'day', st);
-    // FLAG: the Sleep tab's skin-temperature card marks the night's high and
-    // low with dots; not reproduced on this entry card (the detail page's
-    // Highest / Lowest tiles carry that information).
-    const chart = drawLine(mount, m, st === 'empty' ? s.values.map(() => null) : s.values, m.scale.sleep, PERIODS.sleep.day.ticks, { H:120 });
-    mount.classList.remove('chart'); // no scrubbing on the entry cards: a press opens the page
-  });
-  $$('[data-open]', stack).forEach(b => b.addEventListener('click', () => openDetail(b.dataset.open, 'sleep')));
+  $$('[data-open]', $('#hmGrid')).forEach(b => b.addEventListener('click', () => openDetail(b.dataset.open)));
 }
 
 /* DETAIL — the metric page: header, chart, stat strip, time in range. */
 function renderDetail(){
   const m = METRICS[S.metric]; if (!m) return;
-  const scope = S.scope, period = S.period, st = S.state;
-  const s = getSeries(m, scope, period, st);
+  const period = S.period, st = S.state;
+  const s = getSeries(m, period, st);
   const P = s.P;
   const stt = st === 'empty' ? { empty:true, shares:{} } : stats(m, s);
   const loading = st === 'loading', empty = st === 'empty' || stt.empty;
 
   $('#dTitle').textContent = m.name;
-  $('#dScope').hidden = scope !== 'sleep';
   $$('#dSeg button').forEach(b => { const on = b.dataset.period === period; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
 
   // ---- header: title + pill on the left, figure + trend on the right ----
   const headVal = stt.avg; // every view is an average (owner, 2026-09-08 — no "Latest")
   $('#dOver').textContent = P.over;
   const rangeTxt = empty ? '' : `<span class="sep">·</span>${fmtN(m, stt.min)} – ${fmtN(m, stt.max)}${unitSuffix(m)}`;
-  const when = S.back[period] ? dateInfo(period, S.back[period], scope).label : P.sub;
-  $('#dDateLabel').textContent = dateInfo(period, S.back[period] || 0, scope).full;
+  const when = S.back[period] ? dateInfo(period, S.back[period]).label : P.sub;
+  $('#dDateLabel').textContent = dateInfo(period, S.back[period] || 0).full;
   $('#dNext').disabled = !S.back[period];
   $('#dMenuAbout').textContent = 'About ' + m.name.toLowerCase();
   const headR = $('#dHeadR');
@@ -1414,9 +1323,9 @@ function renderDetail(){
   let chart = null;
   if (loading){ drawSkeleton(mount); }
   else if (s.kind === 'line'){
-    chart = drawLine(mount, m, empty ? s.values.map(() => null) : s.values, m.scale[scope], P.ticks, {});
+    chart = drawLine(mount, m, empty ? s.values.map(() => null) : s.values, m.scale, P.ticks, {});
   } else {
-    chart = drawRange(mount, m, empty ? s.values.map(() => null) : s.values, P.ticks, P.tickIdx, m.scale[scope]);
+    chart = drawRange(mount, m, empty ? s.values.map(() => null) : s.values, P.ticks, P.tickIdx, m.scale);
   }
   const note = $('#dNote');
   if (st === 'partial'){
@@ -1468,8 +1377,8 @@ function renderDetail(){
    2026-09-08): the only way from one metric to another is back → tap.
    -------------------------------------------------------------------------- */
 const detail = $('#detail');
-function openDetail(metric, scope){
-  S.metric = metric; S.scope = scope; S.period = 'day'; S.back = { day:0, week:0, month:0, year:0 };
+function openDetail(metric){
+  S.metric = metric; S.period = 'day'; S.back = { day:0, week:0, month:0, year:0 };
   renderDetail();
   detail.hidden = false; detail.scrollTop = 0;
   requestAnimationFrame(() => detail.classList.add('in'));
@@ -1478,17 +1387,9 @@ function closeDetail(){ detail.classList.remove('in'); detail.hidden = true; S.m
 $('#btnBack').addEventListener('click', closeDetail);
 $('#dSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ S.period = b.dataset.period; renderDetail(); } });
 
-function setEntry(entry){
-  S.entry = entry;
-  $('#page-home').classList.toggle('active', entry === 'home');
-  $('#page-sleep').classList.toggle('active', entry === 'sleep');
-  closeDetail();
-  renderJump();
-}
 function renderJump(){
-  const order = S.entry === 'home' ? HOME_ORDER : SLEEP_ORDER;
-  $('#jumpLinks').innerHTML = order.map(k => `<button type="button" data-jump="${k}"><span class="dot" style="background:${METRICS[k].color}"></span>${METRICS[k].card}</button>`).join('');
-  $$('[data-jump]').forEach(b => b.addEventListener('click', () => openDetail(b.dataset.jump, S.entry)));
+  $('#jumpLinks').innerHTML = HOME_ORDER.map(k => `<button type="button" data-jump="${k}"><span class="dot" style="background:${METRICS[k].color}"></span>${METRICS[k].card}</button>`).join('');
+  $$('[data-jump]').forEach(b => b.addEventListener('click', () => openDetail(b.dataset.jump)));
 }
 
 
@@ -1503,13 +1404,9 @@ const MONTH_NAMES = ['January','February','March','April','May','June','July','A
 const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const addDays = (d, n) => new Date(d.getTime() + n * 86400000);
 const md = d => MONTH_SHORT[d.getUTCMonth()] + ' ' + d.getUTCDate();
-function dateInfo(period, back, scope){
+function dateInfo(period, back){
   if (period === 'day'){
     const d = addDays(TODAY, -back);
-    if (scope === 'sleep'){
-      return back === 0 ? { label:'Last night', full:'Last night, ' + md(addDays(d, -1)) + ' – ' + d.getUTCDate(), d }
-                        : { label:'Night of ' + md(addDays(d, -1)), full:DAY_SHORT[d.getUTCDay()] + ', night of ' + md(addDays(d, -1)), d };
-    }
     return back === 0 ? { label:'Today', full:'Today, ' + md(d), d } : { label:DAY_SHORT[d.getUTCDay()] + ', ' + md(d), full:DAY_SHORT[d.getUTCDay()] + ', ' + md(d), d };
   }
   if (period === 'week'){
@@ -1544,13 +1441,13 @@ const daysInMonth = (y, m) => new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
 const mondayOf = d => addDays(d, -((d.getUTCDay() + 6) % 7));
 const YEAR_MIN = TODAY.getUTCFullYear() - 6;   // sample history depth
 function openCalendar(){
-  const p = S.period, back = S.back[p] || 0, info = dateInfo(p, back, S.scope);
+  const p = S.period, back = S.back[p] || 0, info = dateInfo(p, back);
   cal.mode = p; cal.wheel = false;
   if (p === 'day'){ cal.draft = info.d; cal.y = info.d.getUTCFullYear(); cal.m = info.d.getUTCMonth(); }
   else if (p === 'week'){ cal.draft = info.monday; cal.y = info.monday.getUTCFullYear(); cal.m = info.monday.getUTCMonth(); }
   else if (p === 'month'){ cal.draft = { y:info.y, m:info.m }; cal.y = info.y; }
   else { cal.draft = { y:info.y }; cal.y = info.y - (info.y % 12) + 0; }
-  $('#dateTitle').textContent = p === 'day' ? (S.scope === 'sleep' ? 'Pick a night' : 'Pick a day') : p === 'week' ? 'Pick a week' : p === 'month' ? 'Pick a month' : 'Pick a year';
+  $('#dateTitle').textContent = p === 'day' ? 'Pick a day' : p === 'week' ? 'Pick a week' : p === 'month' ? 'Pick a month' : 'Pick a year';
   $('#dateSheet').hidden = false;
   paintCal();
 }
@@ -1765,9 +1662,6 @@ const meas = { state:'idle', remaining:HM_COOLDOWN, cd:null };
 function hmFmt(s){ const m = Math.floor(s / 60), r = s % 60; return `${m < 10 ? '0' : ''}${m}:${r < 10 ? '0' : ''}${r}`; }
 function renderMeasureCta(){
   const m = METRICS[S.metric]; if (!m) return;
-  // pages opened from the Sleep tab have no one-tap measure (owner, 2026-09-09):
-  // overnight readings come from the band's own schedule, not a tap
-  if (S.scope === 'sleep'){ $('#dMeasureSlot').innerHTML = ''; return; }
   const inert = S.state === 'empty' || S.state === 'loading';
   // Title Case labels, per components/button.html
   const label = meas.state === 'measuring' ? 'Measuring…'
@@ -1863,16 +1757,12 @@ scene.addEventListener('click', e => { if (e.target.closest('.hm-sheet') || maRA
 /* --------------------------------------------------------------------------
    CONTROL PANEL — data state + entry point
    -------------------------------------------------------------------------- */
-function renderAll(){ renderHome(); renderSleep(); if (S.metric) renderDetail(); }
+function renderAll(){ renderHome(); if (S.metric) renderDetail(); }
 $$('#stateOpts input').forEach(r => r.addEventListener('change', () => {
   S.state = r.value; app.dataset.state = r.value;
   if (meas.state !== 'idle'){ hmClearTimers(); meas.state = 'idle'; maStop(); }
   $$('#stateOpts label').forEach(l => l.classList.toggle('on', $('input', l).value === r.value));
   renderAll();
-}));
-$$('#entryOpts input').forEach(r => r.addEventListener('change', () => {
-  $$('#entryOpts label').forEach(l => l.classList.toggle('on', $('input', l).value === r.value));
-  setEntry(r.value);
 }));
 
 renderAll();
