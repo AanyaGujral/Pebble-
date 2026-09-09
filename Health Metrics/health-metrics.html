@@ -440,10 +440,13 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 /* About + Settings pages sit over the detail page */
 .subpage.over{z-index:31}
 .sub-body .card p{margin:8px 0 0;font:400 13px/18px var(--font-text);color:var(--text-2)}
-.scorerow{display:flex;align-items:baseline;gap:12px}
-.scorerow .rng{width:72px;flex:0 0 auto;font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+/* zones card rows: dot · range · description in fixed columns, so every
+   range sits on one line and the dot marks the first line of its row */
+.scorerow{display:grid;grid-template-columns:8px 92px minmax(0,1fr);column-gap:10px;align-items:start}
+.scorerow .zd{width:8px;height:8px;border-radius:50%;margin-top:5px}
+.scorerow .rng{font:500 13px/18px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1);white-space:nowrap}
 .scorerow .dsc{font:400 13px/18px var(--font-text);color:var(--text-2)}
-.scorerow .zd{width:8px;height:8px;border-radius:50%;flex:0 0 auto;align-self:center}
+.scorerow .dsc b{display:block;color:var(--text-1);font-weight:500}
 
 /* Measurement settings — the Me tab's Health Monitor page (S06) chrome:
    .sec-h / .group / .row / .trow / .switch, geometry verbatim */
@@ -475,10 +478,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 /* Copied VERBATIM from the homepage file's MEASURE ALL block (the owner's
    Measure_All_Metrics.html scene, 2026-08-14) — owner, 2026-09-09: "copy the
    exact flow". Two edits only: the blurred backdrop is #detail, and Done is
-   the button component. FLAG: the sheet keeps the scene's 498px height,
-   sized for five readings; with one reading the row sits high and Done sits
-   at the bottom, exactly as the scene lays it out. Say if it should hug its
-   one row instead. */
+   the button component. The sheet's fixed 498px height is dropped so it
+   hugs its one reading (owner, 2026-09-09). */
 .ma-scene{position:absolute;inset:0;z-index:69;overflow:hidden}
 .ma-scene[hidden]{display:none}
 /* the app itself is the backdrop: blurred and veiled while the reading runs */
@@ -569,7 +570,9 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
    a two-radial teal tint on surface-card rather than a drifting gradient
    field, and 54px rows at radius-12. The scene's own values win. */
 .hm-sheet{
-  position:absolute;left:8px;right:8px;bottom:8px;height:498px;
+  /* one reading per sheet here, so no fixed height — the sheet hugs its row
+     (owner, 2026-09-09); the scene's five-reading sheet is 498px tall */
+  position:absolute;left:8px;right:8px;bottom:8px;
   border-radius:var(--radius-24);overflow:hidden;
   opacity:var(--ma-sheet-o,0);transform:translateY(var(--ma-sheet-y,120px));
   background:
@@ -596,7 +599,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 /* Done is components/button.html (secondary tier — the same 1px teal outline
    the scene draws); the scene still animates it in via these two vars.
    FLAG: the scene's label weight is 500, the component's secondary is 600. */
-.hm-sheet .done{margin-top:auto;opacity:var(--ma-done-o,0);transform:translateY(var(--ma-done-y,10px))}
+.hm-sheet .done{margin-top:8px;opacity:var(--ma-done-o,0);transform:translateY(var(--ma-done-y,10px))}
 @media (prefers-reduced-motion:reduce){
   .cta,.cta .fill,.btn,.btn .fill{transition:none !important}
   .cta.is-measuring .ico,.btn.is-measuring .phi{animation:none}
@@ -1695,7 +1698,7 @@ function openAbout(){
   $('#aBody').innerHTML =
     `<div class="card"><h3 class="card-title">How it is measured</h3><p>${m.about.how}</p></div>`
     + `<div class="card"><h3 class="card-title">What the zones mean</h3><div style="margin-top:12px;display:flex;flex-direction:column;gap:10px">`
-    + m.zones.map((z, i) => `<div class="scorerow"><span class="zd" style="background:${TONES[z.tone].ink}"></span><span class="rng">${zoneRange(m, z)}</span><span class="dsc"><b style="color:var(--text-1);font-weight:500">${z.label}</b> — ${m.about.zones[i]}</span></div>`).join('')
+    + m.zones.map((z, i) => `<div class="scorerow"><span class="zd" style="background:${TONES[z.tone].ink}"></span><span class="rng">${zoneRange(m, z)}</span><span class="dsc"><b>${z.label}</b>${m.about.zones[i]}</span></div>`).join('')
     + `</div></div>`
     + `<div class="card"><h3 class="card-title">Worth knowing</h3><p>${m.about.tip}</p></div>`
     + `<p class="grp-note">Readings are estimates for wellness use, not a medical device. Talk to a doctor about anything that worries you.</p>`;

@@ -48,7 +48,7 @@ temperature, Blood oxygen (SpO₂) — each with:
    homepage's reading scene plays over the blurred page) → the readings
    sheet with this metric's row and Done → a 49 s disabled cooldown
    ("Measure Again in 00:49") → idle. The scene CSS is the homepage's block
-   verbatim; the sheet keeps its 498px five-reading height (flagged).
+   verbatim; the one-reading sheet hugs its row.
 9. **3-dot menu** — *About <metric>* (how it is measured, what the zones
    mean, one thing worth knowing) and *Measurement settings*, built on the
    Me tab's Health Monitor page: the sensor's on/off switch with its sampling

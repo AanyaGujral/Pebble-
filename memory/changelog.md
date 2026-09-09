@@ -5,6 +5,12 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-09 (later) — Health metrics: the one-reading sheet hugs its row
+  again (no fixed 498px height, Done 8px under the row) per owner; About
+  page's "What the zones mean" rows re-laid as a three-column grid (dot ·
+  range · zone name over its description) so the range never wraps and the
+  dot marks the first line.
+
 - 2026-09-09 — Health metrics: the Measure flow's scene CSS is now copied
   VERBATIM from the homepage's Measure All block (orb, crescents, halo,
   core, ring, caption, flash, and the 498px readings sheet with Done pinned
