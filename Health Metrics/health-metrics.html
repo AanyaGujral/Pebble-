@@ -207,6 +207,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 /* Sleep tab overnight vitals — the homepage's chart-card format */
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .card-title{font:500 17px/22px var(--font-text);color:var(--text-1);white-space:nowrap;margin:0}
+.card-head .card-metric{flex:0 0 auto;max-width:100%}
 .card-metric{text-align:right;flex:0 0 auto}
 .card-metric .val{display:flex;align-items:baseline;justify-content:flex-end;gap:4px}
 .card-metric .num{font:700 24px/28px var(--font-number);letter-spacing:-0.005em;font-feature-settings:var(--num-features);color:var(--text-1)}
@@ -220,7 +221,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
 .card-body{margin-top:16px}
 .card.tap{cursor:pointer;border:0;width:100%;text-align:left;font-family:inherit;color:inherit;display:block}
 .card.tap:hover{background:var(--surface-raised)}
-.card.tap .card-title{display:flex;align-items:center;gap:6px}
+.card.tap .card-title{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+.card.tap .card-title .tt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .card.tap .card-title .caret{width:14px;height:14px;color:var(--text-3)}
 
 /* chart bits — shared by every chart in this file */
@@ -1354,7 +1356,7 @@ function renderSleep(){
     const trend = st === 'empty' ? '<span>No readings yet</span>' : (st === 'loading' ? '<span class="skel" style="display:inline-block;width:110px;height:12px"></span>' : m.sleep.trend);
     return `<button class="card tap" type="button" data-open="${key}" aria-label="${m.sleepCard} details">
       <div class="card-head">
-        <h3 class="card-title">${m.sleepCard}${icon('caret-right','phi caret')}</h3>
+        <h3 class="card-title"><span class="tt">${m.sleepCard}</span>${icon('caret-right','phi caret')}</h3>
         <div class="card-metric"><div class="val">${val}<span class="unit">${m.unit}</span></div><div class="trend">${trend}</div></div>
       </div>
       <div class="card-body"><div class="chartmount" data-key="${key}"></div></div></button>`;
@@ -1763,6 +1765,9 @@ const meas = { state:'idle', remaining:HM_COOLDOWN, cd:null };
 function hmFmt(s){ const m = Math.floor(s / 60), r = s % 60; return `${m < 10 ? '0' : ''}${m}:${r < 10 ? '0' : ''}${r}`; }
 function renderMeasureCta(){
   const m = METRICS[S.metric]; if (!m) return;
+  // pages opened from the Sleep tab have no one-tap measure (owner, 2026-09-09):
+  // overnight readings come from the band's own schedule, not a tap
+  if (S.scope === 'sleep'){ $('#dMeasureSlot').innerHTML = ''; return; }
   const inert = S.state === 'empty' || S.state === 'loading';
   // Title Case labels, per components/button.html
   const label = meas.state === 'measuring' ? 'Measuring…'

@@ -63,8 +63,9 @@ metric's page to another (owner, 2026-09-08). Back → tap is the only route.
 
 Pages opened from the Sleep tab carry a "During sleep" chip and show the
 sleep window only: Day = 23:00–07:00, W/M/Y = one range bar per night
-(overlines read `7-NIGHT AVERAGE`, `30-NIGHT AVERAGE`). Stress has no
-overnight card, so it has no sleep entry.
+(titles read `Last night's average`, `Week's average`, …). There is no
+Measure button on these pages (owner, 2026-09-09). Stress has no overnight
+card, so it has no sleep entry.
 
 ## States (control panel beside the phone)
 

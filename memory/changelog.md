@@ -5,6 +5,13 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-09 (later still) — Health metrics: pages opened from the Sleep
+  tab no longer show the one-tap Measure button (owner) — overnight
+  readings come from the band's schedule. Sleep-tab card titles can now
+  shrink with an ellipsis, so "Heart rate variability" set in the real
+  Google Sans Flex no longer pushes the figure past the card's right
+  padding (the "spacing issue on the right" on the HRV card).
+
 - 2026-09-09 (later) — Health metrics: the one-reading sheet hugs its row
   again (no fixed 498px height, Done 8px under the row) per owner; About
   page's "What the zones mean" rows re-laid as a three-column grid (dot ·
