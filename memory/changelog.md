@@ -5,6 +5,16 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-09 — Health metrics: the Measure flow's scene CSS is now copied
+  VERBATIM from the homepage's Measure All block (orb, crescents, halo,
+  core, ring, caption, flash, and the 498px readings sheet with Done pinned
+  to its foot) after the owner found the animation drifted; the only edits
+  are the blurred backdrop (#detail) and Done as the button component. The
+  measuring button now becomes the raised progress surface the Measure All
+  button turns into. Cooldown label reads "Measure Again in 00:49" (owner:
+  lowercase "in"). Verified side by side with the homepage at 1.5 / 4.5 /
+  7.8 / 11 s. Flag: the one-reading sheet keeps the five-reading height.
+
 - 2026-09-08 (round three) — Health metrics: buttons now use the design
   system's button component (components/button.html) with Title Case labels;
   Measure is the SECONDARY tier so it no longer out-pulls the charts, the

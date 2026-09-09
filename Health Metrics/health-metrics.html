@@ -86,6 +86,7 @@
   --text-on-accent:var(--neutral-900);      /* textColor.onAccent */
   --border-thin:1px;
   --space-4:4px;--space-8:8px;--space-12:12px;--space-16:16px;--space-20:20px;--space-24:24px;--space-32:32px;
+  --teal-200:#9EE0D3;--teal-300:#76D4C3;--teal-600:#1D8173;--teal-900:#00261F; /* orb glows, from js/tokens.js */
   --border-hairline:0.5px;
   --cta-height:48px;
   --duration-fast:120ms;--duration-base:140ms;--duration-slow:240ms;
@@ -324,7 +325,11 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
    measuring action is not, so secondary is the closest fit. While a reading
    runs the outline fills left-to-right, like the Measure All button. */
 .btn .fill{position:absolute;inset:0 auto 0 0;width:0;z-index:0;background:var(--metric-readiness);opacity:.22}
-.btn.is-measuring{cursor:default;color:var(--text-1);border-color:var(--surface-fill)}
+/* measuring — as the Measure All button does it: the button becomes its own
+   raised progress surface (surface-raised, text-1) and the teal fill sweeps
+   underneath for exactly the length of the reading */
+.btn.is-measuring{cursor:default;background:var(--surface-raised);border-color:transparent;color:var(--text-1)}
+.btn.is-measuring .fill{opacity:.28}
 .btn.is-measuring .phi{animation:pulse 1.4s ease-in-out infinite}
 
 /* ==========================================================================
@@ -467,32 +472,131 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--metric-rea
    ported from the homepage file verbatim, one metric at a time. Every cue
    time, easing and value is the authored one; the blurred backdrop is the
    detail page instead of the Home tab. ---- */
+/* Copied VERBATIM from the homepage file's MEASURE ALL block (the owner's
+   Measure_All_Metrics.html scene, 2026-08-14) — owner, 2026-09-09: "copy the
+   exact flow". Two edits only: the blurred backdrop is #detail, and Done is
+   the button component. FLAG: the sheet keeps the scene's 498px height,
+   sized for five readings; with one reading the row sits high and Done sits
+   at the bottom, exactly as the scene lays it out. Say if it should hug its
+   one row instead. */
 .ma-scene{position:absolute;inset:0;z-index:69;overflow:hidden}
 .ma-scene[hidden]{display:none}
+/* the app itself is the backdrop: blurred and veiled while the reading runs */
 #detail.ma-behind{filter:blur(13px)}
 .ma-veil{position:absolute;inset:0;background:var(--surface-app);opacity:var(--ma-dim,.58)}
 .ma-veil2{position:absolute;inset:0;background:color-mix(in srgb, var(--neutral-900) 55%, transparent);opacity:var(--ma-veil2,0)}
-.ma-orb{position:absolute;left:50%;top:39%;width:0;height:0;opacity:var(--ma-orb-o,0);transform:scale(var(--ma-orb-zoom,1));transform-origin:50% 50%}
+
+/* ---- the orb: halo, two swirling crescents, inner lobe, core, ring ---- */
+.ma-orb{
+  position:absolute;left:50%;top:39%;width:0;height:0;
+  opacity:var(--ma-orb-o,0);transform:scale(var(--ma-orb-zoom,1));transform-origin:50% 50%;
+}
 .ma-orb i{display:block;position:absolute;border-radius:50%}
-.ma-halo{left:-240px;top:-240px;width:480px;height:480px;background:radial-gradient(circle, color-mix(in srgb, var(--teal-500) 58%, transparent) 0%, color-mix(in srgb, var(--teal-600) 30%, transparent) 38%, transparent 70%);filter:blur(38px);opacity:.75;transform:scale(var(--ma-breathe,1))}
-.ma-cres{left:-100px;top:-100px;width:200px;height:200px;-webkit-mask-image:radial-gradient(closest-side, transparent 58%, #000 66%, #000 100%);mask-image:radial-gradient(closest-side, transparent 58%, #000 66%, #000 100%)}
-.ma-cres1{background:conic-gradient(from 0deg, transparent 0deg, color-mix(in srgb, var(--teal-500) 90%, transparent) 70deg, color-mix(in srgb, var(--teal-200) 88%, transparent) 135deg, color-mix(in srgb, var(--teal-300) 50%, transparent) 190deg, transparent 250deg);filter:blur(8px);opacity:.8;transform:rotate(calc(var(--ma-spin,0) * 1deg)) scale(var(--ma-breathe,1))}
-.ma-cres2{background:conic-gradient(from 150deg, transparent 0deg, color-mix(in srgb, var(--teal-500) 90%, transparent) 70deg, color-mix(in srgb, var(--teal-200) 88%, transparent) 135deg, color-mix(in srgb, var(--teal-300) 50%, transparent) 190deg, transparent 250deg);filter:blur(14px);opacity:.55;transform:rotate(calc(var(--ma-spin,0) * -0.62deg)) scale(calc(var(--ma-breathe,1) * 1.12))}
-.ma-lobe{left:-74px;top:-86px;width:148px;height:172px;background:radial-gradient(circle at 55% 45%, color-mix(in srgb, var(--teal-200) 82%, transparent) 0%, color-mix(in srgb, var(--teal-500) 40%, transparent) 55%, transparent 78%);filter:blur(22px);transform:rotate(calc(var(--ma-spin,0) * 0.35deg)) scale(var(--ma-breathe,1))}
-.ma-core{left:-70px;top:-70px;width:140px;height:140px;background:radial-gradient(circle at 48% 46%, var(--teal-200) 0%, var(--teal-300) 22%, color-mix(in srgb, var(--teal-400) 80%, transparent) 48%, transparent 74%);filter:blur(16px);transform:scale(var(--ma-core,1))}
+.ma-halo{
+  left:-240px;top:-240px;width:480px;height:480px;
+  background:radial-gradient(circle,
+    color-mix(in srgb, var(--teal-500) 58%, transparent) 0%,
+    color-mix(in srgb, var(--teal-600) 30%, transparent) 38%,
+    color-mix(in srgb, var(--teal-900) 0%, transparent) 70%);
+  filter:blur(38px);opacity:.75;transform:scale(var(--ma-breathe,1));
+}
+/* the two crescents are ring-masked conic sweeps, counter-rotating */
+.ma-cres{
+  left:-100px;top:-100px;width:200px;height:200px;
+  -webkit-mask-image:radial-gradient(closest-side, transparent 58%, #000 66%, #000 100%);
+          mask-image:radial-gradient(closest-side, transparent 58%, #000 66%, #000 100%);
+}
+.ma-cres1{
+  background:conic-gradient(from 0deg,
+    color-mix(in srgb, var(--teal-500) 0%, transparent) 0deg,
+    color-mix(in srgb, var(--teal-500) 90%, transparent) 70deg,
+    color-mix(in srgb, var(--teal-200) 88%, transparent) 135deg,
+    color-mix(in srgb, var(--teal-300) 50%, transparent) 190deg,
+    color-mix(in srgb, var(--teal-500) 0%, transparent) 250deg);
+  filter:blur(8px);opacity:.8;
+  transform:rotate(calc(var(--ma-spin,0) * 1deg)) scale(var(--ma-breathe,1));
+}
+.ma-cres2{
+  background:conic-gradient(from 150deg,
+    color-mix(in srgb, var(--teal-500) 0%, transparent) 0deg,
+    color-mix(in srgb, var(--teal-500) 90%, transparent) 70deg,
+    color-mix(in srgb, var(--teal-200) 88%, transparent) 135deg,
+    color-mix(in srgb, var(--teal-300) 50%, transparent) 190deg,
+    color-mix(in srgb, var(--teal-500) 0%, transparent) 250deg);
+  filter:blur(14px);opacity:.55;
+  transform:rotate(calc(var(--ma-spin,0) * -0.62deg)) scale(calc(var(--ma-breathe,1) * 1.12));
+}
+.ma-lobe{
+  left:-74px;top:-86px;width:148px;height:172px;
+  background:radial-gradient(circle at 55% 45%,
+    color-mix(in srgb, var(--teal-200) 82%, transparent) 0%,
+    color-mix(in srgb, var(--teal-500) 40%, transparent) 55%,
+    color-mix(in srgb, var(--teal-500) 0%, transparent) 78%);
+  filter:blur(22px);
+  transform:rotate(calc(var(--ma-spin,0) * 0.35deg)) scale(var(--ma-breathe,1));
+}
+.ma-core{
+  left:-70px;top:-70px;width:140px;height:140px;
+  background:radial-gradient(circle at 48% 46%,
+    var(--teal-200) 0%, var(--teal-300) 22%,
+    color-mix(in srgb, var(--teal-400) 80%, transparent) 48%,
+    color-mix(in srgb, var(--teal-500) 0%, transparent) 74%);
+  filter:blur(16px);transform:scale(var(--ma-core,1));
+}
 .ma-ring{position:absolute;left:-130px;top:-130px;transform:rotate(-90deg)}
-.ma-cap{position:absolute;left:0;right:0;top:67%;text-align:center;display:flex;flex-direction:column;gap:4px;opacity:var(--ma-cap,0)}
+
+/* ---- caption under the orb ---- */
+.ma-cap{
+  position:absolute;left:0;right:0;top:67%;text-align:center;
+  display:flex;flex-direction:column;gap:var(--space-4);opacity:var(--ma-cap,0);
+}
 .ma-cap .t{font:600 17px/22px var(--font-text);color:var(--text-1)}
 .ma-cap .s{font:400 13px/18px var(--font-text);color:var(--text-2)}
-.ma-flash{position:absolute;inset:0;pointer-events:none;opacity:var(--ma-flash,0);background:radial-gradient(circle at 50% 47%, color-mix(in srgb, var(--teal-200) 90%, transparent) 0%, color-mix(in srgb, var(--teal-300) 80%, transparent) 28%, color-mix(in srgb, var(--teal-500) 38%, transparent) 55%, transparent 80%)}
-.hm-sheet{position:absolute;left:8px;right:8px;bottom:8px;border-radius:var(--radius-24);overflow:hidden;opacity:var(--ma-sheet-o,0);transform:translateY(var(--ma-sheet-y,120px));background:radial-gradient(120% 70% at 12% 4%, color-mix(in srgb, var(--teal-400) 16%, transparent) 0%, transparent 58%),radial-gradient(90% 50% at 92% 96%, color-mix(in srgb, var(--teal-600) 14%, transparent) 0%, transparent 60%),var(--surface-card);border:var(--border-hairline) solid var(--border-card);padding:24px 20px 20px;display:flex;flex-direction:column;gap:12px}
-.hm-sheet .head{text-align:center;display:flex;flex-direction:column;gap:4px;padding-bottom:4px}
+
+/* ---- the bloom flash that covers the frame between orb and sheet ---- */
+.ma-flash{
+  position:absolute;inset:0;pointer-events:none;opacity:var(--ma-flash,0);
+  background:radial-gradient(circle at 50% 47%,
+    color-mix(in srgb, var(--teal-200) 90%, transparent) 0%,
+    color-mix(in srgb, var(--teal-300) 80%, transparent) 28%,
+    color-mix(in srgb, var(--teal-500) 38%, transparent) 55%,
+    color-mix(in srgb, var(--neutral-900) 0%, transparent) 80%);
+}
+
+/* ---- the readings sheet, exactly as the scene draws it ----
+   Note this is a different sheet from the previous round: an inset card with
+   all four corners rounded (radius-24) rather than a full-width bottom sheet,
+   a two-radial teal tint on surface-card rather than a drifting gradient
+   field, and 54px rows at radius-12. The scene's own values win. */
+.hm-sheet{
+  position:absolute;left:8px;right:8px;bottom:8px;height:498px;
+  border-radius:var(--radius-24);overflow:hidden;
+  opacity:var(--ma-sheet-o,0);transform:translateY(var(--ma-sheet-y,120px));
+  background:
+    radial-gradient(120% 70% at 12% 4%, color-mix(in srgb, var(--teal-400) 16%, transparent) 0%, transparent 58%),
+    radial-gradient(90% 50% at 92% 96%, color-mix(in srgb, var(--teal-600) 14%, transparent) 0%, transparent 60%),
+    var(--surface-card);
+  border:var(--border-hairline) solid var(--border-card);
+  padding:var(--space-24) var(--space-20) var(--space-20);
+  display:flex;flex-direction:column;gap:var(--space-12);
+}
+.hm-sheet .head{text-align:center;display:flex;flex-direction:column;gap:var(--space-4);padding-bottom:var(--space-4)}
 .hm-sheet h3{margin:0;font:600 17px/22px var(--font-text);color:var(--text-1)}
-.hm-sheet .when{margin:0;padding:0 8px;font:400 13px/18px var(--font-text);color:var(--text-2);text-wrap:pretty}
-.hm-sheet .rows{display:flex;flex-direction:column;gap:8px}
-.hm-sheet .rd{display:flex;align-items:center;justify-content:space-between;height:54px;padding:0 16px;border-radius:var(--radius-12);background:color-mix(in srgb, var(--surface-raised) 15%, transparent);border:var(--border-hairline) solid var(--border-card);opacity:var(--o,0);transform:translateY(var(--y,14px))}
-.hm-sheet .rd .who{display:flex;align-items:center;gap:8px}
-.hm-sheet .done{margin-top:8px;opacity:var(--ma-done-o,0);transform:translateY(var(--ma-done-y,10px))}
+.hm-sheet .when{margin:0;padding:0 var(--space-8);font:400 13px/18px var(--font-text);color:var(--text-2);text-wrap:pretty}
+.hm-sheet .rows{display:flex;flex-direction:column;gap:var(--space-8)}
+.hm-sheet .rd{
+  display:flex;align-items:center;justify-content:space-between;
+  height:54px;padding:0 var(--space-16);border-radius:var(--radius-12);
+  background:color-mix(in srgb, var(--surface-raised) 15%, transparent);
+  border:var(--border-hairline) solid var(--border-card);
+  opacity:var(--o,0);transform:translateY(var(--y,14px));
+}
+.hm-sheet .rd .who{display:flex;align-items:center;gap:var(--space-8)}
+.hm-sheet .rd .figure{flex:0 0 auto}
+/* Done is components/button.html (secondary tier — the same 1px teal outline
+   the scene draws); the scene still animates it in via these two vars.
+   FLAG: the scene's label weight is 500, the component's secondary is 600. */
+.hm-sheet .done{margin-top:auto;opacity:var(--ma-done-o,0);transform:translateY(var(--ma-done-y,10px))}
 @media (prefers-reduced-motion:reduce){
   .cta,.cta .fill,.btn,.btn .fill{transition:none !important}
   .cta.is-measuring .ico,.btn.is-measuring .phi{animation:none}
@@ -1659,7 +1763,7 @@ function renderMeasureCta(){
   const inert = S.state === 'empty' || S.state === 'loading';
   // Title Case labels, per components/button.html
   const label = meas.state === 'measuring' ? 'Measuring…'
-              : meas.state === 'disabled'  ? `Measure Again In ${hmFmt(meas.remaining)}`
+              : meas.state === 'disabled'  ? `Measure Again in ${hmFmt(meas.remaining)}`
               : (S.state === 'empty' ? 'Take Your First Reading' : 'Measure ' + titleCase(m.name));
   const cls = meas.state === 'measuring' ? ' is-measuring' : '';
   const disabled = meas.state === 'disabled' || inert;
@@ -1675,7 +1779,7 @@ function hmSetState(k){
   if (k === 'disabled') meas.cd = setInterval(() => {
     meas.remaining--;
     if (meas.remaining <= 0){ hmSetState('idle'); return; }
-    const t = $('#dMeasure .txt'); if (t) t.textContent = `Measure Again In ${hmFmt(meas.remaining)}`;
+    const t = $('#dMeasure .txt'); if (t) t.textContent = `Measure Again in ${hmFmt(meas.remaining)}`;
   }, 1000);
 }
 function hmStartRun(){
