@@ -1,5 +1,13 @@
 # Session Handoff
 
+> **2026-09-10 — latest.** The Readiness page and Home ring navigation are
+> built in `Homepage + measurel all + start workout flow.html` (the flow file,
+> not `index.html`) per `docs/feature-readiness-ring-navigation.md`. Tap a
+> Home ring: Sleep/Activity switch tabs, Readiness pushes `#sub-readiness`.
+> One shared selected date now drives Home, Activity, Sleep (night note) and
+> Readiness. Awaiting owner review; open token/focus questions are listed in
+> the changelog entry and in the spec's §9.
+
 > **2026-08-10 — read this first.** `index.html` is now the MERGED source of
 > truth: it adopts the parallel session's build (metric details pages with a
 > D/W/M/Y period switcher; control panel reduced to Default + No data and

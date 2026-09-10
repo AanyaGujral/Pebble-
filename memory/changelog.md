@@ -5,6 +5,41 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-10 — Readiness page + Home ring navigation, built to the owner's
+  spec (`docs/feature-readiness-ring-navigation.md`, rev 1) in
+  `Homepage + measurel all + start workout flow.html` — the file the spec
+  was verified against (index.html untouched; flagged, since CLAUDE.md names
+  index.html as the prototype).
+  (1) The three Home rings are now `<button>`s: Sleep → Sleep tab, Activity →
+  Activity tab (`data-goto`), Readiness → new `#sub-readiness` page
+  (`data-open`, pushed over Health so Health stays lit). No new JS — both
+  listeners already existed. aria-label carries the score and switches to
+  "not available" in the no-data state; a ring always navigates. FLAG: this
+  reverses the 2026-08-14 "no tap-through" decision, deliberately per spec
+  §9.1 — the old markup comment was rewritten in the same change.
+  (2) `#sub-readiness`: back header, read-only date line (overline, text-3),
+  136px teal ring with 56px numeral + READINESS cap, headline/summary,
+  Contributors card (six .goalrow + .gbar rows: sleep, HRV, resting HR, skin
+  temp, SpO₂, previous-day activity — colour dots in the icon column, flagged:
+  no Phosphor pulse/drop glyphs in the file), Overnight vitals 2×2 StatTile
+  grid, Related rows to Sleep / Activity (data-goto closes the page too) and
+  an About readiness row. No D/W/M/Y switcher on purpose.
+  (3) `#sub-about-readiness` added AFTER `#sub-readiness` in the DOM (stacking
+  is document order) — back twice returns to Home.
+  (4) Shared date model: `selDate` collapsed from one cursor per tab to one
+  app-level value; picking a day updates every `[data-datelabel]` and the new
+  Sleep night note ("Night of Aug 5–6" — the night ENDING on the selected
+  date; copy flagged as new, spec §9.6). Calendar chrome per entry point is
+  unchanged.
+  (5) No-data state for Readiness: `--` at text-3 in the ring, bars at zero
+  width, headline/summary swapped via the existing setState() mechanism
+  (heroRest now also collects `#sub-readiness`).
+  Verified headless: date back 3 days on Home → each ring lands on that date;
+  Readiness → Sleep cross-link → back returns to Home, not Readiness.
+  Still open (need owner): --state-press token for the .8 press opacity; one
+  global focus treatment (nav vs button); whether the hero date line is
+  preferred over a date-btn in .sub-head (spec §9.2, §9.3, §9.7).
+
 - 2026-09-03 (rev 2.2) — Owner round of eight on the leaderboard.
   (1) Hero band is now the Pebble green — built from the teal ramp
   (teal.400 wash over a teal.500 → surface.card gradient) rather than the

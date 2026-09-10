@@ -706,7 +706,27 @@ body{
    ========================================================================== */
 /* three score rings in a row — sleep · readiness · activity */
 .ring3row{position:relative;margin-top:28px;padding:0 16px;display:grid;grid-template-columns:repeat(3,1fr);justify-items:center}
-.r3{display:flex;flex-direction:column;align-items:center}
+/* Each ring is now a tap target (Home ring navigation spec rev 1,
+   2026-09-10). The .r3 wrapper changed from <div> to <button> so it gets
+   keyboard focus and an accessible name for free; the lines below strip
+   the browser's default button look so the layout is unchanged.
+   FLAG: this reverses the 2026-08-14 owner decision "no tap-through" — the
+   reversal is deliberate per the spec (§9.1) and the owner asked for the
+   build; the old comment on the markup is updated in the same commit. */
+.r3{
+  display:flex;flex-direction:column;align-items:center;   /* unchanged */
+  background:none;border:0;padding:0;margin:0;
+  font-family:inherit;color:inherit;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:opacity var(--duration-fast) ease;
+}
+/* press = opacity only, never a new colour (button sheet rule). FLAG: .8 is
+   the literal the button sheet uses for primary :active — no token names it
+   yet (spec §9.2 suggests a --state-press token). */
+.r3:active{opacity:.8}
+/* focus matches the nav bar (neutral-0 inset), not the button sheet — the
+   teal button focus ring would collide with the readiness ring's own hue */
+.r3:focus-visible{outline:2px solid var(--neutral-0);outline-offset:-2px}
 .r3box{position:relative;width:92px;height:92px}
 /* Ring scores: League Spartan semibold at 32px (owner, 2026-08-14).
    Flag: 32px is not on the numeric size scale (…24, 42…) — owner picked it
@@ -739,6 +759,41 @@ body{
   font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;
   text-transform:uppercase;color:var(--text-2);
 }
+
+/* ==========================================================================
+   READINESS PAGE (#sub-readiness) — Home ring navigation spec §5, 2026-09-10.
+   A pushed .subpage (not a tab): the hero copies the Sleep/Activity hero
+   ring block, then Contributors / Overnight vitals / Related cards.
+   ========================================================================== */
+/* Teal wash behind the header + hero, fading into the app background —
+   same recipe as the Home hero (metric.readiness at 10% over surface.app). */
+.rd-hero{
+  padding-bottom:24px;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--metric-readiness) 10%, var(--surface-app)) 0%, var(--surface-app) 100%);
+}
+/* Read-only date line in the hero — overlineMedium (11/16, 500, +0.08em,
+   uppercase) on text-3, centred. FLAG (spec §9.7): this is a new element,
+   built from existing tokens only; the date itself is changed on Home. */
+.rd-date{
+  margin-top:8px;text-align:center;
+  font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;
+  text-transform:uppercase;color:var(--text-3);
+}
+/* Overnight vitals as a 2×2 StatTile grid (detail-page tile, no hairline) */
+.sumgrid2{margin-top:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+/* Contributor rows: the 20px icon column holds a metric-colour dot.
+   FLAG: the Phosphor set embedded in this file has no pulse / drop glyphs
+   for HRV and SpO₂, so all six rows use dots rather than mixing real icons
+   with hand-drawn stand-ins. Swap for icons once the paths are added. */
+.rd-dot{width:8px;height:8px;border-radius:999px;justify-self:center}
+/* Related / About rows navigate, so they get the pointer like tappable cards */
+.listrow[data-goto],.listrow[data-open]{cursor:pointer}
+.listrow[data-goto]:hover,.listrow[data-open]:hover{opacity:.8}
+
+/* Sleep header: which night the selected date resolves to (spec §4 rule 4).
+   Sits under the date button; 11/16 medium on text-3. FLAG (spec §9.6):
+   no shipped string existed for this — copy is "Night of Aug 5–6". */
+.nightnote{margin-top:2px;padding-left:0;font-size:11px;line-height:16px;font-weight:500;color:var(--text-3)}
 
 /* section headers between card groups (home tab) — 24px above each section
    (owner asked for more space between sections, 2026-08-14).
@@ -1783,15 +1838,26 @@ body{
           </div>
 
           <!-- three score rings: sleep · readiness · activity.
-               No chevrons and no tap-through — owner request, 2026-08-14.
+               Each ring is a button that opens its metric's ONE day-detail
+               (Home ring navigation spec rev 1, 2026-09-10):
+                 Sleep     → Sleep tab root      (data-goto,  tab switch)
+                 Readiness → #sub-readiness page (data-open,  push; Health stays lit)
+                 Activity  → Activity tab root   (data-goto,  tab switch)
+               Both listeners already exist — no new JS mechanism.
+               History: "No chevrons and no tap-through — owner request,
+               2026-08-14" was the rule here until this spec reversed it
+               (deliberate; spec §9.1). Still no chevrons — the ring itself
+               is the target, ~92×116px.
                Flag: the wireframe paints Activity yellow, but the token for
                activity is lime-400 — tokens win. Scores reuse this
                prototype's sample data (78/73/68), not the wireframe's
-               placeholder 60/40/70. Ring r=40, circumference 251.33. -->
+               placeholder 60/40/70. Ring r=40, circumference 251.33.
+               aria-label carries the score since the visible text is a bare
+               numeral; setState() rewrites it in the no-data state. -->
           <div class="ring3row">
-            <div class="r3">
+            <button class="r3" type="button" data-goto="sleep" data-metric="Sleep" data-dest="sleep" aria-label="Sleep score 78. Open sleep.">
               <div class="r3box">
-                <svg width="92" height="92" viewBox="0 0 92 92">
+                <svg width="92" height="92" viewBox="0 0 92 92" aria-hidden="true">
                   <circle cx="46" cy="46" r="40" fill="none" stroke="var(--neutral-700)" stroke-width="9"/>
                   <circle class="live" cx="46" cy="46" r="40" fill="none" stroke="var(--metric-sleep)" stroke-width="9"
                           stroke-linecap="round" stroke-dasharray="196.0 251.33" transform="rotate(-90 46 46)"/>
@@ -1799,10 +1865,10 @@ body{
                 <div class="r3num"><span class="live">78</span><span class="value-dash">--</span></div>
               </div>
               <div class="r3lab">Sleep</div>
-            </div>
-            <div class="r3">
+            </button>
+            <button class="r3" type="button" data-open="sub-readiness" data-metric="Readiness" data-dest="readiness" aria-label="Readiness score 73. Open readiness.">
               <div class="r3box">
-                <svg width="92" height="92" viewBox="0 0 92 92">
+                <svg width="92" height="92" viewBox="0 0 92 92" aria-hidden="true">
                   <circle cx="46" cy="46" r="40" fill="none" stroke="var(--neutral-700)" stroke-width="9"/>
                   <circle class="live" cx="46" cy="46" r="40" fill="none" stroke="var(--metric-readiness)" stroke-width="9"
                           stroke-linecap="round" stroke-dasharray="183.5 251.33" transform="rotate(-90 46 46)"/>
@@ -1810,10 +1876,10 @@ body{
                 <div class="r3num"><span class="live">73</span><span class="value-dash">--</span></div>
               </div>
               <div class="r3lab">Readiness</div>
-            </div>
-            <div class="r3">
+            </button>
+            <button class="r3" type="button" data-goto="activity" data-metric="Activity" data-dest="activity" aria-label="Activity score 68. Open activity.">
               <div class="r3box">
-                <svg width="92" height="92" viewBox="0 0 92 92">
+                <svg width="92" height="92" viewBox="0 0 92 92" aria-hidden="true">
                   <circle cx="46" cy="46" r="40" fill="none" stroke="var(--neutral-700)" stroke-width="9"/>
                   <circle class="live" cx="46" cy="46" r="40" fill="none" stroke="var(--metric-activity)" stroke-width="9"
                           stroke-linecap="round" stroke-dasharray="170.9 251.33" transform="rotate(-90 46 46)"/>
@@ -1821,7 +1887,7 @@ body{
                 <div class="r3num"><span class="live">68</span><span class="value-dash">--</span></div>
               </div>
               <div class="r3lab">Activity</div>
-            </div>
+            </button>
           </div>
 
           <!-- AI summary — plain centered headline + body over the hero
@@ -2164,6 +2230,11 @@ body{
             <div>
               <div class="screen-title">Sleep</div>
               <button class="date-btn" data-cal="sleep"><span data-datelabel>Today, Aug 6</span><span class="caret"></span></button>
+              <!-- The Sleep tab shows the night ENDING on the selected date
+                   (shared date model, spec §4 rule 4): pick Aug 6 anywhere
+                   and this tab shows the night of Aug 5–6. Text is written
+                   by syncDateLabels(). -->
+              <div class="nightnote"><span data-nightlabel>Night of Aug 5–6</span></div>
             </div>
             <button class="dots-btn" data-menubtn aria-label="More"><span></span><span></span><span></span></button>
           </div>
@@ -2512,6 +2583,194 @@ body{
               <div class="bullet"><span class="sw" style="background:var(--metric-hrv)"></span><div><div class="bt">Heart rate variability</div><p>Gaps between beats. Higher usually means better recovery — compare it to your own baseline, never to someone else's.</p></div></div>
               <div class="bullet"><span class="sw" style="background:var(--metric-skin-temp)"></span><div><div class="bt">Skin temperature</div><p>Shown as a deviation across the night. A sustained rise can precede illness or follow a hard training day.</p></div></div>
               <div class="bullet"><span class="sw" style="background:var(--metric-spo2)"></span><div><div class="bt">Blood oxygen</div><p>Typically sits between 95% and 100%. Repeated dips are worth mentioning to a clinician.</p></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =========================================================
+           READINESS PAGE — Home ring navigation spec rev 1, 2026-09-10.
+           Opened by the Readiness ring on Home (data-open="sub-readiness").
+           A pushed .subpage, NOT a .page: showTab() lights the nav button
+           whose name matches #page-<name>, so a page-readiness would leave
+           the nav bar with nothing lit. As a subpage (z-index 30, under the
+           nav at 55) Health stays lit and the back chevron returns to Home.
+           One-day breakdown only — no D/W/M/Y switcher and no history; if
+           that is ever needed, Readiness wants a nav slot, not this page.
+           Date is read-only here (shared with Home; change it on Home).
+           No 3-dot menu: .sub-head has no overflow (spec §6) — About is a
+           row at the bottom instead.
+           FLAG: the spec's tree lists .sub-head as a sibling of the hero
+           block; it is nested INSIDE the hero wrapper here so the teal wash
+           runs behind the header the way .screen-head sits inside .hero on
+           the tab roots. Same components, layout only.
+           ========================================================= -->
+      <div class="subpage" id="sub-readiness" hidden>
+        <div class="hero stateful rd-hero" id="readinessHero">
+          <div class="sub-head">
+            <button class="backbtn" data-back aria-label="Back"><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button>
+            <span class="t">Readiness</span>
+          </div>
+          <div class="hero-media">
+            <!-- shared selected date, written by syncDateLabels() -->
+            <div class="rd-date"><span data-datelabel>Today, Aug 6</span></div>
+            <div class="ringwrap">
+              <div class="ringbox">
+                <div class="glow" style="background:radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--metric-readiness) 30%, transparent) 0%, transparent 70%)"></div>
+                <svg width="136" height="136" viewBox="0 0 136 136" aria-hidden="true">
+                  <defs>
+                    <!-- teal-300 → teal-500, the same light→dark sweep the
+                         Sleep (violet) and Activity (lime) rings use -->
+                    <linearGradient id="ring-rdy" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="var(--teal-300)"/>
+                      <stop offset="100%" stop-color="var(--teal-500)"/>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="68" cy="68" r="62" fill="none" stroke="var(--neutral-700)" stroke-width="12"/>
+                  <!-- 73% of circumference 389.56 = 284.4 -->
+                  <circle class="live" cx="68" cy="68" r="62" fill="none" stroke="url(#ring-rdy)" stroke-width="12"
+                          stroke-linecap="round" stroke-dasharray="284.4 389.56" transform="rotate(-90 68 68)"/>
+                </svg>
+                <div class="ringnum">
+                  <div class="score"><span class="live">73</span><span class="value-dash" style="font-size:56px;line-height:60px">--</span></div>
+                  <div class="score-cap">Readiness</div>
+                </div>
+              </div>
+            </div>
+            <!-- headline/summary pair is what setState() swaps to no-data copy -->
+            <div class="headline live">Ready for a normal day</div>
+            <p class="summary live">Sleep and HRV are in your usual range. Resting heart rate is a touch high, so keep hard efforts short today.</p>
+            <div class="statechip sync" style="justify-content:center">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing readiness…</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-body">
+          <!-- Contributors — one row per input, same .goalrow + .gbar pattern
+               as Today's goals. No chevrons: these rows explain the score,
+               they do not navigate. Bar = how much of its full contribution
+               each input earned today. Six rows is the cap (spec §5.1).
+               Sample values are invented to match the 73 shown on Home. -->
+          <div class="card stateful empty-zero">
+            <div class="card-head"><div class="card-title">Contributors</div></div>
+            <div class="statechip sync">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
+              <span>Syncing readiness…</span>
+            </div>
+            <div class="card-body">
+              <div class="live" style="display:flex;flex-direction:column;gap:20px">
+                <div class="goalrow">
+                  <span class="rd-dot" style="background:var(--metric-sleep)"></span>
+                  <span class="gname">Sleep</span>
+                  <span class="gval"><span class="gnum live">78</span><span class="gnum value-zero">—</span><span class="ggoal">score</span></span>
+                  <span class="gbar"><i style="width:78%;background:var(--metric-sleep)"></i></span>
+                </div>
+                <div class="goalrow">
+                  <span class="rd-dot" style="background:var(--metric-hrv)"></span>
+                  <span class="gname">HRV</span>
+                  <span class="gval"><span class="gnum live">42</span><span class="gnum value-zero">—</span><span class="ggoal">ms · avg 40</span></span>
+                  <span class="gbar"><i style="width:84%;background:var(--metric-hrv)"></i></span>
+                </div>
+                <div class="goalrow">
+                  <span class="rd-dot" style="background:var(--metric-heart-rate)"></span>
+                  <span class="gname">Resting heart rate</span>
+                  <span class="gval"><span class="gnum live">58</span><span class="gnum value-zero">—</span><span class="ggoal">bpm · avg 55</span></span>
+                  <span class="gbar"><i style="width:62%;background:var(--metric-heart-rate)"></i></span>
+                </div>
+                <div class="goalrow">
+                  <span class="rd-dot" style="background:var(--metric-skin-temp)"></span>
+                  <span class="gname">Skin temperature</span>
+                  <span class="gval"><span class="gnum live">+0.2</span><span class="gnum value-zero">—</span><span class="ggoal">°C</span></span>
+                  <span class="gbar"><i style="width:90%;background:var(--metric-skin-temp)"></i></span>
+                </div>
+                <div class="goalrow">
+                  <span class="rd-dot" style="background:var(--metric-spo2)"></span>
+                  <span class="gname">Blood oxygen</span>
+                  <span class="gval"><span class="gnum live">97</span><span class="gnum value-zero">—</span><span class="ggoal">%</span></span>
+                  <span class="gbar"><i style="width:96%;background:var(--metric-spo2)"></i></span>
+                </div>
+                <div class="goalrow">
+                  <span class="rd-dot" style="background:var(--metric-activity)"></span>
+                  <span class="gname">Previous-day activity</span>
+                  <span class="gval"><span class="gnum live">68</span><span class="gnum value-zero">—</span><span class="ggoal">score</span></span>
+                  <span class="gbar"><i style="width:68%;background:var(--metric-activity)"></i></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Overnight vitals — StatTile 2×2, the detail-page tile format
+               (no hairline). Headers stay and figures go to — with no data. -->
+          <div class="card stateful">
+            <div class="card-head"><div class="card-title">Overnight vitals</div></div>
+            <div class="sumgrid2">
+              <section class="stattile"><div class="label">Resting HR</div><div class="figure"><span class="live" style="display:contents"><span class="value">58</span><span class="unit">bpm</span></span><span class="value-dash">—</span></div></section>
+              <section class="stattile"><div class="label">HRV</div><div class="figure"><span class="live" style="display:contents"><span class="value">42</span><span class="unit">ms</span></span><span class="value-dash">—</span></div></section>
+              <section class="stattile"><div class="label">Skin temp</div><div class="figure"><span class="live" style="display:contents"><span class="value">+0.2</span><span class="unit">°C</span></span><span class="value-dash">—</span></div></section>
+              <section class="stattile"><div class="label">SpO₂</div><div class="figure"><span class="live" style="display:contents"><span class="value">97</span><span class="unit">%</span></span><span class="value-dash">—</span></div></section>
+            </div>
+          </div>
+
+          <!-- Related — readiness is built from sleep and activity data, so
+               hand the user onward. data-goto switches tab AND closes this
+               page (showTab hides every .subpage), landing on the shared
+               selected date. Back from there returns to Home, not here. -->
+          <div class="card">
+            <div class="card-title">Related</div>
+            <div style="margin-top:4px">
+              <div class="listrow" data-goto="sleep" role="button" tabindex="0" style="border-top:0">
+                <div class="lft"><span class="rd-dot" style="background:var(--metric-sleep)"></span><div class="txt"><div class="t1">Sleep</div><div class="t2">Last night's breakdown</div></div></div>
+                <div class="rgt"><span class="rnum live">78</span><span class="chev"></span></div>
+              </div>
+              <div class="listrow" data-goto="activity" role="button" tabindex="0">
+                <div class="lft"><span class="rd-dot" style="background:var(--metric-activity)"></span><div class="txt"><div class="t1">Activity</div><div class="t2">Today's steps, distance, calories</div></div></div>
+                <div class="rgt"><span class="rnum live">68</span><span class="chev"></span></div>
+              </div>
+              <div class="listrow" data-open="sub-about-readiness" role="button" tabindex="0">
+                <div class="lft"><span class="phi" data-ph="info" data-weight="fill" style="width:16px;height:16px;color:var(--text-3)"></span><div class="txt"><div class="t1">About readiness</div><div class="t2">How the score is built</div></div></div>
+                <div class="rgt"><span class="chev"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- About readiness (read-only) — parity with About activity / About
+           sleep. MUST stay AFTER #sub-readiness in the DOM: every .subpage
+           is z-index 30, so stacking is document order, and data-back hides
+           only its own page — back twice returns to Home, same as the metric
+           detail pages today. -->
+      <div class="subpage" id="sub-about-readiness" hidden>
+        <div class="sub-head">
+          <button class="backbtn" data-back aria-label="Back"><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button>
+          <span class="t">About readiness</span>
+        </div>
+        <div class="sub-body">
+          <div class="card">
+            <div class="card-title">What readiness means</div>
+            <p>Readiness is a 0–100 estimate of how well your body has recovered and how much it can take on today. It is built each morning from last night's sleep, your overnight vitals and how hard yesterday was.</p>
+            <p>It is a guide, not an instruction — a low score on a day you feel great is still worth noticing, and the other way round.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Reading the score</div>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+              <div class="scorerow"><span class="rng">85–100</span><span class="dsc">Optimal — a good day to push</span></div>
+              <div class="scorerow"><span class="rng">70–84</span><span class="dsc">Good — train as planned</span></div>
+              <div class="scorerow"><span class="rng">60–69</span><span class="dsc">Fair — keep intensity moderate</span></div>
+              <div class="scorerow"><span class="rng">&lt; 60</span><span class="dsc">Pay attention — favour rest and recovery</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">What goes in</div>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:12px">
+              <div class="bullet"><span class="sw" style="background:var(--metric-sleep)"></span><div><div class="bt">Sleep</div><p>Last night's score — duration, efficiency and how well the stages were balanced. The largest single input.</p></div></div>
+              <div class="bullet"><span class="sw" style="background:var(--metric-hrv)"></span><div><div class="bt">Heart rate variability</div><p>Overnight average against your 7-day baseline. Higher than usual points to good recovery.</p></div></div>
+              <div class="bullet"><span class="sw" style="background:var(--metric-heart-rate)"></span><div><div class="bt">Resting heart rate</div><p>Overnight low against your baseline. A raised resting rate often means the body is still working on something.</p></div></div>
+              <div class="bullet"><span class="sw" style="background:var(--metric-skin-temp)"></span><div><div class="bt">Skin temperature</div><p>Deviation from your usual overnight level. A sustained rise can precede illness by a day or two.</p></div></div>
+              <div class="bullet"><span class="sw" style="background:var(--metric-spo2)"></span><div><div class="bt">Blood oxygen</div><p>Overnight average. Repeated dips lower the score.</p></div></div>
+              <div class="bullet"><span class="sw" style="background:var(--metric-activity)"></span><div><div class="bt">Previous-day activity</div><p>How hard yesterday was. A very heavy day lowers today's readiness; a rest day after a hard block raises it.</p></div></div>
             </div>
           </div>
         </div>
@@ -3754,6 +4013,10 @@ $$('[data-open]').forEach(el => el.addEventListener('click', e => {
 $$('[data-back]').forEach(b => b.addEventListener('click', () => {
   b.closest('.subpage').hidden = true;
 }));
+// Rows that act as buttons (Readiness → Related) also fire on Enter / Space
+$$('.listrow[role="button"]').forEach(row => row.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); row.click(); }
+}));
 
 /* ==========================================================================
    HISTORY CALENDAR — month-scroll modal shared by Health / Activity / Sleep.
@@ -3769,17 +4032,41 @@ const TODAY = { y:2026, m:7, d:6 }; // Thu 6 Aug 2026 (m is 0-based)
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAY_SHORT   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const selDate = { health:{...TODAY}, activity:{...TODAY}, sleep:{...TODAY} };
+// ONE app-level selected date, shared by Home, Activity, Sleep and Readiness
+// (Home ring navigation spec §4, 2026-09-10). It used to be one cursor per
+// tab, which was invisible while nothing crossed between tabs — the moment a
+// ring on Home opens another tab, a per-tab date would silently jump.
+// Rules: cold launch = today; a tab switch never resets it; CAL_CFG keeps its
+// per-entry-point title and ring hue (only the VALUE is global); Sleep shows
+// the night ending on this date; Readiness reads it read-only.
+let selDate = {...TODAY};
 let calTab = null;
 
 // deterministic pseudo-random "score" per day, same idea as the prototypes
 function dayScore(d, m){ const x = Math.sin(d*12.9898 + (m+3)*78.233) * 43758.5453; return 52 + Math.round((x - Math.floor(x)) * 44); }
 
-function dateLabelFor(tab){
-  const s = selDate[tab];
+function dateLabel(){
+  const s = selDate;
   if (s.y === TODAY.y && s.m === TODAY.m && s.d === TODAY.d) return `Today, ${MONTH_SHORT[s.m]} ${s.d}`;
   const wd = new Date(Date.UTC(s.y, s.m, s.d)).getUTCDay();
   return `${DAY_SHORT[wd]}, ${MONTH_SHORT[s.m]} ${s.d}`;
+}
+// kept so any older caller still works — the tab argument is ignored now
+function dateLabelFor(){ return dateLabel(); }
+// Sleep resolves the selected date to the night ENDING on it: Aug 6 → the
+// night of Aug 5–6. Crossing a month boundary spells both months out.
+function nightLabel(){
+  const end = new Date(Date.UTC(selDate.y, selDate.m, selDate.d));
+  const start = new Date(end.getTime() - 86400000);
+  const sm = start.getUTCMonth(), sd = start.getUTCDate();
+  if (sm === selDate.m) return `Night of ${MONTH_SHORT[sm]} ${sd}–${selDate.d}`;
+  return `Night of ${MONTH_SHORT[sm]} ${sd} – ${MONTH_SHORT[selDate.m]} ${selDate.d}`;
+}
+// Write the shared date to EVERY surface that shows it: the three tab date
+// buttons, the Readiness page's read-only line, and the Sleep night note.
+function syncDateLabels(){
+  $$('[data-datelabel]').forEach(el => { el.textContent = dateLabel(); });
+  $$('[data-nightlabel]').forEach(el => { el.textContent = nightLabel(); });
 }
 
 function buildCalendar(tab){
@@ -3799,7 +4086,7 @@ function buildCalendar(tab){
     for (let i = 0; i < first; i++) grid.append(Object.assign(document.createElement('div'), { style:'min-height:44px' }));
     for (let d = 1; d <= days; d++){
       const future = y === TODAY.y && m === TODAY.m && d > TODAY.d;
-      const sel = selDate[tab].y === y && selDate[tab].m === m && selDate[tab].d === d;
+      const sel = selDate.y === y && selDate.m === m && selDate.d === d;
       const btn = document.createElement('button');
       btn.className = 'cal-day' + (future ? ' future' : '');
       btn.type = 'button';
@@ -3816,8 +4103,8 @@ function buildCalendar(tab){
                        stroke-linecap="round" stroke-dasharray="${dash}" transform="rotate(-90 14 14)"/>
              </svg>`);
       if (!future) btn.addEventListener('click', () => {
-        selDate[tab] = { y, m, d };
-        $('#page-' + tab + ' [data-datelabel]').textContent = dateLabelFor(tab);
+        selDate = { y, m, d };      // global — every surface follows
+        syncDateLabels();
         closeCalendar();
       });
       grid.append(btn);
@@ -3839,6 +4126,7 @@ $$('[data-cal]').forEach(btn => btn.addEventListener('click', e => {
   e.stopPropagation(); closeAllMenus(); openCalendar(btn.dataset.cal);
 }));
 $$('[data-calclose]').forEach(el => el.addEventListener('click', closeCalendar));
+syncDateLabels();   // cold launch: every label reads today
 
 /* ==========================================================================
    GOAL EDIT SHEET — Activity goals (steps / distance / calories).
@@ -4306,10 +4594,12 @@ $$('.card.stateful').forEach(card => {
 const HERO_COPY = {
   health:  { empty: ['Welcome to Pebble','Wear your band today and your readiness score will appear here.'] },
   activity:{ empty: ['No activity yet','Your steps, distance and calories will show up after your first sync.'] },
-  sleep:   { empty: ['No sleep data yet','After your first night with the band, your score appears here.'] }
+  sleep:   { empty: ['No sleep data yet','After your first night with the band, your score appears here.'] },
+  // Readiness page (a subpage, not a tab) shares the same swap mechanism
+  readiness:{ empty: ['No readiness score yet','Wear the band overnight and your score, with what went into it, appears here.'] }
 };
 const heroRest = {};
-$$('.page').forEach(page => {
+$$('.page, #sub-readiness').forEach(page => {
   const hero = $('.hero', page); if (!hero) return;
   const head = $('.headline', hero), sum = $('.summary', hero);
   if (head && sum) heroRest[page.id] = [head, sum];
@@ -4328,7 +4618,7 @@ function setState(state){
   // hero text: no-data copy in the empty state, original otherwise
   for (const id in heroRest){
     const [head, sum] = heroRest[id];
-    const key = id.replace('page-','');
+    const key = id.replace(/^(page|sub)-/, '');   // page-health → health, sub-readiness → readiness
     if (state === 'empty' && HERO_COPY[key]){
       head.dataset.rest ??= head.textContent;
       sum.dataset.rest  ??= sum.textContent;
@@ -4341,6 +4631,15 @@ function setState(state){
     }
   }
   bandStatus.textContent = BAND_COPY[state];
+  // Home ring buttons: the accessible name carries the score, so it has to
+  // change with the state — "--" on screen means "not available" out loud.
+  // A ring ALWAYS navigates, even with no data (spec §8).
+  $$('.r3').forEach(b => {
+    const n = $('.r3num .live', b).textContent.trim();   // the numeral, not the svg arc
+    b.setAttribute('aria-label', state === 'empty'
+      ? `${b.dataset.metric} score not available. Open ${b.dataset.dest}.`
+      : `${b.dataset.metric} score ${n}. Open ${b.dataset.dest}.`);
+  });
   // Health monitor renders per app state (first-run copy when empty). Switching
   // state cancels any measurement in flight, so no timer outlives the switch.
   hmCloseSheet();
