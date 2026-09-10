@@ -5,6 +5,27 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-10 (later) — Readiness page rebuilt to the owner's wireframes,
+  modelled on the Sleep/Activity tab heroes: painted background (the Home
+  teal scene reused via paintScene, own gradient id), 136px ring, band chip +
+  "↑ 5 vs yesterday", AI headline + summary, "Medium confidence · day 14".
+  Header is back · date · calendar — the date opens the SHARED month calendar
+  (new CAL_CFG.readiness, teal chrome) and writes the one global date.
+  FLAG: spec §4.5 said no picker on Readiness; wireframe shows one, so it is
+  in, but it never holds a private date. New cards: Last 30 days trend
+  (7d/14d/30d pills, dashed window average, max/min labels, line in readiness
+  teal — wireframe had white, flagged), What shaped today's score (four rows
+  with icon tile, reason line and toned sub-score — replaces the six bar rows
+  from spec §5.1, wireframe wins), Since yesterday (RHR / HRV / skin temp /
+  steps with toned deltas), How to use today (tinted guidance card, plan chips
+  as toggles — flagged, wireframe shows static pills). Related + About rows
+  kept at the bottom (spec §5.2/5.3, not in the wireframe — flagged).
+  FLAG: sample numbers are 73 / Good, not the wireframe's 40 / Rest, because
+  Home shows 73 and one metric must show one value everywhere. Three Phosphor
+  glyphs (pulse, calendar-blank, sparkle) added from memory — re-copy from
+  the package before shipping. No-data: ring --, trend line hides (frame and
+  labels stay), scores and values to —, guidance card hidden.
+
 - 2026-09-10 — Readiness page + Home ring navigation, built to the owner's
   spec (`docs/feature-readiness-ring-navigation.md`, rev 1) in
   `Homepage + measurel all + start workout flow.html` — the file the spec

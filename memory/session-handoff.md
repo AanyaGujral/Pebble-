@@ -5,8 +5,11 @@
 > not `index.html`) per `docs/feature-readiness-ring-navigation.md`. Tap a
 > Home ring: Sleep/Activity switch tabs, Readiness pushes `#sub-readiness`.
 > One shared selected date now drives Home, Activity, Sleep (night note) and
-> Readiness. Awaiting owner review; open token/focus questions are listed in
-> the changelog entry and in the spec's §9.
+> Readiness. Second round the same day rebuilt the page to the owner's
+> wireframes (background hero, trend card, four drivers, since-yesterday,
+> guidance card). Sample day is 73 / Good to match Home — flip the whole
+> sample to the wireframe's 40 / Rest story if that is the state to review.
+> Awaiting owner review; open questions are in the changelog entries.
 
 > **2026-08-10 — read this first.** `index.html` is now the MERGED source of
 > truth: it adopts the parallel session's build (metric details pages with a

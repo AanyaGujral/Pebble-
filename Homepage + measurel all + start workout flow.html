@@ -761,34 +761,107 @@ body{
 }
 
 /* ==========================================================================
-   READINESS PAGE (#sub-readiness) — Home ring navigation spec §5, 2026-09-10.
-   A pushed .subpage (not a tab): the hero copies the Sleep/Activity hero
-   ring block, then Contributors / Overnight vitals / Related cards.
+   READINESS PAGE (#sub-readiness) — Home ring navigation spec §5 (2026-09-10)
+   rebuilt to the owner's wireframes (2026-09-10, second round): modelled on
+   the Sleep / Activity tab heroes — painted background + ring + AI summary —
+   then Last 30 days trend, What shaped today's score, Since yesterday,
+   How to use today.
    ========================================================================== */
-/* Teal wash behind the header + hero, fading into the app background —
-   same recipe as the Home hero (metric.readiness at 10% over surface.app). */
-.rd-hero{
-  padding-bottom:24px;
-  background:linear-gradient(180deg, color-mix(in srgb, var(--metric-readiness) 10%, var(--surface-app)) 0%, var(--surface-app) 100%);
+/* Header: back chevron · date (centred) · calendar. .sub-head is kept as the
+   container (pushed-page pattern); this modifier only spreads the three
+   items. FLAG (spec §4.5 / §9.7): the spec said Readiness has no picker of
+   its own; the wireframe shows one, so the header date opens the SAME shared
+   calendar the tabs use — it writes the one global date, not a private one. */
+/* position + z-index lift the header above the absolutely positioned
+   .hero-bg scene, the same way .screen-head does on the tab roots */
+.rd-head{justify-content:space-between;position:relative;z-index:20}
+.rd-head .date-btn{margin:0;font-size:17px;line-height:22px;font-weight:500;color:var(--text-1)}
+.rd-head .date-btn .caret{margin-bottom:4px}
+/* 40px round icon button mirroring .backbtn on the right edge */
+.rd-head .iconbtn{
+  width:40px;height:40px;margin-right:-12px;display:flex;align-items:center;justify-content:center;
+  background:none;border:0;cursor:pointer;border-radius:999px;color:var(--text-1);
 }
-/* Read-only date line in the hero — overlineMedium (11/16, 500, +0.08em,
-   uppercase) on text-3, centred. FLAG (spec §9.7): this is a new element,
-   built from existing tokens only; the date itself is changed on Home. */
-.rd-date{
-  margin-top:8px;text-align:center;
-  font-size:11px;line-height:16px;font-weight:500;letter-spacing:0.08em;
-  text-transform:uppercase;color:var(--text-3);
+.rd-head .iconbtn:hover{background:var(--surface-raised)}
+/* band chip + delta under the ring ("Good · ↑ 5 vs yesterday") */
+.rd-band{margin-top:16px;display:flex;align-items:center;justify-content:center;gap:12px}
+.rd-band .chip-band{
+  padding:4px 12px;border-radius:999px;font-size:15px;line-height:22px;font-weight:600;
+  background:color-mix(in srgb, var(--band, var(--metric-readiness)) 18%, transparent);
+  color:var(--band, var(--metric-readiness));
 }
-/* Overnight vitals as a 2×2 StatTile grid (detail-page tile, no hairline) */
-.sumgrid2{margin-top:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-/* Contributor rows: the 20px icon column holds a metric-colour dot.
-   FLAG: the Phosphor set embedded in this file has no pulse / drop glyphs
-   for HRV and SpO₂, so all six rows use dots rather than mixing real icons
-   with hand-drawn stand-ins. Swap for icons once the paths are added. */
-.rd-dot{width:8px;height:8px;border-radius:999px;justify-self:center}
+.rd-band .delta{font-size:15px;line-height:22px;font-weight:600;color:var(--positive-text)}
+.rd-band .delta.down{color:var(--caution-text)}
+/* "Medium confidence · day 14" — 13/18 regular on text-3 */
+.rd-conf{margin:8px 24px 0;text-align:center;font-size:13px;line-height:18px;color:var(--text-3)}
+/* trend card */
+.rd-trend .axis-r{font-family:var(--font-number);font-size:13px;line-height:16px;font-weight:500;font-feature-settings:var(--num-features);fill:var(--text-3)}
+.rd-trend svg{display:block;width:100%;height:auto;margin-top:12px}
+/* period pills — outlined, three across; active fills with surface-raised.
+   Not the .seg4 D/W/M/Y switcher: this only changes the window of the same
+   trend line. FLAG: spec §5 said "no history"; the wireframe adds this card,
+   so the wireframe wins — the spec itself notes that history is the signal
+   Readiness may want a nav slot later. */
+.seg3{margin-top:16px;display:flex;gap:12px}
+.seg3 button{
+  flex:1;height:44px;border-radius:999px;background:none;cursor:pointer;
+  border:0.5px solid var(--neutral-500);
+  font-family:var(--font-number);font-size:15px;line-height:20px;font-weight:600;
+  font-feature-settings:var(--num-features);color:var(--text-2);
+}
+.seg3 button:hover{color:var(--text-1)}
+.seg3 button.active{background:var(--surface-raised);border-color:transparent;color:var(--text-1)}
+/* driver list — icon tile · title + reason · score, one row per input,
+   separators edge to edge (card padding moves onto the rows) */
+.rd-list{padding:0}
+.rd-list .row{display:flex;align-items:center;gap:16px;padding:16px;border-top:0.5px solid var(--divider)}
+.rd-list .row:first-child{border-top:0}
+.rd-list .tile{width:48px;height:48px;border-radius:12px;background:var(--surface-raised);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.rd-list .tile .phi{width:22px;height:22px;display:block}
+.rd-list .txt{flex:1;min-width:0;display:grid;gap:2px}
+.rd-list .t1{font-size:17px;line-height:22px;font-weight:500;color:var(--text-1)}
+.rd-list .t2{font-size:13px;line-height:18px;font-weight:400;color:var(--text-3)}
+.rd-list .sc{font-family:var(--font-number);font-size:24px;line-height:28px;font-weight:700;font-feature-settings:var(--num-features)}
+/* score tone: ≥80 positive, ≥50 caution, below negative — the semantic
+   tone tokens the Health monitor already uses (HM_TONE) */
+.tone-pos{color:var(--positive-text)} .tone-caution{color:var(--caution-text)} .tone-neg{color:var(--negative-text)}
+.rd-list .tile .tone-pos{color:var(--positive-icon)} .rd-list .tile .tone-caution{color:var(--caution-icon)} .rd-list .tile .tone-neg{color:var(--negative-icon)}
+/* since-yesterday table — label · value · delta */
+.rd-delta{padding:0}
+.rd-delta .row{display:flex;align-items:center;gap:12px;padding:16px;border-top:0.5px solid var(--divider)}
+.rd-delta .row:first-child{border-top:0}
+.rd-delta .lab{flex:1;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.rd-delta .val{font-family:var(--font-number);font-size:15px;line-height:20px;font-weight:500;font-feature-settings:var(--num-features);color:var(--text-1)}
+.rd-delta .dlt{min-width:72px;text-align:right;font-family:var(--font-number);font-size:13px;line-height:16px;font-weight:600;font-feature-settings:var(--num-features)}
+.rd-delta .value-dash{font-size:15px;line-height:20px}
+/* "How to use today" — the AI guidance card, tinted with the readiness hue
+   (8% over the card surface, 35% hairline) so it reads as the one card
+   that speaks, not another data card */
+.rd-guide{
+  background:color-mix(in srgb, var(--metric-readiness) 8%, var(--surface-card));
+  box-shadow:inset 0 0 0 0.5px color-mix(in srgb, var(--metric-readiness) 35%, transparent);
+}
+.rd-guide .gh{display:flex;align-items:center;gap:12px}
+.rd-guide .gh .spark{width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb, var(--metric-readiness) 18%, transparent);color:var(--metric-readiness)}
+.rd-guide .gh .spark .phi{width:18px;height:18px;display:block}
+.rd-guide .gh .t{font-size:17px;line-height:22px;font-weight:600;color:var(--text-1)}
+.rd-guide p{margin:12px 0 0;font-size:15px;line-height:22px;font-weight:400;color:var(--text-2)}
+.rd-guide .plans{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px}
+/* suggestion chips — tap to keep one as today's plan (aria-pressed).
+   FLAG: the wireframe shows them as static pills; made them toggles so a
+   visible control is never a dead tap. Easy to revert to <span>. */
+.rd-guide .plan{
+  padding:9px 16px;border-radius:999px;border:0;cursor:pointer;
+  background:var(--surface-raised);font-family:inherit;
+  font-size:13px;line-height:18px;font-weight:500;color:var(--text-1);
+  transition:opacity var(--duration-fast) ease;
+}
+.rd-guide .plan:active{opacity:.8}
+.rd-guide .plan[aria-pressed="true"]{background:var(--metric-readiness);color:var(--neutral-900)}
 /* Related / About rows navigate, so they get the pointer like tappable cards */
 .listrow[data-goto],.listrow[data-open]{cursor:pointer}
 .listrow[data-goto]:hover,.listrow[data-open]:hover{opacity:.8}
+.rd-dot{width:8px;height:8px;border-radius:999px;flex:0 0 auto}
 
 /* Sleep header: which night the selected date resolves to (spec §4 rule 4).
    Sits under the date button; 11/16 medium on text-3. FLAG (spec §9.6):
@@ -2589,31 +2662,39 @@ body{
       </div>
 
       <!-- =========================================================
-           READINESS PAGE — Home ring navigation spec rev 1, 2026-09-10.
+           READINESS PAGE — Home ring navigation spec rev 1 + the owner's
+           wireframes (both 2026-09-10).
            Opened by the Readiness ring on Home (data-open="sub-readiness").
            A pushed .subpage, NOT a .page: showTab() lights the nav button
            whose name matches #page-<name>, so a page-readiness would leave
            the nav bar with nothing lit. As a subpage (z-index 30, under the
            nav at 55) Health stays lit and the back chevron returns to Home.
-           One-day breakdown only — no D/W/M/Y switcher and no history; if
-           that is ever needed, Readiness wants a nav slot, not this page.
-           Date is read-only here (shared with Home; change it on Home).
-           No 3-dot menu: .sub-head has no overflow (spec §6) — About is a
-           row at the bottom instead.
-           FLAG: the spec's tree lists .sub-head as a sibling of the hero
-           block; it is nested INSIDE the hero wrapper here so the teal wash
-           runs behind the header the way .screen-head sits inside .hero on
-           the tab roots. Same components, layout only.
+           Modelled on the Sleep / Activity tab heroes: painted background
+           (the Home teal scene, reused), 136px ring, band + delta, AI
+           headline + summary. Then: Last N days trend, What shaped today's
+           score, Since yesterday, How to use today, Related.
+           FLAG — sample numbers: the wireframe shows a 40 "Rest" day with
+           ↓31; Home's readiness ring is 73, and one metric must show one
+           value everywhere (spec §1), so this page shows 73 / "Good" and
+           the copy is written for that day. Swap the whole sample day to
+           the low-readiness story if that is the state you want to review.
            ========================================================= -->
       <div class="subpage" id="sub-readiness" hidden>
-        <div class="hero stateful rd-hero" id="readinessHero">
-          <div class="sub-head">
+        <div class="hero stateful" style="background:linear-gradient(180deg, color-mix(in srgb, var(--metric-readiness) 10%, var(--surface-app)) 0%, var(--surface-app) 88%)">
+          <!-- same code-drawn teal scene as Home (paintScene treats
+               'readiness' as the home art with its own gradient id) -->
+          <div class="hero-bg" aria-hidden="true">
+            <svg data-art="readiness" viewBox="0 0 360 660" preserveAspectRatio="xMidYMid slice"></svg>
+            <div class="bg-scrim-top"></div>
+            <div class="bg-scrim-bottom"></div>
+          </div>
+          <!-- header: back · shared date (opens the shared calendar) · calendar -->
+          <div class="sub-head rd-head">
             <button class="backbtn" data-back aria-label="Back"><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button>
-            <span class="t">Readiness</span>
+            <button class="date-btn" data-cal="readiness"><span data-datelabel>Today, Aug 6</span><span class="caret"></span></button>
+            <button class="iconbtn" data-cal="readiness" aria-label="Pick a date"><span class="phi" data-ph="calendar-blank" style="width:22px;height:22px"></span></button>
           </div>
           <div class="hero-media">
-            <!-- shared selected date, written by syncDateLabels() -->
-            <div class="rd-date"><span data-datelabel>Today, Aug 6</span></div>
             <div class="ringwrap">
               <div class="ringbox">
                 <div class="glow" style="background:radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--metric-readiness) 30%, transparent) 0%, transparent 70%)"></div>
@@ -2637,9 +2718,18 @@ body{
                 </div>
               </div>
             </div>
-            <!-- headline/summary pair is what setState() swaps to no-data copy -->
+            <!-- band + change since yesterday. Band hue via --band:
+                 Optimal → emerald, Good → readiness teal, Fair → caution,
+                 Rest → negative (see About readiness for the bands) -->
+            <div class="rd-band live">
+              <span class="chip-band" style="--band:var(--metric-readiness)">Good</span>
+              <span class="delta">↑ 5 vs yesterday</span>
+            </div>
+            <!-- AI summary — headline/summary pair is what setState() swaps
+                 to no-data copy, exactly as on the tab heroes -->
             <div class="headline live">Ready for a normal day</div>
             <p class="summary live">Sleep and HRV are in your usual range. Resting heart rate is a touch high, so keep hard efforts short today.</p>
+            <div class="rd-conf live">Medium confidence · day 14</div>
             <div class="statechip sync" style="justify-content:center">
               <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
               <span>Syncing readiness…</span>
@@ -2647,76 +2737,98 @@ body{
           </div>
         </div>
 
-        <div class="sub-body">
-          <!-- Contributors — one row per input, same .goalrow + .gbar pattern
-               as Today's goals. No chevrons: these rows explain the score,
-               they do not navigate. Bar = how much of its full contribution
-               each input earned today. Six rows is the cap (spec §5.1).
-               Sample values are invented to match the 73 shown on Home. -->
-          <div class="card stateful empty-zero">
-            <div class="card-head"><div class="card-title">Contributors</div></div>
-            <div class="statechip sync">
-              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
-              <span>Syncing readiness…</span>
+        <div class="stack">
+          <!-- Last N days — the readiness trend. Drawn by rdDrawTrend() from
+               RD_TREND (sample data); the dashed rule is the window average
+               and the right-hand labels are the window max / min. 7d / 14d /
+               30d only change the window. No data: frame + labels stay, the
+               line hides (.live), avg goes to —. -->
+          <div class="card stateful rd-trend">
+            <div class="card-head">
+              <div class="card-title" id="rdTrendTitle">Last 30 days</div>
+              <div class="trend" style="margin-top:0;font-size:15px;line-height:22px;font-weight:400"><span class="live" id="rdTrendAvg">avg 61</span><span class="value-dash" style="font-size:15px;line-height:22px;font-weight:400">—</span></div>
             </div>
-            <div class="card-body">
-              <div class="live" style="display:flex;flex-direction:column;gap:20px">
-                <div class="goalrow">
-                  <span class="rd-dot" style="background:var(--metric-sleep)"></span>
-                  <span class="gname">Sleep</span>
-                  <span class="gval"><span class="gnum live">78</span><span class="gnum value-zero">—</span><span class="ggoal">score</span></span>
-                  <span class="gbar"><i style="width:78%;background:var(--metric-sleep)"></i></span>
-                </div>
-                <div class="goalrow">
-                  <span class="rd-dot" style="background:var(--metric-hrv)"></span>
-                  <span class="gname">HRV</span>
-                  <span class="gval"><span class="gnum live">42</span><span class="gnum value-zero">—</span><span class="ggoal">ms · avg 40</span></span>
-                  <span class="gbar"><i style="width:84%;background:var(--metric-hrv)"></i></span>
-                </div>
-                <div class="goalrow">
-                  <span class="rd-dot" style="background:var(--metric-heart-rate)"></span>
-                  <span class="gname">Resting heart rate</span>
-                  <span class="gval"><span class="gnum live">58</span><span class="gnum value-zero">—</span><span class="ggoal">bpm · avg 55</span></span>
-                  <span class="gbar"><i style="width:62%;background:var(--metric-heart-rate)"></i></span>
-                </div>
-                <div class="goalrow">
-                  <span class="rd-dot" style="background:var(--metric-skin-temp)"></span>
-                  <span class="gname">Skin temperature</span>
-                  <span class="gval"><span class="gnum live">+0.2</span><span class="gnum value-zero">—</span><span class="ggoal">°C</span></span>
-                  <span class="gbar"><i style="width:90%;background:var(--metric-skin-temp)"></i></span>
-                </div>
-                <div class="goalrow">
-                  <span class="rd-dot" style="background:var(--metric-spo2)"></span>
-                  <span class="gname">Blood oxygen</span>
-                  <span class="gval"><span class="gnum live">97</span><span class="gnum value-zero">—</span><span class="ggoal">%</span></span>
-                  <span class="gbar"><i style="width:96%;background:var(--metric-spo2)"></i></span>
-                </div>
-                <div class="goalrow">
-                  <span class="rd-dot" style="background:var(--metric-activity)"></span>
-                  <span class="gname">Previous-day activity</span>
-                  <span class="gval"><span class="gnum live">68</span><span class="gnum value-zero">—</span><span class="ggoal">score</span></span>
-                  <span class="gbar"><i style="width:68%;background:var(--metric-activity)"></i></span>
-                </div>
+            <svg id="rdTrend" viewBox="0 0 296 132" aria-label="Readiness over the last 30 days"></svg>
+            <div class="seg3" id="rdSeg" role="tablist" aria-label="Trend window">
+              <button type="button" data-n="7">7d</button>
+              <button type="button" data-n="14">14d</button>
+              <button type="button" data-n="30" class="active">30d</button>
+            </div>
+          </div>
+
+          <!-- What shaped today's score — the four inputs, each with the one
+               line that explains it and its own 0–100. Colour = tone of the
+               sub-score. FLAG: spec §5.1 listed six inputs with bars; the
+               wireframe shows these four as a list — wireframe wins. -->
+          <div class="sechead"><span class="t">What shaped today's score</span></div>
+          <div class="card stateful rd-list">
+              <div class="row">
+                <div class="tile"><span class="phi tone-caution" data-ph="moon"></span></div>
+                <div class="txt"><div class="t1">Sleep recovery</div><div class="t2">Short on deep sleep</div></div>
+                <span class="sc tone-caution live">67</span><span class="value-dash">—</span>
               </div>
+              <div class="row">
+                <div class="tile"><span class="phi tone-caution" data-ph="pulse"></span></div>
+                <div class="txt"><div class="t1">HRV recovery</div><div class="t2">Slightly below your baseline</div></div>
+                <span class="sc tone-caution live">64</span><span class="value-dash">—</span>
+              </div>
+              <div class="row">
+                <div class="tile"><span class="phi tone-pos" data-ph="person-simple-run" data-weight="fill"></span></div>
+                <div class="txt"><div class="t1">Activity balance</div><div class="t2">Load is within your usual range</div></div>
+                <span class="sc tone-pos live">99</span><span class="value-dash">—</span>
+              </div>
+              <div class="row">
+                <div class="tile"><span class="phi tone-pos" data-ph="thermometer" data-weight="fill"></span></div>
+                <div class="txt"><div class="t1">Body temperature</div><div class="t2">At baseline</div></div>
+                <span class="sc tone-pos live">88</span><span class="value-dash">—</span>
+              </div>
+          </div>
+
+          <!-- Since yesterday — the raw overnight readings and how they moved.
+               Delta tone: a change that costs readiness is caution, one that
+               helps is positive. -->
+          <div class="sechead"><span class="t">Since yesterday</span></div>
+          <div class="card stateful rd-delta">
+              <div class="row">
+                <span class="lab">Resting heart rate</span>
+                <span class="val live">58 bpm</span><span class="value-dash">—</span>
+                <span class="dlt tone-caution live">+3 bpm</span>
+              </div>
+              <div class="row">
+                <span class="lab">HRV</span>
+                <span class="val live">42 ms</span><span class="value-dash">—</span>
+                <span class="dlt tone-caution live">−4 ms</span>
+              </div>
+              <div class="row">
+                <span class="lab">Skin temperature</span>
+                <span class="val live">36.5°C</span><span class="value-dash">—</span>
+                <span class="dlt tone-caution live">+0.1°C</span>
+              </div>
+              <div class="row">
+                <span class="lab">Steps</span>
+                <span class="val live">8.4k</span><span class="value-dash">—</span>
+                <span class="dlt tone-pos live">+3.5k</span>
+              </div>
+          </div>
+
+          <!-- How to use today — the AI's one recommendation plus suggested
+               plans. Hidden entirely with no data (nothing to recommend). -->
+          <div class="card rd-guide hide-empty">
+            <div class="gh"><span class="spark"><span class="phi" data-ph="sparkle" data-weight="fill"></span></span><span class="t">How to use today</span></div>
+            <p>Train as planned, but keep the hard part short. An early night tonight will do more for tomorrow's score than extra volume today.</p>
+            <div class="plans" id="rdPlans">
+              <button type="button" class="plan" aria-pressed="false">Steady session</button>
+              <button type="button" class="plan" aria-pressed="false">Walk 20 min</button>
+              <button type="button" class="plan" aria-pressed="false">Early night</button>
             </div>
           </div>
 
-          <!-- Overnight vitals — StatTile 2×2, the detail-page tile format
-               (no hairline). Headers stay and figures go to — with no data. -->
-          <div class="card stateful">
-            <div class="card-head"><div class="card-title">Overnight vitals</div></div>
-            <div class="sumgrid2">
-              <section class="stattile"><div class="label">Resting HR</div><div class="figure"><span class="live" style="display:contents"><span class="value">58</span><span class="unit">bpm</span></span><span class="value-dash">—</span></div></section>
-              <section class="stattile"><div class="label">HRV</div><div class="figure"><span class="live" style="display:contents"><span class="value">42</span><span class="unit">ms</span></span><span class="value-dash">—</span></div></section>
-              <section class="stattile"><div class="label">Skin temp</div><div class="figure"><span class="live" style="display:contents"><span class="value">+0.2</span><span class="unit">°C</span></span><span class="value-dash">—</span></div></section>
-              <section class="stattile"><div class="label">SpO₂</div><div class="figure"><span class="live" style="display:contents"><span class="value">97</span><span class="unit">%</span></span><span class="value-dash">—</span></div></section>
-            </div>
-          </div>
-
-          <!-- Related — readiness is built from sleep and activity data, so
-               hand the user onward. data-goto switches tab AND closes this
-               page (showTab hides every .subpage), landing on the shared
-               selected date. Back from there returns to Home, not here. -->
+          <!-- Related — spec §5.2 / §5.3: hand the user onward to the data
+               this score is built from, and to the About page. data-goto
+               switches tab AND closes this page (showTab hides every
+               .subpage) on the shared date. FLAG: not in the wireframe —
+               kept because the spec requires the cross-links and About has
+               no other entry point (no 3-dot menu on this header). -->
           <div class="card">
             <div class="card-title">Related</div>
             <div style="margin-top:4px">
@@ -3860,10 +3972,13 @@ function ridgePath(rnd, yBase, amp, spiky){
   return d + ' L360 660 Z';
 }
 function paintScene(svg){
-  const kind = svg.dataset.art;
+  // 'readiness' reuses the Home scene (same teal wash) but keeps its own
+  // gradient id, so two scenes on one page don't fight over #sky-home
+  const art = svg.dataset.art;
+  const kind = art === 'readiness' ? 'home' : art;
   const rnd = seeded(kind === 'sleep' ? 7 : kind === 'home' ? 11 : 3);
   const defs = svgEl('defs', {});
-  const sky = svgEl('linearGradient', { id:'sky-'+kind, x1:0, y1:0, x2:0, y2:1 });
+  const sky = svgEl('linearGradient', { id:'sky-'+art, x1:0, y1:0, x2:0, y2:1 });
   const SKY_STOPS = {
     sleep:    [ ['0%','var(--violet-900)'], ['55%','color-mix(in srgb, var(--violet-800) 70%, var(--neutral-900))'],
                 ['72%','color-mix(in srgb, var(--orchid-700) 32%, var(--violet-900))'], ['85%','var(--violet-900)'] ],
@@ -3880,7 +3995,7 @@ function paintScene(svg){
   };
   SKY_STOPS[kind].forEach(([o, c]) => { const s = svgEl('stop', { offset:o }); s.style.stopColor = c; sky.append(s); });
   defs.append(sky); svg.append(defs);
-  svg.append(svgEl('rect', { x:0, y:0, width:360, height:660, fill:`url(#sky-${kind})` }));
+  svg.append(svgEl('rect', { x:0, y:0, width:360, height:660, fill:`url(#sky-${art})` }));
 
   if (kind === 'home'){
     // faint scattered speckles, thinning out toward the section divide
@@ -3982,6 +4097,14 @@ const PH = {"regular":{"house":"M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80
    Flag: hand-drawn stand-in (rounded play triangle), not Phosphor path
    data — swap for the real "play" fill if pixel parity matters. */
 PH.fill.play = 'M80 40c0-6 6.5-9.8 11.8-6.8l136 81c5.1 3 5.1 10.5 0 13.6l-136 81C86.5 211.8 80 208 80 202Z';
+/* Three more glyphs for the Readiness page (2026-09-10): pulse (HRV row),
+   calendar-blank (header), sparkle (How to use today).
+   Flag: written from memory of @phosphor-icons/core, not pasted from the
+   package — shapes are right, but re-copy from the package before shipping
+   if pixel parity with the rest of the set matters. */
+PH.regular.pulse = 'M232,128H207.2L192,101.5a8,8,0,0,0-14.1.4L145.3,176,102.9,55.9a8,8,0,0,0-15,.3L57.6,128H24a8,8,0,0,0,0,16H63.2a8,8,0,0,0,7.4-5.1l24.6-61.5,42.9,121.4a8,8,0,0,0,14.5.8l34.3-77.2,10.5,18.4A8,8,0,0,0,204.4,144H232a8,8,0,0,0,0-16Z';
+PH.regular['calendar-blank'] = 'M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z';
+PH.fill.sparkle = 'M208.9,144.9l-46.6-17.2a8,8,0,0,1-4.7-4.7L140.4,76.4a13.3,13.3,0,0,0-24.8,0L98.4,123a8,8,0,0,1-4.7,4.7L47.1,144.9a13.3,13.3,0,0,0,0,24.8l46.6,17.2a8,8,0,0,1,4.7,4.7l17.2,46.6a13.3,13.3,0,0,0,24.8,0l17.2-46.6a8,8,0,0,1,4.7-4.7l46.6-17.2a13.3,13.3,0,0,0,0-24.8ZM222,50l-14.3-5.7L202,30a6,6,0,0,0-11.2,0l-5.7,14.3L170.8,50a6,6,0,0,0,0,11.2l14.3,5.7,5.7,14.3a6,6,0,0,0,11.2,0l5.7-14.3L222,61.2A6,6,0,0,0,222,50Z';
 
 function injectIcons(){
   $$('.phi').forEach(el => {
@@ -4019,6 +4142,45 @@ $$('.listrow[role="button"]').forEach(row => row.addEventListener('keydown', e =
 }));
 
 /* ==========================================================================
+   READINESS TREND — "Last N days" card on #sub-readiness (2026-09-10).
+   RD_TREND is 30 sample scores, oldest first, ending on today's 73. The
+   pills pick how many of the latest days to draw; the dashed rule is the
+   window average, the right-hand labels its max and min.
+   ========================================================================== */
+const RD_TREND = [58,66,74,52,61,70,45,55,63,72,66,48,60,71,79,64,52,57,69,74,58,47,62,70,82,55,41,66,60,73];
+function rdDrawTrend(n){
+  const svg = $('#rdTrend'); if (!svg) return;
+  const data = RD_TREND.slice(-n);
+  const W = 296, H = 132, plotW = 250, top = 10, bot = 14;       // 46px gutter for the labels
+  const min = Math.min(...data), max = Math.max(...data);
+  const avg = Math.round(data.reduce((a, b) => a + b, 0) / data.length);
+  const x = i => (i * plotW / (data.length - 1)).toFixed(1);
+  const y = v => (top + (max - v) / (max - min) * (H - top - bot)).toFixed(1);
+  svg.innerHTML =
+    `<text class="axis-r" x="${W}" y="${+y(max) + 5}" text-anchor="end">${max}</text>` +
+    `<text class="axis-r" x="${W}" y="${+y(min) + 5}" text-anchor="end">${min}</text>` +
+    `<line x1="0" x2="${plotW}" y1="${y(avg)}" y2="${y(avg)}" stroke="var(--neutral-500)" stroke-width="1" stroke-dasharray="3 3"/>` +
+    // FLAG: wireframe draws the line in white; the app's charts colour the
+    // line by metric (--chart-accent), so this one is readiness teal
+    `<g class="live"><polyline fill="none" stroke="var(--metric-readiness)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" ` +
+    `points="${data.map((v, i) => x(i) + ',' + y(v)).join(' ')}"/></g>`;
+  $('#rdTrendTitle').textContent = `Last ${n} days`;
+  $('#rdTrendAvg').textContent = `avg ${avg}`;
+  svg.setAttribute('aria-label', `Readiness over the last ${n} days, average ${avg}`);
+}
+$$('#rdSeg button').forEach(b => b.addEventListener('click', () => {
+  $$('#rdSeg button').forEach(o => o.classList.toggle('active', o === b));
+  rdDrawTrend(+b.dataset.n);
+}));
+rdDrawTrend(30);
+// "How to use today" plan chips — one can be kept as today's plan
+$$('#rdPlans .plan').forEach(b => b.addEventListener('click', () => {
+  const on = b.getAttribute('aria-pressed') === 'true';
+  $$('#rdPlans .plan').forEach(o => o.setAttribute('aria-pressed', 'false'));
+  b.setAttribute('aria-pressed', String(!on));
+}));
+
+/* ==========================================================================
    HISTORY CALENDAR — month-scroll modal shared by Health / Activity / Sleep.
    The newest month renders last, so the sheet opens at the present and the
    owner scrolls UP to reach earlier months (per the standalone prototypes).
@@ -4026,7 +4188,9 @@ $$('.listrow[role="button"]').forEach(row => row.addEventListener('keydown', e =
 const CAL_CFG = {
   health:   { title:'Health history',   ring:'var(--metric-readiness)', sel:'var(--teal-100)' },
   activity: { title:'Activity history', ring:'var(--metric-activity)',  sel:'var(--lime-100)' },
-  sleep:    { title:'Sleep history',    ring:'var(--metric-sleep)',     sel:'var(--violet-100)' }
+  sleep:    { title:'Sleep history',    ring:'var(--metric-sleep)',     sel:'var(--violet-100)' },
+  // Readiness page header — same teal chrome as Home; writes the shared date
+  readiness:{ title:'Readiness history', ring:'var(--metric-readiness)', sel:'var(--teal-100)' }
 };
 const TODAY = { y:2026, m:7, d:6 }; // Thu 6 Aug 2026 (m is 0-based)
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
