@@ -5,6 +5,20 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-11 (round 6) — Calibrating now follows the picked date. WEAR_START
+  (Fri 24 Jul, day 1) and CAL_DAYS (7) define the calibration week: picking any
+  first-week day in the calendar makes it "today" and puts the app in
+  Calibrating at that day count (chips, callout title, 7-segment meter and
+  trend title all read the live number via [data-calday] / [data-caldays]);
+  picking a later date returns to the calibrated Default view with today back
+  on Aug 6 (a past calibrated day labels as "Mon, Aug 3"). The calendar's
+  future boundary is always the real latest date (Aug 6) so later dates stay
+  selectable while calibrating; months no longer shift with the state. The
+  panel radio follows state changes made from the calendar. Hero copy no
+  longer hard-codes "day 3". Owner ask: a later date in the date selection
+  for a fully calibrated view, for the prototype recording.
+  `Readiness/Readiness flow.html` regenerated.
+
 - 2026-09-11 (round 5) — Calibrating state now moves the prototype's "today"
   back to day 3 (Sun 26 Jul; the default Thu 6 Aug is day 14), so a recording
   of that state reads as a real first-week morning. TODAY became a let with
