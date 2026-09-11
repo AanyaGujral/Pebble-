@@ -5,6 +5,17 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-11 (round 3) — Readiness hero checked against the Workout Tab
+  hero ring (Activity Tab/Workout Tab.html): geometry, stroke, gradient,
+  glow and numeral already identical; the cap under the number now reads
+  SCORE like that ring (spec §5 had READINESS — flagged in code). Hero →
+  card-stack handoff made visible as on the Workout page: the readiness
+  ground lifts to a deep teal (teal-900 at 55% over neutral-900) in its lower
+  half so the stack's 24px rounded top reads against it; the bottom scrim
+  is dropped there because it faded to surface-app and erased the edge.
+  FLAG: the Figma frame is flat neutral-900 to the bottom — this lift is the
+  minimum that shows the edge the owner asked for.
+
 - 2026-09-11 (later) — Readiness page, feedback round 2. (1) Health and
   activity monitor rebuilt as the Home Health-monitor tiles (.hm .card, 2-up,
   132px, dot + overline label, 24px numeral, unit in caps — BPM / MS / °C —

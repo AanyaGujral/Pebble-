@@ -794,7 +794,12 @@ body{
   position:absolute;inset:0;
   background:
     radial-gradient(240px 260px at 78% -2%, color-mix(in srgb, var(--teal-600) 42%, transparent) 0%, color-mix(in srgb, var(--teal-800) 30%, transparent) 45%, transparent 100%),
-    var(--neutral-900);
+    /* ground lifts toward a deep teal in the lower half so the card stack's
+       rounded top (surface-app) reads against it — the same hero → stack
+       distinction the Workout page gets from its painted scene. FLAG: the
+       Figma frame is flat neutral-900 to the bottom; this lift is the minimum
+       that keeps the stack edge visible (owner asked for it, 2026-09-11). */
+    linear-gradient(180deg, var(--neutral-900) 0%, var(--neutral-900) 38%, color-mix(in srgb, var(--teal-900) 55%, var(--neutral-900)) 100%);
 }
 /* band chip + change vs yesterday under the ring. The change uses the same
    soft caret the Health monitor cards use on Home (hmTri) — numbers are
@@ -2727,7 +2732,8 @@ body{
           <div class="hero-bg" aria-hidden="true">
             <div class="rd-glow"></div>
             <img src="assets/backgrounds/home-page-bg.svg" alt="" onerror="this.remove()">
-            <div class="bg-scrim-bottom"></div>
+            <!-- no .bg-scrim-bottom here: it fades to surface-app and would
+                 erase the stack edge this ground exists to show -->
           </div>
           <!-- header: back · shared date (opens the shared calendar) · 3-dot -->
           <div class="sub-head rd-head">
@@ -2758,7 +2764,10 @@ body{
                 </svg>
                 <div class="ringnum">
                   <div class="score"><span class="live">73</span><span class="value-dash" style="font-size:56px;line-height:60px">--</span></div>
-                  <div class="score-cap">Readiness</div>
+                  <!-- "Score", matching the Workout Tab hero ring verbatim (owner,
+                       2026-09-11). FLAG: spec §5 wrote READINESS here; the page
+                       title already says Readiness, so the cap follows the component. -->
+                  <div class="score-cap">Score</div>
                 </div>
               </div>
             </div>
