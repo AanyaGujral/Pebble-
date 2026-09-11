@@ -5,6 +5,34 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-11 (rev 2) — Menstrual cycle flow reworked on the owner's review of
+  rev 1, and published as an artifact ("Pebble Home Prototype"; the published
+  copy is the repo file with the document shell stripped, built from it —
+  edit the repo file). Changes: (1) the card's "Settings" text became the
+  app's 3-dot menu (Cycle settings · About cycle tracking — About added so the
+  menu has two entries like every other 3-dot menu; FLAG). (2) Every pill is
+  the button component and Title Case ("Log Period Start Today", "Set Up
+  Cycle"). (3) The Watch reminders switch is the Me-tab prototype's (thumb goes
+  text-on-accent when on, eased travel). (4) Follicular left gold for
+  violet-400 and luteal moved to orchid-400 — blues/purples only, as the WHOOP
+  reference paints them; tokens.js `cycle` updated, flags rewritten. (5) Card
+  and page header follow the WHOOP screen: "Cycle Day 8 │ Follicular Phase"
+  over "Next period in: 21 days"; the phase strip is gone. (6) The card's
+  top-right corner carries a radial wash of the current phase's colour (--ph,
+  set by the script; none in the set-up state). (7) Settings rebuilt for
+  spacing and affordance on the Workouts card row — 40px neutral chip with the
+  glyph in neutral-100 (not teal), label, value, Phosphor caret, 64px rows,
+  one card per group; the question lines came off the rows. (8) Every value
+  now opens the drum picker from the Health-metrics settings (the same wheel
+  as the Me-tab field sheet and onboarding), with the row's question as the
+  sheet's sub line; the rev-1 generalisation of the goal-edit sheet was
+  reverted, so that sheet is back to its original code. Also: a ≤440px media
+  rule zooms the phone mockup to 0.9 so the published page never scrolls
+  sideways on a phone. Verified headless: card order and 158px height in
+  both states, day-8/follicular maths, wash colour, menu → settings → drum
+  pick → Save recomputing card and hero, About page, activity goal sheet
+  untouched, no hex outside the token block.
+
 - 2026-09-11 — Built the **Menstrual cycle** flow into `Homepage + measurel all
   + start workout flow.html` (the owner's attached homepage file), with the spec
   in `docs/feature-menstrual-cycle.md` (rev 1). Entry point: a "Menstrual

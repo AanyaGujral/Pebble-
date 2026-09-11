@@ -169,17 +169,18 @@ export const metric = {
 /** Menstrual cycle phases — one hue per phase, used on the Home card, the
  *  cycle calendar and its legend. Added 2026-09-11 with the cycle flow.
  *  FLAG: every 400-step hue is already a metric alias, so each phase shares
- *  a hue with one body signal (menstrual = heartRate, follicular = steps,
- *  ovulation = spo2, luteal = sleep). The owner's reference app paints the
- *  period red and the ovulation window blue, which is where crimson and sky
- *  come from; gold and violet were chosen for legibility on the dark
- *  calendar. Cycle marks never sit beside those metrics' charts, so the
- *  sharing is tolerable — revisit if a phase mark and its twin ever meet. */
+ *  a hue with one body signal (menstrual = heartRate, follicular = sleep,
+ *  ovulation = spo2, luteal = skinTemp). Crimson is the reference app's red
+ *  period; the other three step through the cool half of the ramp (owner,
+ *  2026-09-11: "blues / purples — violet, orchid, sky"), which also matches
+ *  the WHOOP cycle screen the owner supplied. Cycle marks never sit beside
+ *  those metrics' charts, so the sharing is tolerable — revisit if a phase
+ *  mark and its twin ever meet. */
 export const cycle = {
-  menstrual:  '#E43A62',
-  follicular: '#F2C64B',
-  ovulation:  '#58A8DF',
-  luteal:     '#8A7CEC'
+  menstrual:  '#E43A62',   // crimson-400
+  follicular: '#8A7CEC',   // violet-400
+  ovulation:  '#58A8DF',   // sky-400
+  luteal:     '#C873DE'    // orchid-400
 };
 
 /** Identity tints for people (avatar chips) — the Friends / Family ranking
