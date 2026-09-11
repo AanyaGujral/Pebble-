@@ -5,6 +5,14 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-11 (rev 5) — Menstrual cycle page now carries the card's wash: the
+  selected day's phase colour fading from the page's top-right corner over
+  the app background (owner: "the internal page will also have the same
+  gradient as the card"). It is the scroll container's own background, so it
+  holds the corner while the content scrolls; --ph is set with the header, so
+  tapping a day in another phase recolours header and wash together.
+  Artifact republished.
+
 - 2026-09-11 (rev 4) — Menstrual cycle flow, third owner review. Card: gaps
   opened (14px above the strip, 12px above the next-period line). Page: the
   header is now the card's 17/22 with one 13/18 line, and it follows the

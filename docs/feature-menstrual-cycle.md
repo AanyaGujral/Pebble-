@@ -1,6 +1,6 @@
 # Feature: Menstrual cycle
 
-Status: **Prototype built (rev 4, 2026-09-11, after three owner reviews) — UX not yet approved.**
+Status: **Prototype built (rev 5, 2026-09-11, after four owner reviews) — UX not yet approved.**
 Prototype: `Homepage + measurel all + start workout flow.html` — the Home tab's
 **Menstrual cycle** card, the cycle calendar page, the log-a-period sheet and
 the Cycle settings page. Reference: the owner's two screenshots of the legacy
@@ -61,8 +61,9 @@ watch reminders.
   tick at today; 12px, then the next-period line; a radial wash of the
   phase colour from the top-right corner, set through `--ph`.
 - **Cycle page** — `.subpage` / `.sub-head` with the app's 3-dot menu on the
-  right (Cycle settings · About cycle tracking); the same 17px header for
-  the SELECTED day with one 13px line under it ("Today · Next period in:
+  right (Cycle settings · About cycle tracking); the page background carries
+  the card's top-right wash in the selected day's phase colour; the same
+  17px header for the SELECTED day with one 13px line under it ("Today · Next period in:
   21 days"); calendar card with ‹ MONTH › on the left and the + button on
   the right (its one-entry `.menu`), legend, 40px day cells whose `::before`
   paints the bubble (start / mid / end / solo of a run, phase colour at 22%
@@ -147,6 +148,10 @@ the selected day · Last period start on the Me-tab date calendar · Save
 removed (settings apply on pick) · footnote left-aligned · reminder picker
 spacing (value + unit centred, sub line clear of the X and ✓), default 3 days.
 All applied; artifact republished.
+
+## Owner review, 2026-09-11 (rev 4 → rev 5)
+The cycle page carries the same phase-colour wash as the card. Applied;
+artifact republished.
 
 ## Dependencies / risks
 - Reminder rows are settings only; nothing schedules a reminder.
