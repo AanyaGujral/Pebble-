@@ -1658,7 +1658,7 @@ body{
 
 /* ==========================================================================
    MENSTRUAL CYCLE — Home card, cycle calendar page, log sheet, settings page
-   (added 2026-09-11; rev 3 after the owner's second review the same day).
+   (added 2026-09-11; rev 4 after the owner's third review the same day).
    Built after the owner's screenshots of the legacy app (calendar + Setting)
    and, for the day/phase header, the WHOOP cycle screen they supplied
    ("Cycle Day 14 | Follicular Phase / Next period in: 13-17 days").
@@ -1716,7 +1716,9 @@ body{
 }
 .cyc-card .card-head{align-items:center}
 .cyc-card .chev{margin-right:4px}
-.cyc-card .card-body{margin-top:12px;height:92px;display:flex;flex-direction:column;justify-content:center}
+/* body: header line · 14px · strip · 12px · next-period line — the gaps the
+   owner asked to open up in rev 4 */
+.cyc-card .card-body{margin-top:14px;height:96px;display:flex;flex-direction:column;justify-content:center}
 /* "Cycle Day 8 │ Follicular Phase" — headingH3Medium (17/22, weight 500;
    one step down from rev 2, owner), the phase in its own colour, a hairline
    divider between the two */
@@ -1727,11 +1729,11 @@ body{
 /* the phase strip — back by owner request (rev 3): one segment per phase,
    sized to its share of the cycle, on .gbar's 8px pill geometry; phases
    still ahead are dimmed; a text-1 tick marks today */
-.cyc-strip{position:relative;margin-top:8px;display:flex;gap:2px;height:8px}
+.cyc-strip{position:relative;margin-top:14px;display:flex;gap:2px;height:8px}
 .cyc-strip i{display:block;height:100%;border-radius:999px;background:var(--ph)}
 .cyc-strip i.pred{opacity:.4}
 .cyc-strip .tick{position:absolute;top:-3px;width:2px;height:14px;margin-left:-1px;border-radius:1px;background:var(--text-1)}
-.cyc-next{margin-top:6px;font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
+.cyc-next{margin-top:12px;font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
 /* set-up slot — takes the body's slot in the no-data state */
 .cyc-setup{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
 .cyc-setup .msg{font:400 13px/18px var(--font-text);color:var(--text-3);max-width:260px;margin:0}
@@ -1744,22 +1746,23 @@ body{
 .sub-head .cyc-dots .phi{width:20px;height:20px}
 .cyc-head .menu{top:76px;right:12px}
 
-/* page hero — the WHOOP header, left-aligned under the title:
-   headingH2Medium (20/26; one step down from rev 2, owner) for "Cycle Day 8
-   │ Follicular Phase", paragraphP1 for the next-period line, a P2 summary */
-.cyc-hero{padding:4px 0 0}
-.cyc-hero .cyc-now{gap:12px}
-.cyc-hero .cyc-now .d,.cyc-hero .cyc-now .p{font-size:20px;line-height:26px;letter-spacing:-0.005em}
-.cyc-hero .cyc-now .bar{height:20px}
-.cyc-hero .nx{margin:6px 0 0;font:400 15px/22px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
-.cyc-hero .sum{margin:2px 0 0;font:400 13px/18px var(--font-text);color:var(--text-3);font-feature-settings:var(--num-features)}
+/* page hero — the WHOOP header, left-aligned under the title, and it
+   follows the SELECTED day. Rev 4 (owner: "the top half is too large"):
+   the same 17/22 as the card, one 13/18 line under it, nothing else. */
+.cyc-hero{padding:0 0 4px}
+.cyc-hero .cyc-now{gap:10px}
+.cyc-hero .nx{margin:4px 0 0;font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
 
-/* ---- calendar card */
-.cyc-monthnav{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.cyc-monthnav .mt{font:500 17px/22px var(--font-text);color:var(--text-1);font-feature-settings:var(--num-features)}
-.cyc-monthnav .iconbtn{background:none}
+/* ---- calendar card. Head: ‹ month › on the left, the + button on the
+   right (the WHOOP screen), its one-entry menu dropping from it. */
+.cyc-calhead{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cyc-monthnav{display:flex;align-items:center;gap:2px;margin-left:-8px}
+.cyc-monthnav .mt{min-width:96px;text-align:center;font:600 13px/18px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-1);font-feature-settings:var(--num-features)}
+.cyc-monthnav .iconbtn{width:32px;height:32px;background:none}
 .cyc-monthnav .iconbtn:hover{background:var(--surface-raised)}
 .cyc-monthnav .iconbtn[disabled]{opacity:var(--state-inactive);cursor:default}
+.cyc-calhead .menu{top:40px;right:0;width:200px}
+.cyc-calhead .menu button[disabled]{color:var(--text-3);cursor:default;background:none}
 /* legend: four phase dots plus the dotted "predicted" ring */
 .cyc-legend{margin-top:8px;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px}
 .cyc-legend span{display:inline-flex;align-items:center;gap:6px;font:500 11px/16px var(--font-text);color:var(--text-2)}
@@ -1784,24 +1787,30 @@ body{
   border:1.5px solid transparent;
   font:600 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--ph);
 }
+/* League Spartan keeps descender space digits never use, so a centred
+   text box reads high in the circle (see .r3num). The <b> nudges the ink
+   down by half that descender — the numerals now sit on the circle's
+   centre (owner, rev 4). */
+.cyc-d span b{display:block;font-weight:inherit;transform:translateY(0.1em)}
 /* the ONE dotted mark: predicted period days (owner, rev 3) */
 .cyc-d.pred span{border-style:dotted;border-color:var(--ph)}
-/* today — the text-1 ring, as the WHOOP screen circles it */
-.cyc-d.today span{outline:1.5px solid var(--text-1);outline-offset:1px;color:var(--text-1)}
+/* today reads in text-1; the SELECTED day carries the ring (today is
+   selected until another day is tapped — the WHOOP screen's white circle) */
+.cyc-d.today span{color:var(--text-1)}
+.cyc-d.sel span{outline:1.5px solid var(--text-1);outline-offset:1px}
 .cyc-d.pad{visibility:hidden}
 .cyc-d:hover span{box-shadow:0 0 0 3px color-mix(in srgb, var(--ph) 30%, transparent)}
 /* a logged period start carries a small dot under the numeral */
 .cyc-d.logged span::after{content:"";position:absolute;bottom:2px;left:50%;width:3px;height:3px;margin-left:-1.5px;border-radius:999px;background:currentColor}
 .cyc-hint{margin:12px 4px 0;text-align:center;font:400 11px/16px var(--font-text);color:var(--text-3)}
 
-/* This cycle / Logged periods — the Workouts card verbatim (.wo-card /
-   .wo-header / .wo-row), so their spacing and type match the other flows'
-   cards (owner, rev 3). The phase chip holds a 12px dot in the phase colour
-   in place of a glyph. */
-.cyc-pdot{width:12px;height:12px;border-radius:999px;background:var(--ph)}
+/* This cycle — the Workouts card verbatim (.wo-card / .wo-header /
+   .wo-row), so spacing and type match the other flows' cards (rev 3); the
+   row leads with a plain 10px phase dot, no chip (owner, rev 4). */
+.cyc-pdot{flex:none;width:10px;height:10px;border-radius:999px;background:var(--ph);margin:0 4px}
 .wo-row.static{cursor:default}
 .wo-row.static:hover .wo-chip{background:var(--neutral-bg)}
-.cyc-empty{margin:12px 0 0;font:400 13px/18px var(--font-text);color:var(--text-3)}
+
 
 /* ---- settings page — rows are the Workouts card's rows (owner: "same as
    workout details card on homepage"): 40px neutral chip with the glyph in
@@ -1812,7 +1821,10 @@ body{
 .cyc-group .wo-row .val{flex:none;font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
 .cyc-group .wo-row .switch{margin-right:2px}
 .cyc-group .wo-row[aria-disabled="true"]{opacity:var(--state-inactive);pointer-events:none}
-.cyc-foot{margin:8px 12px 0;text-align:center;font:400 13px/18px var(--font-text);color:var(--text-3)}
+/* the four body-signal cards reuse the Health monitor component (.hm) —
+   only the section head's top margin is trimmed to the stack's rhythm */
+.cyc-hm .sec-head{margin:4px 0 12px}
+.cyc-foot{margin:4px 4px 0;text-align:left;font:400 13px/18px var(--font-text);color:var(--text-3)}
 
 /* ---- the action sheet — one goal-edit .sheet frame for every step of the
    log / move / remove flows and the settings pickers: X · title · (✓), the
@@ -1821,7 +1833,7 @@ body{
    and stacked actions in the button tiers (.sheet-acts, Me tab). */
 .cyc-sheet .sheet-head{align-items:center}
 .cyc-sheet .sheet-head .t{flex:1;min-width:0;text-align:center;font-feature-settings:var(--num-features)}
-.cyc-sheet .sub{margin:6px 0 0;text-align:center;font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
+.cyc-sheet .sub{margin:16px 12px 0;text-align:center;font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
 .cyc-sheet .sub[hidden]{display:none}
 #cycActConfirm[hidden]{display:flex;visibility:hidden}   /* keeps the title centred */
 .cyc-lines{margin-top:16px;display:flex;flex-direction:column;gap:10px}
@@ -1833,7 +1845,36 @@ body{
 .conseq span:last-child{font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
 .sheet-acts{margin-top:20px;display:flex;flex-direction:column;gap:4px}
 .sheet-acts[hidden]{display:none}
+/* value + unit meet in the middle with a 24px gap, so "3  DAYS BEFORE"
+   reads as one figure instead of the unit hugging the right edge (rev 4) */
+.picker.pair .col.values{flex:1 1 0}
+.picker.pair .col.values .opt{justify-content:flex-end;padding-right:12px}
+.picker.pair .col.units{flex:1 1 0}
+.picker.pair .col.units .opt{justify-content:flex-start;padding-left:12px}
 .picker[hidden]{display:none}
+/* the date calendar inside the sheet — the Me tab's date-of-birth picker,
+   geometry verbatim: month-name button that flips to the wheel, ‹ › on the
+   right, 38px day pills, the pick in teal, days after today unpickable */
+.cyc-cal[hidden]{display:none}
+.cyc-cal .cal-head{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:0}
+.cyc-cal .cal-title{display:flex;align-items:center;gap:6px;padding:6px 8px;border:0;border-radius:10px;background:none;cursor:pointer;font-family:inherit;font:600 15px/22px var(--font-text);color:var(--text-1)}
+.cyc-cal .cal-title:hover{background:var(--surface-raised)}
+.cyc-cal .cal-title .phi{width:13px;height:13px;color:var(--text-3);transform:rotate(90deg);transition:transform var(--duration-base) ease}
+.cyc-cal .cal-head.wheel .cal-title .phi{transform:rotate(-90deg)}
+.cyc-cal .cal-nav{display:flex;gap:6px}
+.cyc-cal .cal-nav button{width:32px;height:32px;border:0;border-radius:999px;background:var(--surface-raised);color:var(--text-1);cursor:pointer;display:grid;place-items:center}
+.cyc-cal .cal-nav button:hover{background:var(--surface-fill)}
+.cyc-cal .cal-nav .phi{width:13px;height:13px}
+.cyc-cal .cal-week{display:grid;grid-template-columns:repeat(7,1fr);margin-top:12px;padding:0;border:0}
+.cyc-cal .cal-week span{text-align:center;font:500 10px/14px var(--font-text);letter-spacing:.04em;text-transform:uppercase;color:var(--text-3)}
+.cyc-cal .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:6px;row-gap:2px}
+.cyc-cal .cal-grid .d{height:38px;border:0;border-radius:999px;background:none;cursor:pointer;font-family:var(--font-number);font-feature-settings:var(--num-features);font-size:13px;line-height:38px;font-weight:500;color:var(--text-1);padding:0}
+.cyc-cal .cal-grid .d b{display:block;font-weight:inherit;transform:translateY(0.1em)}
+.cyc-cal .cal-grid .d:hover{background:var(--surface-raised)}
+.cyc-cal .cal-grid span.d{visibility:hidden}
+.cyc-cal .cal-grid .d.sel{background:var(--metric-readiness);color:var(--text-on-accent);font-weight:700}
+.cyc-cal .cal-grid .d[disabled]{color:var(--text-3);opacity:.35;cursor:default;background:none}
+.cyc-cal .picker{margin-top:12px}
 .picker{position:relative;margin-top:16px;height:220px;display:flex}
 .picker .band{position:absolute;left:0;right:0;top:88px;height:44px;border-radius:var(--radius-12);background:var(--surface-raised);pointer-events:none;z-index:0}
 .picker .col{flex:1 1 0;height:100%;overflow-y:auto;position:relative;z-index:1;scroll-snap-type:y mandatory;scrollbar-width:none;-ms-overflow-style:none}
@@ -3014,16 +3055,18 @@ body{
 
 
 
+
       <!-- =========================================================
-           MENSTRUAL CYCLE — sub-pages (added 2026-09-11, rev 2 the same
+           MENSTRUAL CYCLE — sub-pages (added 2026-09-11, rev 4 the same
            day), reached from the Menstrual cycle card on Home. They
            slide over the tab like the About / Goal-setting pages.
-             sub-cycle          the calendar page: "Cycle Day 8 │ Follicular
-                                Phase" header, month calendar with every
-                                phase as a tinted bubble (dotted rings only
-                                on predicted period days), this cycle's
-                                phases, logged periods, Log Period. 3-dot
-                                menu → settings / about.
+             sub-cycle          the calendar page: "Cycle Day n │ Phase" header
+                                for the SELECTED day, month calendar with
+                                every phase as a tinted bubble (dotted rings
+                                only on predicted period days), + menu to add
+                                / remove a period on that day, four body-
+                                signal cards for that day, this cycle's
+                                phases. 3-dot menu → settings / about.
              sub-cycle-settings the Setting page from the owner's screenshot,
                                 rebuilt on the Workouts card row: chip ·
                                 label · value · caret. The questions moved
@@ -3046,42 +3089,48 @@ body{
           </div>
         </div>
         <div class="sub-body">
+          <!-- header follows the selected day: "Cycle Day n │ Phase", then
+               "Today · Next period in: 21 days" -->
           <div class="cyc-hero" id="cycHero"></div>
 
           <div class="card">
-            <div class="cyc-monthnav">
-              <button class="iconbtn" type="button" id="cycPrev" aria-label="Previous month"><span class="phi" data-ph="caret-left" style="width:18px;height:18px"></span></button>
-              <span class="mt" id="cycMonthTitle">August 2026</span>
-              <button class="iconbtn" type="button" id="cycNext" aria-label="Next month"><span class="phi" data-ph="caret-right" style="width:18px;height:18px"></span></button>
+            <!-- ‹ MONTH › on the left, + on the right (the WHOOP screen).
+                 Tapping a day selects it; + drops the one-entry menu:
+                 "+ Add period" for the selected day, "− Remove period" when
+                 that day is a logged start (owner, rev 4). -->
+            <div class="cyc-calhead">
+              <div class="cyc-monthnav">
+                <button class="iconbtn" type="button" id="cycPrev" aria-label="Previous month"><span class="phi" data-ph="caret-left" style="width:16px;height:16px"></span></button>
+                <span class="mt" id="cycMonthTitle">August</span>
+                <button class="iconbtn" type="button" id="cycNext" aria-label="Next month"><span class="phi" data-ph="caret-right" style="width:16px;height:16px"></span></button>
+              </div>
+              <button class="iconbtn" type="button" id="cycPlus" aria-label="Add or remove a period" aria-haspopup="menu"><span class="phi" data-ph="plus" style="width:18px;height:18px"></span></button>
+              <div class="menu" id="cycPlusMenu" role="menu"><button type="button" id="cycPlusAct" role="menuitem">+ Add period</button></div>
             </div>
             <div class="cyc-legend" id="cycLegend"></div>
             <div class="cyc-wk"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
             <div class="cyc-grid" id="cycGrid"></div>
-            <p class="cyc-hint">Tap any day for details. Past days can be logged as a period start.</p>
+            <p class="cyc-hint">Tap a day, then + to add or remove a period.</p>
           </div>
 
-          <!-- the page's one primary action opens the log flow: pick the date
-               on the wheel, check what changes, Log Period (owner, rev 3:
-               "flow to change from CTA at the bottom") -->
-          <button class="btn btn--primary btn--m" type="button" id="cycLogCta">Log Period</button>
+          <!-- four body-signal cards for the selected day — the homepage's
+               Health monitor component, rendered by its own hmMetricCard():
+               Skin temp · Resting HR · HRV · Readiness (owner, rev 4).
+               FLAG: sample readings, invented per day. -->
+          <div class="hm cyc-hm">
+            <div class="sec-head"><h2>Body signals</h2><span class="upd" id="cycHmDate">Today</span></div>
+            <div class="grid" id="cycHm"></div>
+          </div>
 
-          <!-- This cycle · Logged periods — both on the Workouts card
-               (owner, rev 3: spacing and sizing to match the other flows'
-               cards). A logged row opens the same sheet a logged calendar
-               day does: Change Date or Remove Log, each with its confirm. -->
+          <!-- This cycle — the Workouts card (rev 3), rows led by a plain
+               phase dot (rev 4). The Logged periods card came off in rev 4. -->
           <div class="wo-card">
             <header class="wo-header"><h3 class="wo-title">This cycle</h3><span class="wo-meta" id="cycCycleMeta"></span></header>
             <div id="cycPhases"></div>
           </div>
-          <div class="wo-card">
-            <header class="wo-header"><h3 class="wo-title">Logged periods</h3><span class="wo-meta" id="cycLogMeta"></span></header>
-            <div id="cycLogs"></div>
-          </div>
 
           <!-- FLAG: the legacy reference also carries a "Body Temperature — °C"
-               card under the calendar, and the WHOOP reference a partner
-               promo. Neither built: not in the brief, and skin temperature
-               already has a card in Health monitor. -->
+               card under the calendar — covered by the Skin temp card above. -->
         </div>
       </div>
 
@@ -3089,8 +3138,8 @@ body{
         <div class="sub-head">
           <button class="backbtn" data-back aria-label="Back"><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button>
           <span class="t">Cycle settings</span>
-          <!-- header text action, as Save on the reference; Title Case -->
-          <button class="cyc-act accent" type="button" id="cycSave">Save</button>
+          <!-- no Save (owner, rev 4): every pick applies as soon as it is
+               confirmed in its sheet -->
         </div>
         <div class="sub-body">
           <!-- Rows: the Workouts card row (chip · label · value · caret), so
@@ -3148,7 +3197,7 @@ body{
             </button>
           </div>
 
-          <!-- the reference's footnote, reworded -->
+          <!-- the reference's footnote, reworded; left-aligned (owner, rev 4) -->
           <p class="cyc-foot">What you enter here is only used to predict your cycle. Predictions are estimates, not medical advice.</p>
         </div>
       </div>
@@ -3214,13 +3263,14 @@ body{
 
 
 
+
     <!-- ============ CYCLE ACTION SHEET ============
          One sheet for every step of the cycle flows — log a period (date
          wheel, then a check of what changes), move or remove a log (confirm
          that says what comes back), a day's details, and the settings
          pickers. The goal-edit .sheet frame; head is cancel · title ·
          confirm as on the Health-metrics drum sheet and the Me tab's field
-         sheet, the ✓ shown only while a wheel is on screen. Content is
+         sheet, the ✓ shown only while a wheel or the calendar is on screen. Content is
          rendered per use by openCycAct() in the MENSTRUAL CYCLE script. -->
     <div id="cycAct" class="cyc" hidden>
       <div class="scrim" data-cycclose></div>
@@ -3236,6 +3286,28 @@ body{
           <div class="band" aria-hidden="true"></div>
           <div class="col values" id="cycActVals" role="listbox" aria-label="Value" tabindex="0"></div>
           <div class="col units" id="cycActUnits" role="listbox" aria-label="Unit" tabindex="0"></div>
+        </div>
+        <!-- the date calendar (Me tab's date-of-birth picker) — Last period start -->
+        <div class="cyc-cal" id="cycActCal" hidden>
+          <div class="cal-head" id="cycCalHead">
+            <button class="cal-title" id="cycCalTitle" type="button" aria-expanded="false">
+              <span id="cycCalTitleText">July 2026</span>
+              <span class="phi" data-ph="caret-right"></span>
+            </button>
+            <div class="cal-nav">
+              <button id="cycCalPrev" type="button" aria-label="Previous month"><span class="phi" data-ph="caret-left"></span></button>
+              <button id="cycCalNext" type="button" aria-label="Next month"><span class="phi" data-ph="caret-right"></span></button>
+            </div>
+          </div>
+          <div id="cycCalGridWrap">
+            <div class="cal-week" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+            <div class="cal-grid" id="cycCalGrid" role="grid" aria-label="Days"></div>
+          </div>
+          <div class="picker" id="cycCalWheel" hidden>
+            <div class="band" aria-hidden="true"></div>
+            <div class="col words" id="cycCalMonths" role="listbox" aria-label="Month" tabindex="0"></div>
+            <div class="col" id="cycCalYears" role="listbox" aria-label="Year" tabindex="0"></div>
+          </div>
         </div>
         <div class="sheet-acts" id="cycActs" hidden></div>
       </div>
@@ -4784,16 +4856,20 @@ $('#maScene').addEventListener('click', e => {
 });
 
 /* ==========================================================================
-   MENSTRUAL CYCLE — model, Home card, calendar page, log flow, settings
-   (added 2026-09-11; rev 3 the same day after the owner's second review).
+   MENSTRUAL CYCLE — model, Home card, calendar page, add / remove, settings
+   (added 2026-09-11; rev 4 the same day after the owner's third review).
    --------------------------------------------------------------------------
    How it works, in plain English:
    · The user logs the day a period STARTS. Those dates live in CYC.starts.
-     Logging is a two-step flow (pick the date on the wheel, then a check of
-     what changes before it saves); a logged day can later be moved or
-     removed, each with its own confirm — mistakes are expected.
+     On the calendar page you tap a day to SELECT it (a ring appears, the
+     header switches to that day's cycle day and phase, the four body-signal
+     cards switch to that day), then the + button offers "Add period" for the
+     selected day — or "Remove period" if that day is already logged. Adding
+     goes straight through when nothing is odd about the date; a nearby log
+     or an unusually short gap gets a check step first. Removing always asks.
    · Two settings shape everything else: how long a period lasts
-     (CYC.periodLen) and how long a whole cycle is (CYC.cycleLen).
+     (CYC.periodLen) and how long a whole cycle is (CYC.cycleLen). Settings
+     apply as soon as they are picked — there is no Save (owner, rev 4).
    · Any calendar day is measured from the most recent logged start on or
      before it: "day N of the cycle". Day N decides the phase —
        menstrual   days 1 … periodLen
@@ -4805,8 +4881,7 @@ $('#maScene').addEventListener('click', e => {
      whatever the cycle length — the standard rule of thumb).
    · On the calendar every day sits in its phase's colour; runs of one phase
      share a tinted "bubble" (the WHOOP screen the owner supplied). Only the
-     PREDICTED PERIOD days carry the dotted ring (owner, rev 3) — other future
-     days just take their phase colour.
+     PREDICTED PERIOD days carry the dotted ring.
    · Sample data: starts on 2 Jul and 30 Jul 2026, so today (Thu 6 Aug, the
      prototype's fixed date) is day 8 — the follicular phase the owner's brief
      names. FLAG: the reference screenshot shows a 6-day period; the sample
@@ -4836,7 +4911,7 @@ const CYC = {
   cycleLen: 28,
   starts: [cycDnum(2026, 6, 2), cycDnum(2026, 6, 30)],   // logged period starts, oldest first
   remind: false,            // watch reminders — off, as in the reference
-  remindPeriod: 2,          // days before the predicted period
+  remindPeriod: 3,          // days before the predicted period (owner: default 3)
   remindOvul: 2,            // days before the ovulation window
   remindTime: 16 * 60 + 35  // 16:35, minutes past midnight
 };
@@ -4872,28 +4947,10 @@ function cycRanges(base){
   ].map(([key, a, b]) => ({ key, from: base + a - 1, to: base + b - 1, days: b - a + 1 }))
    .filter(r => r.days > 0);
 }
-
-/* "tomorrow" / "in 3 days (Aug 9)" — for the summary lines */
-function cycInDays(n){
-  const diff = n - CYC_TODAY;
-  if (diff <= 0) return 'today';
-  if (diff === 1) return 'tomorrow';
-  return 'in ' + diff + ' days (' + cycFmt(n) + ')';
-}
-function cycSummary(I){
-  const P = CYC.periodLen;
-  if (I.phase === 'menstrual'){
-    const left = P - I.day;
-    return left <= 0 ? 'Last predicted day of your period.' : 'Your period usually lasts ' + P + ' days — ' + left + ' more to go.';
-  }
-  if (I.phase === 'follicular') return 'Your ovulation window opens ' + cycInDays(I.base + I.ov - 6) + '.';
-  if (I.phase === 'ovulation')  return 'Ovulation is likely around ' + cycFmt(I.base + I.ov - 1) + '. The window closes ' + cycInDays(I.base + I.ov + 3) + '.';
-  return 'Your next period is expected ' + cycInDays(I.nextStart) + '.';
-}
 const cycHasData = () => CYC.starts.length > 0 && $('#app').dataset.state !== 'empty';
 
-/* ---- Home card ------------------------------------------------------- */
-/* "Cycle Day 8 │ Follicular Phase" — shared by the card and the page hero */
+/* ---- shared header pieces ------------------------------------------- */
+/* "Cycle Day 8 │ Follicular Phase" — the card and the page hero */
 function cycHeadHTML(I){
   const P = CYC_PHASES[I.phase];
   return '<div class="cyc-now">' +
@@ -4901,20 +4958,22 @@ function cycHeadHTML(I){
     '<span class="p" style="--ph:' + P.color + '">' + P.name.replace(' phase', ' Phase') + '</span>' +
   '</div>';
 }
-/* "Next period in: 21 days" — during the period, how far through it you are */
-function cycNextText(I){
+/* "Next period in: 21 days", counted from the day in question; during the
+   period, how far through it that day is */
+function cycNextText(I, from){
   if (I.phase === 'menstrual') return 'Period day ' + I.day + ' of ' + CYC.periodLen;
-  return 'Next period in: ' + cycDays(I.nextStart - CYC_TODAY);
+  return 'Next period in: ' + cycDays(I.nextStart - from);
 }
-/* the phase strip (the "date bar", back by owner request): one segment per
-   phase sized to its share of the cycle, phases still ahead dimmed, a text-1
-   tick at today */
+/* the phase strip (the "date bar"): one segment per phase sized to its
+   share of the cycle, phases still ahead dimmed, a text-1 tick at today */
 function cycStripHTML(I){
   const segs = cycRanges(I.base).map(r =>
     '<i class="' + (r.from > CYC_TODAY ? 'pred' : '') + '" style="flex:' + r.days + ';--ph:' + CYC_PHASES[r.key].color + '"></i>').join('');
   const pct = ((I.day - 0.5) / CYC.cycleLen * 100).toFixed(1);
   return '<div class="cyc-strip">' + segs + '<span class="tick" style="left:' + pct + '%"></span></div>';
 }
+
+/* ---- Home card ------------------------------------------------------- */
 function renderCycleCard(){
   const card = $('#cycCard'), body = $('#cycCardBody'); if (!body) return;
   if (!cycHasData()){
@@ -4928,18 +4987,50 @@ function renderCycleCard(){
   }
   const I = cycInfo(CYC_TODAY);
   card.style.setProperty('--ph', CYC_PHASES[I.phase].color);   // the top-right wash takes the current phase's colour
-  body.innerHTML = cycHeadHTML(I) + cycStripHTML(I) + '<div class="cyc-next">' + cycNextText(I) + '</div>';
+  body.innerHTML = cycHeadHTML(I) + cycStripHTML(I) + '<div class="cyc-next">' + cycNextText(I, CYC_TODAY) + '</div>';
 }
 
-/* ---- cycle page: hero · calendar · this cycle · logged periods --------- */
+/* ---- body signals for a day ---------------------------------------------
+   Four Health-monitor cards (the homepage component, rendered by its own
+   hmMetricCard) for the SELECTED day: skin temperature, resting heart rate,
+   HRV and readiness. FLAG: invented sample readings, shaped per day from a
+   stable hash so a day always shows the same figures; days after today have
+   no reading yet. Readiness reuses the Home ring's teal alias. */
+function cycHash(n, k){ const x = Math.sin(n * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); }
+function cycSignals(n){
+  if (n > CYC_TODAY) return [
+    { n:'Skin Temp',  c:'var(--metric-skin-temp)',  v:'—', u:'', t:null, f:'No reading yet' },
+    { n:'Resting HR', c:'var(--metric-heart-rate)', v:'—', u:'', t:null, f:'No reading yet' },
+    { n:'HRV',        c:'var(--metric-hrv)',        v:'—', u:'', t:null, f:'No reading yet' },
+    { n:'Readiness',  c:'var(--metric-readiness)',  v:'—', u:'', t:null, f:'No reading yet' }
+  ];
+  const I = cycInfo(n);
+  // the luteal phase runs a touch warmer and a touch faster — the one real
+  // physiological pattern the sample follows
+  const lut = I.phase === 'luteal' ? 1 : 0;
+  const temp = (36.3 + lut * 0.3 + (cycHash(n, 1) - 0.5) * 0.3).toFixed(1);
+  const rhr  = Math.round(62 + lut * 3 + (cycHash(n, 2) - 0.5) * 8);
+  const hrv  = Math.round(56 - lut * 5 + (cycHash(n, 3) - 0.5) * 14);
+  const rdy  = Math.round(76 - lut * 4 + (cycHash(n, 4) - 0.5) * 16);
+  const vs = (v, base, good) => ({ d: v >= base ? 'up' : 'down', tone: (v >= base) === good ? 'pos' : 'neg' });
+  return [
+    { n:'Skin Temp',  c:'var(--metric-skin-temp)',  v:temp,        u:'°C',  t:vs(Number(temp), 36.4, false), f: lut ? 'Warmer in the luteal phase' : 'Near your baseline' },
+    { n:'Resting HR', c:'var(--metric-heart-rate)', v:String(rhr), u:'bpm', t:vs(rhr, 63, false),          f:'7-day avg 63 bpm' },
+    { n:'HRV',        c:'var(--metric-hrv)',        v:String(hrv), u:'ms',  t:vs(hrv, 54, true),           f:'7-day avg 54 ms' },
+    { n:'Readiness',  c:'var(--metric-readiness)',  v:String(rdy), u:'',    t:vs(rdy, 73, true),           f: rdy >= 73 ? 'Above your usual' : 'Below your usual' }
+  ];
+}
+
+/* ---- cycle page: hero · calendar · body signals · this cycle ---------- */
 let cycView = { y: TODAY.y, m: TODAY.m };   // the month on screen
+let cycSel  = CYC_TODAY;                     // the selected day — today until a day is tapped
 const CYC_NAV_LIMIT = 12;                    // months either side of today
 
 function renderCyclePage(){
-  const I = cycInfo(CYC_TODAY);
-  $('#cycHero').innerHTML = cycHeadHTML(I) +
-    '<p class="nx">' + cycNextText(I) + '</p>' +
-    '<p class="sum">' + cycSummary(I) + '</p>';
+  // header follows the SELECTED day (owner, rev 4)
+  const I = cycInfo(cycSel);
+  const when = cycSel === CYC_TODAY ? 'Today' : (I.future ? 'Predicted · ' : '') + cycFmt(cycSel, true);
+  $('#cycHero').innerHTML = cycHeadHTML(I) + '<p class="nx">' + when + ' · ' + cycNextText(I, cycSel) + '</p>';
 
   // legend — built once: the four phases, then the dotted predicted-period ring
   const lg = $('#cycLegend');
@@ -4951,11 +5042,10 @@ function renderCyclePage(){
 
   /* the month grid. Each row is one week; runs of one phase inside a row
      share a bubble — a cell knows whether it starts, continues or ends its
-     run (data-band) and paints its part of the pill. Pads (blanks before
-     the 1st / after the last day) break the run, so bubbles stop at the
-     month's edges. */
+     run (data-band) and paints its part of the pill. Pads break the run, so
+     bubbles stop at the month's edges. */
   const { y, m } = cycView;
-  $('#cycMonthTitle').textContent = MONTH_NAMES[m] + ' ' + y;
+  $('#cycMonthTitle').textContent = MONTH_NAMES[m] + (y === TODAY.y ? '' : ' ' + y);
   const first = new Date(Date.UTC(y, m, 1)).getUTCDay();
   const days  = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
   const cells = [];
@@ -4972,46 +5062,36 @@ function renderCyclePage(){
     const band = same(prev) && same(next) ? 'mid' : same(prev) ? 'end' : same(next) ? 'start' : 'solo';
     const predPeriod = Di.future && Di.phase === 'menstrual';       // the only dotted mark
     const logged = CYC.starts.indexOf(n) >= 0;
-    const cls = 'cyc-d' + (n === CYC_TODAY ? ' today' : '') + (Di.future ? ' future' : '') + (logged ? ' logged' : '') + (predPeriod ? ' pred' : '');
+    const cls = 'cyc-d' + (n === CYC_TODAY ? ' today' : '') + (n === cycSel ? ' sel' : '') + (logged ? ' logged' : '') + (predPeriod ? ' pred' : '');
     html += '<button type="button" class="' + cls + '" data-band="' + band + '" data-n="' + n + '" style="--ph:' + Dp.color + '"' +
+      ' aria-pressed="' + (n === cycSel) + '"' +
       ' aria-label="' + cycFmt(n, true) + ', ' + Dp.name + (predPeriod ? ' (predicted)' : '') + (logged ? ', logged period start' : '') + '">' +
-      '<span>' + cycDobj(n).d + '</span></button>';
+      '<span><b>' + cycDobj(n).d + '</b></span></button>';
   });
   $('#cycGrid').innerHTML = html;
   const back = (TODAY.y - y) * 12 + (TODAY.m - m);   // months behind today
   $('#cycPrev').disabled = back >= CYC_NAV_LIMIT;
   $('#cycNext').disabled = back <= -CYC_NAV_LIMIT;
 
-  /* This cycle — the Workouts card's rows: a chip holding the phase dot,
-     phase name, dates, days on the right */
-  const R = cycRanges(I.base);
-  $('#cycCycleMeta').textContent = 'Day ' + I.day + ' of ' + CYC.cycleLen;
+  // the four body-signal cards for the selected day
+  $('#cycHmDate').textContent = cycSel === CYC_TODAY ? 'Today' : cycFmt(cycSel, true);
+  $('#cycHm').innerHTML = cycSignals(cycSel).map(hmMetricCard).join('');
+
+  // This cycle — the Workouts card's rows with a plain phase dot (no chip)
+  const T = cycInfo(CYC_TODAY), R = cycRanges(T.base);
+  $('#cycCycleMeta').textContent = 'Day ' + T.day + ' of ' + CYC.cycleLen;
   $('#cycPhases').innerHTML = R.map(r =>
     '<div class="wo-row static" style="--ph:' + CYC_PHASES[r.key].color + '">' +
-      '<span class="wo-chip"><span class="cyc-pdot"></span></span>' +
+      '<span class="cyc-pdot"></span>' +
       '<span class="wo-body"><span class="wo-name">' + CYC_PHASES[r.key].name + '</span>' +
         '<span class="wo-detail">' + cycFmt(r.from) + ' – ' + cycFmt(r.to) + (r.from > CYC_TODAY ? ' · predicted' : '') + '</span></span>' +
       '<span class="wo-dur">' + cycDays(r.days) + '</span>' +
     '</div>').join('');
-
-  /* Logged periods — newest first; each row opens the day sheet where the
-     log can be moved or removed */
-  const S = CYC.starts.slice().sort((a, b) => b - a);
-  $('#cycLogMeta').textContent = S.length + ' logged';
-  $('#cycLogs').innerHTML = S.length ? S.map((s, i) => {
-    const prevStart = S[i + 1];
-    const detail = prevStart ? cycDays(s - prevStart) + ' after the one before' : 'First log';
-    return '<button class="wo-row" type="button" data-n="' + s + '">' +
-      '<span class="wo-chip"><span class="wo-glyph phi" data-ph="drop" data-weight="fill"></span></span>' +
-      '<span class="wo-body"><span class="wo-name">' + cycFmt(s, true) + '</span><span class="wo-detail">' + detail + '</span></span>' +
-      '<span class="wo-dur">' + cycDays(CYC.periodLen) + '</span>' +
-      '<span class="wo-caret phi" data-ph="caret-right"></span>' +
-    '</button>';
-  }).join('') : '<p class="cyc-empty">No periods logged yet.</p>';
   injectIcons();
 }
 function openCyclePage(){
   cycView = { y: TODAY.y, m: TODAY.m };
+  cycSel = CYC_TODAY;
   renderCyclePage();
   const sub = $('#sub-cycle'); sub.hidden = false; sub.scrollTop = 0;
   injectIcons();
@@ -5023,6 +5103,14 @@ function renderCycleAll(){
 }
 $('#cycPrev').addEventListener('click', () => { cycView.m--; if (cycView.m < 0){ cycView.m = 11; cycView.y--; } renderCyclePage(); });
 $('#cycNext').addEventListener('click', () => { cycView.m++; if (cycView.m > 11){ cycView.m = 0; cycView.y++; } renderCyclePage(); });
+
+// tapping a day selects it — no sheet (owner, rev 4)
+$('#cycGrid').addEventListener('click', e => {
+  const b = e.target.closest('.cyc-d');
+  if (!b || b.classList.contains('pad')) return;
+  cycSel = Number(b.dataset.n);
+  renderCyclePage();
+});
 
 // the Home card: set-up slot → settings; otherwise → the cycle page
 $('#cycCard').addEventListener('click', e => {
@@ -5046,11 +5134,73 @@ $('#cycOpenAbout').addEventListener('click', () => {
   const sub = $('#sub-cycle-about'); sub.hidden = false; sub.scrollTop = 0; injectIcons();
 });
 
+/* ---- the + button: Add period / Remove period for the selected day ------
+   Opens the same .menu dropdown with one entry, worded for the selected
+   day. A future day cannot be logged, so the entry says so and does nothing. */
+$('#cycPlus').addEventListener('click', e => {
+  e.stopPropagation();
+  const m = $('#cycPlusMenu'), was = m.classList.contains('open');
+  closeAllMenus();
+  if (was) return;
+  const logged = CYC.starts.indexOf(cycSel) >= 0, future = cycSel > CYC_TODAY;
+  const b = $('#cycPlusAct');
+  b.textContent = logged ? '− Remove period' : future ? 'Can’t log a future day' : '+ Add period';
+  b.disabled = future && !logged;
+  b.dataset.act = logged ? 'remove' : 'add';
+  m.classList.add('open');
+});
+$('#cycPlusAct').addEventListener('click', () => {
+  closeAllMenus();
+  if ($('#cycPlusAct').dataset.act === 'remove') confirmRemove(cycSel); else addPeriod(cycSel);
+});
+
+/* Adding: straight through when the date is clean; a check step (the Me
+   tab's consequence sheet) when it replaces a nearby log or lands unusually
+   soon after the previous one. */
+function addPeriod(n){
+  const clash = CYC.starts.find(s => Math.abs(s - n) <= CYC.periodLen && s !== n);   // a nearby log this one replaces
+  const prevStart = CYC.starts.filter(s => s < n && s !== clash).sort((a, b) => b - a)[0];
+  const lines = [];
+  if (clash) lines.push({ tone:'warn', text:'Replaces your ' + cycFmt(clash) + ' log — the two dates are within one period of each other.' });
+  if (prevStart && n - prevStart < 21) lines.push({ tone:'warn', text:'Only ' + cycDays(n - prevStart) + ' after your ' + cycFmt(prevStart) + ' log. Cycles are usually 21 days or longer — check the date.' });
+  if (!lines.length){ applyLog(n, clash); return; }
+  lines.push({ tone:'ok', text:'Your cycle day and every prediction update from this date.' });
+  openCycAct({
+    title:'Add period on ' + cycFmt(n) + '?', sub: cycFmt(n, true) + (n === CYC_TODAY ? ' · Today' : ''), lines,
+    actions: [
+      { label:'Add Period', tier:'primary', onClick: () => applyLog(n, clash) },
+      { label:'Cancel', tier:'tertiary', onClick: closeCycAct }
+    ]
+  });
+}
+function applyLog(n, clash){
+  CYC.starts = CYC.starts.filter(s => s !== clash);
+  CYC.starts.push(n);
+  CYC.starts = Array.from(new Set(CYC.starts)).sort((a, b) => a - b);
+  closeCycAct();
+  renderCycleAll();
+}
+/* Removing always asks, and says which log the predictions fall back to. */
+function confirmRemove(n){
+  const rest = CYC.starts.filter(s => s !== n);
+  const fallback = rest.filter(s => s < n).sort((a, b) => b - a)[0] || rest[0];
+  const lines = [];
+  if (!rest.length) lines.push({ tone:'warn', text:'This is your only log. With it gone, the card goes back to set-up until you log a period.' });
+  else lines.push({ tone:'info', text:'Your cycle day and predictions are measured from the ' + cycFmt(fallback) + ' log instead.' });
+  lines.push({ tone:'ok', text:'Nothing else changes — your settings stay as they are.' });
+  openCycAct({
+    title:'Remove this period?', sub: cycFmt(n, true) + ' · logged start', lines,
+    actions: [
+      { label:'Remove Period', tier:'destructive', onClick: () => { CYC.starts = rest; closeCycAct(); renderCycleAll(); } },
+      { label:'Keep It', tier:'tertiary', onClick: closeCycAct }
+    ]
+  });
+}
+
 /* ---- the action sheet ---------------------------------------------------
    One sheet, rendered per use: X · title · (✓) in the head, a sub line,
-   consequence lines (the Me tab's .conseq), an optional drum, and stacked
-   actions in the button tiers. Every step of the log / move / remove flows
-   is one call to openCycAct(). */
+   consequence lines (the Me tab's .conseq), an optional drum or calendar,
+   and stacked actions in the button tiers. */
 const CYC_GLYPH = { warn:'warning-circle', ok:'check-circle', info:'info' };
 function openCycAct(o){
   $('#cycActTitle').textContent = o.title;
@@ -5064,19 +5214,25 @@ function openCycAct(o){
     '<button class="btn btn--' + (a.tier || 'primary') + ' btn--m" type="button" data-i="' + i + '"' + (a.disabled ? ' disabled' : '') + '>' + a.label + '</button>').join('');
   acts.hidden = !(o.actions && o.actions.length);
   $$('button', acts).forEach(b => b.addEventListener('click', () => { const a = o.actions[Number(b.dataset.i)]; if (a.onClick) a.onClick(); }));
-  // the ✓ only appears when a picker returns a value
-  const ok = $('#cycActConfirm'); ok.hidden = !o.picker;
+  const ok = $('#cycActConfirm'); ok.hidden = !(o.picker || o.calendar);   // the ✓ only when something returns a value
   const pk = $('#cycActPicker'); pk.hidden = !o.picker;
+  $('#cycActCal').hidden = !o.calendar;
   $('#cycAct').hidden = false;                     // visible first, or the wheel's scrollTop lands nowhere
+  ok.onclick = null;
   if (o.picker){
     let picked = o.picker.current;
     const vals = $('#cycActVals'), units = $('#cycActUnits');
     vals.classList.toggle('words', !!o.picker.words);
+    pk.classList.toggle('pair', !!o.picker.unit);    // value + unit meet in the middle
     units.hidden = !o.picker.unit;
     cycFillCol(vals, o.picker.opts.map(o.picker.fmt), Math.max(0, o.picker.opts.indexOf(picked)), i => { picked = o.picker.opts[i]; });
     if (o.picker.unit) cycFillCol(units, [o.picker.unit], 0, () => {});
     ok.onclick = () => { closeCycAct(); o.picker.onConfirm(picked); };
-  } else ok.onclick = null;
+  }
+  if (o.calendar){
+    cycCalOpen(o.calendar.current);
+    ok.onclick = () => { closeCycAct(); o.calendar.onConfirm(cycCal.n()); };
+  }
   injectIcons();
 }
 function closeCycAct(){ $('#cycAct').hidden = true; }
@@ -5102,124 +5258,66 @@ function cycFillCol(col, items, selectedIndex, onPick){
   col.scrollTop = selectedIndex * CYC_ROW;
 }
 
-/* ---- the log flow ---------------------------------------------------------
-   Step 1  pick the start date on the wheel (last 60 days, today preset)
-   Step 2  a check: what this log does to the cycle — replaces a nearby log,
-           is unusually short after the previous one, moves the predictions —
-           then Log Period. Change Date goes back to step 1.
-   A day tap skips step 1 with that day preset. `moving` is the log being
-   corrected (from Change Date), which the new date replaces. */
-const CYC_DATE_PICK = { opts: cycRange(CYC_TODAY - 59, CYC_TODAY), fmt: n => cycFmt(n, true), words: true, unit: '' };
-function startLogFlow(preset, moving){
-  openCycAct({
-    title: moving ? 'Change period start' : 'Log period',
-    sub: moving ? 'Move the ' + cycFmt(moving) + ' log to another day.' : 'When did your period start?',
-    picker: Object.assign({}, CYC_DATE_PICK, { current: preset == null ? CYC_TODAY : preset, onConfirm: n => confirmLog(n, moving) })
-  });
+/* ---- the date calendar in the sheet ------------------------------------
+   The Me tab's date-of-birth picker (8th sept /Pebble Me Tab.html, field
+   sheet → calendar): a month grid with the month name as a button that
+   flips to a month + year wheel, ‹ › steppers, days after today unpickable.
+   Used for "Last period start" (owner, rev 4). */
+const cycCal = { y:0, m:0, d:1, mode:'grid', n(){ return cycDnum(this.y, this.m, this.d); } };
+const CYC_CAL_YMIN = TODAY.y - 3;
+function cycCalOpen(n){
+  const o = cycDobj(n); cycCal.y = o.y; cycCal.m = o.m; cycCal.d = o.d;
+  cycCalMode('grid');
 }
-function confirmLog(n, moving){
-  const others = CYC.starts.filter(s => s !== moving);
-  const clash = others.find(s => Math.abs(s - n) <= CYC.periodLen && s !== n);   // a nearby log this one replaces
-  const prevStart = others.filter(s => s < n && s !== clash).sort((a, b) => b - a)[0];
-  const lines = [];
-  if (others.indexOf(n) >= 0){
-    lines.push({ tone:'warn', text: cycFmt(n) + ' is already logged as a period start.' });
-  } else {
-    if (clash) lines.push({ tone:'warn', text:'Replaces your ' + cycFmt(clash) + ' log — the two dates are within one period of each other.' });
-    if (prevStart){
-      const gap = n - prevStart;
-      if (gap < 21) lines.push({ tone:'warn', text:'Only ' + cycDays(gap) + ' after your ' + cycFmt(prevStart) + ' log. Cycles are usually 21 days or longer — check the date.' });
-      else lines.push({ tone:'ok', text:'Closes a ' + gap + '-day cycle from ' + cycFmt(prevStart) + '.' });
-    }
-    lines.push({ tone:'ok', text:'Your cycle day and every prediction update from this date.' });
+function cycCalTitle(){ $('#cycCalTitleText').textContent = MONTH_NAMES[cycCal.m] + ' ' + cycCal.y; }
+function cycCalGrid(){
+  const first = new Date(Date.UTC(cycCal.y, cycCal.m, 1)).getUTCDay();
+  const total = new Date(Date.UTC(cycCal.y, cycCal.m + 1, 0)).getUTCDate();
+  let html = '';
+  for (let i = 0; i < first; i++) html += '<span class="d"></span>';
+  for (let d = 1; d <= total; d++){
+    const n = cycDnum(cycCal.y, cycCal.m, d), sel = cycCal.d === d;
+    html += '<button type="button" class="d' + (sel ? ' sel' : '') + '" data-d="' + d + '"' + (n > CYC_TODAY ? ' disabled' : '') +
+      ' role="gridcell" aria-selected="' + sel + '"><b>' + d + '</b></button>';
   }
-  openCycAct({
-    title: cycFmt(n, true) + (n === CYC_TODAY ? ' · Today' : ''),
-    sub: moving ? 'New start date for the ' + cycFmt(moving) + ' log.' : 'Log this as a period start?',
-    lines,
-    actions: [
-      { label: moving ? 'Move Log' : 'Log Period', tier:'primary', disabled: others.indexOf(n) >= 0, onClick: () => applyLog(n, moving, clash) },
-      { label:'Change Date', tier:'tertiary', onClick: () => startLogFlow(n, moving) }
-    ]
-  });
+  const grid = $('#cycCalGrid');
+  grid.innerHTML = html;
+  $$('.d[data-d]', grid).forEach(b => b.onclick = () => { cycCal.d = Number(b.dataset.d); cycCalGrid(); });
+  cycCalTitle();
 }
-function applyLog(n, moving, clash){
-  CYC.starts = CYC.starts.filter(s => s !== moving && s !== clash);
-  CYC.starts.push(n);
-  CYC.starts = Array.from(new Set(CYC.starts)).sort((a, b) => a - b);
-  closeCycAct();
-  renderCycleAll();
+function cycCalClamp(){ const max = new Date(Date.UTC(cycCal.y, cycCal.m + 1, 0)).getUTCDate(); if (cycCal.d > max) cycCal.d = max; if (cycCal.n() > CYC_TODAY) cycCal.d = cycDobj(CYC_TODAY).d; }
+function cycCalMode(mode){
+  cycCal.mode = mode;
+  const wheel = mode === 'wheel';
+  $('#cycCalGridWrap').hidden = wheel;
+  $('#cycCalWheel').hidden = !wheel;
+  $('#cycCalHead').classList.toggle('wheel', wheel);
+  $('#cycCalTitle').setAttribute('aria-expanded', String(wheel));
+  if (!wheel){ cycCalGrid(); return; }
+  const years = cycRange(CYC_CAL_YMIN, TODAY.y);
+  cycFillCol($('#cycCalMonths'), MONTH_NAMES, cycCal.m, i => { cycCal.m = i; cycCalClamp(); cycCalTitle(); });
+  cycFillCol($('#cycCalYears'), years.map(String), years.indexOf(cycCal.y), i => { cycCal.y = years[i]; cycCalClamp(); cycCalTitle(); });
 }
-
-/* ---- the remove flow: one confirm that says what comes back ----------- */
-function confirmRemove(n){
-  const rest = CYC.starts.filter(s => s !== n);
-  const fallback = rest.filter(s => s < n).sort((a, b) => b - a)[0];
-  const lines = [];
-  if (!rest.length) lines.push({ tone:'warn', text:'This is your only log. With it gone, the card goes back to set-up until you log a period.' });
-  else if (fallback) lines.push({ tone:'info', text:'Your cycle day and predictions are measured from the ' + cycFmt(fallback) + ' log instead.' });
-  else lines.push({ tone:'info', text:'Your cycle day and predictions are measured from the ' + cycFmt(rest[0]) + ' log instead.' });
-  lines.push({ tone:'ok', text:'Nothing else changes — your settings stay as they are.' });
-  openCycAct({
-    title:'Remove this log?',
-    sub: cycFmt(n, true) + ' · period start',
-    lines,
-    actions: [
-      { label:'Remove Log', tier:'destructive', onClick: () => { CYC.starts = rest; closeCycAct(); renderCycleAll(); } },
-      { label:'Keep It', tier:'tertiary', onClick: closeCycAct }
-    ]
-  });
+$('#cycCalTitle').addEventListener('click', () => cycCalMode(cycCal.mode === 'grid' ? 'wheel' : 'grid'));
+function cycCalStep(delta){
+  let m = cycCal.m + delta, y = cycCal.y;
+  if (m < 0){ m = 11; y--; }
+  if (m > 11){ m = 0; y++; }
+  if (y < CYC_CAL_YMIN || y > TODAY.y) return;
+  cycCal.m = m; cycCal.y = y; cycCalClamp();
+  cycCalMode('grid');
 }
-
-/* ---- a day on the calendar (or a row in Logged periods) --------------- */
-function openCycDay(n){
-  const I = cycInfo(n), P = CYC_PHASES[I.phase], logged = CYC.starts.indexOf(n) >= 0;
-  const title = cycFmt(n, true) + (n === CYC_TODAY ? ' · Today' : '');
-  if (logged){
-    openCycAct({
-      title, sub:'Logged period start · ' + cycDays(CYC.periodLen) + ' expected',
-      lines: [{ tone:'info', text:'Day 1 of the cycle that runs to ' + cycFmt(n + CYC.cycleLen - 1) + '.' }],
-      actions: [
-        { label:'Change Date', tier:'secondary', onClick: () => startLogFlow(n, n) },
-        { label:'Remove Log',  tier:'destructive', onClick: () => confirmRemove(n) }
-      ]
-    });
-    return;
-  }
-  if (I.future){                                    // predictions: read-only
-    openCycAct({
-      title, sub:'Predicted · ' + P.name + ' · day ' + I.day,
-      lines: [{ tone:'info', text: I.phase === 'menstrual' ? 'Your next period is expected to start ' + cycFmt(I.base) + '.' : 'Predicted from your ' + cycFmt(CYC.starts[CYC.starts.length - 1]) + ' log and a ' + CYC.cycleLen + '-day cycle.' }]
-    });
-    return;
-  }
-  openCycAct({
-    title, sub: P.name + ' · day ' + I.day + ' of this cycle' + (I.projected ? ' (estimated)' : ''),
-    actions: [{ label: n === CYC_TODAY ? 'Log Period Start Today' : 'Log Period Start Here', tier:'primary', onClick: () => confirmLog(n, null) }]
-  });
-}
-$('#cycGrid').addEventListener('click', e => {
-  const b = e.target.closest('.cyc-d');
-  if (!b || b.classList.contains('pad')) return;
-  openCycDay(Number(b.dataset.n));
-});
-$('#cycLogs').addEventListener('click', e => {
-  const b = e.target.closest('[data-n]'); if (b) openCycDay(Number(b.dataset.n));
-});
-$('#cycLogCta').addEventListener('click', () => startLogFlow(CYC_TODAY, null));
+$('#cycCalPrev').addEventListener('click', () => cycCalStep(-1));
+$('#cycCalNext').addEventListener('click', () => cycCalStep(1));
 
 /* ---- settings page ---------------------------------------------------- */
-/* Edits go into a draft; Save writes them back. Back discards them.
-   FLAG: no "discard changes?" confirm on back — the Me-tab spec's confirm
-   pattern would fit here if the owner wants one. */
-let cycDraft = null;
+/* Every pick applies at once — no Save, no draft (owner, rev 4). */
 const CYC_PICK = {
   periodLen:    { title:'Period length',      q:'How many days does your period usually last?',
                   unit:'days',        opts: cycRange(2, 10),  fmt: String },
   cycleLen:     { title:'Cycle length',       q:'How many days from the start of one period to the start of the next?',
                   unit:'days',        opts: cycRange(21, 40), fmt: String },
-  lastStart:    { title:'Last period start',  q:'When did your last period start?',
-                  unit:'',            opts: CYC_DATE_PICK.opts, fmt: CYC_DATE_PICK.fmt, words:true },
+  lastStart:    { title:'Last period start',  q:'When did your last period start?', calendar:true },
   remindPeriod: { title:'Period reminder',    q:'How many days before your predicted period should the band remind you?',
                   unit:'days before', opts: [1, 2, 3, 5, 7],  fmt: String },
   remindOvul:   { title:'Ovulation reminder', q:'How many days before your ovulation window should the band remind you?',
@@ -5233,43 +5331,40 @@ function cycValText(key, v){
   if (key === 'remindTime') return cycHM(v);
   return v + ' days before';
 }
+const cycLastStart = () => CYC.starts.length ? CYC.starts[CYC.starts.length - 1] : CYC_TODAY;
 function renderCycSettings(){
-  $$('[data-cycval]').forEach(el => { el.textContent = cycValText(el.dataset.cycval, cycDraft[el.dataset.cycval]); });
+  $$('[data-cycval]').forEach(el => {
+    const k = el.dataset.cycval;
+    el.textContent = cycValText(k, k === 'lastStart' ? cycLastStart() : CYC[k]);
+  });
   const sw = $('#cycRemind');
-  sw.classList.toggle('on', cycDraft.remind);
-  sw.setAttribute('aria-checked', String(cycDraft.remind));
-  $$('.cyc-dep').forEach(r => r.setAttribute('aria-disabled', String(!cycDraft.remind)));
+  sw.classList.toggle('on', CYC.remind);
+  sw.setAttribute('aria-checked', String(CYC.remind));
+  $$('.cyc-dep').forEach(r => r.setAttribute('aria-disabled', String(!CYC.remind)));
 }
 function openCycSettings(){
-  cycDraft = {
-    periodLen: CYC.periodLen, cycleLen: CYC.cycleLen,
-    lastStart: CYC.starts.length ? CYC.starts[CYC.starts.length - 1] : CYC_TODAY,
-    remind: CYC.remind, remindPeriod: CYC.remindPeriod, remindOvul: CYC.remindOvul, remindTime: CYC.remindTime
-  };
   renderCycSettings();
   const sub = $('#sub-cycle-settings'); sub.hidden = false; sub.scrollTop = 0;
   injectIcons();
 }
-$('#cycRemind').addEventListener('click', () => { cycDraft.remind = !cycDraft.remind; renderCycSettings(); });
+$('#cycRemind').addEventListener('click', () => { CYC.remind = !CYC.remind; renderCycSettings(); });
 $$('[data-cycpick]').forEach(row => row.addEventListener('click', () => {
   if (row.getAttribute('aria-disabled') === 'true') return;
   const key = row.dataset.cycpick, cfg = CYC_PICK[key];
+  if (cfg.calendar){
+    openCycAct({ title: cfg.title, sub: cfg.q, calendar: { current: cycLastStart(), onConfirm: n => {
+      // "Last period start" edits the most recent logged start (or makes the first one)
+      if (CYC.starts.length) CYC.starts[CYC.starts.length - 1] = n; else CYC.starts.push(n);
+      CYC.starts = Array.from(new Set(CYC.starts)).sort((a, b) => a - b);
+      renderCycSettings(); renderCycleAll();
+    } } });
+    return;
+  }
   openCycAct({
     title: cfg.title, sub: cfg.q,
-    picker: { opts: cfg.opts, fmt: cfg.fmt, unit: cfg.unit, words: cfg.words, current: cycDraft[key], onConfirm: v => { cycDraft[key] = v; renderCycSettings(); } }
+    picker: { opts: cfg.opts, fmt: cfg.fmt, unit: cfg.unit, words: cfg.words, current: CYC[key], onConfirm: v => { CYC[key] = v; renderCycSettings(); renderCycleAll(); } }
   });
 }));
-$('#cycSave').addEventListener('click', () => {
-  CYC.periodLen = cycDraft.periodLen; CYC.cycleLen = cycDraft.cycleLen;
-  CYC.remind = cycDraft.remind; CYC.remindPeriod = cycDraft.remindPeriod;
-  CYC.remindOvul = cycDraft.remindOvul; CYC.remindTime = cycDraft.remindTime;
-  // "Last period start" edits the most recent logged start (or makes the first one)
-  if (CYC.starts.length) CYC.starts[CYC.starts.length - 1] = cycDraft.lastStart; else CYC.starts.push(cycDraft.lastStart);
-  CYC.starts = Array.from(new Set(CYC.starts)).sort((a, b) => a - b);
-  $('#sub-cycle-settings').hidden = true;
-  renderCycleAll();
-  if ($('#sub-cycle').hidden) openCyclePage();   // set up from the card → land on the calendar
-});
 
 renderCycleAll();
 

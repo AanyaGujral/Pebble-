@@ -5,6 +5,34 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-11 (rev 4) — Menstrual cycle flow, third owner review. Card: gaps
+  opened (14px above the strip, 12px above the next-period line). Page: the
+  header is now the card's 17/22 with one 13/18 line, and it follows the
+  SELECTED day. Calendar: ‹ MONTH › sits left with a + button on the right;
+  tapping a day selects it (text-1 ring, header + body-signal cards switch to
+  it) instead of opening a sheet; + drops the app's one-entry menu — "+ Add
+  period" for the selected day, "− Remove period" when it is a logged start,
+  "Can't log a future day" (inert) for a future one. Adding logs at once
+  unless the date replaces a nearby log or lands under 21 days after the
+  previous one (then the rev-3 check step); removing keeps its confirm. The
+  Log Period CTA, the Logged periods card and the Change Date flow are gone.
+  Numerals now sit on the circle's centre (0.1em nudge for League Spartan's
+  descender space, the .r3num fix). New "Body signals" section: four Health
+  monitor cards (Skin temp · Resting HR · HRV · Readiness) rendered by the
+  component's own hmMetricCard() for the selected day — FLAG: invented
+  sample readings per day, luteal days a touch warmer / faster; future days
+  show —. This cycle rows lead with a plain 10px dot again. Settings: Save
+  removed — every pick applies as soon as it is confirmed; Last period start
+  opens the Me-tab date-of-birth calendar (month grid, month/year wheel
+  behind the title, ‹ ›, future days unpickable), ported into the action
+  sheet; footnote left-aligned; picker value + unit now meet in the middle
+  ("3  DAYS BEFORE") and the question sits 16px under the head; period
+  reminder default 3 days. Verified headless: select Aug 4 → header Day 6 /
+  Follicular and cards switch; + → Add → check (replaces Jul 30) → Day 1
+  Menstrual; + → Remove → confirm → back; future day inert; settings picks
+  apply live; calendar pick sets the latest start; no-data slot 164px;
+  activity goal sheet untouched. Artifact republished.
+
 - 2026-09-11 (rev 3) — Menstrual cycle flow, second owner review. (1) Card
   header down one type step (17/22) and the phase strip ("date bar") back
   under it; page header down to 20/26. (2) Calendar redrawn as the WHOOP
