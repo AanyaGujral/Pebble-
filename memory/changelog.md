@@ -5,6 +5,28 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-11 — Readiness page, owner feedback round 1 (preview artifact
+  published). Header: calendar icon removed; 3-dot menu added top right with
+  About readiness (Related card at the bottom removed). Background rebuilt to
+  the Figma "Home page bg" frame (node 927:4897): flat neutral-900 — the
+  Figma fill #07080C is that token exactly — plus one teal glow top-right.
+  FLAG: the glow vector could not be downloaded from this environment, so it
+  is a token radial-gradient matched by eye; an <img> slot at
+  assets/backgrounds/home-page-bg.svg takes over when the export is dropped
+  in. What shaped today's score: icons are fills in the Home workout card's
+  chip (.wo-chip 40px / .wo-glyph 20px neutral-100). Numbers are never
+  coloured now — a caret (Home's hmTri soft triangle, positive/negative tone)
+  sits to the right of every number, a neutral dot (.dot-flat) when
+  unchanged; the hero delta uses the same caret. "Since yesterday" renamed
+  "Health and activity monitor" with today's value + caret. How to use today:
+  circle removed, sparkle alone with a teal-300→teal-500 gradient fill,
+  padding 20px, three grey tags on one line (Go easy · Walk 20 min · Early
+  night — static, not toggles). Audit against created designs: trend axis
+  labels now use the shipped .axis (10px) instead of 13px; title-less cards
+  drop the hairline above their first row; menu offset for the shorter
+  .sub-head. Preview: https://claude.ai/code/artifact/2207ff9c-444e-4cbb-8935-c6c8e9ff292d
+  (opens on the Readiness page; rest of the prototype intact).
+
 - 2026-09-10 (later) — Readiness page rebuilt to the owner's wireframes,
   modelled on the Sleep/Activity tab heroes: painted background (the Home
   teal scene reused via paintScene, own gradient id), 136px ring, band chip +

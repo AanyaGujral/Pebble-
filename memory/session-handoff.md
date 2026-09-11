@@ -1,6 +1,14 @@
 # Session Handoff
 
-> **2026-09-10 — latest.** The Readiness page and Home ring navigation are
+> **2026-09-11 — latest.** Readiness feedback round 1 is in (see changelog):
+> Figma background, 3-dot About menu, caret-not-colour numbers, workout-card
+> icon chips, renamed monitor card, one-line tags. Preview artifact:
+> https://claude.ai/code/artifact/2207ff9c-444e-4cbb-8935-c6c8e9ff292d
+> Still needed from the owner: the exported background SVG for
+> `assets/backgrounds/home-page-bg.svg`, and a decision on the 73/Good vs
+> 40/Rest sample day.
+
+> **2026-09-10.** The Readiness page and Home ring navigation are
 > built in `Homepage + measurel all + start workout flow.html` (the flow file,
 > not `index.html`) per `docs/feature-readiness-ring-navigation.md`. Tap a
 > Home ring: Sleep/Activity switch tabs, Readiness pushes `#sub-readiness`.
