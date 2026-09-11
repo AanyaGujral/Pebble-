@@ -1,9 +1,10 @@
-> **2026-09-11 — Menstrual cycle flow (rev 2, after one owner review).** Built
+> **2026-09-11 — Menstrual cycle flow (rev 3, after two owner reviews).** Built
 > into `Homepage + measurel all + start workout flow.html` (Home card after
-> Start Workout → cycle calendar page with 3-dot menu → log sheet; Cycle
-> settings page on workout-card rows with the drum picker). Published as the
+> Start Workout → cycle calendar page with bubbles + 3-dot menu → log / move /
+> remove flows on one action sheet; Cycle settings page on workout-card rows
+> with the drum picker). Published as the
 > artifact "Pebble Home Prototype" — republish by stripping the document
-> shell from the repo file (see the changelog entry). Spec + eleven flagged
+> shell from the repo file (see the changelog entry). Spec + thirteen flagged
 > decisions: `docs/feature-menstrual-cycle.md`. The Family ranking card from the Friends
 > prototype was ported into that file (static) so the cycle card could sit
 > above it. New tokens `cycle` and `avatar` in `js/tokens.js`. Awaiting owner

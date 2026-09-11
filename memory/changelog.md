@@ -5,6 +5,33 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-11 (rev 3) — Menstrual cycle flow, second owner review. (1) Card
+  header down one type step (17/22) and the phase strip ("date bar") back
+  under it; page header down to 20/26. (2) Calendar redrawn as the WHOOP
+  screen's bubbles: each run of one phase in a week row shares a pill tinted
+  22% of the phase colour (cells know if they start / continue / end the run
+  and paint their part), numerals in the phase colour, today ringed in
+  text-1, and the dotted ring now ONLY on predicted period days — other future
+  days simply take their phase colour. (3) Logging is a flow from the bottom
+  CTA ("Log Period", primary): date wheel with today preset → a check step on
+  the Me-tab consequence-sheet pattern (replaces a nearby log · unusually
+  short gap under 21 days · predictions move) → Log Period; a past day tapped
+  on the calendar enters at the check step. (4) Removal / correction: a logged
+  day, or a row in the new "Logged periods" card, offers Change Date (wheel →
+  check → Move Log) and Remove Log (confirm that names the log predictions
+  fall back to, Remove Log destructive / Keep It tertiary). Future days open
+  read-only details. (5) "This cycle" and "Logged periods" are the Workouts
+  card verbatim (.wo-card / .wo-row, 40px chip carrying a 12px phase dot or
+  the drop glyph), so their rhythm matches the other flows' cards. All sheets
+  are one action sheet (openCycAct) — X · title · ✓ · sub · consequence lines ·
+  drum · stacked tiers — replacing the rev-2 day sheet and drum sheet; two
+  glyphs added (Phosphor warning-circle, check-circle, from the Me-tab table).
+  Verified headless: log today → replaces nothing, flags the 7-day gap, card
+  and hero go to Day 1 Menstrual; remove → back to Day 8 Follicular; move Jul
+  30 → Jul 29 recomputes to Day 9 Ovulation; future day read-only; settings
+  picker; no-data slot still 158px; activity goal sheet untouched. Artifact
+  republished (same URL).
+
 - 2026-09-11 (rev 2) — Menstrual cycle flow reworked on the owner's review of
   rev 1, and published as an artifact ("Pebble Home Prototype"; the published
   copy is the repo file with the document shell stripped, built from it —
