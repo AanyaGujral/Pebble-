@@ -4347,7 +4347,9 @@ function rdDrawTrend(n){
     yLabels:['100','75','50','25'], yMin:25, yMax:100,
     ticks: tickIdx.map(i => { const d = new Date(Date.UTC(TODAY.y, TODAY.m, TODAY.d - (days - 1 - i))); return `${d.getUTCDate()} ${MONTH_SHORT[d.getUTCMonth()]}`; }),
     tickIdx,
-    goal: avg, goalLabel: `avg ${avg}`, goalLabelAt: 'start',
+    // dashed average rule, unlabelled — the header's "avg N" names it, and a
+    // label on the plot sat on the line wherever the data crossed the average
+    goal: avg, goalLabel: '',
     fmt: v => String(v),
     stampFmt: i => rdDateLabel(days - 1 - i)
   };

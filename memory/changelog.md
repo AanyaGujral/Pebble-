@@ -12,8 +12,9 @@ meaningful change. Format: `[date] — what changed — why/notes`
   chart engine (drawLine + attachScrub, the port of
   components/Charts/line-chart.html): press-and-drag reads that day's score
   and date into the card header and snaps back; the dashed window average is
-  drawGoal with an "avg N" label, placed at the left end via a new optional
-  cfg.goalLabelAt:'start' (default unchanged for the detail pages). Window
+  drawGoal, unlabelled on the plot (the header's "avg N" names it; a plot
+  label sat on the line wherever the data crossed the average). drawGoal
+  gained an optional cfg.goalLabelAt:'start'; default unchanged. Window
   pills shrunk to 32px / 13px. (3) Calibrating state added to the control
   panel (day 3 of 7): hero copy swaps on Home and Readiness ("Getting to know
   you" / "Still learning your baseline"), a calibrating chip (same component
