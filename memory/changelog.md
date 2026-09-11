@@ -5,6 +5,16 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-11 (round 5) — Calibrating state now moves the prototype's "today"
+  back to day 3 (Sun 26 Jul; the default Thu 6 Aug is day 14), so a recording
+  of that state reads as a real first-week morning. TODAY became a let with
+  TODAY_DEFAULT / TODAY_CALIBRATING; setState() swaps it, resets the shared
+  date and re-syncs every label — header dates, sleep night note, calendar
+  future days (27 Jul onward go blank) and the trend's date ticks all follow.
+  Switching back to Default restores Aug 6. `Readiness/Readiness flow.html`
+  regenerated from the source (generator kept in the session scratchpad;
+  transform documented in the file's own comment).
+
 - 2026-09-11 (round 4) — `Readiness/Readiness flow.html` created: the homepage
   flow file with the bottom nav bar removed (owner request). Nav markup kept
   hidden so showTab() still marks Home current; the 96px reserved for the bar

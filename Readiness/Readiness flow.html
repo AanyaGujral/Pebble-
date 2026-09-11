@@ -1904,7 +1904,7 @@ nav.pebble-nav[data-mainnav]{display:none !important}
   <div class="opts" id="stateOpts">
     <label class="on"><input type="radio" name="cardstate" value="default" checked><span>Default<span class="desc">Live data, as designed</span></span></label>
     <label><input type="radio" name="cardstate" value="empty"><span>No data<span class="desc">New user, nothing synced yet</span></span></label>
-    <label><input type="radio" name="cardstate" value="calibrating"><span>Calibrating<span class="desc">Day 3 of 7 — readiness baseline still forming</span></span></label>
+    <label><input type="radio" name="cardstate" value="calibrating"><span>Calibrating<span class="desc">Day 3 of 7 — today becomes Sun 26 Jul</span></span></label>
   </div>
     <h2 style="margin-top:18px">Workout clock</h2>
     <p class="hint">Not part of the app. The fast clock exists so the workout
@@ -4239,7 +4239,15 @@ const CAL_CFG = {
   // Readiness page header — same teal chrome as Home; writes the shared date
   readiness:{ title:'Readiness history', ring:'var(--metric-readiness)', sel:'var(--teal-100)' }
 };
-const TODAY = { y:2026, m:7, d:6 }; // Thu 6 Aug 2026 (m is 0-based)
+// The prototype's "today". Default is Thu 6 Aug 2026 — day 14 of wearing the
+// band, which is what the readiness hero's "day 14" refers to. It is a let,
+// not a const: the Calibrating state moves it back to day 3 (Sun 26 Jul) so
+// a recording of that state reads as a real day-3 morning — header date,
+// calendar "future" days, sleep night note and the trend's date ticks all
+// follow (owner, 2026-09-11). (m is 0-based.)
+const TODAY_DEFAULT     = { y:2026, m:7, d:6  };   // Thu 6 Aug — day 14
+const TODAY_CALIBRATING = { y:2026, m:6, d:26 };   // Sun 26 Jul — day 3 of 7
+let TODAY = { ...TODAY_DEFAULT };
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAY_SHORT   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -4889,6 +4897,14 @@ const BAND_COPY = {
 
 function setState(state){
   document.getElementById('app').dataset.state = state;
+  // Calibrating happens in the first week, so "today" moves to day 3 and
+  // every date label follows; leaving it would show a day-3 score on day 14.
+  const today = state === 'calibrating' ? TODAY_CALIBRATING : TODAY_DEFAULT;
+  if (today.d !== TODAY.d || today.m !== TODAY.m || today.y !== TODAY.y){
+    TODAY = { ...today };
+    selDate = { ...today };
+    syncDateLabels();
+  }
   // hero text: no-data copy in the empty state, original otherwise
   for (const id in heroRest){
     const [head, sum] = heroRest[id];
