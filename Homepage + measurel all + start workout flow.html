@@ -191,6 +191,28 @@
   --zone-anaerobic:var(--tangerine-400);
   --zone-limit:var(--crimson-400);
 
+  /* ---- menstrual cycle (added 2026-09-11) — mirrored from js/tokens.js
+     `cycle`. See the FLAG there: each phase shares a hue with one metric
+     alias, chosen after the reference app's red period / blue ovulation. */
+  --cycle-menstrual:var(--crimson-400);
+  --cycle-follicular:var(--gold-400);
+  --cycle-ovulation:var(--sky-400);
+  --cycle-luteal:var(--violet-400);
+  /* names the button component (components/button.html) uses; the cycle
+     flow's buttons are that component's rules, scoped under .cyc */
+  --text-on-accent:var(--neutral-900);
+  --control-h-m:44px;--control-h-l:52px;
+  /* Family ranking card, ported from the Friends prototype with the cycle
+     card: its fixed body height and the identity tints for people
+     (js/tokens.js `avatar` — a hue's 800 step behind its 200 step) */
+  --friends-body-h:140px;
+  --avatar-1-bg:var(--violet-800);--avatar-1-fg:var(--violet-200);
+  --avatar-2-bg:var(--teal-800);--avatar-2-fg:var(--teal-200);
+  --avatar-3-bg:var(--crimson-800);--avatar-3-fg:var(--crimson-200);
+  --avatar-4-bg:var(--terracotta-800);--avatar-4-fg:var(--terracotta-200);
+  --avatar-5-bg:var(--sky-800);--avatar-5-fg:var(--sky-200);
+  --avatar-6-bg:var(--orchid-800);--avatar-6-fg:var(--orchid-200);
+
   /* MAP PREVIEW PALETTE — the one deliberate exception to "tokens only",
      flagged by the flow's author and left as they wrote it. The owner
      supplied a Google Maps screenshot (Kolkata: the Maidan, Victoria
@@ -1634,6 +1656,172 @@ body{
 .sectionlab{padding:16px 16px 8px;font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
 
 /* ==========================================================================
+   MENSTRUAL CYCLE — Home card, cycle calendar page, log sheet, settings page
+   (added 2026-09-11). Built after the owner's two screenshots of the legacy
+   app (the Ovulation calendar and its Setting page), restyled on this file's
+   own pieces: .card / .card-head, .subpage / .sub-head, .settings-group /
+   .setrow / .itile, .switch, the goal-edit .sheet, .iconbtn and .listrow.
+   New here: the phase day-circle (.cyc-d) and the four --cycle-* colours,
+   mirrored from js/tokens.js `cycle`. Everything cycle-related carries the
+   .cyc class so the button tiers below stay clear of the workout flow's own
+   #wf .btn rules.
+   ========================================================================== */
+
+/* ---- button tiers — copied from components/button.html (the same rules
+   the Friends prototype uses), scoped to .cyc. The component names its
+   label colour --text-on-accent; that alias is added to the token block. */
+.cyc .btn{
+  -webkit-appearance:none;appearance:none;display:inline-flex;align-items:center;
+  justify-content:center;box-sizing:border-box;width:100%;height:var(--control-h-l);
+  padding:0 24px;border:none;border-radius:var(--radius-pill);background:transparent;
+  font:600 15px/22px var(--font-text);text-align:center;white-space:nowrap;cursor:pointer;
+  transition:opacity var(--duration-fast) var(--ease-standard);
+}
+.cyc .btn--m{height:var(--control-h-m)}
+.cyc .btn--primary{background:var(--metric-readiness);color:var(--text-on-accent)}
+.cyc .btn--secondary{background:transparent;border:var(--border-thin) solid var(--metric-readiness);color:var(--metric-readiness)}
+.cyc .btn--primary:not([disabled]):hover{opacity:.9}
+.cyc .btn--primary:not([disabled]):active{opacity:.8}
+.cyc .btn--secondary:not([disabled]):hover{opacity:.75}
+.cyc .btn--secondary:not([disabled]):active{opacity:.6}
+.cyc .btn[disabled]{opacity:var(--state-inactive);cursor:default}
+
+/* ---- Home card: "DAY 8 · FOLLICULAR PHASE", a phase strip, next-period line.
+   Fixed body height so the no-data (set-up) state is the same size and the
+   Family ranking card under it never moves — the same rule that card set
+   for itself (hard rule 9 in docs/feature-family-ranking.md). */
+.cyc-card .card-head{align-items:center}
+.cyc-card .chev{margin-right:4px}
+.cyc-card .card-body{margin-top:12px;height:96px;display:flex;flex-direction:column;justify-content:center}
+.cyc-now{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+/* DAY + number: the "DAY 11" best-day format the Activity detail tiles use —
+   small overline word, League Spartan numeral (numL: 24/28 bold) */
+.cyc-daynum{display:flex;align-items:baseline;gap:4px}
+.cyc-daynum .w{font:500 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+.cyc-daynum .n{font:700 24px/28px var(--font-number);letter-spacing:-0.005em;font-feature-settings:var(--num-features);color:var(--text-1)}
+/* the phase name, overline token in the phase's own colour */
+.cyc-phase{font:600 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--ph)}
+/* the strip — one segment per phase, sized to its share of the cycle; a
+   text-1 tick marks today. Reuses .gbar's 8px pill geometry. */
+.cyc-strip{position:relative;margin-top:12px;display:flex;gap:2px;height:8px}
+.cyc-strip i{display:block;height:100%;border-radius:999px;background:var(--ph)}
+.cyc-strip i.pred{opacity:.4}   /* phases still ahead — predicted, not yet lived */
+.cyc-strip .tick{position:absolute;top:-3px;width:2px;height:14px;margin-left:-1px;border-radius:1px;background:var(--text-1)}
+.cyc-next{margin-top:10px;font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
+/* set-up slot — takes the body's slot in the no-data state (control panel) */
+.cyc-setup{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.cyc-setup .msg{font:400 13px/18px var(--font-text);color:var(--text-3);max-width:260px;margin:0}
+.cyc-setup .btn{max-width:180px}
+
+/* ---- cycle page header: back · title · a text action on the right (the
+   reference's "Setting"), same 13/18 medium as the date pill text */
+.sub-head .cyc-act{
+  margin-left:auto;background:none;border:0;cursor:pointer;font-family:inherit;
+  padding:8px 4px 8px 12px;font:500 15px/22px var(--font-text);color:var(--text-2);
+}
+.sub-head .cyc-act:hover{color:var(--text-1)}
+.sub-head .cyc-act.accent{color:var(--metric-readiness);font-weight:600}
+
+/* page hero — centred, like the Activity / Sleep heroes' headline + summary */
+.cyc-hero{text-align:center;padding:8px 8px 4px}
+.cyc-hero .big{display:flex;align-items:baseline;justify-content:center;gap:6px}
+.cyc-hero .big .w{font:500 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+.cyc-hero .big .n{font:700 56px/60px var(--font-number);letter-spacing:-0.01em;font-feature-settings:var(--num-features);color:var(--text-1)}
+.cyc-hero .ph{margin-top:2px;font:600 17px/22px var(--font-text);color:var(--ph)}
+.cyc-hero .sum{margin:4px 0 0;font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
+
+/* ---- calendar card */
+.cyc-monthnav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cyc-monthnav .mt{font:500 17px/22px var(--font-text);color:var(--text-1);font-feature-settings:var(--num-features)}
+.cyc-monthnav .iconbtn{background:none}
+.cyc-monthnav .iconbtn:hover{background:var(--surface-raised)}
+.cyc-monthnav .iconbtn[disabled]{opacity:var(--state-inactive);cursor:default}
+/* legend: four phase dots plus the dotted "predicted" ring */
+.cyc-legend{margin-top:8px;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px}
+.cyc-legend span{display:inline-flex;align-items:center;gap:6px;font:500 11px/16px var(--font-text);color:var(--text-2)}
+.cyc-legend i{width:8px;height:8px;border-radius:999px;background:var(--ph);display:inline-block}
+.cyc-legend i.pred{background:none;border:1.5px dotted var(--text-2);width:10px;height:10px}
+.cyc-wk{margin-top:12px;display:grid;grid-template-columns:repeat(7,1fr)}
+.cyc-wk span{text-align:center;font:500 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.cyc-grid{margin-top:4px;display:grid;grid-template-columns:repeat(7,1fr);row-gap:2px}
+/* a day: 44px tap target, 34px circle. Colour and ink per phase come in as
+   --ph / --ph-ink from the script — crimson needs light ink, the other three
+   take neutral-900 (checked: 4.6:1 on crimson, ≥6:1 on gold / sky / violet) */
+.cyc-d{height:44px;background:none;border:0;padding:0;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+.cyc-d span{
+  width:34px;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+  border:1.5px solid transparent;
+  font:500 13px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1);
+}
+.cyc-d[data-mark="solid"] span{background:var(--ph);border-color:var(--ph);color:var(--ph-ink);font-weight:700}
+.cyc-d[data-mark="dotted"] span{border-style:dotted;border-color:var(--ph);color:var(--ph)}
+.cyc-d.today span{outline:1.5px solid var(--text-1);outline-offset:2px}
+.cyc-d.future{cursor:default}
+.cyc-d.pad{visibility:hidden}
+.cyc-d:not(.future):hover span{box-shadow:0 0 0 3px var(--surface-raised)}
+/* a logged period start carries a small text-1 dot under the numeral */
+.cyc-d.logged span{position:relative}
+.cyc-d.logged span::after{content:"";position:absolute;bottom:3px;left:50%;width:3px;height:3px;margin-left:-1.5px;border-radius:999px;background:currentColor}
+.cyc-hint{margin:12px 4px 0;text-align:center;font:400 11px/16px var(--font-text);color:var(--text-3)}
+
+/* phases-this-cycle rows reuse .listrow; the dot is the phase colour */
+.cyc-phrow .sw{width:8px;height:8px;border-radius:999px;background:var(--ph);flex:0 0 auto}
+
+/* ---- settings page. Rows are .setrow with a question line above the
+   label, as the reference lays it out. The icon tile is pushed down so it
+   centres on the label line, not the question. */
+.cyc-q{align-items:flex-start}
+.cyc-q .itile{margin-top:20px}
+.cyc-q .body{flex:1;min-width:0}
+.cyc-q .q{display:block;font:400 11px/16px var(--font-text);color:var(--text-3);margin-bottom:2px}
+.cyc-q .row{display:flex;align-items:center;gap:8px;min-height:22px}
+.cyc-q .row .lab{flex:1}
+.setrow .val.pick{color:var(--text-2)}
+/* the reminder rows are dependent on the switch above them — dimmed and
+   inert while it is off (state-inactive is the system's disabled opacity) */
+.cyc-dep[aria-disabled="true"]{opacity:var(--state-inactive);pointer-events:none}
+.cyc-foot{margin:8px 12px 0;text-align:center;font:400 13px/18px var(--font-text);color:var(--text-3)}
+
+/* ---- day sheet (log a period start) — the goal-edit .sheet with copy */
+.cyc-sheet .line{margin-top:12px;font:400 13px/18px var(--font-text);color:var(--text-2);text-align:center;font-feature-settings:var(--num-features)}
+.cyc-sheet .line b{font-weight:600;color:var(--ph)}
+.cyc-sheet .btn{margin-top:16px}
+/* long pick lists (dates, times) scroll inside the goal sheet */
+.sheet-rows.scroll{max-height:296px;overflow-y:auto;scrollbar-width:none}
+.sheet-rows.scroll::-webkit-scrollbar{display:none}
+
+/* ---- Family ranking card — ported verbatim from the Friends prototype
+   (8th sept /family ranking_updated.html, rev 2.2, §7.4) so the cycle card
+   can sit above it as asked. --friends-body-h and the avatar tints are that
+   file's; the tints are now in js/tokens.js `avatar`. */
+.friends-card .card-body{height:var(--friends-body-h);display:flex;flex-direction:column;overflow:hidden}
+.friends-card .card-head{align-items:center}
+.friends-card .chev{margin-right:4px}
+.fc-rows{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.fcrow{display:grid;grid-template-columns:16px 28px 1fr auto;align-items:center;column-gap:8px}
+.fcrow .rank{grid-area:1/1/2/2;justify-self:center;align-self:center;font:500 11px/16px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-3)}
+.fcrow .av{grid-area:1/2/2/3;align-self:center}
+.fcrow .stepglyph{width:14px;height:14px;color:var(--text-1)}
+.fcrow .nm{grid-area:1/3/2/4;font:500 13px/18px var(--font-text);color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fcrow .val{grid-area:1/4/2/5;justify-self:end;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.fcrow .num{font:700 15px/20px var(--font-number);font-feature-settings:var(--num-features);color:var(--text-1)}
+.fcrow[data-row="you"] .nm{font-weight:var(--weight-semibold)}
+.av{
+  width:40px;height:40px;border-radius:var(--radius-pill);background:var(--surface-fill);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  font:600 15px/22px var(--font-text);color:var(--text-1);text-transform:uppercase;
+}
+.av.sm{width:28px;height:28px;font:600 11px/16px var(--font-text)}
+.av[data-hue="1"]{background:var(--avatar-1-bg);color:var(--avatar-1-fg)}
+.av[data-hue="2"]{background:var(--avatar-2-bg);color:var(--avatar-2-fg)}
+.av[data-hue="3"]{background:var(--avatar-3-bg);color:var(--avatar-3-fg)}
+.av[data-hue="4"]{background:var(--avatar-4-bg);color:var(--avatar-4-fg)}
+.av[data-hue="5"]{background:var(--avatar-5-bg);color:var(--avatar-5-fg)}
+.av[data-hue="6"]{background:var(--avatar-6-bg);color:var(--avatar-6-fg)}
+
+.cyc-d[data-tone="soft"][data-mark="solid"] span{background:color-mix(in srgb, var(--ph) 22%, var(--surface-card));border-color:transparent;color:var(--ph)}
+
+/* ==========================================================================
    6. CARD STATES — driven by data-state on <body>
    --------------------------------------------------------------------------
    default  → everything as designed
@@ -1945,6 +2133,66 @@ body{
             <span class="phi" data-ph="play" data-weight="fill" style="width:16px;height:16px"></span>
             Start Workout
           </button>
+
+          <!-- ══ MENSTRUAL CYCLE CARD ══ (added 2026-09-11) — the entry point
+               to the cycle flow. Title, chevron, then "DAY 8 · FOLLICULAR
+               PHASE", a four-segment phase strip with a tick at today, and
+               the next-period line. Body is rendered by renderCycleCard()
+               in the MENSTRUAL CYCLE script section, so it can follow the
+               logged start date and the control panel's no-data state (where
+               it becomes a "set up your cycle" slot of the same height).
+               Owner: "add this card on the homepage at the bottom above
+               family ranking". FLAG: this file's Home tab had no Family
+               ranking card — that card lived only in the Friends prototype
+               (8th sept /family ranking_updated.html, rev 2.2), so its
+               populated state is ported in below to give this card the
+               neighbour the owner described. FLAG: no section head above
+               these two — the Friends card never had one either; a 12px
+               extra top margin gives the same 24px break a section head
+               would. Tapping opens the cycle page (or, with nothing logged
+               yet, the settings page). -->
+          <div class="card cyc cyc-card" id="cycCard" role="button" tabindex="0" style="margin-top:12px;cursor:pointer" aria-label="Menstrual cycle">
+            <div class="card-head">
+              <div class="card-title">Menstrual cycle</div>
+              <span class="chev"></span>
+            </div>
+            <div class="card-body" id="cycCardBody"></div>
+          </div>
+
+          <!-- ══ FAMILY RANKING CARD ══ — ported from the Friends prototype
+               (rev 2.2, §7.4) in its populated baseline (F4: four people,
+               all synced — the leader, the person directly above you, and
+               you). Markup and the sample figures are that file's; the only
+               change is that it is static here. FLAG: the ranking page it
+               opens is not in this file — the chevron is kept so the card
+               reads the same as it does there, but the tap goes nowhere yet.
+               FLAG: --friends-body-h (140px) is that prototype's measurement
+               for the tallest of its six states; copied, not re-measured. -->
+          <div class="card friends-card" id="friends-card" aria-label="Family ranking">
+            <div class="card-head">
+              <div class="card-title">Family ranking</div>
+              <span class="chev"></span>
+            </div>
+            <div class="card-body" id="fc-body">
+              <div class="fc-rows">
+                <div class="fcrow" data-row="ranked">
+                  <span class="rank">1</span><span class="av sm" data-hue="2">K</span>
+                  <span class="nm">Koms</span>
+                  <span class="val"><span class="phi stepglyph" data-ph="footprints" data-weight="fill"></span><span class="num">12,480</span></span>
+                </div>
+                <div class="fcrow" data-row="ranked">
+                  <span class="rank">3</span><span class="av sm" data-hue="3">A</span>
+                  <span class="nm">Ankit</span>
+                  <span class="val"><span class="phi stepglyph" data-ph="footprints" data-weight="fill"></span><span class="num">8,740</span></span>
+                </div>
+                <div class="fcrow" data-row="you">
+                  <span class="rank">4</span><span class="av sm" data-hue="6">A</span>
+                  <span class="nm">You</span>
+                  <span class="val"><span class="phi stepglyph" data-ph="footprints" data-weight="fill"></span><span class="num">7,240</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
 
         </div>
       </section>
@@ -2697,6 +2945,119 @@ body{
         </div>
       </div>
 
+
+      <!-- =========================================================
+           MENSTRUAL CYCLE — two sub-pages (added 2026-09-11), reached
+           from the Menstrual cycle card on Home. Both slide over the
+           tab like the About / Goal-setting pages.
+             sub-cycle          the calendar page: day + phase hero,
+                                month calendar with every phase in its
+                                colour (solid = so far, dotted = predicted),
+                                the phases of this cycle, log a period start.
+             sub-cycle-settings the Setting page from the owner's screenshot:
+                                period length, cycle length, last period
+                                start, watch reminders (toggle + three rows),
+                                a footnote, and Save in the header.
+           Everything inside is filled in by the MENSTRUAL CYCLE script.
+           ========================================================= -->
+      <div class="subpage cyc" id="sub-cycle" hidden>
+        <div class="sub-head">
+          <button class="backbtn" data-back aria-label="Back"><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button>
+          <span class="t">Menstrual cycle</span>
+          <!-- text action, as the reference's "Setting" — plural here because
+               the page holds several settings -->
+          <button class="cyc-act" type="button" id="cycOpenSettings">Settings</button>
+        </div>
+        <div class="sub-body">
+          <div class="cyc-hero" id="cycHero"></div>
+
+          <div class="card">
+            <div class="cyc-monthnav">
+              <button class="iconbtn" type="button" id="cycPrev" aria-label="Previous month"><span class="phi" data-ph="caret-left" style="width:18px;height:18px"></span></button>
+              <span class="mt" id="cycMonthTitle">August 2026</span>
+              <button class="iconbtn" type="button" id="cycNext" aria-label="Next month"><span class="phi" data-ph="caret-right" style="width:18px;height:18px"></span></button>
+            </div>
+            <div class="cyc-legend" id="cycLegend"></div>
+            <div class="cyc-wk"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+            <div class="cyc-grid" id="cycGrid"></div>
+            <p class="cyc-hint">Tap a past day to log the start of a period.</p>
+          </div>
+
+          <!-- one tap to log today — the same sheet the day tap opens -->
+          <button class="btn btn--secondary btn--m" type="button" id="cycLogToday">Log period start today</button>
+
+          <div class="card">
+            <div class="card-head"><div class="card-title">This cycle</div><span class="subnote" id="cycCycleMeta"></span></div>
+            <div class="card-body" id="cycPhases" style="margin-top:8px"></div>
+          </div>
+
+          <!-- FLAG: the reference screen also carries a "Body Temperature — °C"
+               card under the calendar. Not built: the owner's brief names the
+               calendar, the log action and the settings page, and skin
+               temperature already has a card in Health monitor. Add here if
+               the cycle page should show it too. -->
+        </div>
+      </div>
+
+      <div class="subpage cyc" id="sub-cycle-settings" hidden>
+        <div class="sub-head">
+          <button class="backbtn" data-back aria-label="Back"><span class="phi" data-ph="caret-left" style="width:20px;height:20px"></span></button>
+          <span class="t">Cycle settings</span>
+          <button class="cyc-act accent" type="button" id="cycSave">Save</button>
+        </div>
+        <div class="sub-body">
+          <!-- the three questions. Copy is the reference's, tidied:
+               "How many days does your menstruation usually come?" →
+               "How many days does your period usually last?" etc. — flagged
+               here rather than kept verbatim, since the originals read as
+               machine-translated. Icons: Phosphor drop and clock (path data
+               from the Me-tab prototype), arrows-clockwise for the cycle —
+               the reference shows a calendar glyph, which this file's icon
+               set does not carry (CDN fetch is blocked in this environment);
+               swap in calendar-blank fill if pixel parity matters. -->
+          <div class="settings-group">
+            <div class="setrow cyc-q" data-cycpick="periodLen">
+              <span class="itile"><span class="phi" data-ph="drop" data-weight="fill" style="width:18px;height:18px;color:var(--metric-readiness)"></span></span>
+              <span class="body">
+                <span class="q">How many days does your period usually last?</span>
+                <span class="row"><span class="lab">Period length</span><span class="val pick" data-cycval="periodLen"></span><span class="chev"></span></span>
+              </span>
+            </div>
+            <div class="setrow cyc-q" data-cycpick="cycleLen">
+              <span class="itile"><span class="phi" data-ph="arrows-clockwise" data-weight="fill" style="width:18px;height:18px;color:var(--metric-readiness)"></span></span>
+              <span class="body">
+                <span class="q">How many days from the start of one period to the start of the next?</span>
+                <span class="row"><span class="lab">Cycle length</span><span class="val pick" data-cycval="cycleLen"></span><span class="chev"></span></span>
+              </span>
+            </div>
+            <div class="setrow cyc-q" data-cycpick="lastStart">
+              <span class="itile"><span class="phi" data-ph="clock" data-weight="fill" style="width:18px;height:18px;color:var(--metric-readiness)"></span></span>
+              <span class="body">
+                <span class="q">When did your last period start?</span>
+                <span class="row"><span class="lab">Last period start</span><span class="val pick" data-cycval="lastStart"></span><span class="chev"></span></span>
+              </span>
+            </div>
+          </div>
+
+          <!-- watch reminders: the switch, then the three rows it governs
+               (dimmed and inert while it is off — the reference greys them
+               the same way). Off by default, as in the reference. -->
+          <div class="settings-group">
+            <div class="setrow" style="cursor:default">
+              <span class="lab">Watch reminders</span>
+              <button class="switch" type="button" role="switch" aria-checked="false" id="cycRemind" aria-label="Watch reminders"><i></i></button>
+            </div>
+            <div class="setrow cyc-dep" data-cycpick="remindPeriod" aria-disabled="true"><span class="lab">Period reminder</span><span class="val pick" data-cycval="remindPeriod"></span><span class="chev"></span></div>
+            <div class="setrow cyc-dep" data-cycpick="remindOvul" aria-disabled="true"><span class="lab">Ovulation reminder</span><span class="val pick" data-cycval="remindOvul"></span><span class="chev"></span></div>
+            <div class="setrow cyc-dep" data-cycpick="remindTime" aria-disabled="true"><span class="lab">Reminder time</span><span class="val pick" data-cycval="remindTime"></span><span class="chev"></span></div>
+          </div>
+
+          <!-- the reference's footnote, reworded: "The physiological information
+               you fill in will be used for menstrual period record prediction" -->
+          <p class="cyc-foot">What you enter here is only used to predict your cycle. Predictions are estimates, not medical advice.</p>
+        </div>
+      </div>
+
     </div><!-- /.pages -->
 
     <!-- ============ HISTORY CALENDAR (shared by all tabs) ============ -->
@@ -2728,6 +3089,24 @@ body{
           <button class="iconbtn" id="sheetConfirm" aria-label="Confirm"><span class="phi" data-ph="check" style="width:18px;height:18px"></span></button>
         </div>
         <div class="sheet-rows" id="sheetRows"></div>
+      </div>
+    </div>
+
+
+    <!-- ============ CYCLE DAY SHEET (log a period start) ============
+         The goal-edit sheet's frame, opened by tapping a past day on the
+         cycle calendar or "Log period start today". Names the day and its
+         phase, then one action. -->
+    <div id="cycDaySheet" class="cyc" hidden>
+      <div class="scrim" data-cycclose></div>
+      <div class="sheet cyc-sheet">
+        <div class="sheet-head">
+          <button class="iconbtn" data-cycclose aria-label="Close"><span class="phi" data-ph="x" style="width:16px;height:16px"></span></button>
+          <span class="t" id="cycDayTitle">Tue, Aug 4</span>
+          <span style="width:36px"></span>
+        </div>
+        <p class="line" id="cycDayLine"></p>
+        <button class="btn btn--primary btn--m" type="button" id="cycDayLog">Log period start</button>
       </div>
     </div>
 
@@ -3723,6 +4102,11 @@ const PH = {"regular":{"house":"M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80
    Flag: hand-drawn stand-in (rounded play triangle), not Phosphor path
    data — swap for the real "play" fill if pixel parity matters. */
 PH.fill.play = 'M80 40c0-6 6.5-9.8 11.8-6.8l136 81c5.1 3 5.1 10.5 0 13.6l-136 81C86.5 211.8 80 208 80 202Z';
+/* Two more for the cycle settings page (2026-09-11): Phosphor drop and
+   clock, fill weight. Path data copied verbatim from the Me-tab prototype
+   (8th sept /Pebble Me Tab.html), which carries the larger icon table. */
+PH.fill.drop  = 'M174,47.75a254.19,254.19,0,0,0-41.45-38.3,8,8,0,0,0-9.18,0A254.19,254.19,0,0,0,82,47.75C54.51,79.32,40,112.6,40,144a88,88,0,0,0,176,0C216,112.6,201.49,79.32,174,47.75Zm9.85,105.59a57.6,57.6,0,0,1-46.56,46.55A8.75,8.75,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z';
+PH.fill.clock = 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm56,112H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z';
 
 function injectIcons(){
   $$('.phi').forEach(el => {
@@ -3873,8 +4257,12 @@ function openSheet(key){
   $('#goalSheet').hidden = false;
 }
 $$('.goalcard').forEach(c => c.addEventListener('click', () => openSheet(c.dataset.goal)));
-$$('[data-sheetcancel]').forEach(el => el.addEventListener('click', () => { $('#goalSheet').hidden = true; }));
+// set by openPickSheet (cycle settings): while a callback is waiting, the
+// check hands the picked value to it instead of writing an activity goal
+let sheetOnConfirm = null;
+$$('[data-sheetcancel]').forEach(el => el.addEventListener('click', () => { $('#goalSheet').hidden = true; sheetOnConfirm = null; }));
 $('#sheetConfirm').addEventListener('click', () => {
+  if (sheetOnConfirm){ const cb = sheetOnConfirm; sheetOnConfirm = null; $('#goalSheet').hidden = true; cb(sheetPick); return; }
   goalSel[sheetKey] = sheetPick;
   $(`.goalcard[data-goal="${sheetKey}"] [data-goalval]`).textContent = GOAL_OPTS[sheetKey].fmt(sheetPick);
   $('#goalSheet').hidden = true;
@@ -4265,6 +4653,340 @@ $('#maScene').addEventListener('click', e => {
 });
 
 /* ==========================================================================
+   MENSTRUAL CYCLE — model, Home card, calendar page, log sheet, settings
+   (added 2026-09-11).
+   --------------------------------------------------------------------------
+   How it works, in plain English:
+   · The user logs the day a period STARTS (tap a past day on the calendar,
+     or "Log period start today"). Those dates live in CYC.starts.
+   · Two settings shape everything else: how long a period lasts
+     (CYC.periodLen) and how long a whole cycle is (CYC.cycleLen).
+   · Any calendar day is measured from the most recent logged start on or
+     before it: "day N of the cycle". Day N decides the phase —
+       menstrual   days 1 … periodLen
+       follicular  after the period, until the ovulation window opens
+       ovulation   5 days before the ovulation day to 4 days after it
+                   (10 days, the reference app's own definition — its
+                   calendar page says so in the intro line)
+       luteal      the rest of the cycle
+     The ovulation day is cycleLen − 14 (luteal phases run close to 14 days
+     whatever the cycle length — the standard rule of thumb).
+   · Days after today are PREDICTED and drawn as a dotted ring; days lived
+     since a logged start are solid. Days before the first logged start, or
+     past the end of the last logged cycle, are back- or forward-projected
+     and also dotted — a solid mark always means "measured from a real log".
+   · Sample data: starts on 2 Jul and 30 Jul 2026, so today (Thu 6 Aug, the
+     prototype's fixed date) is day 8 — the follicular phase the owner's brief
+     names. FLAG: the reference screenshot shows a 6-day period; the sample
+     uses 5 so the follicular band is three days wide on the calendar rather
+     than two (with a 10-day ovulation window and a 28-day cycle, a 6-day
+     period leaves only days 7–8 follicular). The default is user-set either
+     way. FLAG: the reference's "Last Time · 10 Sep 2026" is a date in the
+     prototype's future, so it was not copied.
+   ========================================================================== */
+const CYC_PHASES = {
+  menstrual:  { name:'Menstrual phase',  color:'var(--cycle-menstrual)',  ink:'var(--text-1)',      tone:'strong' },
+  follicular: { name:'Follicular phase', color:'var(--cycle-follicular)', ink:'var(--neutral-900)', tone:'soft' },
+  ovulation:  { name:'Ovulation phase',  color:'var(--cycle-ovulation)',  ink:'var(--neutral-900)', tone:'strong' },
+  luteal:     { name:'Luteal phase',     color:'var(--cycle-luteal)',     ink:'var(--neutral-900)', tone:'soft' }
+};
+/* tone: the period and the ovulation window are the two things the reference
+   marks, so they get a full fill; follicular and luteal are tinted (colour at
+   22% over the card) with the numeral in the phase colour — every day still
+   carries its phase, but the calendar is not a wall of colour. FLAG: a
+   design call, not in the brief. */
+
+const CYC_DAY_MS = 86400000;
+const cycDnum = (y, m, d) => Math.round(Date.UTC(y, m, d) / CYC_DAY_MS);           // date → day count
+const cycDobj = n => { const t = new Date(n * CYC_DAY_MS); return { y:t.getUTCFullYear(), m:t.getUTCMonth(), d:t.getUTCDate(), wd:t.getUTCDay() }; };
+const CYC_TODAY = cycDnum(TODAY.y, TODAY.m, TODAY.d);                                // the prototype's fixed "today"
+const cycFmt = (n, wd) => { const o = cycDobj(n); return (wd ? DAY_SHORT[o.wd] + ', ' : '') + MONTH_SHORT[o.m] + ' ' + o.d; };
+const cycFmtLong = n => { const o = cycDobj(n); return o.d + ' ' + MONTH_SHORT[o.m] + ' ' + o.y; };  // "30 Jul 2026", the reference's format
+const cycRange = (a, b) => { const r = []; for (let v = a; v <= b; v++) r.push(v); return r; };
+const cycHM = min => String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(min % 60).padStart(2, '0');
+
+const CYC = {
+  periodLen: 5,
+  cycleLen: 28,
+  starts: [cycDnum(2026, 6, 2), cycDnum(2026, 6, 30)],   // logged period starts, oldest first
+  remind: false,            // watch reminders — off, as in the reference
+  remindPeriod: 2,          // days before the predicted period
+  remindOvul: 2,            // days before the ovulation window
+  remindTime: 16 * 60 + 35  // 16:35, minutes past midnight
+};
+
+/* Where a day sits: the start it is measured from, its day number, its
+   phase, and whether that is measured (solid) or estimated (dotted). */
+function cycInfo(n){
+  const L = CYC.cycleLen, S = CYC.starts;
+  let base = null;
+  for (const s of S) if (s <= n) base = s;
+  let estimated = false;
+  if (base === null){                                  // before the first log: project back
+    const k = Math.ceil((S[0] - n) / L); base = S[0] - k * L; estimated = true;
+  }
+  let day = n - base + 1;
+  if (day > L){                                        // past the logged cycle: project forward
+    const k = Math.floor((day - 1) / L); base += k * L; day -= k * L; estimated = true;
+  }
+  const ov = L - 14;
+  const phase = day <= CYC.periodLen ? 'menstrual' : day < ov - 5 ? 'follicular' : day <= ov + 4 ? 'ovulation' : 'luteal';
+  return { base, day, phase, ov, estimated: estimated || n > CYC_TODAY, nextStart: base + L };
+}
+
+/* The four phases of the cycle that starts on `base`, as day ranges. Empty
+   phases (a long period can swallow the follicular days) are dropped. */
+function cycRanges(base){
+  const P = CYC.periodLen, L = CYC.cycleLen, ov = L - 14;
+  return [
+    ['menstrual',  1,                     P],
+    ['follicular', P + 1,                 ov - 6],
+    ['ovulation',  Math.max(ov - 5, P + 1), ov + 4],
+    ['luteal',     ov + 5,                L]
+  ].map(([key, a, b]) => ({ key, from: base + a - 1, to: base + b - 1, days: b - a + 1 }))
+   .filter(r => r.days > 0);
+}
+
+/* "tomorrow" / "in 3 days (Aug 9)" — for the summary lines */
+function cycInDays(n){
+  const diff = n - CYC_TODAY;
+  if (diff <= 0) return 'today';
+  if (diff === 1) return 'tomorrow';
+  return 'in ' + diff + ' days (' + cycFmt(n) + ')';
+}
+function cycSummary(I){
+  const P = CYC.periodLen;
+  if (I.phase === 'menstrual'){
+    const left = P - I.day;
+    return left <= 0 ? 'Last predicted day of your period.' : 'Your period usually lasts ' + P + ' days — ' + left + ' more to go.';
+  }
+  if (I.phase === 'follicular') return 'Your ovulation window opens ' + cycInDays(I.base + I.ov - 6) + '.';
+  if (I.phase === 'ovulation')  return 'Ovulation is likely around ' + cycFmt(I.base + I.ov - 1) + '. The window closes ' + cycInDays(I.base + I.ov + 3) + '.';
+  return 'Your next period is expected ' + cycInDays(I.nextStart) + '.';
+}
+const cycHasData = () => CYC.starts.length > 0 && $('#app').dataset.state !== 'empty';
+
+/* ---- Home card ------------------------------------------------------- */
+function renderCycleCard(){
+  const body = $('#cycCardBody'); if (!body) return;
+  if (!cycHasData()){
+    body.innerHTML =
+      '<div class="cyc-setup">' +
+        '<p class="msg">Log when your last period started to see your phase and predicted dates.</p>' +
+        '<button class="btn btn--secondary btn--m" type="button" data-cycsetup>Set up cycle</button>' +
+      '</div>';
+    return;
+  }
+  const I = cycInfo(CYC_TODAY), P = CYC_PHASES[I.phase];
+  const segs = cycRanges(I.base).map(r =>
+    '<i class="' + (r.from > CYC_TODAY ? 'pred' : '') + '" style="flex:' + r.days + ';--ph:' + CYC_PHASES[r.key].color + '"></i>').join('');
+  const pct = ((I.day - 0.5) / CYC.cycleLen * 100).toFixed(1);
+  const next = I.phase === 'menstrual'
+    ? 'Period · day ' + I.day + ' of ' + CYC.periodLen
+    : 'Next period in ' + (I.nextStart - CYC_TODAY) + ' days · ' + cycFmt(I.nextStart, true);
+  body.innerHTML =
+    '<div class="cyc-now">' +
+      '<span class="cyc-daynum"><span class="w">Day</span><span class="n">' + I.day + '</span></span>' +
+      '<span class="cyc-phase" style="--ph:' + P.color + '">' + P.name + '</span>' +
+    '</div>' +
+    '<div class="cyc-strip">' + segs + '<span class="tick" style="left:' + pct + '%"></span></div>' +
+    '<div class="cyc-next">' + next + '</div>';
+}
+
+/* ---- cycle page: hero · calendar · phases list ------------------------ */
+let cycView = { y: TODAY.y, m: TODAY.m };   // the month on screen
+const CYC_NAV_LIMIT = 12;                    // months either side of today
+
+function renderCyclePage(){
+  const I = cycInfo(CYC_TODAY), P = CYC_PHASES[I.phase];
+  $('#cycHero').innerHTML =
+    '<div class="big"><span class="w">Day</span><span class="n">' + I.day + '</span></div>' +
+    '<div class="ph" style="--ph:' + P.color + '">' + P.name + '</div>' +
+    '<p class="sum">' + cycSummary(I) + '</p>';
+
+  // legend — built once
+  const lg = $('#cycLegend');
+  if (!lg.childElementCount){
+    lg.innerHTML = ['menstrual','follicular','ovulation','luteal'].map(k =>
+      '<span style="--ph:' + CYC_PHASES[k].color + '"><i></i>' + CYC_PHASES[k].name.replace(' phase','') + '</span>').join('') +
+      '<span><i class="pred"></i>Predicted</span>';
+  }
+
+  // the month grid
+  const { y, m } = cycView;
+  $('#cycMonthTitle').textContent = MONTH_NAMES[m] + ' ' + y;
+  const first = new Date(Date.UTC(y, m, 1)).getUTCDay();
+  const days  = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  let html = '';
+  for (let i = 0; i < first; i++) html += '<span class="cyc-d pad"></span>';
+  for (let d = 1; d <= days; d++){
+    const n = cycDnum(y, m, d), Di = cycInfo(n), Dp = CYC_PHASES[Di.phase];
+    const future = n > CYC_TODAY, logged = CYC.starts.indexOf(n) >= 0;
+    const cls = 'cyc-d' + (n === CYC_TODAY ? ' today' : '') + (future ? ' future' : '') + (logged ? ' logged' : '');
+    html += '<button type="button" class="' + cls + '" data-mark="' + (Di.estimated ? 'dotted' : 'solid') + '" data-tone="' + Dp.tone + '"' +
+      ' data-n="' + n + '" style="--ph:' + Dp.color + ';--ph-ink:' + Dp.ink + '"' +
+      (future ? ' tabindex="-1" aria-disabled="true"' : '') +
+      ' aria-label="' + cycFmt(n, true) + ', ' + Dp.name + (Di.estimated ? ' (predicted)' : '') + (logged ? ', logged period start' : '') + '">' +
+      '<span>' + d + '</span></button>';
+  }
+  $('#cycGrid').innerHTML = html;
+  const back = (TODAY.y - y) * 12 + (TODAY.m - m);   // months behind today
+  $('#cycPrev').disabled = back >= CYC_NAV_LIMIT;
+  $('#cycNext').disabled = back <= -CYC_NAV_LIMIT;
+
+  // this cycle's phases, as rows
+  const R = cycRanges(I.base);
+  $('#cycCycleMeta').textContent = 'Day ' + I.day + ' of ' + CYC.cycleLen;
+  $('#cycPhases').innerHTML = R.map((r, i) =>
+    '<div class="listrow cyc-phrow" style="--ph:' + CYC_PHASES[r.key].color + (i === 0 ? ';border-top:0;padding-top:4px' : '') + '">' +
+      '<div class="lft"><span class="sw"></span><span class="txt">' +
+        '<span class="t1">' + CYC_PHASES[r.key].name + '</span>' +
+        '<span class="t2">' + cycFmt(r.from) + ' – ' + cycFmt(r.to) + (r.from > CYC_TODAY ? ' · predicted' : '') + '</span>' +
+      '</span></div>' +
+      '<div class="rgt"><span class="rnum">' + r.days + ' days</span></div>' +
+    '</div>').join('');
+}
+function openCyclePage(){
+  cycView = { y: TODAY.y, m: TODAY.m };
+  renderCyclePage();
+  const sub = $('#sub-cycle'); sub.hidden = false; sub.scrollTop = 0;
+  injectIcons();
+}
+function renderCycleAll(){
+  renderCycleCard();
+  if (!$('#sub-cycle').hidden) renderCyclePage();
+  injectIcons();
+}
+$('#cycPrev').addEventListener('click', () => { cycView.m--; if (cycView.m < 0){ cycView.m = 11; cycView.y--; } renderCyclePage(); });
+$('#cycNext').addEventListener('click', () => { cycView.m++; if (cycView.m > 11){ cycView.m = 0; cycView.y++; } renderCyclePage(); });
+
+// the Home card: set-up slot → settings; otherwise → the cycle page
+$('#cycCard').addEventListener('click', e => {
+  if (e.target.closest('[data-cycsetup]') || !cycHasData()){ openCycSettings(); return; }
+  openCyclePage();
+});
+$('#cycCard').addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('#cycCard').click(); }
+});
+$('#cycOpenSettings').addEventListener('click', openCycSettings);
+
+/* ---- day sheet: log a period start ----------------------------------- */
+let cycDayN = null;
+function openCycDay(n){
+  cycDayN = n;
+  const I = cycInfo(n), P = CYC_PHASES[I.phase], logged = CYC.starts.indexOf(n) >= 0;
+  $('#cycDayTitle').textContent = cycFmt(n, true) + (n === CYC_TODAY ? ' · Today' : '');
+  $('#cycDayLine').innerHTML = logged
+    ? 'Logged as the start of a period.'
+    : '<b style="--ph:' + P.color + '">' + P.name + '</b> · day ' + I.day + ' of this cycle' + (I.estimated ? ' (estimated)' : '');
+  const btn = $('#cycDayLog');
+  btn.disabled = logged;
+  btn.textContent = logged ? 'Already logged' : 'Log period start';
+  $('#cycDaySheet').hidden = false;
+}
+const closeCycDay = () => { $('#cycDaySheet').hidden = true; };
+$$('[data-cycclose]').forEach(el => el.addEventListener('click', closeCycDay));
+$('#cycGrid').addEventListener('click', e => {
+  const b = e.target.closest('.cyc-d');
+  if (!b || b.classList.contains('pad') || b.classList.contains('future')) return;   // predictions can't be logged
+  openCycDay(Number(b.dataset.n));
+});
+$('#cycLogToday').addEventListener('click', () => openCycDay(CYC_TODAY));
+$('#cycDayLog').addEventListener('click', () => {
+  if (cycDayN == null) return;
+  // a start within one period length of an existing one REPLACES it — that
+  // is a correction of the same period, not a second period
+  CYC.starts = CYC.starts.filter(s => Math.abs(s - cycDayN) > CYC.periodLen);
+  CYC.starts.push(cycDayN);
+  CYC.starts.sort((a, b) => a - b);
+  closeCycDay();
+  renderCycleAll();
+});
+
+/* ---- settings page ---------------------------------------------------- */
+/* Edits go into a draft; Save writes them back. Back discards them.
+   FLAG: no "discard changes?" confirm on back — the Me-tab spec's confirm
+   pattern would fit here if the owner wants one. */
+let cycDraft = null;
+const CYC_PICK = {
+  periodLen:    { title:'Period length',      unit:'days',        opts: cycRange(2, 10),  fmt: String },
+  cycleLen:     { title:'Cycle length',       unit:'days',        opts: cycRange(21, 40), fmt: String },
+  lastStart:    { title:'Last period start',  unit:'',            opts: cycRange(CYC_TODAY - 59, CYC_TODAY), fmt: n => cycFmt(n, true) },
+  remindPeriod: { title:'Period reminder',    unit:'days before', opts: [1, 2, 3, 5, 7],  fmt: String },
+  remindOvul:   { title:'Ovulation reminder', unit:'days before', opts: [1, 2, 3, 5, 7],  fmt: String },
+  remindTime:   { title:'Reminder time',      unit:'',            opts: cycRange(12, 44).map(i => i * 30), fmt: cycHM }   // 06:00 … 22:00
+};
+function cycValText(key, v){
+  if (key === 'periodLen' || key === 'cycleLen') return v + ' days';
+  if (key === 'lastStart') return cycFmtLong(v);
+  if (key === 'remindTime') return cycHM(v);
+  return v + ' days before';
+}
+function renderCycSettings(){
+  $$('[data-cycval]').forEach(el => { el.textContent = cycValText(el.dataset.cycval, cycDraft[el.dataset.cycval]); });
+  const sw = $('#cycRemind');
+  sw.classList.toggle('on', cycDraft.remind);
+  sw.setAttribute('aria-checked', String(cycDraft.remind));
+  $$('.cyc-dep').forEach(r => r.setAttribute('aria-disabled', String(!cycDraft.remind)));
+}
+function openCycSettings(){
+  cycDraft = {
+    periodLen: CYC.periodLen, cycleLen: CYC.cycleLen,
+    lastStart: CYC.starts.length ? CYC.starts[CYC.starts.length - 1] : CYC_TODAY,
+    remind: CYC.remind, remindPeriod: CYC.remindPeriod, remindOvul: CYC.remindOvul, remindTime: CYC.remindTime
+  };
+  renderCycSettings();
+  const sub = $('#sub-cycle-settings'); sub.hidden = false; sub.scrollTop = 0;
+  injectIcons();
+}
+$('#cycRemind').addEventListener('click', () => { cycDraft.remind = !cycDraft.remind; renderCycSettings(); });
+$$('[data-cycpick]').forEach(row => row.addEventListener('click', () => {
+  if (row.getAttribute('aria-disabled') === 'true') return;
+  const key = row.dataset.cycpick;
+  openPickSheet(CYC_PICK[key], cycDraft[key], v => { cycDraft[key] = v; renderCycSettings(); });
+}));
+$('#cycSave').addEventListener('click', () => {
+  CYC.periodLen = cycDraft.periodLen; CYC.cycleLen = cycDraft.cycleLen;
+  CYC.remind = cycDraft.remind; CYC.remindPeriod = cycDraft.remindPeriod;
+  CYC.remindOvul = cycDraft.remindOvul; CYC.remindTime = cycDraft.remindTime;
+  // "Last period start" edits the most recent logged start (or makes the first one)
+  if (CYC.starts.length) CYC.starts[CYC.starts.length - 1] = cycDraft.lastStart; else CYC.starts.push(cycDraft.lastStart);
+  CYC.starts = Array.from(new Set(CYC.starts)).sort((a, b) => a - b);
+  $('#sub-cycle-settings').hidden = true;
+  renderCycleAll();
+  if ($('#sub-cycle').hidden) openCyclePage();   // set up from the card → land on the calendar
+});
+
+/* A generic value picker on the goal-edit sheet: same rows, same check /
+   X, but the caller decides what happens on confirm. Long lists (dates,
+   times) scroll inside the sheet with the current value centred. */
+function openPickSheet(cfg, value, onConfirm){
+  sheetKey = null; sheetPick = value; sheetOnConfirm = onConfirm;
+  $('#sheetTitle').textContent = cfg.title;
+  const rows = $('#sheetRows');
+  rows.innerHTML = '';
+  rows.classList.toggle('scroll', cfg.opts.length > 7);
+  let selEl = null;
+  cfg.opts.forEach(v => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sheet-row' + (v === value ? ' sel' : '');
+    b.innerHTML = '<span class="v">' + cfg.fmt(v) + (cfg.unit ? '<span class="u">' + cfg.unit + '</span>' : '') + '</span>';
+    b.addEventListener('click', () => {
+      sheetPick = v;
+      $$('.sheet-row', rows).forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel');
+    });
+    if (v === value) selEl = b;
+    rows.append(b);
+  });
+  $('#goalSheet').hidden = false;
+  if (selEl && rows.classList.contains('scroll')) rows.scrollTop = selEl.offsetTop - rows.clientHeight / 2 + selEl.offsetHeight / 2;
+}
+
+renderCycleAll();
+
+/* ==========================================================================
    STATE MACHINE — the control panel drives data-state on <body>.
    CSS does the hiding/showing; this code fills in the cover content
    (skeletons + messages) once, and tweaks the few text-only spots.
@@ -4345,6 +5067,8 @@ function setState(state){
   // state cancels any measurement in flight, so no timer outlives the switch.
   hmCloseSheet();
   hmSetState('idle');
+  // the Menstrual cycle card follows the no-data state too (set-up slot)
+  if (typeof renderCycleCard === 'function') renderCycleCard();
   // highlight the picked option in the panel
   $$('#stateOpts label').forEach(l => l.classList.toggle('on', $('input', l).value === state));
 }

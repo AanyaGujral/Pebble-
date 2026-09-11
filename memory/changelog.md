@@ -5,6 +5,44 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-11 — Built the **Menstrual cycle** flow into `Homepage + measurel all
+  + start workout flow.html` (the owner's attached homepage file), with the spec
+  in `docs/feature-menstrual-cycle.md` (rev 1). Entry point: a "Menstrual
+  cycle" card on Home after Start Workout — "DAY 8 · FOLLICULAR PHASE", a
+  four-segment phase strip with a tick at today, and the next-period line; in
+  the control panel's no-data state it becomes a same-height "Set up cycle"
+  slot. Tapping opens the cycle page: DAY hero + phase + one summary line, a
+  month calendar where every day carries its phase colour (period and
+  ovulation filled, follicular and luteal tinted; days after today — and any
+  day projected beyond a logged cycle — drawn as dotted rings, so tentative
+  period dates read as dotted), a legend, month nav, "This cycle" phase rows,
+  and logging a period start by tapping a past day (a sheet names the day and
+  its phase) or by "Log period start today". The Cycle settings page carries
+  every row from the owner's Setting screenshot — period length, cycle
+  length, last period start (each with its question line), Watch reminders
+  toggle, period / ovulation reminder, reminder time, footnote, Save — with
+  values picked on the existing goal-edit sheet (generalised by one callback,
+  `sheetOnConfirm`, so activity goals still work). Phase maths: ovulation day =
+  cycle − 14, ovulation window 5 days before to 4 after (the reference app's
+  own rule), luteal to the end.
+  Tokens: added `cycle` (four phase hues) and `avatar` (the Friends identity
+  tints, which that prototype was using without them being in tokens.js) to
+  `js/tokens.js`, mirrored into the file's :root. FLAG: every phase hue is
+  also a metric alias — see the note in tokens.js.
+  Family ranking: the owner asked for the card "above family ranking", but this
+  file's Home tab had no Family ranking card (it lived only in the Friends
+  prototype), so its populated state was ported in as a static card after the
+  cycle card — chevron goes nowhere here, flagged in the markup.
+  Icons: Phosphor drop and clock (fill) copied from the Me-tab prototype's
+  table; arrows-clockwise stands in for the reference's calendar glyph (CDN
+  fetch is blocked in this environment). Verified in headless Chromium: card
+  order and heights, day-8/follicular maths, dotted predictions in the next
+  month, log sheet, settings save recomputing the card and hero, no-data slot
+  at the same 162px, activity goal sheet unaffected, no hex outside the token
+  block. Sample period length is 5 (reference shows 6) so the follicular band
+  is visible; the reference's "10 Sep 2026" last-start is in the prototype's
+  future and was not copied. Not built: the reference's Body Temperature card.
+
 - 2026-09-03 (rev 2.2) — Owner round of eight on the leaderboard.
   (1) Hero band is now the Pebble green — built from the teal ramp
   (teal.400 wash over a teal.500 → surface.card gradient) rather than the

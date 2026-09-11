@@ -1,3 +1,12 @@
+> **2026-09-11 — Menstrual cycle flow.** Built into `Homepage + measurel all +
+> start workout flow.html` (Home card after Start Workout → cycle calendar
+> page → log sheet; Cycle settings page). Spec + nine flagged decisions:
+> `docs/feature-menstrual-cycle.md`. The Family ranking card from the Friends
+> prototype was ported into that file (static) so the cycle card could sit
+> above it. New tokens `cycle` and `avatar` in `js/tokens.js`. Awaiting owner
+> review — start with the flagged decisions (phase hues, two-tone calendar,
+> 5-day sample period). Branch `claude/affectionate-faraday-tz1s0x`.
+
 # Session Handoff
 
 > **2026-08-10 — read this first.** `index.html` is now the MERGED source of

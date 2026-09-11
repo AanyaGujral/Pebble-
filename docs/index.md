@@ -10,6 +10,7 @@ A table of every screen/feature and its state. Keeps work unambiguous.
 | Health / Peak score | — | Not started | |
 | Me tab | `docs/feature-me-tab.md` | UX approved (rev 3) — UI not specified | 14 inner pages, 10 tab states. Read the spec before writing any Me-tab code |
 | Friends (was Family Ranking) | `docs/feature-family-ranking.md` + `Friends/friends.html` | Prototype built to rev 2 — UX not yet approved | Codes make links, not groups. First-use teaching state, podium + list + sticky you-card, friend profile, share/enter a code, friends list. 6 screens, 9 F-states, 10 components |
+| Menstrual cycle | `docs/feature-menstrual-cycle.md` + `Homepage + measurel all + start workout flow.html` | Prototype built (rev 1) — UX not yet approved | Home card (Day n · phase) above Family ranking, phase calendar (solid = lived, dotted = predicted), log a period start, Cycle settings page. 9 flagged decisions in the spec |
 
 When you start a feature, create `docs/feature-<name>.md` with: what it does,
 acceptance criteria (checkboxes), implementation approach, and dependencies.

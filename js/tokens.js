@@ -166,6 +166,37 @@ export const metric = {
   skinTemp: '#C873DE'
 };
 
+/** Menstrual cycle phases — one hue per phase, used on the Home card, the
+ *  cycle calendar and its legend. Added 2026-09-11 with the cycle flow.
+ *  FLAG: every 400-step hue is already a metric alias, so each phase shares
+ *  a hue with one body signal (menstrual = heartRate, follicular = steps,
+ *  ovulation = spo2, luteal = sleep). The owner's reference app paints the
+ *  period red and the ovulation window blue, which is where crimson and sky
+ *  come from; gold and violet were chosen for legibility on the dark
+ *  calendar. Cycle marks never sit beside those metrics' charts, so the
+ *  sharing is tolerable — revisit if a phase mark and its twin ever meet. */
+export const cycle = {
+  menstrual:  '#E43A62',
+  follicular: '#F2C64B',
+  ovulation:  '#58A8DF',
+  luteal:     '#8A7CEC'
+};
+
+/** Identity tints for people (avatar chips) — the Friends / Family ranking
+ *  flow assigns one per person from a stable hash. Background is the hue's
+ *  800 step, the initial is its 200 step. Recorded here 2026-09-11 because
+ *  the Family ranking card now also lives on the homepage prototype; the
+ *  Friends prototype had been carrying these values without them being in
+ *  this file. */
+export const avatar = {
+  1: { bg: '#30295E', fg: '#BBB7FC' },   // violet
+  2: { bg: '#004239', fg: '#9EE0D3' },   // teal
+  3: { bg: '#5D0820', fg: '#FD99A5' },   // crimson
+  4: { bg: '#532210', fg: '#F2AF98' },   // terracotta
+  5: { bg: '#113952', fg: '#A2CFF1' },   // sky
+  6: { bg: '#492053', fg: '#E4B1F2' }    // orchid
+};
+
 /** Semantic states — glyphs and badges only, never chart lines or fills. */
 export const semantic = {
   positive: {
@@ -445,7 +476,7 @@ export const borderWidth = {
 };
 
 const tokens = {
-  color, neutral, surface, textColor, metric, semantic,
+  color, neutral, surface, textColor, metric, cycle, avatar, semantic,
   fontFamily, fontWeight, typeText, typeNumeric,
   radius, spacing, borderWidth,
 };
