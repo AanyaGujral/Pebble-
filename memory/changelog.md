@@ -5,6 +5,24 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-11 (later) — Readiness page, feedback round 2. (1) Health and
+  activity monitor rebuilt as the Home Health-monitor tiles (.hm .card, 2-up,
+  132px, dot + overline label, 24px numeral, unit in caps — BPM / MS / °C —
+  caret or neutral dot, 13px footer). (2) Trend chart now runs on the app's
+  chart engine (drawLine + attachScrub, the port of
+  components/Charts/line-chart.html): press-and-drag reads that day's score
+  and date into the card header and snaps back; the dashed window average is
+  drawGoal with an "avg N" label, placed at the left end via a new optional
+  cfg.goalLabelAt:'start' (default unchanged for the detail pages). Window
+  pills shrunk to 32px / 13px. (3) Calibrating state added to the control
+  panel (day 3 of 7): hero copy swaps on Home and Readiness ("Getting to know
+  you" / "Still learning your baseline"), a calibrating chip (same component
+  as the syncing chip) appears under the summary, the confidence line reads
+  "Low confidence · baseline still forming", a callout card with a 7-segment
+  day meter tops the stack, the trend shows only the 3 recorded days with the
+  pills parked. setState() now swaps hero copy for any state that has copy,
+  not only empty.
+
 - 2026-09-11 — Readiness page, owner feedback round 1 (preview artifact
   published). Header: calendar icon removed; 3-dot menu added top right with
   About readiness (Related card at the bottom removed). Background rebuilt to

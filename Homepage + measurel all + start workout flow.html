@@ -811,21 +811,25 @@ body{
 /* trend card — axis labels use the shipped .axis class (10/12 font-number,
    text-3) like every other chart in the app; FLAG: wireframe drew them at
    ~13px, the created designs win on type scale */
-.rd-trend svg{display:block;width:100%;height:auto;margin-top:12px}
 /* period pills — outlined, three across; active fills with surface-raised.
    Not the .seg4 D/W/M/Y switcher: this only changes the window of the same
    trend line. FLAG: spec §5 said "no history"; the wireframe adds this card,
    so the wireframe wins — the spec itself notes that history is the signal
    Readiness may want a nav slot later. */
-.seg3{margin-top:16px;display:flex;gap:12px}
+.seg3{margin-top:12px;display:flex;gap:8px}
+/* 32px pills, 13/16 numerals — smaller than the first cut (owner,
+   2026-09-11: "reduce the tab size"); still ≥ 32px tall for the thumb */
 .seg3 button{
-  flex:1;height:44px;border-radius:999px;background:none;cursor:pointer;
+  flex:1;height:32px;border-radius:999px;background:none;cursor:pointer;
   border:0.5px solid var(--neutral-500);
-  font-family:var(--font-number);font-size:15px;line-height:20px;font-weight:600;
+  font-family:var(--font-number);font-size:13px;line-height:16px;font-weight:600;
   font-feature-settings:var(--num-features);color:var(--text-2);
 }
 .seg3 button:hover{color:var(--text-1)}
 .seg3 button.active{background:var(--surface-raised);border-color:transparent;color:var(--text-1)}
+/* while calibrating there are only a few days to show — the window pills
+   are parked (visible, inert) rather than hidden, so the card keeps its shape */
+.seg3 button[aria-disabled="true"]{opacity:.4;cursor:default}
 /* driver list — the icon chip is the Home workout card's .wo-chip verbatim
    (40px, radius 12, neutral-bg, 20px fill glyph on neutral-100) — owner,
    2026-09-11: "colours and sizing same as the workout card". Rows keep the
@@ -846,13 +850,30 @@ body{
 .numcell .tri{display:block;flex:0 0 auto}
 .numcell .dot-flat{flex:0 0 auto}
 .numcell .value-dash{font-size:20px;line-height:24px}
-/* Health and activity monitor — label · today's value · caret / dot */
-.rd-mon .row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:0.5px solid var(--divider)}
-.rd-mon .row:first-of-type{margin-top:0;padding-top:0;border-top:0}
-.rd-mon .row:last-of-type{padding-bottom:0}
-.rd-mon .lab{flex:1;font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
-.rd-mon .numcell .n{font-size:15px;line-height:20px;font-weight:500}
-.rd-mon .numcell .value-dash{font-size:15px;line-height:20px}
+/* Health and activity monitor — the Home Health-monitor tiles verbatim
+   (.hm .card: 2-up grid, 132px, dot + overline label, 24px numeral, unit in
+   caps on text-3, caret, 13px footer). Owner, 2026-09-11: "use homepage
+   health monitor cards for reference of size, colour etc." The neutral dot
+   (unchanged) sits where the caret would. */
+.rd-hm .grid{margin-top:0}
+.rd-hm .dot-flat{align-self:center;margin-left:4px;flex:0 0 auto}
+/* Calibrating — the first 7 days build the baseline, so the score is
+   provisional. A chip in the hero (same look as the syncing chip), a
+   callout card at the top of the stack, and the confidence line swaps. */
+.statechip.cal svg{color:var(--metric-readiness)}
+#app[data-state="calibrating"] .stateful .statechip.cal{display:flex}
+.rd-conf .conf-cal{display:none}
+#app[data-state="calibrating"] .rd-conf .conf-default{display:none}
+#app[data-state="calibrating"] .rd-conf .conf-cal{display:inline}
+.calnote{display:none;gap:12px;align-items:flex-start}
+#app[data-state="calibrating"] .calnote{display:flex}
+.calnote .ico{width:20px;height:20px;flex:0 0 auto;color:var(--metric-readiness);margin-top:1px}
+.calnote .ct{font-size:15px;line-height:22px;font-weight:500;color:var(--text-1)}
+.calnote p{margin:4px 0 0;font-size:13px;line-height:18px;color:var(--text-2)}
+/* day-count meter — 7 segments, the ones already recorded filled */
+.calnote .days{margin-top:10px;display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calnote .days i{display:block;height:4px;border-radius:999px;background:var(--surface-raised)}
+.calnote .days i.on{background:var(--metric-readiness)}
 /* "How to use today" — the AI guidance card, tinted with the readiness hue
    (8% over the card surface, 35% hairline) so it reads as the one card that
    speaks. Sparkle only, no circle behind it (owner, 2026-09-11); the glyph
@@ -1864,6 +1885,7 @@ body{
   <div class="opts" id="stateOpts">
     <label class="on"><input type="radio" name="cardstate" value="default" checked><span>Default<span class="desc">Live data, as designed</span></span></label>
     <label><input type="radio" name="cardstate" value="empty"><span>No data<span class="desc">New user, nothing synced yet</span></span></label>
+    <label><input type="radio" name="cardstate" value="calibrating"><span>Calibrating<span class="desc">Day 3 of 7 — readiness baseline still forming</span></span></label>
   </div>
     <h2 style="margin-top:18px">Workout clock</h2>
     <p class="hint">Not part of the app. The fast clock exists so the workout
@@ -1982,6 +2004,11 @@ body{
           <div class="hero-media">
             <div class="headline live">You're set up for a good day</div>
             <p class="summary live">Your metrics are in their usual range — keep up your normal routine today.</p>
+            <!-- calibrating chip (first 7 days) — shown by the calibrating state -->
+            <div class="statechip cal" style="justify-content:center">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,172Z"/></svg>
+              <span>Readiness calibrating · day 3 of 7</span>
+            </div>
             <div class="statechip sync" style="justify-content:center">
               <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
               <span>Syncing with band…</span>
@@ -2746,7 +2773,13 @@ body{
                  to no-data copy, exactly as on the tab heroes -->
             <div class="headline live">Ready for a normal day</div>
             <p class="summary live">Sleep and HRV are in your usual range. Resting heart rate is a touch high, so keep hard efforts short today.</p>
-            <div class="rd-conf live">Medium confidence · day 14</div>
+            <div class="rd-conf live"><span class="conf-default">Medium confidence · day 14</span><span class="conf-cal">Low confidence · baseline still forming</span></div>
+            <!-- calibrating chip — same component as the syncing chip below,
+                 shown by #app[data-state="calibrating"] -->
+            <div class="statechip cal" style="justify-content:center">
+              <svg viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,172Z"/></svg>
+              <span>Calibrating · day 3 of 7</span>
+            </div>
             <div class="statechip sync" style="justify-content:center">
               <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg>
               <span>Syncing readiness…</span>
@@ -2755,17 +2788,35 @@ body{
         </div>
 
         <div class="stack">
-          <!-- Last N days — the readiness trend. Drawn by rdDrawTrend() from
-               RD_TREND (sample data); the dashed rule is the window average
-               and the right-hand labels are the window max / min. 7d / 14d /
-               30d only change the window. No data: frame + labels stay, the
-               line hides (.live), avg goes to —. -->
-          <div class="card stateful rd-trend">
-            <div class="card-head">
-              <div class="card-title" id="rdTrendTitle">Last 30 days</div>
-              <div class="trend" style="margin-top:0;font-size:15px;line-height:22px;font-weight:400"><span class="live" id="rdTrendAvg">avg 61</span><span class="value-dash" style="font-size:15px;line-height:22px;font-weight:400">—</span></div>
+          <!-- Calibrating callout — shown only in the calibrating state
+               (first 7 days). Copy says plainly that the score is provisional. -->
+          <div class="card calnote" role="status">
+            <span class="phi ico" data-ph="info" data-weight="fill"></span>
+            <div style="flex:1;min-width:0">
+              <div class="ct">Calibrating · day 3 of 7</div>
+              <p>Readiness needs a week of nights to learn your baseline. Until then the score is a rough guide and can swing more than it will later.</p>
+              <div class="days" aria-label="3 of 7 baseline days recorded"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
             </div>
-            <svg id="rdTrend" viewBox="0 0 296 132" aria-label="Readiness over the last 30 days"></svg>
+          </div>
+
+          <!-- Last N days — the readiness trend, on the SAME chart engine as
+               every other chart in the app (drawLine + attachScrub, ported
+               from components/Charts/line-chart.html): press and drag reads
+               the score for that day into the header, with its date under
+               it, and snaps back on release. The dashed rule is the window
+               average (drawGoal). 7d / 14d / 30d only change the window and
+               rebuild the mount, so old scrub listeners go with it.
+               No data: .empty-frame keeps gridlines + labels, hides the line.
+               Calibrating: only the recorded days are drawn, pills parked. -->
+          <div class="card stateful empty-frame" data-rdcard>
+            <div class="card-head">
+              <div class="card-title" data-rdtitle>Last 30 days</div>
+              <div class="card-metric">
+                <div class="val"><span class="num live" data-val>73</span><span class="value-dash">—</span></div>
+                <div class="trend live" data-trend><span>avg 62</span></div>
+              </div>
+            </div>
+            <div class="card-body"><div class="chartmount live" data-mount></div></div>
             <div class="seg3" id="rdSeg" role="tablist" aria-label="Trend window">
               <button type="button" data-n="7">7d</button>
               <button type="button" data-n="14">14d</button>
@@ -2804,29 +2855,35 @@ body{
               </div>
           </div>
 
-          <!-- Health and activity monitor — today's readings with the same
-               number + caret treatment (owner, 2026-09-11; was "Since
-               yesterday" with coloured deltas). Caret tone follows what the
-               move means for readiness: RHR up and HRV down are negative,
-               steps up is positive, skin temperature unchanged is a dot. -->
+          <!-- Health and activity monitor — today's readings in the Home
+               Health-monitor tile (owner, 2026-09-11). Units in caps via the
+               tile's .unit token. Caret tone follows what the move means for
+               readiness: RHR up and HRV down are negative, steps up is
+               positive, an unchanged reading gets the neutral dot. -->
           <div class="sechead"><span class="t">Health and activity monitor</span></div>
-          <div class="card stateful rd-mon">
-              <div class="row">
-                <span class="lab">Resting heart rate</span>
-                <span class="numcell"><span class="n live">58 bpm</span><span class="value-dash">—</span><svg class="tri live" viewBox="0 0 24 24" width="14" height="14" role="img" aria-label="up, neg"><path d="M12 5 L19.5 17.5 H4.5 Z" fill="var(--negative-icon)" stroke="var(--negative-icon)" stroke-width="5" stroke-linejoin="round"/></svg></span>
+          <div class="hm rd-hm stateful">
+            <div class="grid">
+              <div class="card">
+                <div class="tile-top"><span class="dot" style="background:var(--metric-heart-rate)"></span><span class="label">Resting HR</span></div>
+                <div class="figure"><span class="value live">58</span><span class="value-dash">—</span><span class="unit">bpm</span><svg class="tri live" viewBox="0 0 24 24" width="14" height="14" role="img" aria-label="up, neg"><path d="M12 5 L19.5 17.5 H4.5 Z" fill="var(--negative-icon)" stroke="var(--negative-icon)" stroke-width="5" stroke-linejoin="round"/></svg></div>
+                <div class="card-foot">7-day avg 55 bpm</div>
               </div>
-              <div class="row">
-                <span class="lab">HRV</span>
-                <span class="numcell"><span class="n live">42 ms</span><span class="value-dash">—</span><svg class="tri live" viewBox="0 0 24 24" width="14" height="14" role="img" aria-label="down, neg"><path d="M12 19 L4.5 6.5 H19.5 Z" fill="var(--negative-icon)" stroke="var(--negative-icon)" stroke-width="5" stroke-linejoin="round"/></svg></span>
+              <div class="card">
+                <div class="tile-top"><span class="dot" style="background:var(--metric-hrv)"></span><span class="label">HRV</span></div>
+                <div class="figure"><span class="value live">42</span><span class="value-dash">—</span><span class="unit">ms</span><svg class="tri live" viewBox="0 0 24 24" width="14" height="14" role="img" aria-label="down, neg"><path d="M12 19 L4.5 6.5 H19.5 Z" fill="var(--negative-icon)" stroke="var(--negative-icon)" stroke-width="5" stroke-linejoin="round"/></svg></div>
+                <div class="card-foot">7-day avg 46 ms</div>
               </div>
-              <div class="row">
-                <span class="lab">Skin temperature</span>
-                <span class="numcell"><span class="n live">36.5°C</span><span class="value-dash">—</span><span class="dot-flat live" role="img" aria-label="unchanged"></span></span>
+              <div class="card">
+                <div class="tile-top"><span class="dot" style="background:var(--metric-skin-temp)"></span><span class="label">Skin Temp</span></div>
+                <div class="figure"><span class="value live">36.5</span><span class="value-dash">—</span><span class="unit">°C</span><span class="dot-flat live" role="img" aria-label="unchanged"></span></div>
+                <div class="card-foot">Same as baseline</div>
               </div>
-              <div class="row">
-                <span class="lab">Steps</span>
-                <span class="numcell"><span class="n live">8.4k</span><span class="value-dash">—</span><svg class="tri live" viewBox="0 0 24 24" width="14" height="14" role="img" aria-label="up, pos"><path d="M12 5 L19.5 17.5 H4.5 Z" fill="var(--positive-icon)" stroke="var(--positive-icon)" stroke-width="5" stroke-linejoin="round"/></svg></span>
+              <div class="card">
+                <div class="tile-top"><span class="dot" style="background:var(--metric-steps)"></span><span class="label">Steps</span></div>
+                <div class="figure"><span class="value live">8.4k</span><span class="value-dash">—</span><svg class="tri live" viewBox="0 0 24 24" width="14" height="14" role="img" aria-label="up, pos"><path d="M12 5 L19.5 17.5 H4.5 Z" fill="var(--positive-icon)" stroke="var(--positive-icon)" stroke-width="5" stroke-linejoin="round"/></svg></div>
+                <div class="card-foot">Yesterday 4.9k</div>
               </div>
+            </div>
           </div>
 
           <!-- How to use today — the AI's one recommendation plus short tags.
@@ -3465,7 +3522,10 @@ function drawGoal(svg, cfg){
   const gy = yFor(cfg.goal, cfg);
   svg.append(svgEl('line', { x1:0, x2:PLOT_W, y1:gy, y2:gy, stroke:'var(--text-2)',
     'stroke-width':1, 'stroke-dasharray':'6 4' }));
-  const t = svgEl('text', { x:PLOT_W-4, y:gy-5, 'text-anchor':'end', class:'axis', fill:'var(--text-2)' });
+  // cfg.goalLabelAt:'start' puts the label at the left end (readiness trend,
+  // 2026-09-11) so it never sits on the newest point; default is unchanged
+  const atStart = cfg.goalLabelAt === 'start';
+  const t = svgEl('text', { x: atStart ? 4 : PLOT_W-4, y:gy-5, 'text-anchor': atStart ? 'start' : 'end', class:'axis', fill:'var(--text-2)' });
   t.textContent = cfg.goalLabel; svg.append(t);
 }
 
@@ -4145,39 +4205,6 @@ $$('.listrow[role="button"]').forEach(row => row.addEventListener('keydown', e =
 }));
 
 /* ==========================================================================
-   READINESS TREND — "Last N days" card on #sub-readiness (2026-09-10).
-   RD_TREND is 30 sample scores, oldest first, ending on today's 73. The
-   pills pick how many of the latest days to draw; the dashed rule is the
-   window average, the right-hand labels its max and min.
-   ========================================================================== */
-const RD_TREND = [58,66,74,52,61,70,45,55,63,72,66,48,60,71,79,64,52,57,69,74,58,47,62,70,82,55,41,66,60,73];
-function rdDrawTrend(n){
-  const svg = $('#rdTrend'); if (!svg) return;
-  const data = RD_TREND.slice(-n);
-  const W = 296, H = 132, plotW = 250, top = 10, bot = 14;       // 46px gutter for the labels
-  const min = Math.min(...data), max = Math.max(...data);
-  const avg = Math.round(data.reduce((a, b) => a + b, 0) / data.length);
-  const x = i => (i * plotW / (data.length - 1)).toFixed(1);
-  const y = v => (top + (max - v) / (max - min) * (H - top - bot)).toFixed(1);
-  svg.innerHTML =
-    `<text class="axis" x="${W}" y="${+y(max) + 4}" text-anchor="end">${max}</text>` +
-    `<text class="axis" x="${W}" y="${+y(min) + 4}" text-anchor="end">${min}</text>` +
-    `<line x1="0" x2="${plotW}" y1="${y(avg)}" y2="${y(avg)}" stroke="var(--neutral-500)" stroke-width="1" stroke-dasharray="3 3"/>` +
-    // FLAG: wireframe draws the line in white; the app's charts colour the
-    // line by metric (--chart-accent), so this one is readiness teal
-    `<g class="live"><polyline fill="none" stroke="var(--metric-readiness)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" ` +
-    `points="${data.map((v, i) => x(i) + ',' + y(v)).join(' ')}"/></g>`;
-  $('#rdTrendTitle').textContent = `Last ${n} days`;
-  $('#rdTrendAvg').textContent = `avg ${avg}`;
-  svg.setAttribute('aria-label', `Readiness over the last ${n} days, average ${avg}`);
-}
-$$('#rdSeg button').forEach(b => b.addEventListener('click', () => {
-  $$('#rdSeg button').forEach(o => o.classList.toggle('active', o === b));
-  rdDrawTrend(+b.dataset.n);
-}));
-rdDrawTrend(30);
-
-/* ==========================================================================
    HISTORY CALENDAR — month-scroll modal shared by Health / Activity / Sleep.
    The newest month renders last, so the sheet opens at the present and the
    owner scrolls UP to reach earlier months (per the standalone prototypes).
@@ -4288,6 +4315,63 @@ $$('[data-cal]').forEach(btn => btn.addEventListener('click', e => {
 }));
 $$('[data-calclose]').forEach(el => el.addEventListener('click', closeCalendar));
 syncDateLabels();   // cold launch: every label reads today
+
+/* ==========================================================================
+   READINESS TREND — "Last N days" card on #sub-readiness (2026-09-11).
+   Same engine as every chart in the app: drawLine() draws it, attachScrub()
+   makes it scrubbable (press / drag reads that day's score + date into the
+   card header, snaps back on release). RD_TREND holds 30 sample scores,
+   oldest first, ending on today's 73. The dashed rule is the window
+   average, drawn by drawGoal with the label "avg N".
+   Calibrating state: only the recorded days (RD_CAL_DAYS) are drawn and the
+   window pills are parked — there is no 7-day window yet.
+   ========================================================================== */
+const RD_TREND = [58,66,74,52,61,70,45,55,63,72,66,48,60,71,79,64,52,57,69,74,58,47,62,70,82,55,41,66,60,73];
+const RD_CAL_DAYS = 3;          // day 3 of 7 in the calibrating sample
+let rdWindow = 30;              // the active pill
+function rdDateLabel(daysAgo){  // "Thu, Aug 6" for today, counting back
+  const d = new Date(Date.UTC(TODAY.y, TODAY.m, TODAY.d - daysAgo));
+  return `${DAY_SHORT[d.getUTCDay()]}, ${MONTH_SHORT[d.getUTCMonth()]} ${d.getUTCDate()}`;
+}
+function rdDrawTrend(n){
+  const card = $('[data-rdcard]'); if (!card) return;
+  const calibrating = document.getElementById('app').dataset.state === 'calibrating';
+  const days = calibrating ? RD_CAL_DAYS : n;
+  const data = RD_TREND.slice(-days);
+  const avg  = Math.round(data.reduce((a, b) => a + b, 0) / data.length);
+  // 5 evenly spread date ticks (3 when only a few days exist), pinned to points
+  const nTicks = days >= 5 ? 5 : days;
+  const tickIdx = Array.from({ length:nTicks }, (_, k) => Math.round(k * (days - 1) / (nTicks - 1)));
+  const cfg = {
+    kind:'line', data, color:'var(--metric-readiness)', unit:'',
+    yLabels:['100','75','50','25'], yMin:25, yMax:100,
+    ticks: tickIdx.map(i => { const d = new Date(Date.UTC(TODAY.y, TODAY.m, TODAY.d - (days - 1 - i))); return `${d.getUTCDate()} ${MONTH_SHORT[d.getUTCMonth()]}`; }),
+    tickIdx,
+    goal: avg, goalLabel: `avg ${avg}`, goalLabelAt: 'start',
+    fmt: v => String(v),
+    stampFmt: i => rdDateLabel(days - 1 - i)
+  };
+  $('[data-rdtitle]', card).textContent = calibrating ? `Day ${RD_CAL_DAYS} of 7` : `Last ${days} days`;
+  $('[data-val]', card).textContent = String(data[data.length - 1]);
+  $('[data-trend]', card).innerHTML = `<span>avg ${avg}</span>`;
+  // fresh mount so the previous window's scrub listeners are discarded
+  const fresh = document.createElement('div');
+  fresh.className = 'chartmount live';
+  fresh.setAttribute('data-mount', '');
+  $('[data-mount]', card).replaceWith(fresh);
+  attachScrub(card, drawLine(fresh, 'readiness-' + days, cfg));
+  $$('#rdSeg button').forEach(b => {
+    b.classList.toggle('active', +b.dataset.n === n);
+    b.setAttribute('aria-selected', String(+b.dataset.n === n));
+    b.setAttribute('aria-disabled', String(calibrating));
+  });
+}
+$$('#rdSeg button').forEach(b => b.addEventListener('click', () => {
+  if (b.getAttribute('aria-disabled') === 'true') return;
+  rdWindow = +b.dataset.n;
+  rdDrawTrend(rdWindow);
+}));
+rdDrawTrend(rdWindow);
 
 /* ==========================================================================
    GOAL EDIT SHEET — Activity goals (steps / distance / calories).
@@ -4757,8 +4841,11 @@ const HERO_COPY = {
   activity:{ empty: ['No activity yet','Your steps, distance and calories will show up after your first sync.'] },
   sleep:   { empty: ['No sleep data yet','After your first night with the band, your score appears here.'] },
   // Readiness page (a subpage, not a tab) shares the same swap mechanism
-  readiness:{ empty: ['No readiness score yet','Wear the band overnight and your score, with what went into it, appears here.'] }
+  readiness:{ empty: ['No readiness score yet','Wear the band overnight and your score, with what went into it, appears here.'],
+              calibrating: ['Still learning your baseline','Your first week sets the baseline this score is measured against. Until day 7, expect it to move more than it will later.'] }
 };
+// Home also says so while calibrating — the ring is the first place the score is seen
+HERO_COPY.health.calibrating = ['Getting to know you','Readiness is calibrating — day 3 of 7. Treat today\'s score as a rough guide until your baseline settles.'];
 const heroRest = {};
 $$('.page, #sub-readiness').forEach(page => {
   const hero = $('.hero', page); if (!hero) return;
@@ -4771,7 +4858,8 @@ const BAND_COPY = {
   default:'Connected',
   loading:'Connecting…',   // kept for later integration
   syncing:'Syncing…',      // kept for later integration
-  empty:  'Disconnected'
+  empty:  'Disconnected',
+  calibrating: 'Connected'   // the band is fine — the SCORE is the provisional thing
 };
 
 function setState(state){
@@ -4780,7 +4868,7 @@ function setState(state){
   for (const id in heroRest){
     const [head, sum] = heroRest[id];
     const key = id.replace(/^(page|sub)-/, '');   // page-health → health, sub-readiness → readiness
-    if (state === 'empty' && HERO_COPY[key]){
+    if (HERO_COPY[key] && HERO_COPY[key][state]){   // empty and calibrating have their own copy
       head.dataset.rest ??= head.textContent;
       sum.dataset.rest  ??= sum.textContent;
       head.textContent = HERO_COPY[key][state][0];
@@ -4792,6 +4880,8 @@ function setState(state){
     }
   }
   bandStatus.textContent = BAND_COPY[state];
+  // readiness trend shows only the recorded days while calibrating
+  if (typeof rdDrawTrend === 'function') rdDrawTrend(rdWindow);
   // Home ring buttons: the accessible name carries the score, so it has to
   // change with the state — "--" on screen means "not available" out loud.
   // A ring ALWAYS navigates, even with no data (spec §8).

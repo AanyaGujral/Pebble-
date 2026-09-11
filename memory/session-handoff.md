@@ -1,6 +1,9 @@
 # Session Handoff
 
-> **2026-09-11 — latest.** Readiness feedback round 1 is in (see changelog):
+> **2026-09-11 — latest.** Readiness feedback rounds 1 and 2 are in (see
+> changelog): round 2 added the scrubbable trend on the shared chart engine,
+> Health-monitor tiles for the monitor section, and a Calibrating state in
+> the control panel. Round 1:
 > Figma background, 3-dot About menu, caret-not-colour numbers, workout-card
 > icon chips, renamed monitor card, one-line tags. Preview artifact:
 > https://claude.ai/code/artifact/2207ff9c-444e-4cbb-8935-c6c8e9ff292d
