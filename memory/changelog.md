@@ -5,6 +5,12 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-11 (round 4) — `Readiness/Readiness flow.html` created: the homepage
+  flow file with the bottom nav bar removed (owner request). Nav markup kept
+  hidden so showTab() still marks Home current; the 96px reserved for the bar
+  drops to 32px. Source of truth stays the homepage flow file — regenerate
+  this one after edits there. Preview artifact now serves this build.
+
 - 2026-09-11 (round 3) — Readiness hero checked against the Workout Tab
   hero ring (Activity Tab/Workout Tab.html): geometry, stroke, gradient,
   glow and numeral already identical; the cap under the number now reads
