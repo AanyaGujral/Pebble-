@@ -5,6 +5,13 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-11 (rev 6) — Cycle page section spacing brought to the app's
+  rhythm, measured on Home rather than guessed: card → section head 36px
+  (the stack's 12px gap + the 24px .sechead margin), head → its cards 16px
+  (.hm .sec-head). "Body signals" had 16px and 12px. Card → card stays 12px
+  and the page head → first content 16px, both already matching the About
+  pages. Artifact republished.
+
 - 2026-09-11 (rev 5) — Menstrual cycle page now carries the card's wash: the
   selected day's phase colour fading from the page's top-right corner over
   the app background (owner: "the internal page will also have the same

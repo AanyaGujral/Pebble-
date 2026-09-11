@@ -1833,9 +1833,11 @@ body{
 .cyc-group .wo-row .val{flex:none;font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
 .cyc-group .wo-row .switch{margin-right:2px}
 .cyc-group .wo-row[aria-disabled="true"]{opacity:var(--state-inactive);pointer-events:none}
-/* the four body-signal cards reuse the Health monitor component (.hm) —
-   only the section head's top margin is trimmed to the stack's rhythm */
-.cyc-hm .sec-head{margin:4px 0 12px}
+/* the four body-signal cards reuse the Health monitor component (.hm). The
+   section head keeps the app's rhythm, measured on Home (rev 6): 36px from
+   the card above to a section head (the stack's 12px gap + 24px, as
+   .sechead) and 16px from the head to its first cards (as .hm .sec-head). */
+.cyc-hm .sec-head{margin:24px 0 16px}
 .cyc-foot{margin:4px 4px 0;text-align:left;font:400 13px/18px var(--font-text);color:var(--text-3)}
 
 /* ---- the action sheet — one goal-edit .sheet frame for every step of the
