@@ -16,10 +16,17 @@
     --neutral-300: #999FB9;
     --neutral-800: #0F111B;
     --neutral-900: #07080C;
+    --teal-400:    #45C7B3;
+    --teal-600:    #1D8173;
+    --metric-readiness: var(--teal-400);   /* the app's accent, as everywhere else */
     --surface-app:  var(--neutral-900);
     --surface-card: var(--neutral-800);
     --radius-full: 999px;
     --radius-20: 20px;
+    --radius-24: 24px;
+    --space-2: 2px;
+    --space-8: 8px;
+    --gutter: 16px;
     --font-text: 'Google Sans Flex','Google Sans','Inter',Arial,sans-serif;
   }
 
@@ -61,25 +68,56 @@
     position: sticky;
     bottom: calc(24px + env(safe-area-inset-bottom, 0px));
     margin-top: auto;
+    /* the demo screen pads 24px, but the dock sits on the 16px system gutter */
+    margin-inline: calc(var(--gutter) - 24px);
     padding-top: 24px;
     display: flex;
     justify-content: center;
   }
 
-  /* ---------------- navigation ---------------- */
-  /* bar 328 × 60 · tabs 72 × 60 · 4px between · 14px side padding */
-  .pebble-nav{
+  /* ---------------- navigation dock ----------------
+     Two units centred on one axis, 8px apart, filling the 16px gutter exactly:
+       nav pill  286 × 60   (tabs 63 × 60, 2px between, 14px side padding)
+       AI unit    64 × 64   (your Figma frame; overhangs the pill 2px top
+                             and bottom, as Whoop's does)
+       286 + 8 + 64 = 358 = 390 − 2 × 16
+
+     FLAG — consequences of making room for the AI unit, all in the nav pill,
+     none a new token:
+       · pill 328 → 286, tabs 72 → 63. The 64px frame took 4px more than the
+         60 it replaced; this holds the 8px gap and the 16px gutter and takes
+         the 4 from the pill. The alternatives are gap 8 → 4 (pill stays 290,
+         tabs 64) or letting the dock run 362 wide on a 14px gutter (pill
+         untouched). Say which.
+       · gap between tabs 4px → 2px (--space-2), so the tab width lands on a
+         whole pixel.
+     Material is identical across both units — same fill, blur and shadow.
+     Only the foreground differs: nav glyphs are neutral, the logomark is
+     teal-400. ---------------- */
+  .nav-dock{
     display: flex;
     align-items: center;
-    gap: 4px;
-    width: 328px;
-    height: 60px;
-    padding: 0 14px;
-    border-radius: var(--radius-full);
+    gap: var(--space-8);
+    width: 358px;
+  }
+
+  /* the surface both units share */
+  .nav-dock > *{
     background: rgba(15, 17, 27, .8);            /* neutral 800 @ 80% */
     -webkit-backdrop-filter: blur(26px);          /* Figma background blur 52 */
     backdrop-filter: blur(26px);
     box-shadow: 0 8px 24px rgba(7,8,12,.48), 0 2px 6px rgba(7,8,12,.32);
+  }
+
+  .pebble-nav{
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 286px;
+    height: 60px;
+    flex: none;
+    padding: 0 14px;
+    border-radius: var(--radius-full);
   }
 
   .pebble-tab{
@@ -88,7 +126,7 @@
     align-items: center;
     justify-content: center;
     gap: 2px;
-    width: 72px;
+    width: 63px;
     height: 60px;
     padding: 10px 0;
     border: 0;
@@ -120,9 +158,77 @@
   .pebble-tab[aria-current="page"] .icon{  color: var(--neutral-0); }
   .pebble-tab[aria-current="page"] .label{ color: var(--neutral-100); }
 
+  /* ---------------- AI chat unit ----------------
+     Built to your Figma frame ("Fill + Shadow", 2026-09-20), then balanced
+     against the pill in the round after:
+       frame     64 × 64, radius 24 (was 20 — one system step up, toward the
+                 pill's full round), clips its children
+       logomark  28 × 28 (was 32), teal-400 — untouched
+       glow 1    circle 36px, teal-600 fill, layer blur 80, at 60%
+       glow 2    circle 20px, teal-600 fill, layer blur 20, at 60%
+     Same surface, blur and shadow as the nav. It is an action, not a fifth
+     tab: no label, no aria-current, and it sits outside <nav> so the primary
+     nav stays four destinations.
+
+     Figma → CSS: a Figma layer blur of N is a CSS filter blur of N/2 (the
+     same conversion this file already uses for the nav's background blur,
+     52 → 26). So 80 → 40px and 20 → 10px. The frame clips, as your render
+     shows — the glow lives inside the square, nothing bleeds past the edge.
+     The teal is dialled with opacity so the fill stays the teal-600 token
+     rather than stepping to a darker ramp value.
+     ---------------- */
+  .pebble-ai{
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    flex: none;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-24);
+    overflow: hidden;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pebble-ai::before,
+  .pebble-ai::after{
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    border-radius: 50%;
+    background: var(--teal-600);
+    opacity: .6;
+    pointer-events: none;
+  }
+  /* glow 1 — 36px, blur 80 */
+  .pebble-ai::before{
+    width: 36px; height: 36px;
+    margin: -18px 0 0 -18px;
+    filter: blur(40px);
+  }
+  /* glow 2 — 20px, blur 20 */
+  .pebble-ai::after{
+    width: 20px; height: 20px;
+    margin: -10px 0 0 -10px;
+    filter: blur(10px);
+  }
+  .pebble-ai:focus-visible{ outline: 2px solid var(--neutral-0); outline-offset: -2px; }
+  .pebble-ai .mark{
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 28px;
+    height: 28px;
+    color: var(--metric-readiness);
+    transition: transform 160ms ease;
+  }
+  .pebble-ai:active .mark{ transform: scale(.92); }
+
   @media (prefers-reduced-motion: reduce){
-    .pebble-tab .icon, .pebble-tab .label{ transition: none; }
-    .pebble-tab:active .icon{ transform: none; }
+    .pebble-tab .icon, .pebble-tab .label, .pebble-ai .mark{ transition: none; }
+    .pebble-tab:active .icon, .pebble-ai:active .mark{ transform: none; }
   }
 </style>
 </head>
@@ -136,7 +242,24 @@
     <div class="card"></div>
 
     <div class="nav-slot">
-      <nav class="pebble-nav" aria-label="Primary"></nav>
+      <div class="nav-dock">
+        <nav class="pebble-nav" aria-label="Primary"></nav>
+
+        <!-- ============================================================
+             Pebble logomark — the master vector, lifted from page 5 of
+             Pebble_Brand Guidelines 2020.ai (section "02 Logomark") and
+             normalised onto a 24 box. Curves are the artwork's own; not
+             redrawn, per the guideline that the mark is never recreated.
+             Natural aspect is 473.34 × 509.94 → 22.28 × 24, centred in
+             the box; the box is drawn at 28px. fill-rule
+             is nonzero, as the master artwork sets it.
+             ============================================================ -->
+        <button class="pebble-ai" type="button" aria-label="Pebble AI chat">
+          <svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path fill="currentColor" fill-rule="nonzero" d="M 20.924 9.414 C 20.619 10.353 20.074 11.131 19.309 11.818 C 17.942 13.045 16.071 13.686 14.162 14.062 C 13.936 14.107 13.709 14.147 13.481 14.183 C 13.386 14.199 13.29 14.213 13.195 14.227 C 13.145 14.234 13.122 14.238 13.113 14.24 C 13.099 14.241 13.068 14.245 13.006 14.252 C 12.644 14.296 12.281 14.332 11.916 14.357 C 11.465 14.389 11.015 14.4 10.564 14.404 C 9.528 14.414 8.445 14.388 7.4 14.524 C 7.69 12.902 7.981 11.279 8.272 9.657 C 8.293 9.539 8.314 9.421 8.335 9.303 C 8.593 8.047 8.813 6.805 9.453 5.673 C 10.269 4.23 11.553 3.054 13.088 2.412 C 16.138 1.136 20.321 2.058 21.085 5.681 C 21.345 6.913 21.31 8.23 20.924 9.414 M 22.663 4.509 C 22.032 2.871 20.935 1.467 19.306 0.72 C 17.58 -0.072 15.587 -0.185 13.749 0.256 C 10.268 1.092 7.562 4 6.823 7.477 C 6.729 7.921 6.641 8.366 6.549 8.811 C 6.178 10.882 5.807 12.954 5.436 15.026 C 4.14 15.525 2.969 16.307 2.125 17.432 C 1.156 18.723 0.476 20.809 1.104 22.404 C 1.665 23.829 3.288 24.403 4.643 23.702 C 5.549 23.232 5.998 22.361 6.17 21.396 C 6.419 19.998 6.67 18.723 6.92 17.326 C 6.437 17.43 5.567 17.672 4.9 18.146 C 4.779 18.822 4.658 19.374 4.537 20.05 C 4.454 20.515 4.427 21.094 4.249 21.539 C 4.073 21.976 3.692 22.179 3.353 22.16 C 3.233 22.153 3.094 22.105 3.014 22.026 C 2.836 21.85 2.772 21.626 2.747 21.36 C 2.734 21.226 2.737 21.089 2.742 20.954 C 2.747 20.829 2.758 20.705 2.772 20.581 C 2.777 20.546 2.787 20.483 2.796 20.443 C 2.821 20.325 2.844 20.206 2.874 20.089 C 3.118 19.134 3.674 18.239 4.548 17.582 C 4.708 17.462 4.871 17.354 5.037 17.256 L 5.037 17.254 C 5.101 17.199 6.225 16.616 7.026 16.508 L 7.044 16.508 L 7.045 16.505 C 8.39 16.234 9.818 16.295 11.219 16.246 C 12.871 16.189 14.543 15.954 16.13 15.49 C 18.161 14.896 20.165 13.88 21.492 12.185 C 23.103 10.126 23.611 6.969 22.663 4.509"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </main>
 
@@ -203,13 +326,20 @@
     if (btn) select(btn.dataset.id, false);
   });
 
-  // Arrow keys move between tabs, as in a native tab bar.
+  // Arrow keys move between tabs, as in a native tab bar. The AI unit is not
+  // part of this loop — it's an action outside the nav, reached with Tab.
   nav.addEventListener('keydown', function(e){
     const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
     if (!dir) return;
     e.preventDefault();
     const i = TABS.findIndex(function(t){ return t.id === active; });
     select(TABS[(i + dir + TABS.length) % TABS.length].id, true);
+  });
+
+  // The AI unit opens chat over the current tab — it never changes the
+  // selected tab. Wire it up here: openChat()
+  document.querySelector('.pebble-ai').addEventListener('click', function(){
+    /* openChat(); */
   });
 
   render();

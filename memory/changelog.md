@@ -5,6 +5,35 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-20 — Built `AI Coach/ai-coach.html`, the prototype of the AI coach
+  chat behind the navigation dock's AI unit, and wrote
+  `docs/feature-ai-coach.md` (rev 1) alongside it. Tapping the unit raises a
+  half-screen sheet over the app (blur + veil as in the Measure All scene);
+  the coach "reads your day" behind the Measure All orb at avatar scale, then
+  types the summary letter by letter. Composer: text, tap-to-record voice
+  (waveform, Spartan timer, cancel / stop-and-use, scripted transcript typed
+  into the field), and add-a-photo (Take = code-drawn bowl on tokens, Choose =
+  real file picker via FileReader). Photo has a draft state (thumbnail +
+  remove badge + note in the composer) and a sent state (image turn with the
+  note and a "Sent · 9:41" line). Replies go thinking (orb + shimmer caption,
+  ~1.6 s) → filling (typewriter with caret). Handle drag follows the finger
+  and snaps half / full / closed by position and velocity; tap toggles. The
+  sheet's top section is a teal-500→700 gradient onto surface-card with an
+  orchid-400 radial at 18% (and a fainter one at 8%) to break the teal; the
+  second crescent of the orb carries orchid too. A control panel jumps to ten
+  states for review. Verified headless: half = 422px, full = 788px, drag
+  snaps and closes, transcript lands, photo attaches, no hex outside the
+  token block, reduced motion lands text in one go with no animation.
+  Also saved the owner's 2026-09-20 nav dock (pill 286 + AI unit 64) over
+  `components/pebble-nav.html`, replacing the 328px four-tab version, since
+  the chat is built on it. FLAGS in the file header and spec §Dependencies:
+  390-wide frame (the dock's) vs the app's 360; microphone / arrow-up / image
+  glyphs written from memory of Phosphor (no network) — verify; suggestion
+  chips are a proposal; tap-to-record vs hold-to-talk undecided; sheet motion
+  on duration-slow (240ms) where ~320ms may feel better; orchid amount;
+  numerals in prose stay in the text face. Not pushed to main — on branch
+  `claude/wizardly-edison-w090t8`.
+
 - 2026-09-03 (rev 2.2) — Owner round of eight on the leaderboard.
   (1) Hero band is now the Pebble green — built from the teal ramp
   (teal.400 wash over a teal.500 → surface.card gradient) rather than the

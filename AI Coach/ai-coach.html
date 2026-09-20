@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AI coach · Pebble prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=League+Spartan:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   AI COACH — the chat flow behind the AI unit in the navigation dock.
+   Built 2026-09-20 to the owner's brief (see docs/feature-ai-coach.md):
+
+     tap the AI unit  →  a half-screen chat sheet rises over the app
+                         and types out a summary of today, letter by letter
+     the composer     →  type, hold-to-talk voice recording, add / take a photo
+     the handle bar   →  drag the sheet between half and full height, or away
+     the coach        →  a "thinking" state, then the answer fills in
+
+   Colour and motion come from the Measure All reading scene on the homepage
+   (Homepage + measurel all + start workout flow.html, .ma-orb). The same
+   orb — halo, two counter-rotating crescents, a bright core — is the coach's
+   presence here: it breathes while the coach reads your day or thinks, and
+   the sheet's top section carries the teal gradient with a hint of orchid the
+   owner asked for, so the teal does not run flat.
+
+   Everything is assembled from patterns the app already has:
+     .nav-dock / .pebble-nav / .pebble-ai   components/pebble-nav.html (2026-09-20)
+     .ma-orb halo / crescents / core        Measure All scene, homepage
+     .phone / .screen / .statusbar          every standalone prototype
+     .panel                                 Friends/friends.html control panel
+     button tiers                           components/button.html
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══ 1. TOKENS ═════════════════════════════════════════════════════════════
+   Mirrored by hand from js/tokens.js — copied in rather than imported because
+   ES-module imports don't work over file:// and the design gate says this
+   page must open by double-clicking. Same arrangement as index.html and the
+   other standalone prototypes: if js/tokens.js changes, re-copy the values.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root{
+  color-scheme:dark;
+
+  /* neutral.* */
+  --neutral-0:#EFF1F9;--neutral-100:#D5D9EA;--neutral-200:#B8BDD3;
+  --neutral-300:#999FB9;--neutral-400:#7B819C;--neutral-500:#5E637D;
+  --neutral-600:#42465B;--neutral-700:#282B39;--neutral-800:#0F111B;
+  --neutral-900:#07080C;
+
+  /* color.teal — the app colour, the whole ramp: the orb and the sheet
+     gradient mix several steps of it */
+  --teal-0:#E4F9F4;--teal-100:#C1EDE4;--teal-200:#9EE0D3;--teal-300:#76D4C3;
+  --teal-400:#45C7B3;--teal-500:#31A492;--teal-600:#1D8173;--teal-700:#076155;
+  --teal-800:#004239;--teal-900:#00261F;
+
+  /* color.orchid — the "hint" that breaks the teal monotony */
+  --orchid-200:#E4B1F2;--orchid-300:#D692E8;--orchid-400:#C873DE;
+  --orchid-500:#A65DB9;--orchid-600:#864896;
+
+  /* the hues behind the metric aliases the home screen shows, at step 400 */
+  --violet-400:#8A7CEC;--lime-400:#A6CE4E;--gold-400:#F2C64B;
+  --crimson-400:#E43A62;--tangerine-400:#F59E3B;--emerald-400:#43B476;
+  --terracotta-400:#D96F4A;
+
+  /* surfaces — elevation is lightness, never shadow */
+  --surface-app:var(--neutral-900);
+  --surface-card:var(--neutral-800);
+  --surface-raised:var(--neutral-700);
+  --surface-fill:var(--neutral-600);
+
+  /* text */
+  --text-1:var(--neutral-0);
+  --text-2:var(--neutral-200);
+  --text-3:var(--neutral-400);
+  --text-on-accent:var(--neutral-900);
+
+  /* metric aliases */
+  --metric-sleep:var(--violet-400);
+  --metric-readiness:var(--teal-400);   /* the app's accent, as everywhere else */
+  --metric-activity:var(--lime-400);
+  --metric-steps:var(--gold-400);
+  --metric-heart-rate:var(--crimson-400);
+  --metric-calories:var(--tangerine-400);
+  --metric-hrv:var(--terracotta-400);
+
+  /* type — Google Sans Flex for words, League Spartan for numerals */
+  --font-text:'Google Sans Flex','Google Sans','Inter',Arial,sans-serif;
+  --font-number:'Spartan','League Spartan',sans-serif;
+  --num-features:'tnum' 1,'lnum' 1;
+  --weight-regular:400;--weight-medium:500;--weight-semibold:600;--weight-bold:700;
+
+  /* radius, spacing, borders, motion */
+  --radius-8:8px;--radius-12:12px;--radius-16:16px;--radius-20:20px;
+  --radius-24:24px;--radius-28:28px;--radius-32:32px;--radius-full:999px;
+  --radius-card:20px;--radius-sheet:28px;--radius-pill:var(--radius-full);
+  --space-2:2px;--space-4:4px;--space-8:8px;--space-12:12px;--space-16:16px;
+  --space-20:20px;--space-24:24px;--space-32:32px;--space-40:40px;--space-48:48px;
+  --border-hairline:0.5px;--border-thin:1px;--border-card:var(--neutral-700);
+  --gutter:16px;
+  --duration-fast:120ms;--duration-base:140ms;--duration-slow:240ms;
+  --ease-standard:ease;
+  --ease-emphasis:cubic-bezier(0.32,0.72,0,1);
+  --cta-height:48px;
+  --control-h-m:40px;
+}
+
+/* ═══ 2. DESK — the page the phone sits on, plus the control panel ══════════ */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-height:100vh;background:var(--surface-app);color:var(--text-1);
+  font-family:var(--font-text);
+  display:flex;align-items:flex-start;justify-content:center;
+  gap:32px;padding:32px 16px;flex-wrap:wrap;
+}
+.panel{
+  position:sticky;top:32px;width:252px;background:var(--surface-card);
+  border:var(--border-hairline) solid var(--neutral-700);
+  border-radius:var(--radius-card);padding:16px;
+}
+.panel h2{margin:0;font:600 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.panel h2+h2{margin-top:20px}
+.panel .hint{margin:8px 0 12px;font:400 11px/16px var(--font-text);color:var(--text-3)}
+.panel .opts{display:flex;flex-direction:column;gap:4px}
+.panel label{
+  display:flex;align-items:flex-start;gap:10px;padding:9px 10px;
+  border-radius:var(--radius-12);cursor:pointer;
+  font:500 13px/18px var(--font-text);color:var(--text-2);
+}
+.panel label:hover{background:var(--surface-raised)}
+.panel label.on{background:var(--surface-raised);color:var(--text-1)}
+.panel input{accent-color:var(--metric-readiness);margin:3px 0 0}
+.panel .desc{display:block;font:400 10px/14px var(--font-text);color:var(--text-3)}
+.panel .rule{margin:16px 0;border:0;border-top:var(--border-hairline) solid var(--neutral-700)}
+.panel .note{margin:12px 0 0;font:400 11px/16px var(--font-text);color:var(--text-3)}
+
+/* ═══ 3. PHONE ═══════════════════════════════════════════════════════════════
+   FLAG — the screen is 390 × 844 here, not the 360 × 780 the other
+   prototypes use. The navigation dock component the owner supplied is laid
+   out for a 390 frame (286 + 8 + 64 = 358 = 390 − 2 × 16); at 360 the pill
+   would need re-cutting. Using the dock's own frame keeps the component
+   untouched. Say if the app frame should win instead.
+   ─────────────────────────────────────────────────────────────────────────── */
+.phone{
+  flex:0 0 auto;border-radius:40px;background:var(--neutral-900);
+  border:2px solid var(--neutral-700);outline:6px solid var(--neutral-800);padding:10px;
+}
+.screen{
+  position:relative;width:390px;height:844px;border-radius:32px;overflow:hidden;
+  background:var(--surface-app);
+}
+/* punch-hole selfie camera, as the other prototypes draw it */
+.screen::before{
+  content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:12px;height:12px;border-radius:50%;background:var(--neutral-900);
+  border:2px solid var(--neutral-700);z-index:90;pointer-events:none;
+}
+.statusbar{
+  position:absolute;top:0;left:0;right:0;height:32px;z-index:92;
+  display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  font:500 13px/18px var(--font-text);color:var(--text-1);pointer-events:none;
+}
+.statusbar .batt{width:20px;height:10px;border-radius:3px;border:1px solid var(--text-2);padding:1px}
+.statusbar .batt i{display:block;width:12px;height:100%;border-radius:2px;background:var(--text-1)}
+.statusbar .right{display:flex;align-items:center;gap:6px;color:var(--text-2)}
+.gesture{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:112px;height:4px;border-radius:var(--radius-full);background:var(--neutral-600);
+  z-index:90;pointer-events:none;
+}
+
+/* ═══ 4. HOME — the screen the chat opens over ═══════════════════════════════
+   A light stand-in for the Health tab: greeting, the three score rings from
+   the homepage, and the card stack as tinted blocks (the same placeholder
+   cards the nav component ships with). It is here so the sheet's blur and
+   scrim have something to work on — nothing on it is interactive except the
+   dock.
+   ─────────────────────────────────────────────────────────────────────────── */
+.home{
+  position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;
+  padding:56px 24px 120px;display:flex;flex-direction:column;gap:12px;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--metric-readiness) 10%, var(--surface-app)) 0%, var(--surface-app) 46%);
+  transition:filter var(--duration-slow) var(--ease-standard);
+}
+.home::-webkit-scrollbar{display:none}
+/* while the sheet is up the app is the backdrop: blurred as in the Measure
+   All scene (#page-health.ma-behind, blur 13px) */
+.home.is-behind{filter:blur(13px)}
+.home h1{margin:0;font:600 24px/30px var(--font-text);letter-spacing:-0.01em;color:var(--neutral-100)}
+.home .date{margin:-6px 0 8px;font:400 13px/18px var(--font-text);color:var(--text-2)}
+.ring3row{margin:8px 0 12px;display:grid;grid-template-columns:repeat(3,1fr);justify-items:center}
+.r3{display:flex;flex-direction:column;align-items:center}
+.r3box{position:relative;width:92px;height:92px}
+.r3num{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-number);font-size:32px;line-height:1;font-weight:600;
+  letter-spacing:-0.01em;font-feature-settings:var(--num-features);color:var(--text-1);
+  transform:translateY(0.109em);  /* optical centring, see the homepage note */
+}
+.r3lab{margin-top:8px;font:500 11px/16px var(--font-text);letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+.home .card{height:88px;border-radius:var(--radius-20);background:var(--surface-card);flex:none}
+.home .card:nth-of-type(odd){ background-image:linear-gradient(100deg, color-mix(in srgb, var(--violet-400) 35%, transparent), color-mix(in srgb, var(--teal-400) 12%, transparent))}
+.home .card:nth-of-type(even){background-image:linear-gradient(100deg, color-mix(in srgb, var(--crimson-400) 28%, transparent), color-mix(in srgb, var(--tangerine-400) 12%, transparent))}
+.home .sechead{margin-top:12px;font:500 17px/22px var(--font-text);color:var(--text-1)}
+
+/* ═══ 5. NAVIGATION DOCK — components/pebble-nav.html, 2026-09-20, verbatim ══
+   Two units centred on one axis, 8px apart, filling the 16px gutter exactly:
+     nav pill  286 × 60   (tabs 63 × 60, 2px between, 14px side padding)
+     AI unit    64 × 64   (overhangs the pill 2px top and bottom)
+   Positioned absolutely here instead of sticky, because the home screen
+   scrolls inside the phone rather than the page. Nothing else changed.
+   ─────────────────────────────────────────────────────────────────────────── */
+.nav-slot{
+  position:absolute;left:0;right:0;bottom:24px;z-index:55;
+  display:flex;justify-content:center;pointer-events:none;
+}
+.nav-dock{display:flex;align-items:center;gap:var(--space-8);width:358px;pointer-events:auto}
+.nav-dock > *{
+  background:color-mix(in srgb, var(--neutral-800) 80%, transparent);   /* neutral 800 @ 80% */
+  -webkit-backdrop-filter:blur(26px);          /* Figma background blur 52 */
+  backdrop-filter:blur(26px);
+  box-shadow:0 8px 24px color-mix(in srgb, var(--neutral-900) 48%, transparent),
+             0 2px 6px color-mix(in srgb, var(--neutral-900) 32%, transparent);
+}
+.pebble-nav{
+  display:flex;align-items:center;gap:var(--space-2);
+  width:286px;height:60px;flex:none;padding:0 14px;border-radius:var(--radius-full);
+}
+.pebble-tab{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  width:63px;height:60px;padding:10px 0;border:0;background:none;border-radius:var(--radius-full);
+  font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.pebble-tab:focus-visible{outline:2px solid var(--neutral-0);outline-offset:-2px}
+.pebble-tab .icon{display:block;height:24px;color:var(--neutral-300);transition:color 160ms ease, transform 160ms ease}
+.pebble-tab .label{font-size:10px;line-height:14px;font-weight:400;letter-spacing:.01em;color:var(--neutral-300);transition:color 160ms ease}
+.pebble-tab:active .icon{transform:scale(.92)}
+.pebble-tab[aria-current="page"] .icon{ color:var(--neutral-0)}
+.pebble-tab[aria-current="page"] .label{color:var(--neutral-100)}
+
+.pebble-ai{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  width:64px;height:64px;flex:none;padding:0;border:0;border-radius:var(--radius-24);
+  overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.pebble-ai::before,.pebble-ai::after{
+  content:"";position:absolute;left:50%;top:50%;border-radius:50%;
+  background:var(--teal-600);opacity:.6;pointer-events:none;
+}
+.pebble-ai::before{width:36px;height:36px;margin:-18px 0 0 -18px;filter:blur(40px)}   /* glow 1 — 36px, blur 80 */
+.pebble-ai::after{ width:20px;height:20px;margin:-10px 0 0 -10px;filter:blur(10px)}   /* glow 2 — 20px, blur 20 */
+.pebble-ai:focus-visible{outline:2px solid var(--neutral-0);outline-offset:-2px}
+.pebble-ai .mark{position:relative;z-index:1;display:block;width:28px;height:28px;color:var(--metric-readiness);transition:transform 160ms ease}
+.pebble-ai:active .mark{transform:scale(.92)}
+
+/* ═══ 6. THE CHAT SHEET ══════════════════════════════════════════════════════
+   Geometry is one custom property, --sheet-h, set by the script:
+     half  = 50% of the screen (422px)      the resting state the brief asks for
+     full  = screen − 56px                  leaves the status bar and a sliver
+                                            of the app, so it still reads as a
+                                            sheet over the app, not a new page
+   Dragging the handle writes --sheet-h live (no transition); letting go snaps
+   to half, full, or closed. Opening and snapping ease with the app's emphasis
+   curve at duration-slow.
+   FLAG — 240ms is quick for a half-screen sheet; ~320ms would feel more like
+   the system sheets, but the motion scale has no step between 240 and nothing.
+   Kept on the token; say if a new "duration-sheet" step should be added.
+   ─────────────────────────────────────────────────────────────────────────── */
+.ai-scrim{
+  position:absolute;inset:0;z-index:70;
+  background:color-mix(in srgb, var(--neutral-900) 58%, transparent);  /* the Measure All veil, .58 */
+  opacity:0;pointer-events:none;
+  transition:opacity var(--duration-slow) var(--ease-standard);
+}
+.ai-scrim.is-on{opacity:1;pointer-events:auto}
+
+.ai-sheet{
+  position:absolute;left:0;right:0;bottom:0;z-index:71;
+  height:var(--sheet-h,422px);
+  display:flex;flex-direction:column;
+  border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;
+  background:var(--surface-card);
+  box-shadow:0 -8px 32px color-mix(in srgb, var(--neutral-900) 48%, transparent);
+  transform:translateY(100%);
+  transition:transform var(--duration-slow) var(--ease-emphasis), height var(--duration-slow) var(--ease-emphasis);
+  overflow:hidden;
+}
+.ai-sheet.is-open{transform:none}
+.ai-sheet.is-dragging{transition:none}
+.ai-sheet[hidden]{display:none}
+
+/* The top section's gradient — teal, with a hint of orchid.
+   Teal-500 → teal-700 mixed onto the card surface so it stays a dark sheet
+   rather than a bright banner, fading out into surface-card by ~260px so the
+   conversation reads on a plain surface below. The orchid sits top-right as
+   one radial wash at 18%, and a second, fainter one low-left at 8%, so the
+   teal never runs flat but never turns purple.
+   FLAG — 18% / 8% are a judgement of "subtle"; dial here if it should be
+   more or less present. */
+.ai-sheet::before{
+  content:"";position:absolute;left:0;right:0;top:0;height:280px;pointer-events:none;
+  background:
+    radial-gradient(70% 60% at 88% 0%,  color-mix(in srgb, var(--orchid-400) 18%, transparent) 0%, transparent 62%),
+    radial-gradient(60% 40% at 8% 70%,  color-mix(in srgb, var(--orchid-500) 8%, transparent) 0%, transparent 60%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--teal-500) 52%, var(--surface-card)) 0%,
+      color-mix(in srgb, var(--teal-700) 40%, var(--surface-card)) 42%,
+      var(--surface-card) 100%);
+}
+/* a faint speckle of the lighter teal near the top edge — the "glow" from
+   the AI unit carried into the sheet */
+.ai-sheet::after{
+  content:"";position:absolute;left:50%;top:-40px;width:220px;height:120px;margin-left:-110px;
+  border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle, color-mix(in srgb, var(--teal-300) 30%, transparent) 0%, transparent 70%);
+  filter:blur(24px);
+}
+
+/* ---- header: handle, title, close ---- */
+.ai-head{
+  position:relative;z-index:2;flex:none;
+  padding:8px var(--space-16) var(--space-12);
+  touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;
+}
+.ai-head:active{cursor:grabbing}
+.ai-handle{
+  display:block;width:36px;height:4px;margin:0 auto var(--space-12);
+  border-radius:var(--radius-full);
+  background:color-mix(in srgb, var(--neutral-0) 40%, transparent);
+}
+.ai-title-row{display:flex;align-items:center;gap:var(--space-12)}
+.ai-title-row .who{flex:1;min-width:0}
+.ai-title-row .t{font:600 17px/22px var(--font-text);color:var(--text-1)}
+.ai-title-row .s{font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
+.ai-title-row .s b{font-weight:500;color:var(--teal-200)}
+.icon-btn{
+  width:36px;height:36px;flex:none;border:0;border-radius:50%;padding:0;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  background:color-mix(in srgb, var(--neutral-0) 10%, transparent);color:var(--text-1);
+  -webkit-tap-highlight-color:transparent;
+  transition:opacity var(--duration-fast) var(--ease-standard);
+}
+.icon-btn:active{opacity:.7}
+.icon-btn:focus-visible{outline:2px solid var(--neutral-0);outline-offset:2px}
+.icon-btn svg{width:20px;height:20px;display:block}
+
+/* ---- the coach's orb — the Measure All orb at avatar scale ----
+   Same four layers as .ma-orb (halo, two crescents, core), sized by --orb.
+   The crescents counter-rotate on keyframes rather than the scene's rAF
+   axis, since here it loops for as long as the coach is busy.
+   Note: the #000 in the mask-image below is mask alpha (opaque = visible),
+   not a colour — the Measure All scene writes its crescent masks the same
+   way. Every visible colour here is a token. */
+.orb{position:relative;width:var(--orb,40px);height:var(--orb,40px);flex:none}
+.orb i{position:absolute;inset:0;border-radius:50%;display:block}
+.orb .halo{
+  inset:-40%;
+  background:radial-gradient(circle,
+    color-mix(in srgb, var(--teal-500) 58%, transparent) 0%,
+    color-mix(in srgb, var(--teal-600) 30%, transparent) 38%,
+    transparent 70%);
+  filter:blur(6px);opacity:.85;
+  animation:orb-breathe 3.2s ease-in-out infinite;
+}
+.orb .cres{
+  -webkit-mask-image:radial-gradient(closest-side, transparent 56%, #000 66%, #000 100%);
+          mask-image:radial-gradient(closest-side, transparent 56%, #000 66%, #000 100%);
+  background:conic-gradient(from 0deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--teal-500) 90%, transparent) 70deg,
+    color-mix(in srgb, var(--teal-200) 88%, transparent) 135deg,
+    color-mix(in srgb, var(--teal-300) 50%, transparent) 190deg,
+    transparent 250deg);
+  filter:blur(1px);opacity:.9;
+  animation:orb-spin 2.6s linear infinite;
+}
+.orb .cres2{
+  inset:-8%;
+  background:conic-gradient(from 150deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--teal-500) 80%, transparent) 70deg,
+    color-mix(in srgb, var(--orchid-300) 55%, transparent) 135deg,   /* the orchid hint lives in the second crescent */
+    color-mix(in srgb, var(--teal-300) 50%, transparent) 190deg,
+    transparent 250deg);
+  filter:blur(2px);opacity:.6;
+  animation:orb-spin 4.2s linear infinite reverse;
+}
+.orb .core{
+  inset:22%;
+  background:radial-gradient(circle at 48% 46%,
+    var(--teal-200) 0%, var(--teal-300) 30%,
+    color-mix(in srgb, var(--teal-400) 80%, transparent) 62%,
+    transparent 100%);
+  filter:blur(1.5px);
+  animation:orb-pulse 2.2s ease-in-out infinite;
+}
+/* at rest (the coach is done) the orb settles: crescents stop, core steady */
+.orb.is-still .halo,.orb.is-still .cres,.orb.is-still .core{animation:none}
+.orb.is-still .cres{opacity:.55}
+@keyframes orb-spin{to{transform:rotate(360deg)}}
+@keyframes orb-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes orb-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+
+/* ---- the conversation ---- */
+.ai-log{
+  position:relative;z-index:1;flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;
+  padding:var(--space-4) var(--space-16) var(--space-12);
+  display:flex;flex-direction:column;gap:var(--space-12);
+  overscroll-behavior:contain;
+}
+.ai-log::-webkit-scrollbar{display:none}
+.msg{max-width:84%;display:flex;flex-direction:column;gap:var(--space-8)}
+.msg.ai{align-self:flex-start}
+.msg.user{align-self:flex-end;align-items:flex-end}
+/* the coach speaks straight onto the sheet — no bubble around its words, so
+   long answers don't become a wall of boxes; the user's turn is the bubble */
+.msg.ai .body{
+  font:400 15px/22px var(--font-text);color:var(--text-1);
+  white-space:pre-wrap;text-wrap:pretty;
+}
+.msg.ai .body:empty{display:none}
+.msg.user .body{
+  padding:10px 14px;border-radius:var(--radius-20);border-bottom-right-radius:6px;
+  background:color-mix(in srgb, var(--teal-400) 22%, var(--surface-raised));
+  font:400 15px/22px var(--font-text);color:var(--text-1);white-space:pre-wrap;text-wrap:pretty;
+}
+.msg.user .body:empty{display:none}
+/* image in a sent message: rounded, capped, caption in the same turn */
+.msg.user .photo{
+  display:block;max-width:220px;max-height:220px;width:auto;height:auto;
+  border-radius:var(--radius-16);border-bottom-right-radius:6px;object-fit:cover;
+  background:var(--surface-raised);
+}
+.msg.user .photo + .body{border-top-right-radius:6px}
+/* delivery meta under a sent turn — "Sent · 9:41", numerals in Spartan */
+.msg .meta{
+  display:flex;align-items:center;gap:4px;
+  font:400 11px/16px var(--font-text);color:var(--text-3);
+}
+.msg .meta .n{font-family:var(--font-number);font-weight:500;font-feature-settings:var(--num-features)}
+.msg .meta svg{width:12px;height:12px;color:var(--teal-300)}
+
+/* thinking: the orb beside a shimmering caption. The shimmer is a gradient
+   sweep through the words — teal-200 → text → orchid-200 — clipped to the
+   text, the same hues as the orb so they read as one thing. */
+.think{display:flex;align-items:center;gap:var(--space-12);min-height:40px}
+.think .cap{
+  font:500 13px/18px var(--font-text);
+  background:linear-gradient(90deg,
+    var(--text-2) 0%, var(--teal-200) 35%, var(--orchid-200) 50%, var(--teal-200) 65%, var(--text-2) 100%);
+  background-size:220% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:shimmer 2.4s linear infinite;
+}
+@keyframes shimmer{from{background-position:120% 0}to{background-position:-120% 0}}
+
+/* filling: a caret rides the end of the text while it types; the coach's
+   orb sits up in the header while it's busy (see .ai-head .orb) */
+.caret{
+  display:inline-block;width:2px;height:1em;margin-left:2px;vertical-align:-0.15em;
+  background:var(--teal-300);border-radius:1px;
+  animation:blink 1s steps(2,start) infinite;
+}
+@keyframes blink{to{visibility:hidden}}
+
+/* suggestion chips under the summary — FLAG: a proposal, not in the brief.
+   Tapping one sends it as the user's message. They leave once anything is
+   sent. */
+.chips{display:flex;flex-wrap:wrap;gap:var(--space-8);padding-top:var(--space-4)}
+.chip{
+  height:32px;padding:0 var(--space-12);border-radius:var(--radius-full);
+  border:var(--border-thin) solid color-mix(in srgb, var(--teal-400) 45%, transparent);
+  background:color-mix(in srgb, var(--teal-400) 8%, transparent);
+  font:500 13px/18px var(--font-text);color:var(--teal-100);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:opacity var(--duration-fast) var(--ease-standard);
+}
+.chip:active{opacity:.6}
+
+/* ---- composer ---- */
+.ai-composer{
+  position:relative;z-index:2;flex:none;
+  padding:var(--space-8) var(--space-16) var(--space-16);
+  background:linear-gradient(180deg, transparent, var(--surface-card) 30%);
+}
+.field{
+  position:relative;
+  display:flex;flex-direction:column;gap:var(--space-8);
+  padding:6px;border-radius:var(--radius-24);
+  background:var(--surface-raised);
+  border:var(--border-hairline) solid var(--neutral-600);
+}
+.field:focus-within{border-color:color-mix(in srgb, var(--teal-400) 60%, transparent)}
+.field .row{display:flex;align-items:flex-end;gap:var(--space-4)}
+.field textarea{
+  flex:1;min-width:0;min-height:36px;max-height:110px;
+  margin:0;padding:7px 6px;border:0;background:none;resize:none;outline:none;
+  font:400 15px/22px var(--font-text);color:var(--text-1);
+  scrollbar-width:none;
+}
+.field textarea::placeholder{color:var(--text-3)}
+.field textarea::-webkit-scrollbar{display:none}
+/* the round buttons in the field: attach on the left, mic / send on the right */
+.fbtn{
+  width:36px;height:36px;flex:none;border:0;border-radius:50%;padding:0;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  background:transparent;color:var(--text-2);-webkit-tap-highlight-color:transparent;
+  transition:background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
+}
+.fbtn:active{opacity:.7}
+.fbtn:focus-visible{outline:2px solid var(--neutral-0);outline-offset:2px}
+.fbtn svg{width:22px;height:22px;display:block}
+.fbtn.attach{color:var(--text-2)}
+.fbtn.attach.is-open{background:color-mix(in srgb, var(--neutral-0) 10%, transparent);color:var(--text-1)}
+.fbtn.attach.is-open svg{transform:rotate(45deg)}
+.fbtn.attach svg{transition:transform var(--duration-base) var(--ease-standard)}
+/* mic when the field is empty; send (teal-400, the app's one primary) once
+   there is text or a photo to send */
+.fbtn.action{background:color-mix(in srgb, var(--neutral-0) 10%, transparent);color:var(--text-1)}
+.field.has-content .fbtn.action{background:var(--metric-readiness);color:var(--text-on-accent)}
+.fbtn.action .i-mic{display:block}
+.fbtn.action .i-send{display:none}
+.field.has-content .fbtn.action .i-mic{display:none}
+.field.has-content .fbtn.action .i-send{display:block}
+
+/* attached photo — the draft state: thumbnail above the text with a remove
+   badge; the field grows to hold it */
+.preview{display:none;padding:2px 2px 0;gap:var(--space-8)}
+.field.has-photo .preview{display:flex}
+.preview .thumb{position:relative;width:72px;height:72px;flex:none}
+.preview img{width:72px;height:72px;border-radius:var(--radius-12);object-fit:cover;display:block;background:var(--surface-fill)}
+.preview .rm{
+  position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;padding:0;
+  background:var(--neutral-900);color:var(--text-1);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:0 0 0 2px var(--surface-raised);
+}
+.preview .rm svg{width:12px;height:12px}
+.preview .pmeta{align-self:center;font:400 11px/16px var(--font-text);color:var(--text-3)}
+.preview .pmeta b{display:block;font-weight:500;color:var(--text-2)}
+
+/* attach menu — pops up over the + button */
+.attach-menu{
+  position:absolute;left:0;bottom:calc(100% + 8px);z-index:3;min-width:180px;
+  padding:var(--space-4);border-radius:var(--radius-16);
+  background:var(--surface-raised);border:var(--border-hairline) solid var(--neutral-600);
+  box-shadow:0 8px 24px color-mix(in srgb, var(--neutral-900) 48%, transparent);
+  display:none;flex-direction:column;
+}
+.attach-menu.is-open{display:flex}
+.attach-menu button{
+  display:flex;align-items:center;gap:var(--space-12);height:44px;padding:0 var(--space-12);
+  border:0;border-radius:var(--radius-12);background:none;cursor:pointer;text-align:left;
+  font:500 15px/22px var(--font-text);color:var(--text-1);-webkit-tap-highlight-color:transparent;
+}
+.attach-menu button:hover,.attach-menu button:active{background:color-mix(in srgb, var(--neutral-0) 8%, transparent)}
+.attach-menu button svg{width:20px;height:20px;color:var(--teal-200)}
+
+/* ---- voice recording ----
+   The field turns into the recorder: cancel on the left, a live waveform,
+   the elapsed time in Spartan, and a teal stop/confirm on the right. */
+.rec{display:none;align-items:center;gap:var(--space-8);flex:1;min-width:0}
+.field.is-recording .rec{display:flex}
+.field.is-recording textarea,.field.is-recording .attach,.field.is-recording .action{display:none}
+.wave{
+  position:relative;flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:3px;
+  overflow:hidden;border-radius:var(--radius-full);
+}
+/* the orchid hint sits behind the bars as a soft wash */
+.wave::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 100% at 70% 50%, color-mix(in srgb, var(--orchid-400) 14%, transparent), transparent 80%);
+}
+.wave i{
+  display:block;width:3px;height:6px;border-radius:var(--radius-full);
+  background:linear-gradient(180deg, var(--teal-200), var(--teal-400));
+  animation:wave 1.1s ease-in-out infinite;
+  --amp:16px;
+}
+@keyframes wave{0%,100%{height:6px}50%{height:var(--amp)}}
+.rec .time{
+  font-family:var(--font-number);font-weight:500;font-size:13px;line-height:16px;
+  font-feature-settings:var(--num-features);color:var(--text-2);min-width:34px;text-align:right;
+  display:flex;align-items:center;gap:6px;
+}
+.rec .time::before{
+  content:"";width:6px;height:6px;border-radius:50%;background:var(--teal-400);
+  animation:blink 1.2s steps(2,start) infinite;
+}
+.fbtn.stop{background:var(--metric-readiness);color:var(--text-on-accent)}
+.fbtn.cancel{color:var(--text-2)}
+/* after stop, while the "transcript" lands, the field says so */
+.field.is-transcribing textarea{color:var(--text-2)}
+
+/* the coach's orb in the header while it is reading or thinking */
+.ai-head .orb{--orb:36px}
+.ai-head .orb.is-still{opacity:.9}
+
+/* ═══ 7. REDUCED MOTION — the design gate ════════════════════════════════════
+   No sheet slide, no orb spin, no shimmer, no caret blink, no waveform
+   bounce. The typewriter effect is switched off in the script (text lands in
+   one go), and the sheet appears in place. */
+@media (prefers-reduced-motion:reduce){
+  .home,.ai-scrim,.ai-sheet,.icon-btn,.fbtn,.fbtn.attach svg,.chip{transition:none}
+  .home.is-behind{filter:none}
+  .orb .halo,.orb .cres,.orb .cres2,.orb .core,.think .cap,.caret,.wave i,.rec .time::before{animation:none}
+  .think .cap{color:var(--text-2);background:none;-webkit-background-clip:border-box;background-clip:border-box}
+  .wave i{height:var(--amp)}
+  .pebble-tab .icon,.pebble-tab .label,.pebble-ai .mark{transition:none}
+  .pebble-tab:active .icon,.pebble-ai:active .mark{transform:none}
+}
+
+/* narrow viewports: drop the desk, stack the panel under the phone */
+@media (max-width:760px){
+  body{padding:16px 8px}
+  .panel{position:static;width:100%;max-width:410px;order:2}
+}
+</style>
+</head>
+<body>
+
+<!-- ======================= PHONE ======================= -->
+<div class="phone">
+  <div class="screen" id="screen">
+
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="right">
+        <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M1 11h2V8H1v3Zm4 0h2V5H5v6Zm4 0h2V2H9v9Z" fill="currentColor"/></svg>
+        <span class="batt"><i></i></span>
+      </span>
+    </div>
+
+    <!-- ---- the app behind the chat: a stand-in Health tab ---- -->
+    <main class="home" id="home" aria-label="Health">
+      <h1 id="screen-title">Good morning, Aanya</h1>
+      <div class="date">Today, Sep 20</div>
+
+      <!-- three score rings from the homepage; r=40, circumference 251.33 -->
+      <div class="ring3row" aria-hidden="true">
+        <div class="r3"><div class="r3box">
+          <svg width="92" height="92" viewBox="0 0 92 92"><circle cx="46" cy="46" r="40" fill="none" stroke="var(--neutral-700)" stroke-width="9"/><circle cx="46" cy="46" r="40" fill="none" stroke="var(--metric-sleep)" stroke-width="9" stroke-linecap="round" stroke-dasharray="196.0 251.33" transform="rotate(-90 46 46)"/></svg>
+          <div class="r3num">78</div></div><div class="r3lab">Sleep</div></div>
+        <div class="r3"><div class="r3box">
+          <svg width="92" height="92" viewBox="0 0 92 92"><circle cx="46" cy="46" r="40" fill="none" stroke="var(--neutral-700)" stroke-width="9"/><circle cx="46" cy="46" r="40" fill="none" stroke="var(--metric-readiness)" stroke-width="9" stroke-linecap="round" stroke-dasharray="183.5 251.33" transform="rotate(-90 46 46)"/></svg>
+          <div class="r3num">73</div></div><div class="r3lab">Readiness</div></div>
+        <div class="r3"><div class="r3box">
+          <svg width="92" height="92" viewBox="0 0 92 92"><circle cx="46" cy="46" r="40" fill="none" stroke="var(--neutral-700)" stroke-width="9"/><circle cx="46" cy="46" r="40" fill="none" stroke="var(--metric-activity)" stroke-width="9" stroke-linecap="round" stroke-dasharray="170.9 251.33" transform="rotate(-90 46 46)"/></svg>
+          <div class="r3num">68</div></div><div class="r3lab">Activity</div></div>
+      </div>
+
+      <div class="sechead">Health monitor</div>
+      <div class="card"></div>
+      <div class="card"></div>
+      <div class="sechead">Activity monitor</div>
+      <div class="card"></div>
+      <div class="card"></div>
+    </main>
+
+    <!-- ---- navigation dock (components/pebble-nav.html) ---- -->
+    <div class="nav-slot">
+      <div class="nav-dock">
+        <nav class="pebble-nav" aria-label="Primary"></nav>
+        <!-- Pebble logomark — the master vector from the brand guidelines,
+             normalised onto a 24 box (see components/pebble-nav.html). -->
+        <button class="pebble-ai" type="button" id="aiOpen" aria-label="Pebble AI chat" aria-haspopup="dialog" aria-expanded="false">
+          <svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path fill="currentColor" fill-rule="nonzero" d="M 20.924 9.414 C 20.619 10.353 20.074 11.131 19.309 11.818 C 17.942 13.045 16.071 13.686 14.162 14.062 C 13.936 14.107 13.709 14.147 13.481 14.183 C 13.386 14.199 13.29 14.213 13.195 14.227 C 13.145 14.234 13.122 14.238 13.113 14.24 C 13.099 14.241 13.068 14.245 13.006 14.252 C 12.644 14.296 12.281 14.332 11.916 14.357 C 11.465 14.389 11.015 14.4 10.564 14.404 C 9.528 14.414 8.445 14.388 7.4 14.524 C 7.69 12.902 7.981 11.279 8.272 9.657 C 8.293 9.539 8.314 9.421 8.335 9.303 C 8.593 8.047 8.813 6.805 9.453 5.673 C 10.269 4.23 11.553 3.054 13.088 2.412 C 16.138 1.136 20.321 2.058 21.085 5.681 C 21.345 6.913 21.31 8.23 20.924 9.414 M 22.663 4.509 C 22.032 2.871 20.935 1.467 19.306 0.72 C 17.58 -0.072 15.587 -0.185 13.749 0.256 C 10.268 1.092 7.562 4 6.823 7.477 C 6.729 7.921 6.641 8.366 6.549 8.811 C 6.178 10.882 5.807 12.954 5.436 15.026 C 4.14 15.525 2.969 16.307 2.125 17.432 C 1.156 18.723 0.476 20.809 1.104 22.404 C 1.665 23.829 3.288 24.403 4.643 23.702 C 5.549 23.232 5.998 22.361 6.17 21.396 C 6.419 19.998 6.67 18.723 6.92 17.326 C 6.437 17.43 5.567 17.672 4.9 18.146 C 4.779 18.822 4.658 19.374 4.537 20.05 C 4.454 20.515 4.427 21.094 4.249 21.539 C 4.073 21.976 3.692 22.179 3.353 22.16 C 3.233 22.153 3.094 22.105 3.014 22.026 C 2.836 21.85 2.772 21.626 2.747 21.36 C 2.734 21.226 2.737 21.089 2.742 20.954 C 2.747 20.829 2.758 20.705 2.772 20.581 C 2.777 20.546 2.787 20.483 2.796 20.443 C 2.821 20.325 2.844 20.206 2.874 20.089 C 3.118 19.134 3.674 18.239 4.548 17.582 C 4.708 17.462 4.871 17.354 5.037 17.256 L 5.037 17.254 C 5.101 17.199 6.225 16.616 7.026 16.508 L 7.044 16.508 L 7.045 16.505 C 8.39 16.234 9.818 16.295 11.219 16.246 C 12.871 16.189 14.543 15.954 16.13 15.49 C 18.161 14.896 20.165 13.88 21.492 12.185 C 23.103 10.126 23.611 6.969 22.663 4.509"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ---- the scrim over the app, and the sheet ---- -->
+    <div class="ai-scrim" id="aiScrim"></div>
+
+    <section class="ai-sheet" id="aiSheet" hidden role="dialog" aria-modal="true" aria-labelledby="aiTitle">
+      <!-- header doubles as the drag surface: handle + title row -->
+      <header class="ai-head" id="aiHead">
+        <span class="ai-handle" aria-hidden="true"></span>
+        <div class="ai-title-row">
+          <div class="orb is-still" id="aiOrb" aria-hidden="true"><i class="halo"></i><i class="cres"></i><i class="cres cres2"></i><i class="core"></i></div>
+          <div class="who">
+            <div class="t" id="aiTitle">Pebble AI</div>
+            <div class="s" id="aiSub">Today · Sun 20 Sep</div>
+          </div>
+          <button class="icon-btn" type="button" id="aiClose" aria-label="Close chat"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
+        </div>
+      </header>
+
+      <!-- the conversation -->
+      <div class="ai-log" id="aiLog" aria-live="polite"></div>
+
+      <!-- composer -->
+      <div class="ai-composer">
+        <div class="field" id="field">
+          <!-- attached photo (draft) -->
+          <div class="preview" id="preview">
+            <div class="thumb">
+              <img id="previewImg" alt="Attached photo">
+              <button class="rm" type="button" id="previewRm" aria-label="Remove photo"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
+            </div>
+            <div class="pmeta"><b id="previewName">Photo</b><span id="previewHint">Add a note, or just send</span></div>
+          </div>
+
+          <div class="row">
+            <button class="fbtn attach" type="button" id="attachBtn" aria-label="Add a photo" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></svg></button>
+            <textarea id="input" rows="1" placeholder="Ask your coach…" aria-label="Message"></textarea>
+
+            <!-- recording state, hidden until the mic is tapped -->
+            <div class="rec" id="rec" aria-live="off">
+              <button class="fbtn cancel" type="button" id="recCancel" aria-label="Cancel recording"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
+              <div class="wave" id="wave" aria-hidden="true"></div>
+              <div class="time" id="recTime">0:00</div>
+              <button class="fbtn stop" type="button" id="recStop" aria-label="Stop and use recording"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></svg></button>
+            </div>
+
+            <button class="fbtn action" type="button" id="actionBtn" aria-label="Record a voice message">
+              <!-- FLAG: the microphone and arrow-up glyphs below are written
+                   from memory of Phosphor regular; this session had no
+                   network to fetch @phosphor-icons/core. Verify both against
+                   the package before this ships. -->
+              <svg class="i-mic" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M128,176a48.05,48.05,0,0,0,48-48V64a48,48,0,0,0-96,0v64A48.05,48.05,0,0,0,128,176ZM96,64a32,32,0,0,1,64,0v64a32,32,0,0,1-64,0Zm40,143.6V232a8,8,0,0,1-16,0V207.6A80.11,80.11,0,0,1,48,128a8,8,0,0,1,16,0,64,64,0,0,0,128,0,8,8,0,0,1,16,0A80.11,80.11,0,0,1,136,207.6Z"/></svg>
+              <svg class="i-send" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z"/></svg>
+            </button>
+          </div>
+
+          <!-- attach menu -->
+          <div class="attach-menu" id="attachMenu" role="menu">
+            <button type="button" role="menuitem" id="attachTake"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm-44,76a36,36,0,1,1-36-36A36,36,0,0,1,164,132Z"/></svg>Take photo</button>
+            <!-- FLAG: "image" glyph also from memory of Phosphor regular — verify. -->
+            <button type="button" role="menuitem" id="attachChoose"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z"/></svg>Choose photo</button>
+          </div>
+          <input type="file" id="fileInput" accept="image/*" hidden>
+        </div>
+      </div>
+    </section>
+
+    <div class="gesture"></div>
+  </div>
+</div>
+
+<!-- ======================= CONTROL PANEL ======================= -->
+<aside class="panel">
+  <h2>Chat state</h2>
+  <p class="hint">Jump straight to a state for review. Everything is also reachable by using the phone.</p>
+  <div class="opts" id="stateOpts">
+    <label><input type="radio" name="st" value="closed" checked><span>Closed<span class="desc">Home screen, dock at rest</span></span></label>
+    <label><input type="radio" name="st" value="opening"><span>Opening<span class="desc">Sheet rises, coach reads your day, summary types out</span></span></label>
+    <label><input type="radio" name="st" value="idle"><span>Summary done<span class="desc">Summary landed, suggestion chips, empty composer</span></span></label>
+    <label><input type="radio" name="st" value="recording"><span>Voice recording<span class="desc">Waveform, timer, cancel / stop</span></span></label>
+    <label><input type="radio" name="st" value="transcribed"><span>Transcript in field<span class="desc">Recording stopped, words landed, ready to send</span></span></label>
+    <label><input type="radio" name="st" value="photo-draft"><span>Photo attached<span class="desc">Thumbnail in the composer with a note</span></span></label>
+    <label><input type="radio" name="st" value="photo-sent"><span>Photo sent<span class="desc">Photo turn in the log, coach looks at it and answers</span></span></label>
+    <label><input type="radio" name="st" value="thinking"><span>Thinking<span class="desc">Orb spins, shimmer caption, holds here</span></span></label>
+    <label><input type="radio" name="st" value="filling"><span>Answer filling in<span class="desc">Reply types letter by letter</span></span></label>
+    <label><input type="radio" name="st" value="expanded"><span>Expanded<span class="desc">Sheet dragged to full height</span></span></label>
+  </div>
+
+  <hr class="rule">
+  <h2>Typing speed</h2>
+  <p class="hint">For review only — slows the letter-by-letter fill.</p>
+  <div class="opts" id="speedOpts">
+    <label class="on"><input type="radio" name="sp" value="1" checked><span>Normal</span></label>
+    <label><input type="radio" name="sp" value="3"><span>Slow (3×)</span></label>
+  </div>
+
+  <p class="note">Handle: drag up for full height, down to half, further down to close. Tap the handle to toggle half / full. Esc closes.</p>
+  <p class="note">Reduced motion follows the OS setting: no slide, spin, shimmer or typewriter — text lands in one go.</p>
+</aside>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCRIPT — plain JS, no build step. Sections:
+     1. helpers and Phosphor glyphs for the dock
+     2. the navigation dock (from components/pebble-nav.html)
+     3. sheet geometry: open / close / snap / drag
+     4. the conversation: typewriter, thinking, scripted replies
+     5. the composer: text, voice recording, photos
+     6. the control panel
+   ═══════════════════════════════════════════════════════════════════════════ */
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+// read a token off :root so drawn things (the sample photo) stay on tokens
+const tok = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+/* ── 1. Phosphor icons for the dock — regular (idle) and fill (selected) ── */
+const ICONS = {
+  health: {
+    regular: '<path fill="currentColor" d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z"/>',
+    fill:    '<path fill="currentColor" d="M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z"/>'
+  },
+  activity: {
+    regular: '<path fill="currentColor" d="M231.16,166.63l-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-8-8,48.05,48.05,0,0,1-48-48,8,8,0,0,0-12.83-6.37L30.13,76l-.2.16a16,16,0,0,0-1.24,23.75L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63ZM224,200H151.37L40,88.63l12.87-9.76,38.79,38.79A8,8,0,0,0,103,106.34L65.74,69.11l40-30.31A64.15,64.15,0,0,0,160,87.5v21.89a63.65,63.65,0,0,0,35.38,57.24L224,180.94ZM70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm40,24a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16h54.8A8,8,0,0,1,110.8,208Z"/>',
+    fill:    '<path fill="currentColor" d="M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z"/>'
+  },
+  sleep: {
+    regular: '<path d="M108.11,28.11A96.09,96.09,0,0,0,227.89,147.89,96,96,0,1,1,108.11,28.11Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>',
+    fill:    '<path fill="currentColor" d="M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z"/>'
+  },
+  me: {
+    regular: '<circle cx="128" cy="96" r="64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M32,216c19.37-33.47,54.55-56,96-56s76.63,22.53,96,56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/>',
+    fill:    '<path fill="currentColor" d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z"/>'
+  }
+};
+// the "sent" tick under a user turn — Phosphor check, already in the app
+const CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></svg>';
+
+/* ── 2. the navigation dock ─────────────────────────────────────────────── */
+const TABS = [
+  { id:'health',   label:'Health'   },
+  { id:'activity', label:'Activity' },
+  { id:'sleep',    label:'Sleep'    },
+  { id:'me',       label:'Me'       }
+];
+const nav = $('.pebble-nav');
+let activeTab = 'health';
+function glyph(id, on){
+  return '<svg class="icon" width="24" height="24" viewBox="0 0 256 256" aria-hidden="true" focusable="false">'
+    + ICONS[id][on ? 'fill' : 'regular'] + '</svg>';
+}
+function renderNav(){
+  nav.innerHTML = TABS.map(tab => {
+    const on = tab.id === activeTab;
+    return '<button type="button" class="pebble-tab" data-id="' + tab.id + '"'
+      + (on ? ' aria-current="page"' : '') + ' tabindex="' + (on ? '0' : '-1') + '">'
+      + glyph(tab.id, on) + '<span class="label">' + tab.label + '</span></button>';
+  }).join('');
+  $('#screen-title').textContent = activeTab === 'health' ? 'Good morning, Aanya' : TABS.find(t => t.id === activeTab).label;
+}
+nav.addEventListener('click', e => {
+  const btn = e.target.closest('.pebble-tab');
+  if (btn && btn.dataset.id !== activeTab){ activeTab = btn.dataset.id; renderNav(); }
+});
+nav.addEventListener('keydown', e => {
+  const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+  if (!dir) return;
+  e.preventDefault();
+  const i = TABS.findIndex(t => t.id === activeTab);
+  activeTab = TABS[(i + dir + TABS.length) % TABS.length].id;
+  renderNav();
+  nav.querySelector('[aria-current="page"]').focus();
+});
+renderNav();
+
+/* ── 3. sheet geometry ──────────────────────────────────────────────────────
+   Heights are computed from the screen so the same code works if the frame
+   ever changes. half = 50% (the brief); full leaves 56px of app above. */
+const screen = $('#screen'), sheet = $('#aiSheet'), scrim = $('#aiScrim'), home = $('#home');
+const head = $('#aiHead'), log = $('#aiLog');
+const SHEET = {
+  half: () => Math.round(screen.clientHeight * 0.5),
+  full: () => screen.clientHeight - 56
+};
+let sheetOpen = false, sheetPos = 'half';   // 'half' | 'full'
+let openTimers = [];                        // every pending timeout, so a reset can clear them
+
+function setHeight(px){ sheet.style.setProperty('--sheet-h', px + 'px'); }
+
+function openChat(opts = {}){
+  clearTimers();
+  sheet.hidden = false;
+  sheetPos = opts.pos || 'half';
+  setHeight(SHEET[sheetPos]());
+  // let the browser paint the sheet off-screen first, or there is nothing to slide from
+  requestAnimationFrame(() => {
+    sheet.classList.add('is-open');
+    scrim.classList.add('is-on');
+    home.classList.add('is-behind');
+  });
+  sheetOpen = true;
+  $('#aiOpen').setAttribute('aria-expanded', 'true');
+  if (opts.fresh !== false) resetConversation();
+  if (opts.summary !== false) startSummary(opts.instantSummary);
+}
+function closeChat(){
+  clearTimers();
+  cancelRecording(true);
+  closeAttachMenu();
+  sheet.classList.remove('is-open');
+  scrim.classList.remove('is-on');
+  home.classList.remove('is-behind');
+  sheetOpen = false;
+  $('#aiOpen').setAttribute('aria-expanded', 'false');
+  const done = () => { if (!sheetOpen) sheet.hidden = true; };
+  if (reduced.matches) done(); else later(done, 260);
+  $('#aiOpen').focus();
+}
+function snapTo(pos){
+  sheetPos = pos;
+  sheet.classList.remove('is-dragging');
+  setHeight(SHEET[pos]());
+}
+function later(fn, ms){ const t = setTimeout(fn, ms); openTimers.push(t); return t; }
+function clearTimers(){ openTimers.forEach(clearTimeout); openTimers = []; }
+
+/* drag — pointer events on the header (handle + title row). Height follows
+   the finger; on release we look at where it is and how fast it was moving. */
+let drag = null;
+head.addEventListener('pointerdown', e => {
+  if (e.target.closest('button')) return;
+  drag = { y0:e.clientY, h0:sheet.getBoundingClientRect().height, t0:performance.now(), y:e.clientY, t:performance.now(), moved:false };
+  head.setPointerCapture(e.pointerId);
+  sheet.classList.add('is-dragging');
+});
+head.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dy = e.clientY - drag.y0;
+  if (Math.abs(dy) > 3) drag.moved = true;
+  // track velocity over the last few pixels of movement
+  drag.vy = (e.clientY - drag.y) / Math.max(1, performance.now() - drag.t);
+  drag.y = e.clientY; drag.t = performance.now();
+  const h = Math.min(SHEET.full(), Math.max(120, drag.h0 - dy));
+  setHeight(h);
+});
+function endDrag(e){
+  if (!drag) return;
+  const d = drag; drag = null;
+  head.releasePointerCapture?.(e.pointerId);
+  const h = sheet.getBoundingClientRect().height;
+  const half = SHEET.half(), full = SHEET.full();
+  const vy = d.vy || 0;   // px per ms; positive = moving down
+  if (!d.moved){ snapTo(sheetPos === 'half' ? 'full' : 'half'); return; }   // a tap on the handle toggles
+  if (vy > 0.6 && h < half + 40){ closeChat(); return; }                    // flicked down from half
+  if (h < half - 90){ closeChat(); return; }                                // dragged well below half
+  if (vy < -0.5 || h > (half + full) / 2){ snapTo('full'); return; }
+  snapTo('half');
+}
+head.addEventListener('pointerup', endDrag);
+head.addEventListener('pointercancel', endDrag);
+
+$('#aiOpen').addEventListener('click', () => { if (!sheetOpen) openChat(); });
+$('#aiClose').addEventListener('click', closeChat);
+scrim.addEventListener('click', closeChat);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && sheetOpen) closeChat(); });
+
+/* ── 4. the conversation ─────────────────────────────────────────────────── */
+const orb = $('#aiOrb');
+const speed = () => Number(($('input[name="sp"]:checked') || {}).value || 1);
+
+/* Sample copy. Figures match the homepage prototype's sample day (sleep 78,
+   readiness 73, activity 68). FLAG — numerals inside chat prose are set in
+   the text face, not Spartan: swapping typeface mid-sentence would break the
+   reading line. Figures that stand alone (the recording timer, "Sent 9:41")
+   do use Spartan, as the system asks. */
+const SUMMARY = "Good morning, Aanya. You slept 7 h 12 min and your sleep score came in at 78 — deep sleep was up on your week. Readiness is 73 with HRV holding at 42 ms, so you've recovered from Thursday's run.\n\nYou're 3,240 steps in already. Today suits a moderate session: 30–40 minutes at an easy pace, and get some water in before noon.";
+const CHIPS = ['Plan my workout', 'How did I sleep?', 'What should I eat?'];
+const REPLIES = [
+  { test:/sleep|slept|tired|bed|nap/i,
+    text:"Last night was one of your better ones. You were asleep for 7 h 12 min out of 7 h 48 min in bed, with 1 h 34 min of deep sleep — above your 30-day average of 1 h 20 min. Two brief wake-ups around 2 a.m., both under four minutes.\n\nIf you want to lift the score further, the lever is timing: your last three 80+ nights all started before 11 p.m." },
+  { test:/workout|train|run|session|push|gym|exercise|plan|hard/i,
+    text:"Readiness at 73 says go, but not all out. I'd aim for a 35-minute easy run or a moderate strength session — zone 2 for most of it, one or two short pushes near the end if you feel good.\n\nYou ran hard on Thursday, so keep today below that. Start Workout on the Health tab and I'll keep an eye on your heart-rate zones as you go." },
+  { test:/eat|food|meal|lunch|dinner|breakfast|snack|calorie|protein|hungry/i,
+    text:"You've logged about 640 kcal so far, mostly from breakfast. With a moderate session planned, aim for something with 25–30 g of protein and some slow carbs in the next couple of hours — a grain bowl, eggs on toast, or yoghurt with oats.\n\nSend me a photo of your plate and I'll estimate it for you." },
+  { test:/stress|hrv|anxious|calm|relax|breath/i,
+    text:"Your HRV has held steady at 42 ms this week, and your resting heart rate is 58 — both point to a calm system. Stress readings were highest yesterday between 3 and 5 p.m., which lines up with the long stretch you spent still.\n\nA five-minute walk around that time tends to bring your afternoon readings down." },
+  { test:/step|walk|distance/i,
+    text:"3,240 steps so far — about a third of your 10,000 goal, which is normal for this time of morning. On days you hit the goal you usually pass 6,000 by lunch, so a 20-minute walk before then would put you on track." }
+];
+const PHOTO_REPLY = "That looks like a grain bowl — rice, salmon, avocado and greens. Roughly 520 kcal, about 32 g of protein and a good amount of healthy fat.\n\nIt's a solid choice before a moderate session. If you're eating within the hour, keep the portion as it is; if you're training later, this will carry you through to the afternoon. Want me to log it?";
+const FALLBACK = "Good question. Looking at today — sleep 78, readiness 73, HRV steady — you're in a good place, so most things you're thinking of trying should be fine. Tell me a bit more about what you're after and I'll get specific.";
+const TRANSCRIPT = "How hard should I push in today's session?";
+
+function replyFor(text, hasPhoto){
+  if (hasPhoto) return PHOTO_REPLY;
+  const hit = REPLIES.find(r => r.test.test(text));
+  return hit ? hit.text : FALLBACK;
+}
+
+function resetConversation(){
+  clearTimers();
+  log.innerHTML = '';
+  orb.classList.add('is-still');
+  clearInput();
+  removePhoto();
+  cancelRecording(true);
+}
+
+function timeNow(){
+  // the prototype's clock reads 9:41 in the status bar; keep the meta in step
+  return '9:41';
+}
+
+/* a user turn: optional photo, optional text, then the "Sent" line */
+function addUserTurn(text, photoSrc){
+  const m = document.createElement('div');
+  m.className = 'msg user';
+  let html = '';
+  if (photoSrc) html += '<img class="photo" src="' + photoSrc + '" alt="Photo you sent">';
+  html += '<div class="body"></div>';
+  html += '<div class="meta">' + CHECK + '<span>Sent</span><span class="n">' + timeNow() + '</span></div>';
+  m.innerHTML = html;
+  $('.body', m).textContent = text || '';
+  log.appendChild(m);
+  scrollLog();
+  return m;
+}
+
+/* the coach's turn: a thinking row first, then the words. hold=true stays
+   in thinking (the control panel uses it to freeze that state). */
+function addAITurn(text, opts = {}){
+  const m = document.createElement('div');
+  m.className = 'msg ai';
+  m.innerHTML = '<div class="think"><div class="orb" aria-hidden="true"><i class="halo"></i><i class="cres"></i><i class="cres cres2"></i><i class="core"></i></div><span class="cap">' + (opts.caption || 'Thinking…') + '</span></div><div class="body"></div>';
+  log.appendChild(m);
+  orb.classList.remove('is-still');
+  scrollLog();
+  if (opts.hold) return m;
+  const think = reduced.matches ? 400 : (opts.thinkMs ?? 1600);
+  later(() => fillIn(m, text, opts.after), think);
+  return m;
+}
+
+/* letter by letter. Under reduced motion the whole answer lands at once. */
+function fillIn(m, text, after){
+  const think = $('.think', m), body = $('.body', m);
+  if (think) think.remove();
+  if (reduced.matches){
+    body.textContent = text;
+    orb.classList.add('is-still');
+    scrollLog();
+    if (after) after();
+    return;
+  }
+  const caret = document.createElement('span'); caret.className = 'caret';
+  body.appendChild(caret);
+  let i = 0;
+  const base = 14 * speed();   // ms per character
+  const tick = () => {
+    if (i >= text.length){
+      caret.remove();
+      orb.classList.add('is-still');
+      if (after) after();
+      return;
+    }
+    const ch = text[i++];
+    caret.before(document.createTextNode(ch));
+    scrollLog();
+    // breathe at punctuation, as speech does
+    const pause = /[.!?]/.test(ch) ? 9 : /[,;:—]/.test(ch) ? 4 : ch === '\n' ? 6 : 1;
+    later(tick, base * pause);
+  };
+  later(tick, base);
+}
+
+function scrollLog(){ log.scrollTop = log.scrollHeight; }
+
+/* the opening: the coach "reads your day", then types the summary */
+function startSummary(instant){
+  const m = addAITurn(SUMMARY, { caption:'Reading your day…', thinkMs:1400, after:showChips });
+  if (instant){
+    // used by the control panel to land on "summary done" without waiting
+    clearTimers();
+    $('.think', m)?.remove();
+    $('.body', m).textContent = SUMMARY;
+    orb.classList.add('is-still');
+    showChips();
+  }
+}
+function showChips(){
+  if ($('.chips', log)) return;
+  const c = document.createElement('div');
+  c.className = 'chips';
+  c.innerHTML = CHIPS.map(t => '<button type="button" class="chip">' + t + '</button>').join('');
+  c.addEventListener('click', e => {
+    const b = e.target.closest('.chip');
+    if (b) send(b.textContent, null);
+  });
+  log.appendChild(c);
+  scrollLog();
+}
+
+/* send whatever is in the composer (or a chip's text) */
+function send(text, photoSrc){
+  text = (text || '').trim();
+  if (!text && !photoSrc) return;
+  $('.chips', log)?.remove();
+  addUserTurn(text, photoSrc);
+  clearInput();
+  removePhoto();
+  addAITurn(replyFor(text, !!photoSrc), { caption: photoSrc ? 'Looking at your photo…' : 'Thinking…' });
+}
+
+/* ── 5. the composer ──────────────────────────────────────────────────────── */
+const field = $('#field'), input = $('#input'), actionBtn = $('#actionBtn');
+let photo = null;   // { src, name }
+
+function autosize(){
+  input.style.height = 'auto';
+  input.style.height = Math.min(110, input.scrollHeight) + 'px';
+}
+function syncField(){
+  const has = input.value.trim().length > 0 || !!photo;
+  field.classList.toggle('has-content', has);
+  actionBtn.setAttribute('aria-label', has ? 'Send' : 'Record a voice message');
+  autosize();
+}
+function clearInput(){ input.value = ''; syncField(); }
+input.addEventListener('input', syncField);
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); send(input.value, photo?.src); }
+});
+actionBtn.addEventListener('click', () => {
+  if (field.classList.contains('has-content')) send(input.value, photo?.src);
+  else startRecording();
+});
+
+/* photos — attach, preview, remove */
+const attachBtn = $('#attachBtn'), attachMenu = $('#attachMenu');
+function openAttachMenu(){ attachMenu.classList.add('is-open'); attachBtn.classList.add('is-open'); attachBtn.setAttribute('aria-expanded','true'); }
+function closeAttachMenu(){ attachMenu.classList.remove('is-open'); attachBtn.classList.remove('is-open'); attachBtn.setAttribute('aria-expanded','false'); }
+attachBtn.addEventListener('click', () => attachMenu.classList.contains('is-open') ? closeAttachMenu() : openAttachMenu());
+document.addEventListener('click', e => { if (!e.target.closest('#attachBtn, #attachMenu')) closeAttachMenu(); });
+
+function setPhoto(src, name){
+  photo = { src, name };
+  $('#previewImg').src = src;
+  $('#previewName').textContent = name || 'Photo';
+  field.classList.add('has-photo');
+  syncField();
+  input.focus();
+}
+function removePhoto(){
+  photo = null;
+  $('#previewImg').removeAttribute('src');
+  field.classList.remove('has-photo');
+  syncField();
+}
+$('#previewRm').addEventListener('click', removePhoto);
+
+/* "Take photo" — there is no camera in a prototype, so this drops in a
+   code-drawn stand-in (a grain bowl, drawn from tokens) as the photo just
+   taken. FLAG: replace with a real sample photo file if the owner supplies
+   one; drawn so the file stays self-contained and on tokens. */
+$('#attachTake').addEventListener('click', () => { closeAttachMenu(); setPhoto(samplePhoto(), 'IMG_0920.jpg'); });
+/* "Choose photo" — the real file picker; works over file:// via FileReader,
+   so any photo on the owner's machine can be tried in the flow. */
+$('#attachChoose').addEventListener('click', () => { closeAttachMenu(); $('#fileInput').click(); });
+$('#fileInput').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => setPhoto(r.result, f.name);
+  r.readAsDataURL(f);
+  e.target.value = '';
+});
+function samplePhoto(){
+  // colours pulled off :root so the drawing stays on tokens
+  const c = {
+    bg: tok('--neutral-700'), plate: tok('--neutral-100'), rim: tok('--neutral-300'),
+    rice: tok('--neutral-0'), salmon: tok('--terracotta-400'), salmon2: tok('--tangerine-400'),
+    avo: tok('--lime-400'), avo2: tok('--emerald-400'), greens: tok('--emerald-400'), seed: tok('--gold-400'),
+    shade: tok('--neutral-900')
+  };
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+    <rect width="320" height="320" fill="${c.bg}"/>
+    <ellipse cx="160" cy="184" rx="138" ry="120" fill="${c.shade}" opacity=".4"/>
+    <ellipse cx="160" cy="168" rx="134" ry="118" fill="${c.plate}"/>
+    <ellipse cx="160" cy="168" rx="134" ry="118" fill="none" stroke="${c.rim}" stroke-width="3" opacity=".5"/>
+    <ellipse cx="160" cy="166" rx="110" ry="94" fill="${c.rice}"/>
+    <g fill="${c.rice}" opacity=".9"><circle cx="150" cy="150" r="6"/><circle cx="166" cy="172" r="5"/><circle cx="140" cy="176" r="5"/><circle cx="178" cy="150" r="4"/></g>
+    <path d="M176 92 C214 84 246 104 252 134 C256 152 238 160 212 154 C186 148 170 134 168 118 C167 106 170 96 176 92 Z" fill="${c.salmon}"/>
+    <path d="M186 104 C212 100 236 116 240 136" fill="none" stroke="${c.salmon2}" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+    <path d="M196 118 C216 116 232 128 236 142" fill="none" stroke="${c.salmon2}" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+    <path d="M78 150 C70 120 90 96 116 100 C132 104 138 122 130 144 C124 162 96 170 78 150 Z" fill="${c.avo}"/>
+    <path d="M92 146 C86 128 96 112 112 112 C120 112 124 122 120 136 C116 150 100 158 92 146 Z" fill="${c.avo2}" opacity=".85"/>
+    <path d="M96 198 C110 186 132 190 140 206 C148 222 132 240 112 236 C94 232 84 210 96 198 Z" fill="${c.greens}" opacity=".9"/>
+    <path d="M190 190 C206 176 232 182 240 200 C246 214 236 232 216 232 C196 232 180 208 190 190 Z" fill="${c.greens}" opacity=".75"/>
+    <path d="M172 218 C176 200 198 196 210 208" fill="none" stroke="${c.avo}" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+    <g fill="${c.seed}"><circle cx="150" cy="130" r="3"/><circle cx="162" cy="200" r="3"/><circle cx="134" cy="160" r="3"/><circle cx="182" cy="176" r="3"/><circle cx="118" cy="182" r="2.5"/></g>
+    <ellipse cx="110" cy="112" rx="40" ry="14" fill="${c.plate}" opacity=".18"/>
+  </svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+/* voice recording — the prototype has no microphone: the waveform animates,
+   the timer counts, and stopping "transcribes" a scripted sentence into the
+   field (typed in, so it reads as words arriving). FLAG: in the real app the
+   transcript would stream in while you speak; the confirm button here means
+   "stop and use it", cancel throws it away. */
+const wave = $('#wave'), recTime = $('#recTime');
+let recTimer = null, recStart = 0;
+wave.innerHTML = Array.from({length:28}, (_, i) => {
+  // amplitude and phase per bar so the wave reads as sound, not a rule
+  const amp = 8 + Math.round(Math.abs(Math.sin(i * 0.9)) * 18);
+  return '<i style="--amp:' + amp + 'px;animation-delay:' + (-(i * 0.11) % 1.1).toFixed(2) + 's"></i>';
+}).join('');
+function startRecording(){
+  closeAttachMenu();
+  field.classList.add('is-recording');
+  recStart = performance.now();
+  recTime.textContent = '0:00';
+  recTimer = setInterval(() => {
+    const s = Math.floor((performance.now() - recStart) / 1000);
+    recTime.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }, 250);
+  $('#recStop').focus();
+}
+function cancelRecording(silent){
+  clearInterval(recTimer); recTimer = null;
+  field.classList.remove('is-recording', 'is-transcribing');
+  if (!silent) input.focus();
+}
+function stopRecording(){
+  clearInterval(recTimer); recTimer = null;
+  field.classList.remove('is-recording');
+  field.classList.add('is-transcribing');
+  input.value = '';
+  if (reduced.matches){
+    input.value = TRANSCRIPT; field.classList.remove('is-transcribing'); syncField(); input.focus(); return;
+  }
+  let i = 0;
+  const tick = () => {
+    if (i >= TRANSCRIPT.length){ field.classList.remove('is-transcribing'); syncField(); input.focus(); return; }
+    input.value += TRANSCRIPT[i++];
+    syncField();
+    later(tick, 22 * speed());
+  };
+  later(tick, 300);
+}
+$('#recCancel').addEventListener('click', () => cancelRecording(false));
+$('#recStop').addEventListener('click', stopRecording);
+
+/* ── 6. the control panel ─────────────────────────────────────────────────── */
+const STATE = {
+  closed(){ closeChat(); },
+  opening(){ if (sheetOpen) closeChat(); later(() => openChat(), sheetOpen ? 280 : 0); },
+  idle(){ openChat({ instantSummary:true }); },
+  recording(){ STATE.idle(); startRecording(); },
+  transcribed(){ STATE.idle(); input.value = TRANSCRIPT; syncField(); },
+  'photo-draft'(){ STATE.idle(); setPhoto(samplePhoto(), 'IMG_0920.jpg'); input.value = 'Lunch — how does this look?'; syncField(); },
+  'photo-sent'(){ STATE.idle(); send('Lunch — how does this look?', samplePhoto()); },
+  thinking(){ STATE.idle(); $('.chips', log)?.remove(); addUserTurn(TRANSCRIPT); addAITurn('', { hold:true }); },
+  filling(){ STATE.idle(); $('.chips', log)?.remove(); addUserTurn(TRANSCRIPT); addAITurn(replyFor(TRANSCRIPT), { thinkMs:200 }); },
+  expanded(){ openChat({ instantSummary:true, pos:'full' }); }
+};
+$('#stateOpts').addEventListener('change', e => {
+  $$('#stateOpts label').forEach(l => l.classList.toggle('on', l.contains(e.target)));
+  const fn = STATE[e.target.value];
+  if (fn) fn();
+});
+$('#speedOpts').addEventListener('change', e => {
+  $$('#speedOpts label').forEach(l => l.classList.toggle('on', l.contains(e.target)));
+});
+// keep the panel's highlight honest when the phone itself is used
+$('#aiOpen').addEventListener('click', () => markState('opening'));
+$('#aiClose').addEventListener('click', () => markState('closed'));
+function markState(v){
+  $$('#stateOpts input').forEach(i => { i.checked = i.value === v; i.closest('label').classList.toggle('on', i.value === v); });
+}
+markState('closed');
+</script>
+</body>
+</html>
