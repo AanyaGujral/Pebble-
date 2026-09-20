@@ -4,9 +4,12 @@
 > `AI Coach/ai-coach.html` + spec `docs/feature-ai-coach.md` (rev 1, UX not
 > yet approved). Entry point is the AI unit in the 2026-09-20 nav dock, which
 > now lives at `components/pebble-nav.html`. Ten review states in the control
-> panel. Ten open questions for the owner in the spec — frame size (390 vs
-> 360), Phosphor glyphs to verify, tap-to-record vs hold-to-talk, chips,
-> sheet motion duration, orchid amount. Nothing in `index.html` touched.
+> panel. Owner round 1 (same day) settled: 360 frame (dock re-cut in the
+> prototype, component file not yet), tap-to-record, chips kept, more orchid
+> less teal, short summary. Still open (spec §Dependencies): Phosphor glyphs
+> to verify, sheet motion duration, re-cut of `components/pebble-nav.html`.
+> Published as a claude.ai artifact for review. Nothing in `index.html`
+> touched.
 > Next: owner review → fold answers back into the prototype → decide whether
 > the chat moves into `index.html` or the homepage flow file.
 

@@ -136,18 +136,16 @@ body{
 .panel .note{margin:12px 0 0;font:400 11px/16px var(--font-text);color:var(--text-3)}
 
 /* ═══ 3. PHONE ═══════════════════════════════════════════════════════════════
-   FLAG — the screen is 390 × 844 here, not the 360 × 780 the other
-   prototypes use. The navigation dock component the owner supplied is laid
-   out for a 390 frame (286 + 8 + 64 = 358 = 390 − 2 × 16); at 360 the pill
-   would need re-cutting. Using the dock's own frame keeps the component
-   untouched. Say if the app frame should win instead.
+   360 × 780, the app's frame. SETTLED 2026-09-20: the owner chose the app
+   frame over the dock component's 390, so the dock is re-cut below to fit
+   (see section 5). components/pebble-nav.html still carries the 390 cut.
    ─────────────────────────────────────────────────────────────────────────── */
 .phone{
   flex:0 0 auto;border-radius:40px;background:var(--neutral-900);
   border:2px solid var(--neutral-700);outline:6px solid var(--neutral-800);padding:10px;
 }
 .screen{
-  position:relative;width:390px;height:844px;border-radius:32px;overflow:hidden;
+  position:relative;width:360px;height:780px;border-radius:32px;overflow:hidden;
   background:var(--surface-app);
 }
 /* punch-hole selfie camera, as the other prototypes draw it */
@@ -204,18 +202,24 @@ body{
 .home .card:nth-of-type(even){background-image:linear-gradient(100deg, color-mix(in srgb, var(--crimson-400) 28%, transparent), color-mix(in srgb, var(--tangerine-400) 12%, transparent))}
 .home .sechead{margin-top:12px;font:500 17px/22px var(--font-text);color:var(--text-1)}
 
-/* ═══ 5. NAVIGATION DOCK — components/pebble-nav.html, 2026-09-20, verbatim ══
+/* ═══ 5. NAVIGATION DOCK — components/pebble-nav.html, re-cut for 360 ════════
    Two units centred on one axis, 8px apart, filling the 16px gutter exactly:
-     nav pill  286 × 60   (tabs 63 × 60, 2px between, 14px side padding)
-     AI unit    64 × 64   (overhangs the pill 2px top and bottom)
+     nav pill  256 × 60   (tabs 58 × 60, no gap, 12px side padding)
+     AI unit    64 × 64   (unchanged — the owner's Figma frame; overhangs the
+                           pill 2px top and bottom)
+     256 + 8 + 64 = 328 = 360 − 2 × 16
+   FLAG — the component's 390 cut is pill 286 / tabs 63 / 2px gap / 14px
+   padding. Bringing it to 360 takes 30px out of the pill, all from the tabs:
+   58 wide with the 2px gap dropped and the padding 14 → 12 so the tab lands
+   on a whole pixel. Material, glyphs, labels, the AI unit: untouched.
    Positioned absolutely here instead of sticky, because the home screen
-   scrolls inside the phone rather than the page. Nothing else changed.
+   scrolls inside the phone rather than the page.
    ─────────────────────────────────────────────────────────────────────────── */
 .nav-slot{
   position:absolute;left:0;right:0;bottom:24px;z-index:55;
   display:flex;justify-content:center;pointer-events:none;
 }
-.nav-dock{display:flex;align-items:center;gap:var(--space-8);width:358px;pointer-events:auto}
+.nav-dock{display:flex;align-items:center;gap:var(--space-8);width:328px;pointer-events:auto}
 .nav-dock > *{
   background:color-mix(in srgb, var(--neutral-800) 80%, transparent);   /* neutral 800 @ 80% */
   -webkit-backdrop-filter:blur(26px);          /* Figma background blur 52 */
@@ -224,12 +228,12 @@ body{
              0 2px 6px color-mix(in srgb, var(--neutral-900) 32%, transparent);
 }
 .pebble-nav{
-  display:flex;align-items:center;gap:var(--space-2);
-  width:286px;height:60px;flex:none;padding:0 14px;border-radius:var(--radius-full);
+  display:flex;align-items:center;gap:0;
+  width:256px;height:60px;flex:none;padding:0 12px;border-radius:var(--radius-full);
 }
 .pebble-tab{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  width:63px;height:60px;padding:10px 0;border:0;background:none;border-radius:var(--radius-full);
+  width:58px;height:60px;padding:10px 0;border:0;background:none;border-radius:var(--radius-full);
   font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;
 }
 .pebble-tab:focus-visible{outline:2px solid var(--neutral-0);outline-offset:-2px}
@@ -256,7 +260,7 @@ body{
 
 /* ═══ 6. THE CHAT SHEET ══════════════════════════════════════════════════════
    Geometry is one custom property, --sheet-h, set by the script:
-     half  = 50% of the screen (422px)      the resting state the brief asks for
+     half  = 50% of the screen (390px)      the resting state the brief asks for
      full  = screen − 56px                  leaves the status bar and a sliver
                                             of the app, so it still reads as a
                                             sheet over the app, not a new page
@@ -277,7 +281,7 @@ body{
 
 .ai-sheet{
   position:absolute;left:0;right:0;bottom:0;z-index:71;
-  height:var(--sheet-h,422px);
+  height:var(--sheet-h,390px);
   display:flex;flex-direction:column;
   border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;
   background:var(--surface-card);
@@ -290,22 +294,22 @@ body{
 .ai-sheet.is-dragging{transition:none}
 .ai-sheet[hidden]{display:none}
 
-/* The top section's gradient — teal, with a hint of orchid.
-   Teal-500 → teal-700 mixed onto the card surface so it stays a dark sheet
-   rather than a bright banner, fading out into surface-card by ~260px so the
-   conversation reads on a plain surface below. The orchid sits top-right as
-   one radial wash at 18%, and a second, fainter one low-left at 8%, so the
-   teal never runs flat but never turns purple.
-   FLAG — 18% / 8% are a judgement of "subtle"; dial here if it should be
-   more or less present. */
+/* The top section's gradient — teal, with orchid breaking it.
+   Teal-600 → teal-700 mixed onto the card surface so it stays a dark sheet
+   rather than a bright banner, fading out into surface-card by ~280px so the
+   conversation reads on a plain surface below. Orchid comes in as two
+   radials: a wide wash top-right at 34% and a smaller one low-left at 16%.
+   SETTLED 2026-09-20: rev 1 was teal-500 at 52% with orchid at 18% / 8%;
+   the owner asked for more orchid and less teal, so teal dropped a step and
+   ~15 points, orchid roughly doubled. Dial the four percentages here. */
 .ai-sheet::before{
   content:"";position:absolute;left:0;right:0;top:0;height:280px;pointer-events:none;
   background:
-    radial-gradient(70% 60% at 88% 0%,  color-mix(in srgb, var(--orchid-400) 18%, transparent) 0%, transparent 62%),
-    radial-gradient(60% 40% at 8% 70%,  color-mix(in srgb, var(--orchid-500) 8%, transparent) 0%, transparent 60%),
+    radial-gradient(80% 70% at 92% 0%,  color-mix(in srgb, var(--orchid-400) 34%, transparent) 0%, transparent 64%),
+    radial-gradient(60% 45% at 6% 72%,  color-mix(in srgb, var(--orchid-500) 16%, transparent) 0%, transparent 62%),
     linear-gradient(180deg,
-      color-mix(in srgb, var(--teal-500) 52%, var(--surface-card)) 0%,
-      color-mix(in srgb, var(--teal-700) 40%, var(--surface-card)) 42%,
+      color-mix(in srgb, var(--teal-600) 40%, var(--surface-card)) 0%,
+      color-mix(in srgb, var(--teal-700) 28%, var(--surface-card)) 42%,
       var(--surface-card) 100%);
 }
 /* a faint speckle of the lighter teal near the top edge — the "glow" from
@@ -313,7 +317,7 @@ body{
 .ai-sheet::after{
   content:"";position:absolute;left:50%;top:-40px;width:220px;height:120px;margin-left:-110px;
   border-radius:50%;pointer-events:none;
-  background:radial-gradient(circle, color-mix(in srgb, var(--teal-300) 30%, transparent) 0%, transparent 70%);
+  background:radial-gradient(circle, color-mix(in srgb, var(--teal-300) 22%, transparent) 0%, transparent 70%);
   filter:blur(24px);
 }
 
@@ -464,9 +468,9 @@ body{
 }
 @keyframes blink{to{visibility:hidden}}
 
-/* suggestion chips under the summary — FLAG: a proposal, not in the brief.
-   Tapping one sends it as the user's message. They leave once anything is
-   sent. */
+/* suggestion chips under the summary — proposed 2026-09-20 and KEPT by the
+   owner the same day. Tapping one sends it as the user's message. They
+   leave once anything is sent. */
 .chips{display:flex;flex-wrap:wrap;gap:var(--space-8);padding-top:var(--space-4)}
 .chip{
   height:32px;padding:0 var(--space-12);border-radius:var(--radius-full);
@@ -610,10 +614,15 @@ body{
   .pebble-tab:active .icon,.pebble-ai:active .mark{transform:none}
 }
 
-/* narrow viewports: drop the desk, stack the panel under the phone */
+/* narrow viewports: drop the desk, stack the panel under the phone. Below
+   ~420px (a phone viewing this page) the mockup scales down to keep the 16px
+   gutter — the frame is 396 wide with its bezel. */
 @media (max-width:760px){
-  body{padding:16px 8px}
-  .panel{position:static;width:100%;max-width:410px;order:2}
+  body{padding-block:16px;padding-inline:16px;gap:16px}
+  .panel{position:static;width:100%;max-width:396px;order:2}
+}
+@media (max-width:428px){
+  .phone{transform:scale(calc((100vw - 32px) / 396));transform-origin:top center;margin-bottom:calc(-1 * (1 - (100vw - 32px) / 396) * 800px)}
 }
 </style>
 </head>
@@ -944,7 +953,9 @@ const speed = () => Number(($('input[name="sp"]:checked') || {}).value || 1);
    the text face, not Spartan: swapping typeface mid-sentence would break the
    reading line. Figures that stand alone (the recording timer, "Sent 9:41")
    do use Spartan, as the system asks. */
-const SUMMARY = "Good morning, Aanya. You slept 7 h 12 min and your sleep score came in at 78 — deep sleep was up on your week. Readiness is 73 with HRV holding at 42 ms, so you've recovered from Thursday's run.\n\nYou're 3,240 steps in already. Today suits a moderate session: 30–40 minutes at an easy pace, and get some water in before noon.";
+/* SETTLED 2026-09-20: owner asked for a short opening — one paragraph,
+   under 30 words. */
+const SUMMARY = "Morning, Aanya. Sleep 78, readiness 73 — you've recovered from Thursday's run. 3,240 steps in already. Today suits an easy 30–40 minute session.";
 const CHIPS = ['Plan my workout', 'How did I sleep?', 'What should I eat?'];
 const REPLIES = [
   { test:/sleep|slept|tired|bed|nap/i,
@@ -1176,9 +1187,9 @@ function samplePhoto(){
 
 /* voice recording — the prototype has no microphone: the waveform animates,
    the timer counts, and stopping "transcribes" a scripted sentence into the
-   field (typed in, so it reads as words arriving). FLAG: in the real app the
-   transcript would stream in while you speak; the confirm button here means
-   "stop and use it", cancel throws it away. */
+   field (typed in, so it reads as words arriving). SETTLED 2026-09-20: the
+   owner kept tap-to-record with stop-and-use (not hold-to-talk). In the real
+   app the transcript would stream in while you speak. */
 const wave = $('#wave'), recTime = $('#recTime');
 let recTimer = null, recStart = 0;
 wave.innerHTML = Array.from({length:28}, (_, i) => {

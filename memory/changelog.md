@@ -5,6 +5,21 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-20 (rev 1.1) — Owner's first round on the AI coach chat, folded
+  into `AI Coach/ai-coach.html` and the spec. (1) 360 wins: frame back to the
+  app's 360 × 780 and the dock re-cut to fit — pill 256, tabs 58, tab gap
+  dropped, side padding 14 → 12 so the tab is a whole pixel; AI unit
+  untouched (256 + 8 + 64 = 328 = 360 − 32). Half-sheet is now 390px. FLAG:
+  `components/pebble-nav.html` still carries the 390 cut. (2) Tap-to-record
+  stays, no hold-to-talk. (3) Suggestion chips kept. (4) More orchid, less
+  teal: top gradient now teal-600 40% → teal-700 28% with orchid-400 at 34%
+  top-right and orchid-500 at 16% low-left (was teal-500 52% / orchid 18%
+  and 8%). (5) Opening summary cut to one short paragraph under 30 words.
+  Also published the prototype as a claude.ai artifact so the owner can drive
+  the state panel in the browser; the artifact is the same file minus the
+  document skeleton the host adds, and scales the phone down under 428px so
+  it fits a phone viewer with a 16px gutter.
+
 - 2026-09-20 — Built `AI Coach/ai-coach.html`, the prototype of the AI coach
   chat behind the navigation dock's AI unit, and wrote
   `docs/feature-ai-coach.md` (rev 1) alongside it. Tapping the unit raises a
