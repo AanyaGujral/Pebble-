@@ -334,15 +334,18 @@ body{
    and the close button removed — a 36px filled circle no longer balanced a
    22px mark on a one-line header. Closing is the handle (drag or flick
    down), a tap on the scrim, or Esc. FLAG: with no visible close control the
-   sheet leans on the handle being understood; a native sheet does the same. */
+   sheet leans on the handle being understood; a native sheet does the same.
+   Owner round 3 (2026-09-21): the header gets its air back as empty space —
+   10px above the handle, 14px between handle and the name line, 8px below —
+   60px in all, without the date line coming back. */
 .ai-head{
   position:relative;z-index:2;flex:none;
-  padding:6px var(--space-16) var(--space-4);
+  padding:10px var(--space-16) var(--space-8);
   touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;
 }
 .ai-head:active{cursor:grabbing}
 .ai-handle{
-  display:block;width:36px;height:4px;margin:0 auto 6px;
+  display:block;width:36px;height:4px;margin:0 auto 14px;
   border-radius:var(--radius-full);
   background:color-mix(in srgb, var(--neutral-0) 40%, transparent);
 }
@@ -426,15 +429,20 @@ body{
 @keyframes orb-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
 
 /* ---- the conversation ---- */
+/* Owner round 3: at least 8px between the header and the first line of a
+   reply — 8px here on top of the header's own 8px below the name. */
 .ai-log{
   position:relative;z-index:1;flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;
-  padding:var(--space-4) var(--space-16) var(--space-12);
+  padding:var(--space-8) var(--space-16) var(--space-12);
   display:flex;flex-direction:column;gap:var(--space-12);
   overscroll-behavior:contain;
 }
 .ai-log::-webkit-scrollbar{display:none}
 .msg{max-width:84%;display:flex;flex-direction:column;gap:var(--space-8)}
-.msg.ai{align-self:flex-start}
+/* Owner round 3: the coach's words run nearly the full width — the gap on
+   the right is at most twice the 16px gutter (16px log padding + 16px here),
+   not the 84% cap the user bubble keeps. */
+.msg.ai{align-self:flex-start;max-width:calc(100% - var(--space-16))}
 .msg.user{align-self:flex-end;align-items:flex-end}
 /* the coach speaks straight onto the sheet — no bubble around its words, so
    long answers don't become a wall of boxes; the user's turn is the bubble */

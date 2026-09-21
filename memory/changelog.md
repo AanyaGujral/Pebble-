@@ -5,6 +5,14 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-21 (rev 1.3) — Owner round 3 on the Health Coach header and text
+  measure. Header back up to 60px but as empty space, not content: 10px above
+  the handle (handle pushed down), 14px between handle and the name line, 8px
+  below. Log gets 8px top padding so a reply never starts closer than 16px to
+  the header. The coach's text now runs to within 32px of the right edge (log
+  padding 16 + 16 max-width allowance) instead of the 84% cap, which left a
+  third of the line empty; the user bubble keeps 84%. Artifact republished.
+
 - 2026-09-21 (rev 1.2) — Owner round 2 on the AI coach chat, seven asks.
   (1) "Pebble AI" → "Health Coach" everywhere user-facing (sheet title, the
   dock unit's label, the page title). (2) The header orb replaced by the

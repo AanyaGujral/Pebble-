@@ -1,6 +1,6 @@
 # Feature: AI coach chat
 
-Rev 1.2 — prototype built 2026-09-20 to the owner's brief; owner rounds 1 and 2
+Rev 1.3 — prototype built 2026-09-20 to the owner's brief; owner rounds 1–3
 folded in (2026-09-20 / 21). UX not yet approved.
 Prototype: `AI Coach/ai-coach.html` (opens by double-clicking).
 
@@ -39,9 +39,11 @@ sheet between half and full height, or away.
 - Sheet geometry is one custom property `--sheet-h`; half = 50% of the
   screen (390px), full = screen − 56px. Pointer events on the header do the drag;
   release snaps by position and velocity.
-- The sheet header is one 40px line: the Pebble logomark (with the dock's
-  glow behind it) and "Health Coach". No date line, no close button; the
-  handle, the scrim and Esc close.
+- The sheet header is 60px: 10px, handle, 14px, one 24px line with the
+  Pebble logomark (the dock's glow behind it) and "Health Coach", 8px. No
+  date line, no close button; the handle, the scrim and Esc close. Replies
+  start at least 16px below it. The coach's text runs to within 32px of the
+  right edge; the user's bubble caps at 84%.
 - The coach's presence is the Measure All orb (halo, two counter-rotating
   crescents, core) at avatar scale, on CSS keyframes, in the thinking row of
   each reply. The second crescent carries the orchid hint.
