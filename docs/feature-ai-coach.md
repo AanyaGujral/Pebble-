@@ -1,7 +1,7 @@
 # Feature: AI coach chat
 
-Rev 1.1 — prototype built 2026-09-20 to the owner's brief; owner's first round
-of answers folded in the same day. UX not yet approved.
+Rev 1.2 — prototype built 2026-09-20 to the owner's brief; owner rounds 1 and 2
+folded in (2026-09-20 / 21). UX not yet approved.
 Prototype: `AI Coach/ai-coach.html` (opens by double-clicking).
 
 ## What it does
@@ -18,8 +18,8 @@ sheet between half and full height, or away.
 - [x] Composer: text field, hold-free tap-to-record voice, add / take a photo.
 - [x] Voice recording state: waveform, elapsed time, cancel, stop-and-use.
 - [x] Photo attached (draft) state: thumbnail in the composer with a remove
-      badge, optional note; photo sent state: image turn in the log with the
-      note and a "Sent · time" line.
+      badge, optional note; photo sent state: image bubble in the log with
+      the note. No delivery line under the user's turns.
 - [x] Coach reply: thinking state (orb + shimmer caption), then the answer
       fills in letter by letter with a caret.
 - [x] Handle drag: follows the finger; snaps to half / full; dragging or
@@ -39,10 +39,14 @@ sheet between half and full height, or away.
 - Sheet geometry is one custom property `--sheet-h`; half = 50% of the
   screen (390px), full = screen − 56px. Pointer events on the header do the drag;
   release snaps by position and velocity.
+- The sheet header is one 40px line: the Pebble logomark (with the dock's
+  glow behind it) and "Health Coach". No date line, no close button; the
+  handle, the scrim and Esc close.
 - The coach's presence is the Measure All orb (halo, two counter-rotating
-  crescents, core) at avatar scale, on CSS keyframes. It sits in the header
-  and in the thinking row; it goes still when the coach is done. The second
-  crescent carries the orchid hint.
+  crescents, core) at avatar scale, on CSS keyframes, in the thinking row of
+  each reply. The second crescent carries the orchid hint.
+- The top gradient is 40% of the sheet's height so it follows the drag, and
+  sits a notch quieter at half height than at full.
 - Typewriter fill is a timer per character (14 ms base, longer at
   punctuation); reduced motion switches it off. Thinking holds ~1.6 s.
 - Voice and camera are simulated: the waveform animates and the timer counts;
@@ -65,6 +69,16 @@ sheet between half and full height, or away.
   orchid-500 at 16% low-left (was teal-500 52%, orchid 18% / 8%).
 - **Opening summary:** short — one paragraph, under 30 words.
 
+## Decisions (owner, 2026-09-21 — round 2)
+- **Name:** "Health Coach", not "Pebble AI".
+- **Header:** the orb replaced by the Pebble logomark; date line removed;
+  height halved (72 → 40px); close button removed since a 36px circle no
+  longer balanced the one-line header. Handle / scrim / Esc close.
+- **Teal balance:** collapsed state read too teal, expanded was fine. The
+  gradient now scales with the sheet (40% of its height) and is 28% quieter
+  at half.
+- **User turns:** no "Sent · time · tick" line.
+
 ## Dependencies / risks — still open
 1. **Icons.** Microphone, arrow-up (send) and image glyphs are written from
    memory of Phosphor regular (no network this session). Verify against
@@ -72,10 +86,10 @@ sheet between half and full height, or away.
 2. **Sheet motion.** Open / snap use `duration-slow` (240 ms). A half-screen
    sheet arguably wants ~320 ms; that would be a new motion token.
 3. **Numerals in prose** stay in the text face rather than Spartan, so the
-   reading line isn't broken. The recording timer and the "Sent" time do use
-   Spartan.
-4. **Photo bubble.** Should a photo without a note still show the "Sent"
-   line?
+   reading line isn't broken. The recording timer does use Spartan.
+4. **Closing without a button.** The sheet now relies on the handle, the
+   scrim and Esc. Fine for a native-feeling sheet; say if a close control
+   should come back in another form.
 5. **Other tabs.** The sheet opens over the current tab without changing it;
    the summary is the same everywhere for now.
 6. **Dock component.** `components/pebble-nav.html` is the 390 cut; re-cut it

@@ -8,8 +8,12 @@
 > prototype, component file not yet), tap-to-record, chips kept, more orchid
 > less teal, short summary. Still open (spec §Dependencies): Phosphor glyphs
 > to verify, sheet motion duration, re-cut of `components/pebble-nav.html`.
-> Published as a claude.ai artifact for review. Nothing in `index.html`
-> touched.
+> Round 2 (2026-09-21) settled: "Health Coach" name, logomark in a 40px
+> header with no date and no close button, gradient scales with sheet height
+> and sits quieter at half, no delivery line under user turns.
+> Published as a claude.ai artifact for review
+> (https://claude.ai/artifact/NeL6sHKpdfyBacN5y6vbe1). Nothing in
+> `index.html` touched.
 > Next: owner review → fold answers back into the prototype → decide whether
 > the chat moves into `index.html` or the homepage flow file.
 

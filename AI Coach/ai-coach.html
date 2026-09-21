@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>AI coach · Pebble prototype</title>
+<title>Pebble Health Coach</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=League+Spartan:wght@500;600;700&display=swap" rel="stylesheet">
@@ -23,7 +23,8 @@
    orb — halo, two counter-rotating crescents, a bright core — is the coach's
    presence here: it breathes while the coach reads your day or thinks, and
    the sheet's top section carries the teal gradient with a hint of orchid the
-   owner asked for, so the teal does not run flat.
+   owner asked for, so the teal does not run flat. The sheet is titled
+   "Health Coach" under the Pebble logomark (owner, 2026-09-21).
 
    Everything is assembled from patterns the app already has:
      .nav-dock / .pebble-nav / .pebble-ai   components/pebble-nav.html (2026-09-20)
@@ -296,14 +297,19 @@ body{
 
 /* The top section's gradient — teal, with orchid breaking it.
    Teal-600 → teal-700 mixed onto the card surface so it stays a dark sheet
-   rather than a bright banner, fading out into surface-card by ~280px so the
+   rather than a bright banner, fading out into surface-card so the
    conversation reads on a plain surface below. Orchid comes in as two
    radials: a wide wash top-right at 34% and a smaller one low-left at 16%.
    SETTLED 2026-09-20: rev 1 was teal-500 at 52% with orchid at 18% / 8%;
    the owner asked for more orchid and less teal, so teal dropped a step and
-   ~15 points, orchid roughly doubled. Dial the four percentages here. */
+   ~15 points, orchid roughly doubled. Dial the four percentages here.
+   Owner round 2 (2026-09-21): "too much teal collapsed, fine expanded". The
+   fade was a fixed 280px, which is 72% of the half sheet but 39% of the full
+   one. It is now 40% of whichever height the sheet has (so it follows the
+   drag), and the half sheet also takes it a notch quieter (.is-half). */
 .ai-sheet::before{
-  content:"";position:absolute;left:0;right:0;top:0;height:280px;pointer-events:none;
+  content:"";position:absolute;left:0;right:0;top:0;height:40%;min-height:150px;pointer-events:none;
+  transition:opacity var(--duration-slow) var(--ease-standard);
   background:
     radial-gradient(80% 70% at 92% 0%,  color-mix(in srgb, var(--orchid-400) 34%, transparent) 0%, transparent 64%),
     radial-gradient(60% 45% at 6% 72%,  color-mix(in srgb, var(--orchid-500) 16%, transparent) 0%, transparent 62%),
@@ -312,6 +318,7 @@ body{
       color-mix(in srgb, var(--teal-700) 28%, var(--surface-card)) 42%,
       var(--surface-card) 100%);
 }
+.ai-sheet.is-half::before{opacity:.72}
 /* a faint speckle of the lighter teal near the top edge — the "glow" from
    the AI unit carried into the sheet */
 .ai-sheet::after{
@@ -321,23 +328,35 @@ body{
   filter:blur(24px);
 }
 
-/* ---- header: handle, title, close ---- */
+/* ---- header: handle + one line (logomark, name) ----
+   Owner round 2 (2026-09-21): header halved (72 → 40px), the orb replaced by
+   the Pebble logomark with the dock's own glow behind it, the date line cut,
+   and the close button removed — a 36px filled circle no longer balanced a
+   22px mark on a one-line header. Closing is the handle (drag or flick
+   down), a tap on the scrim, or Esc. FLAG: with no visible close control the
+   sheet leans on the handle being understood; a native sheet does the same. */
 .ai-head{
   position:relative;z-index:2;flex:none;
-  padding:8px var(--space-16) var(--space-12);
+  padding:6px var(--space-16) var(--space-4);
   touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;
 }
 .ai-head:active{cursor:grabbing}
 .ai-handle{
-  display:block;width:36px;height:4px;margin:0 auto var(--space-12);
+  display:block;width:36px;height:4px;margin:0 auto 6px;
   border-radius:var(--radius-full);
   background:color-mix(in srgb, var(--neutral-0) 40%, transparent);
 }
-.ai-title-row{display:flex;align-items:center;gap:var(--space-12)}
+.ai-title-row{display:flex;align-items:center;gap:var(--space-8);height:24px}
 .ai-title-row .who{flex:1;min-width:0}
-.ai-title-row .t{font:600 17px/22px var(--font-text);color:var(--text-1)}
-.ai-title-row .s{font:400 13px/18px var(--font-text);color:var(--text-2);font-feature-settings:var(--num-features)}
-.ai-title-row .s b{font-weight:500;color:var(--teal-200)}
+.ai-title-row .t{font:600 15px/22px var(--font-text);color:var(--text-1)}
+/* the logomark, 22px, teal-400 as in the dock, with the dock's two-glow
+   treatment scaled down behind it */
+.ai-logo{position:relative;width:24px;height:24px;flex:none;display:flex;align-items:center;justify-content:center}
+.ai-logo::before{
+  content:"";position:absolute;left:50%;top:50%;width:20px;height:20px;margin:-10px 0 0 -10px;
+  border-radius:50%;background:var(--teal-600);opacity:.7;filter:blur(8px);pointer-events:none;
+}
+.ai-logo svg{position:relative;z-index:1;width:22px;height:22px;display:block;color:var(--metric-readiness)}
 .icon-btn{
   width:36px;height:36px;flex:none;border:0;border-radius:50%;padding:0;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
@@ -437,13 +456,8 @@ body{
   background:var(--surface-raised);
 }
 .msg.user .photo + .body{border-top-right-radius:6px}
-/* delivery meta under a sent turn — "Sent · 9:41", numerals in Spartan */
-.msg .meta{
-  display:flex;align-items:center;gap:4px;
-  font:400 11px/16px var(--font-text);color:var(--text-3);
-}
-.msg .meta .n{font-family:var(--font-number);font-weight:500;font-feature-settings:var(--num-features)}
-.msg .meta svg{width:12px;height:12px;color:var(--teal-300)}
+/* Owner round 2 (2026-09-21): no "Sent · time · tick" line under the user's
+   turns — the bubble alone is the sent state. */
 
 /* thinking: the orb beside a shimmering caption. The shimmer is a gradient
    sweep through the words — teal-200 → text → orchid-200 — clipped to the
@@ -596,9 +610,6 @@ body{
 /* after stop, while the "transcript" lands, the field says so */
 .field.is-transcribing textarea{color:var(--text-2)}
 
-/* the coach's orb in the header while it is reading or thinking */
-.ai-head .orb{--orb:36px}
-.ai-head .orb.is-still{opacity:.9}
 
 /* ═══ 7. REDUCED MOTION — the design gate ════════════════════════════════════
    No sheet slide, no orb spin, no shimmer, no caret blink, no waveform
@@ -672,9 +683,9 @@ body{
         <nav class="pebble-nav" aria-label="Primary"></nav>
         <!-- Pebble logomark — the master vector from the brand guidelines,
              normalised onto a 24 box (see components/pebble-nav.html). -->
-        <button class="pebble-ai" type="button" id="aiOpen" aria-label="Pebble AI chat" aria-haspopup="dialog" aria-expanded="false">
+        <button class="pebble-ai" type="button" id="aiOpen" aria-label="Health Coach" aria-haspopup="dialog" aria-expanded="false">
           <svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path fill="currentColor" fill-rule="nonzero" d="M 20.924 9.414 C 20.619 10.353 20.074 11.131 19.309 11.818 C 17.942 13.045 16.071 13.686 14.162 14.062 C 13.936 14.107 13.709 14.147 13.481 14.183 C 13.386 14.199 13.29 14.213 13.195 14.227 C 13.145 14.234 13.122 14.238 13.113 14.24 C 13.099 14.241 13.068 14.245 13.006 14.252 C 12.644 14.296 12.281 14.332 11.916 14.357 C 11.465 14.389 11.015 14.4 10.564 14.404 C 9.528 14.414 8.445 14.388 7.4 14.524 C 7.69 12.902 7.981 11.279 8.272 9.657 C 8.293 9.539 8.314 9.421 8.335 9.303 C 8.593 8.047 8.813 6.805 9.453 5.673 C 10.269 4.23 11.553 3.054 13.088 2.412 C 16.138 1.136 20.321 2.058 21.085 5.681 C 21.345 6.913 21.31 8.23 20.924 9.414 M 22.663 4.509 C 22.032 2.871 20.935 1.467 19.306 0.72 C 17.58 -0.072 15.587 -0.185 13.749 0.256 C 10.268 1.092 7.562 4 6.823 7.477 C 6.729 7.921 6.641 8.366 6.549 8.811 C 6.178 10.882 5.807 12.954 5.436 15.026 C 4.14 15.525 2.969 16.307 2.125 17.432 C 1.156 18.723 0.476 20.809 1.104 22.404 C 1.665 23.829 3.288 24.403 4.643 23.702 C 5.549 23.232 5.998 22.361 6.17 21.396 C 6.419 19.998 6.67 18.723 6.92 17.326 C 6.437 17.43 5.567 17.672 4.9 18.146 C 4.779 18.822 4.658 19.374 4.537 20.05 C 4.454 20.515 4.427 21.094 4.249 21.539 C 4.073 21.976 3.692 22.179 3.353 22.16 C 3.233 22.153 3.094 22.105 3.014 22.026 C 2.836 21.85 2.772 21.626 2.747 21.36 C 2.734 21.226 2.737 21.089 2.742 20.954 C 2.747 20.829 2.758 20.705 2.772 20.581 C 2.777 20.546 2.787 20.483 2.796 20.443 C 2.821 20.325 2.844 20.206 2.874 20.089 C 3.118 19.134 3.674 18.239 4.548 17.582 C 4.708 17.462 4.871 17.354 5.037 17.256 L 5.037 17.254 C 5.101 17.199 6.225 16.616 7.026 16.508 L 7.044 16.508 L 7.045 16.505 C 8.39 16.234 9.818 16.295 11.219 16.246 C 12.871 16.189 14.543 15.954 16.13 15.49 C 18.161 14.896 20.165 13.88 21.492 12.185 C 23.103 10.126 23.611 6.969 22.663 4.509"/>
+            <path id="pebble-mark" fill="currentColor" fill-rule="nonzero" d="M 20.924 9.414 C 20.619 10.353 20.074 11.131 19.309 11.818 C 17.942 13.045 16.071 13.686 14.162 14.062 C 13.936 14.107 13.709 14.147 13.481 14.183 C 13.386 14.199 13.29 14.213 13.195 14.227 C 13.145 14.234 13.122 14.238 13.113 14.24 C 13.099 14.241 13.068 14.245 13.006 14.252 C 12.644 14.296 12.281 14.332 11.916 14.357 C 11.465 14.389 11.015 14.4 10.564 14.404 C 9.528 14.414 8.445 14.388 7.4 14.524 C 7.69 12.902 7.981 11.279 8.272 9.657 C 8.293 9.539 8.314 9.421 8.335 9.303 C 8.593 8.047 8.813 6.805 9.453 5.673 C 10.269 4.23 11.553 3.054 13.088 2.412 C 16.138 1.136 20.321 2.058 21.085 5.681 C 21.345 6.913 21.31 8.23 20.924 9.414 M 22.663 4.509 C 22.032 2.871 20.935 1.467 19.306 0.72 C 17.58 -0.072 15.587 -0.185 13.749 0.256 C 10.268 1.092 7.562 4 6.823 7.477 C 6.729 7.921 6.641 8.366 6.549 8.811 C 6.178 10.882 5.807 12.954 5.436 15.026 C 4.14 15.525 2.969 16.307 2.125 17.432 C 1.156 18.723 0.476 20.809 1.104 22.404 C 1.665 23.829 3.288 24.403 4.643 23.702 C 5.549 23.232 5.998 22.361 6.17 21.396 C 6.419 19.998 6.67 18.723 6.92 17.326 C 6.437 17.43 5.567 17.672 4.9 18.146 C 4.779 18.822 4.658 19.374 4.537 20.05 C 4.454 20.515 4.427 21.094 4.249 21.539 C 4.073 21.976 3.692 22.179 3.353 22.16 C 3.233 22.153 3.094 22.105 3.014 22.026 C 2.836 21.85 2.772 21.626 2.747 21.36 C 2.734 21.226 2.737 21.089 2.742 20.954 C 2.747 20.829 2.758 20.705 2.772 20.581 C 2.777 20.546 2.787 20.483 2.796 20.443 C 2.821 20.325 2.844 20.206 2.874 20.089 C 3.118 19.134 3.674 18.239 4.548 17.582 C 4.708 17.462 4.871 17.354 5.037 17.256 L 5.037 17.254 C 5.101 17.199 6.225 16.616 7.026 16.508 L 7.044 16.508 L 7.045 16.505 C 8.39 16.234 9.818 16.295 11.219 16.246 C 12.871 16.189 14.543 15.954 16.13 15.49 C 18.161 14.896 20.165 13.88 21.492 12.185 C 23.103 10.126 23.611 6.969 22.663 4.509"/>
           </svg>
         </button>
       </div>
@@ -688,12 +699,10 @@ body{
       <header class="ai-head" id="aiHead">
         <span class="ai-handle" aria-hidden="true"></span>
         <div class="ai-title-row">
-          <div class="orb is-still" id="aiOrb" aria-hidden="true"><i class="halo"></i><i class="cres"></i><i class="cres cres2"></i><i class="core"></i></div>
+          <span class="ai-logo" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><use href="#pebble-mark"/></svg></span>
           <div class="who">
-            <div class="t" id="aiTitle">Pebble AI</div>
-            <div class="s" id="aiSub">Today · Sun 20 Sep</div>
+            <div class="t" id="aiTitle">Health Coach</div>
           </div>
-          <button class="icon-btn" type="button" id="aiClose" aria-label="Close chat"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
         </div>
       </header>
 
@@ -760,7 +769,7 @@ body{
     <label><input type="radio" name="st" value="recording"><span>Voice recording<span class="desc">Waveform, timer, cancel / stop</span></span></label>
     <label><input type="radio" name="st" value="transcribed"><span>Transcript in field<span class="desc">Recording stopped, words landed, ready to send</span></span></label>
     <label><input type="radio" name="st" value="photo-draft"><span>Photo attached<span class="desc">Thumbnail in the composer with a note</span></span></label>
-    <label><input type="radio" name="st" value="photo-sent"><span>Photo sent<span class="desc">Photo turn in the log, coach looks at it and answers</span></span></label>
+    <label><input type="radio" name="st" value="photo-sent"><span>Photo sent<span class="desc">Photo bubble in the log, coach looks at it and answers</span></span></label>
     <label><input type="radio" name="st" value="thinking"><span>Thinking<span class="desc">Orb spins, shimmer caption, holds here</span></span></label>
     <label><input type="radio" name="st" value="filling"><span>Answer filling in<span class="desc">Reply types letter by letter</span></span></label>
     <label><input type="radio" name="st" value="expanded"><span>Expanded<span class="desc">Sheet dragged to full height</span></span></label>
@@ -774,7 +783,7 @@ body{
     <label><input type="radio" name="sp" value="3"><span>Slow (3×)</span></label>
   </div>
 
-  <p class="note">Handle: drag up for full height, down to half, further down to close. Tap the handle to toggle half / full. Esc closes.</p>
+  <p class="note">Handle: drag up for full height, down to half, further down to close. Tap the handle to toggle half / full. Tapping the dimmed app or pressing Esc also closes — there is no close button.</p>
   <p class="note">Reduced motion follows the OS setting: no slide, spin, shimmer or typewriter — text lands in one go.</p>
 </aside>
 
@@ -813,8 +822,6 @@ const ICONS = {
     fill:    '<path fill="currentColor" d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z"/>'
   }
 };
-// the "sent" tick under a user turn — Phosphor check, already in the app
-const CHECK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></svg>';
 
 /* ── 2. the navigation dock ─────────────────────────────────────────────── */
 const TABS = [
@@ -866,12 +873,15 @@ let sheetOpen = false, sheetPos = 'half';   // 'half' | 'full'
 let openTimers = [];                        // every pending timeout, so a reset can clear them
 
 function setHeight(px){ sheet.style.setProperty('--sheet-h', px + 'px'); }
+// the gradient reads the resting position — quieter at half, full at full
+function markPos(pos){ sheet.classList.toggle('is-half', pos === 'half'); sheet.classList.toggle('is-full', pos === 'full'); }
 
 function openChat(opts = {}){
   clearTimers();
   sheet.hidden = false;
   sheetPos = opts.pos || 'half';
   setHeight(SHEET[sheetPos]());
+  markPos(sheetPos);
   // let the browser paint the sheet off-screen first, or there is nothing to slide from
   requestAnimationFrame(() => {
     sheet.classList.add('is-open');
@@ -900,6 +910,7 @@ function snapTo(pos){
   sheetPos = pos;
   sheet.classList.remove('is-dragging');
   setHeight(SHEET[pos]());
+  markPos(pos);
 }
 function later(fn, ms){ const t = setTimeout(fn, ms); openTimers.push(t); return t; }
 function clearTimers(){ openTimers.forEach(clearTimeout); openTimers = []; }
@@ -940,12 +951,10 @@ head.addEventListener('pointerup', endDrag);
 head.addEventListener('pointercancel', endDrag);
 
 $('#aiOpen').addEventListener('click', () => { if (!sheetOpen) openChat(); });
-$('#aiClose').addEventListener('click', closeChat);
-scrim.addEventListener('click', closeChat);
+scrim.addEventListener('click', () => { closeChat(); markState('closed'); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && sheetOpen) closeChat(); });
 
 /* ── 4. the conversation ─────────────────────────────────────────────────── */
-const orb = $('#aiOrb');
 const speed = () => Number(($('input[name="sp"]:checked') || {}).value || 1);
 
 /* Sample copy. Figures match the homepage prototype's sample day (sleep 78,
@@ -982,25 +991,18 @@ function replyFor(text, hasPhoto){
 function resetConversation(){
   clearTimers();
   log.innerHTML = '';
-  orb.classList.add('is-still');
   clearInput();
   removePhoto();
   cancelRecording(true);
 }
 
-function timeNow(){
-  // the prototype's clock reads 9:41 in the status bar; keep the meta in step
-  return '9:41';
-}
-
-/* a user turn: optional photo, optional text, then the "Sent" line */
+/* a user turn: optional photo, optional text */
 function addUserTurn(text, photoSrc){
   const m = document.createElement('div');
   m.className = 'msg user';
   let html = '';
   if (photoSrc) html += '<img class="photo" src="' + photoSrc + '" alt="Photo you sent">';
   html += '<div class="body"></div>';
-  html += '<div class="meta">' + CHECK + '<span>Sent</span><span class="n">' + timeNow() + '</span></div>';
   m.innerHTML = html;
   $('.body', m).textContent = text || '';
   log.appendChild(m);
@@ -1015,7 +1017,6 @@ function addAITurn(text, opts = {}){
   m.className = 'msg ai';
   m.innerHTML = '<div class="think"><div class="orb" aria-hidden="true"><i class="halo"></i><i class="cres"></i><i class="cres cres2"></i><i class="core"></i></div><span class="cap">' + (opts.caption || 'Thinking…') + '</span></div><div class="body"></div>';
   log.appendChild(m);
-  orb.classList.remove('is-still');
   scrollLog();
   if (opts.hold) return m;
   const think = reduced.matches ? 400 : (opts.thinkMs ?? 1600);
@@ -1029,7 +1030,6 @@ function fillIn(m, text, after){
   if (think) think.remove();
   if (reduced.matches){
     body.textContent = text;
-    orb.classList.add('is-still');
     scrollLog();
     if (after) after();
     return;
@@ -1041,7 +1041,6 @@ function fillIn(m, text, after){
   const tick = () => {
     if (i >= text.length){
       caret.remove();
-      orb.classList.add('is-still');
       if (after) after();
       return;
     }
@@ -1065,7 +1064,6 @@ function startSummary(instant){
     clearTimers();
     $('.think', m)?.remove();
     $('.body', m).textContent = SUMMARY;
-    orb.classList.add('is-still');
     showChips();
   }
 }
@@ -1256,7 +1254,6 @@ $('#speedOpts').addEventListener('change', e => {
 });
 // keep the panel's highlight honest when the phone itself is used
 $('#aiOpen').addEventListener('click', () => markState('opening'));
-$('#aiClose').addEventListener('click', () => markState('closed'));
 function markState(v){
   $$('#stateOpts input').forEach(i => { i.checked = i.value === v; i.closest('label').classList.toggle('on', i.value === v); });
 }

@@ -5,6 +5,21 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-21 (rev 1.2) — Owner round 2 on the AI coach chat, seven asks.
+  (1) "Pebble AI" → "Health Coach" everywhere user-facing (sheet title, the
+  dock unit's label, the page title). (2) The header orb replaced by the
+  Pebble logomark — the dock's own path via <use>, 22px teal-400, with the
+  dock's teal-600 glow scaled down behind it. The Measure All orb stays as
+  the thinking indicator in the log. (3) Teal balance: the top gradient was a
+  fixed 280px, 72% of the half sheet but 39% of the full one, which is why it
+  read heavy collapsed and fine expanded. It is now 40% of the sheet's height
+  (follows the drag) and the half state takes it to 72% opacity. (4) No
+  "Sent · 9:41 ✓" line under the user's turns. (5) Date line cut from the
+  header. (6) Header halved, 72 → 40px: 6px pad, handle, 6px, a 24px row.
+  (7) Close button removed — a 36px filled circle no longer balanced a 22px
+  mark on a one-line header; handle, scrim tap and Esc close. FLAG in code:
+  the sheet now leans on the handle being understood. Artifact republished.
+
 - 2026-09-20 (rev 1.1) — Owner's first round on the AI coach chat, folded
   into `AI Coach/ai-coach.html` and the spec. (1) 360 wins: frame back to the
   app's 360 × 780 and the dock re-cut to fit — pill 256, tabs 58, tab gap
