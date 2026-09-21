@@ -288,7 +288,6 @@ body{
   background:var(--surface-card);
   box-shadow:0 -8px 32px color-mix(in srgb, var(--neutral-900) 48%, transparent);
   transform:translateY(100%);
-  transition:transform var(--duration-slow) var(--ease-emphasis), height var(--duration-slow) var(--ease-emphasis);
   overflow:hidden;
 }
 .ai-sheet.is-open{transform:none}
@@ -336,11 +335,14 @@ body{
    down), a tap on the scrim, or Esc. FLAG: with no visible close control the
    sheet leans on the handle being understood; a native sheet does the same.
    Owner round 3 (2026-09-21): the header gets its air back as empty space —
-   10px above the handle, 14px between handle and the name line, 8px below —
-   60px in all, without the date line coming back. */
+   10px above the handle, 14px between handle and the name line — without the
+   date line coming back.
+   Owner round 4 (2026-09-21): mark and name centred on the header, mark
+   22 → 20px, glow removed, 12px of empty space below the name line (64px in
+   all; the log adds 8px more before the first reply). */
 .ai-head{
   position:relative;z-index:2;flex:none;
-  padding:10px var(--space-16) var(--space-8);
+  padding:10px var(--space-16) var(--space-12);
   touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;
 }
 .ai-head:active{cursor:grabbing}
@@ -349,17 +351,12 @@ body{
   border-radius:var(--radius-full);
   background:color-mix(in srgb, var(--neutral-0) 40%, transparent);
 }
-.ai-title-row{display:flex;align-items:center;gap:var(--space-8);height:24px}
-.ai-title-row .who{flex:1;min-width:0}
+.ai-title-row{display:flex;align-items:center;justify-content:center;gap:var(--space-8);height:24px}
+.ai-title-row .who{flex:none;min-width:0}
 .ai-title-row .t{font:600 15px/22px var(--font-text);color:var(--text-1)}
-/* the logomark, 22px, teal-400 as in the dock, with the dock's two-glow
-   treatment scaled down behind it */
-.ai-logo{position:relative;width:24px;height:24px;flex:none;display:flex;align-items:center;justify-content:center}
-.ai-logo::before{
-  content:"";position:absolute;left:50%;top:50%;width:20px;height:20px;margin:-10px 0 0 -10px;
-  border-radius:50%;background:var(--teal-600);opacity:.7;filter:blur(8px);pointer-events:none;
-}
-.ai-logo svg{position:relative;z-index:1;width:22px;height:22px;display:block;color:var(--metric-readiness)}
+/* the logomark, 20px, teal-400 as in the dock — no glow (owner, round 4) */
+.ai-logo{position:relative;width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center}
+.ai-logo svg{width:20px;height:20px;display:block;color:var(--metric-readiness)}
 .icon-btn{
   width:36px;height:36px;flex:none;border:0;border-radius:50%;padding:0;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
@@ -619,12 +616,44 @@ body{
 .field.is-transcribing textarea{color:var(--text-2)}
 
 
+/* ---- the keyboard ----
+   Owner round 4: tapping the text field brings the keyboard up, and the
+   sheet goes to full height behind it, as it would on the device. The
+   keyboard is a stand-in drawn from tokens (Gboard-style rows); its keys do
+   type into the field, so the flow can be walked without a real keyboard.
+   The sheet takes the keyboard's height as bottom padding, so the composer
+   sits on top of it and the log shrinks. */
+.kbd{
+  position:absolute;left:0;right:0;bottom:0;z-index:80;height:var(--kbd-h);
+  padding:8px 4px 20px;display:flex;flex-direction:column;gap:8px;
+  background:var(--neutral-800);
+  transform:translateY(100%);
+  transition:transform var(--duration-slow) var(--ease-emphasis);
+}
+.kbd.is-up{transform:none}
+.kbd .krow{display:flex;justify-content:center;gap:5px}
+.kbd .k{
+  width:31px;height:42px;border:0;padding:0;border-radius:var(--radius-8);
+  background:var(--neutral-700);color:var(--text-1);cursor:pointer;
+  font:400 17px/42px var(--font-text);text-align:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.kbd .k:active{background:var(--neutral-600)}
+.kbd .k.fn{background:var(--neutral-600);color:var(--text-2);font-size:13px}
+.kbd .k.w{width:49px}
+.kbd .k.space{width:157px}
+.kbd .k.go{background:var(--metric-readiness);color:var(--text-on-accent);font-weight:500}
+.kbd .k svg{width:20px;height:20px;display:inline-block;vertical-align:middle}
+:root{--kbd-h:268px}
+.ai-sheet{padding-bottom:var(--kbd-pad,0px);transition:transform var(--duration-slow) var(--ease-emphasis), height var(--duration-slow) var(--ease-emphasis), padding var(--duration-slow) var(--ease-emphasis)}
+.ai-sheet.kbd-up{--kbd-pad:var(--kbd-h)}
+
 /* ═══ 7. REDUCED MOTION — the design gate ════════════════════════════════════
    No sheet slide, no orb spin, no shimmer, no caret blink, no waveform
    bounce. The typewriter effect is switched off in the script (text lands in
    one go), and the sheet appears in place. */
 @media (prefers-reduced-motion:reduce){
-  .home,.ai-scrim,.ai-sheet,.icon-btn,.fbtn,.fbtn.attach svg,.chip{transition:none}
+  .home,.ai-scrim,.ai-sheet,.icon-btn,.fbtn,.fbtn.attach svg,.chip,.kbd{transition:none}
   .home.is-behind{filter:none}
   .orb .halo,.orb .cres,.orb .cres2,.orb .core,.think .cap,.caret,.wave i,.rec .time::before{animation:none}
   .think .cap{color:var(--text-2);background:none;-webkit-background-clip:border-box;background-clip:border-box}
@@ -753,7 +782,9 @@ body{
 
           <!-- attach menu -->
           <div class="attach-menu" id="attachMenu" role="menu">
-            <button type="button" role="menuitem" id="attachTake"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm-44,76a36,36,0,1,1-36-36A36,36,0,0,1,164,132Z"/></svg>Take photo</button>
+            <!-- Owner round 4: outline camera, not the filled one. FLAG: Phosphor
+                 regular "camera" written from memory (no network) — verify. -->
+            <button type="button" role="menuitem" id="attachTake"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V80a8,8,0,0,1,8-8H80a8,8,0,0,0,6.66-3.56L100.28,48h55.43l13.63,20.44A8,8,0,0,0,176,72h32a8,8,0,0,1,8,8ZM128,88a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,88Zm0,72a28,28,0,1,1,28-28A28,28,0,0,1,128,160Z"/></svg>Take photo</button>
             <!-- FLAG: "image" glyph also from memory of Phosphor regular — verify. -->
             <button type="button" role="menuitem" id="attachChoose"><svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z"/></svg>Choose photo</button>
           </div>
@@ -761,6 +792,9 @@ body{
         </div>
       </div>
     </section>
+
+    <!-- stand-in keyboard — rows are built by the script -->
+    <div class="kbd" id="kbd" aria-hidden="true"></div>
 
     <div class="gesture"></div>
   </div>
@@ -775,6 +809,7 @@ body{
     <label><input type="radio" name="st" value="opening"><span>Opening<span class="desc">Sheet rises, coach reads your day, summary types out</span></span></label>
     <label><input type="radio" name="st" value="idle"><span>Summary done<span class="desc">Summary landed, suggestion chips, empty composer</span></span></label>
     <label><input type="radio" name="st" value="recording"><span>Voice recording<span class="desc">Waveform, timer, cancel / stop</span></span></label>
+    <label><input type="radio" name="st" value="keyboard"><span>Keyboard up<span class="desc">Field tapped, keyboard rises, sheet goes near full</span></span></label>
     <label><input type="radio" name="st" value="transcribed"><span>Transcript in field<span class="desc">Recording stopped, words landed, ready to send</span></span></label>
     <label><input type="radio" name="st" value="photo-draft"><span>Photo attached<span class="desc">Thumbnail in the composer with a note</span></span></label>
     <label><input type="radio" name="st" value="photo-sent"><span>Photo sent<span class="desc">Photo bubble in the log, coach looks at it and answers</span></span></label>
@@ -792,6 +827,7 @@ body{
   </div>
 
   <p class="note">Handle: drag up for full height, down to half, further down to close. Tap the handle to toggle half / full. Tapping the dimmed app or pressing Esc also closes — there is no close button.</p>
+  <p class="note">Tap the text field and the keyboard rises; its keys type into the field. Tap outside the field to drop it.</p>
   <p class="note">Reduced motion follows the OS setting: no slide, spin, shimmer or typewriter — text lands in one go.</p>
 </aside>
 
@@ -904,6 +940,7 @@ function openChat(opts = {}){
 function closeChat(){
   clearTimers();
   cancelRecording(true);
+  input.blur(); hideKeyboard();
   closeAttachMenu();
   sheet.classList.remove('is-open');
   scrim.classList.remove('is-on');
@@ -998,6 +1035,7 @@ function replyFor(text, hasPhoto){
 
 function resetConversation(){
   clearTimers();
+  input.blur(); hideKeyboard();
   log.innerHTML = '';
   clearInput();
   removePhoto();
@@ -1123,6 +1161,41 @@ actionBtn.addEventListener('click', () => {
   else startRecording();
 });
 
+/* the keyboard — rises on focus, drops on blur, and its keys type */
+const kbd = $('#kbd');
+const KEYS = [['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','h','j','k','l'],['z','x','c','v','b','n','m']];
+const BACK = '<svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M216,48H68.53a16.08,16.08,0,0,0-13.72,7.77L9.14,131.88a8,8,0,0,0,0,8.24l45.67,76.11A16.08,16.08,0,0,0,68.53,224H216a16,16,0,0,0,16-16V64A16,16,0,0,0,216,48Zm0,160H68.53L24.56,136,68.53,64H216ZM165.66,101.66,142.34,125l23.32,23.31a8,8,0,0,1-11.32,11.32L131,136.28l-23.31,23.31a8,8,0,0,1-11.32-11.32L119.72,125,96.4,101.66a8,8,0,0,1,11.32-11.32L131,113.66l23.31-23.32a8,8,0,0,1,11.32,11.32Z"/></svg>';
+kbd.innerHTML =
+  '<div class="krow">' + KEYS[0].map(k => '<button type="button" class="k" data-k="' + k + '">' + k + '</button>').join('') + '</div>' +
+  '<div class="krow">' + KEYS[1].map(k => '<button type="button" class="k" data-k="' + k + '">' + k + '</button>').join('') + '</div>' +
+  '<div class="krow"><button type="button" class="k fn w" data-k="shift">⇧</button>' + KEYS[2].map(k => '<button type="button" class="k" data-k="' + k + '">' + k + '</button>').join('') + '<button type="button" class="k fn w" data-k="back" aria-label="Delete">' + BACK + '</button></div>' +
+  '<div class="krow"><button type="button" class="k fn w" data-k="123">?123</button><button type="button" class="k" data-k=",">,</button><button type="button" class="k space" data-k=" "> </button><button type="button" class="k" data-k=".">.</button><button type="button" class="k fn w go" data-k="go">Send</button></div>';
+let shifted = false;
+function showKeyboard(){
+  if (kbd.classList.contains('is-up')) return;
+  kbd.classList.add('is-up');
+  sheet.classList.add('kbd-up');
+  if (sheetPos !== 'full') snapTo('full');
+}
+function hideKeyboard(){
+  kbd.classList.remove('is-up');
+  sheet.classList.remove('kbd-up');
+}
+input.addEventListener('focus', showKeyboard);
+input.addEventListener('blur', hideKeyboard);
+// a tap on a key must not steal focus from the field
+kbd.addEventListener('pointerdown', e => e.preventDefault());
+kbd.addEventListener('click', e => {
+  const k = e.target.closest('.k'); if (!k) return;
+  const v = k.dataset.k;
+  if (v === 'back') input.value = input.value.slice(0, -1);
+  else if (v === 'shift') shifted = !shifted;
+  else if (v === '123') return;                      // stand-in: no symbol layer
+  else if (v === 'go'){ send(input.value, photo?.src); return; }
+  else { input.value += (shifted || input.value === '' || /[.!?]\s$/.test(input.value)) ? v.toUpperCase() : v; shifted = false; }
+  syncField();
+});
+
 /* photos — attach, preview, remove */
 const attachBtn = $('#attachBtn'), attachMenu = $('#attachMenu');
 function openAttachMenu(){ attachMenu.classList.add('is-open'); attachBtn.classList.add('is-open'); attachBtn.setAttribute('aria-expanded','true'); }
@@ -1245,6 +1318,7 @@ const STATE = {
   opening(){ if (sheetOpen) closeChat(); later(() => openChat(), sheetOpen ? 280 : 0); },
   idle(){ openChat({ instantSummary:true }); },
   recording(){ STATE.idle(); startRecording(); },
+  keyboard(){ STATE.idle(); input.value = 'How hard should I'; syncField(); input.focus(); },
   transcribed(){ STATE.idle(); input.value = TRANSCRIPT; syncField(); },
   'photo-draft'(){ STATE.idle(); setPhoto(samplePhoto(), 'IMG_0920.jpg'); input.value = 'Lunch — how does this look?'; syncField(); },
   'photo-sent'(){ STATE.idle(); send('Lunch — how does this look?', samplePhoto()); },

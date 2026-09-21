@@ -1,6 +1,6 @@
 # Feature: AI coach chat
 
-Rev 1.3 — prototype built 2026-09-20 to the owner's brief; owner rounds 1–3
+Rev 1.4 — prototype built 2026-09-20 to the owner's brief; owner rounds 1–4
 folded in (2026-09-20 / 21). UX not yet approved.
 Prototype: `AI Coach/ai-coach.html` (opens by double-clicking).
 
@@ -16,6 +16,7 @@ sheet between half and full height, or away.
 - [x] On open, the coach shows a "reading your day" state (the orb), then the
       summary types out letter by letter.
 - [x] Composer: text field, hold-free tap-to-record voice, add / take a photo.
+- [x] Keyboard rises on focus and pushes the sheet to near full screen.
 - [x] Voice recording state: waveform, elapsed time, cancel, stop-and-use.
 - [x] Photo attached (draft) state: thumbnail in the composer with a remove
       badge, optional note; photo sent state: image bubble in the log with
@@ -39,10 +40,13 @@ sheet between half and full height, or away.
 - Sheet geometry is one custom property `--sheet-h`; half = 50% of the
   screen (390px), full = screen − 56px. Pointer events on the header do the drag;
   release snaps by position and velocity.
-- The sheet header is 60px: 10px, handle, 14px, one 24px line with the
-  Pebble logomark (the dock's glow behind it) and "Health Coach", 8px. No
-  date line, no close button; the handle, the scrim and Esc close. Replies
-  start at least 16px below it. The coach's text runs to within 32px of the
+- The sheet header is 64px: 10px, handle, 14px, one 24px line with the
+  20px Pebble logomark and "Health Coach" centred, 12px. No glow, no date
+  line, no close button; the handle, the scrim and Esc close. Replies start
+  20px below it.
+- Tapping the text field raises a stand-in keyboard (268px, drawn from
+  tokens, keys type into the field, teal Send key) and the sheet snaps to
+  full behind it; the composer sits on the keyboard. Blur drops it. The coach's text runs to within 32px of the
   right edge; the user's bubble caps at 84%.
 - The coach's presence is the Measure All orb (halo, two counter-rotating
   crescents, core) at avatar scale, on CSS keyframes, in the thinking row of
@@ -58,7 +62,7 @@ sheet between half and full height, or away.
 - Replies are scripted by keyword (sleep / workout / food / stress / steps)
   with a photo-specific reply and a fallback. Figures match the homepage's
   sample day (78 / 73 / 68).
-- Control panel beside the phone jumps to ten states for review, plus a
+- Control panel beside the phone jumps to eleven states for review, plus a
   typing-speed switch.
 
 ## Decisions (owner, 2026-09-20)
@@ -82,8 +86,8 @@ sheet between half and full height, or away.
 - **User turns:** no "Sent · time · tick" line.
 
 ## Dependencies / risks — still open
-1. **Icons.** Microphone, arrow-up (send) and image glyphs are written from
-   memory of Phosphor regular (no network this session). Verify against
+1. **Icons.** Microphone, arrow-up (send), image and outline camera glyphs
+   are written from memory of Phosphor regular (no network this session). Verify against
    `@phosphor-icons/core` before shipping.
 2. **Sheet motion.** Open / snap use `duration-slow` (240 ms). A half-screen
    sheet arguably wants ~320 ms; that would be a new motion token.

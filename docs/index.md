@@ -10,7 +10,7 @@ A table of every screen/feature and its state. Keeps work unambiguous.
 | Health / Peak score | — | Not started | |
 | Me tab | `docs/feature-me-tab.md` | UX approved (rev 3) — UI not specified | 14 inner pages, 10 tab states. Read the spec before writing any Me-tab code |
 | Friends (was Family Ranking) | `docs/feature-family-ranking.md` + `Friends/friends.html` | Prototype built to rev 2 — UX not yet approved | Codes make links, not groups. First-use teaching state, podium + list + sticky you-card, friend profile, share/enter a code, friends list. 6 screens, 9 F-states, 10 components |
-| AI coach chat | `docs/feature-ai-coach.md` + `AI Coach/ai-coach.html` | Prototype built (rev 1.2, owner rounds 1–2 folded in) — UX not yet approved | Half-screen sheet from the dock's AI unit: typed summary, text / voice / photo composer, handle drag, thinking + filling states. 10 review states, 10 open questions |
+| AI coach chat | `docs/feature-ai-coach.md` + `AI Coach/ai-coach.html` | Prototype built (rev 1.4, owner rounds 1–4 folded in) — UX not yet approved | Half-screen sheet from the dock's AI unit: typed summary, text / voice / photo composer, handle drag, thinking + filling states. 10 review states, 10 open questions |
 
 When you start a feature, create `docs/feature-<name>.md` with: what it does,
 acceptance criteria (checkboxes), implementation approach, and dependencies.

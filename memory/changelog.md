@@ -5,6 +5,17 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-21 (rev 1.4) — Owner round 4 on the Health Coach. Header: mark and
+  name centred on the sheet, mark 22 → 20px, the glow behind it removed, 12px
+  of empty space under the name line (header 64px, first reply 20px below).
+  "Take photo" now carries the outline camera (Phosphor regular, from memory
+  — verify). New: tapping the text field raises a stand-in keyboard drawn from
+  tokens (four Gboard-style rows, teal Send key) and the sheet snaps to full
+  behind it, taking the keyboard's 268px as bottom padding so the composer
+  rides on top; the keys type into the field and Send sends. Blur drops it;
+  closing or jumping states resets it. "Keyboard up" added to the panel.
+  Artifact republished.
+
 - 2026-09-21 (rev 1.3) — Owner round 3 on the Health Coach header and text
   measure. Header back up to 60px but as empty space, not content: 10px above
   the handle (handle pushed down), 14px between handle and the name line, 8px
