@@ -5,6 +5,12 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-25 (rev 1.5) — Owner round 5: Health Coach header left-aligned
+  again, the logomark sat inside a 28px circle on a teal-tinted raised
+  surface (a profile-photo avatar), the name 6px to its right. Header 68px.
+  FLAG: 6px sits between the 4 and 8 spacing steps; owner asked for 4–6.
+  Artifact republished.
+
 - 2026-09-21 (rev 1.4) — Owner round 4 on the Health Coach. Header: mark and
   name centred on the sheet, mark 22 → 20px, the glow behind it removed, 12px
   of empty space under the name line (header 64px, first reply 20px below).

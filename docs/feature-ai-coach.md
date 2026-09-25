@@ -1,7 +1,7 @@
 # Feature: AI coach chat
 
-Rev 1.4 — prototype built 2026-09-20 to the owner's brief; owner rounds 1–4
-folded in (2026-09-20 / 21). UX not yet approved.
+Rev 1.5 — prototype built 2026-09-20 to the owner's brief; owner rounds 1–5
+folded in (2026-09-20 → 25). UX not yet approved.
 Prototype: `AI Coach/ai-coach.html` (opens by double-clicking).
 
 ## What it does
@@ -40,8 +40,9 @@ sheet between half and full height, or away.
 - Sheet geometry is one custom property `--sheet-h`; half = 50% of the
   screen (390px), full = screen − 56px. Pointer events on the header do the drag;
   release snaps by position and velocity.
-- The sheet header is 64px: 10px, handle, 14px, one 24px line with the
-  20px Pebble logomark and "Health Coach" centred, 12px. No glow, no date
+- The sheet header is 68px: 10px, handle, 14px, one 28px line — the Pebble
+  logomark in a 28px circle like a profile photo, "Health Coach" 6px to its
+  right, left-aligned — then 12px. No glow, no date
   line, no close button; the handle, the scrim and Esc close. Replies start
   20px below it.
 - Tapping the text field raises a stand-in keyboard (268px, drawn from

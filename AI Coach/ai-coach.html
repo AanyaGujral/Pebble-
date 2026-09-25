@@ -338,8 +338,11 @@ body{
    10px above the handle, 14px between handle and the name line — without the
    date line coming back.
    Owner round 4 (2026-09-21): mark and name centred on the header, mark
-   22 → 20px, glow removed, 12px of empty space below the name line (64px in
-   all; the log adds 8px more before the first reply). */
+   22 → 20px, glow removed, 12px of empty space below the name line.
+   Owner round 5 (2026-09-25): back to left-aligned, the mark inside a 28px
+   circle like a profile photo, the name 6px to its right. 68px in all; the
+   log adds 8px more before the first reply. FLAG: 6px is between the 4 and
+   8 spacing steps — owner asked for 4–6, so 6 it is. */
 .ai-head{
   position:relative;z-index:2;flex:none;
   padding:10px var(--space-16) var(--space-12);
@@ -351,12 +354,17 @@ body{
   border-radius:var(--radius-full);
   background:color-mix(in srgb, var(--neutral-0) 40%, transparent);
 }
-.ai-title-row{display:flex;align-items:center;justify-content:center;gap:var(--space-8);height:24px}
-.ai-title-row .who{flex:none;min-width:0}
+.ai-title-row{display:flex;align-items:center;justify-content:flex-start;gap:6px;height:28px}
+.ai-title-row .who{flex:1;min-width:0}
 .ai-title-row .t{font:600 15px/22px var(--font-text);color:var(--text-1)}
-/* the logomark, 20px, teal-400 as in the dock — no glow (owner, round 4) */
-.ai-logo{position:relative;width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center}
-.ai-logo svg{width:20px;height:20px;display:block;color:var(--metric-readiness)}
+/* the avatar: a 28px circle on a teal-tinted raised surface, the logomark
+   16px inside it in teal-400 — reads as the coach's profile photo */
+.ai-logo{
+  position:relative;width:28px;height:28px;flex:none;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb, var(--teal-400) 18%, var(--surface-raised));
+}
+.ai-logo svg{width:16px;height:16px;display:block;color:var(--metric-readiness)}
 .icon-btn{
   width:36px;height:36px;flex:none;border:0;border-radius:50%;padding:0;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
