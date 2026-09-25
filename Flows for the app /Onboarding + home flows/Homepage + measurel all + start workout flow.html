@@ -770,6 +770,32 @@ body{
 .startbtn .phi{color:var(--neutral-900)}
 .startbtn:active{transform:scale(.99)}
 
+/* Start Workout + Log Workout, side by side (owner, 2026-09-25).
+   Each takes half the row with a 12px gap (spacing.12). Heights match at
+   --cta-height (48px) so the pair reads as one row.
+   FLAG: components/button.html specs 52px (controlHeight.l); this screen's
+   CTAs (Measure All, Start Workout) were already 48px, so the new button
+   matches its neighbours rather than the sheet. Switch both to 52 together
+   if the button spec should win here. */
+.wo-ctas{display:flex;gap:var(--space-12);margin-top:8px}
+.wo-ctas .startbtn{flex:1;min-width:0;width:auto;margin-top:0}
+/* Log Workout — the SECONDARY tier from components/button.html:
+   transparent ground, 1px teal border (--border-thin), teal label at
+   p1.semibold. States are opacity only: hover .75 / active .6. */
+.logbtn{
+  flex:1;min-width:0;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  height:var(--cta-height);border:var(--border-thin) solid var(--metric-readiness);
+  border-radius:var(--radius-pill);background:transparent;color:var(--metric-readiness);
+  font-family:var(--font-text);font-size:15px;line-height:22px;font-weight:var(--weight-semibold);
+  white-space:nowrap;cursor:pointer;
+  transition:opacity var(--duration-fast) var(--ease-standard);
+}
+.logbtn .phi{color:var(--metric-readiness)}
+.logbtn:hover{opacity:.75}
+.logbtn:active{opacity:.6}
+@media (prefers-reduced-motion:reduce){.logbtn{transition:none}}
+
 /* ---- Health monitor — owner-supplied component v4 (components/
    measure-all-cell.html, 2026-08-14): five metric cards, then "Measure All"
    as a full-width pill BELOW the grid (the Start Workout pattern), then the
@@ -1237,6 +1263,164 @@ body{
 }
 #wf .picker.empty .no-results{display:block}
 #wf .picker.empty .sec-label, #wf .picker.empty .act-list{display:none}
+
+/* ── LOG WORKOUT — manual entry (owner, 2026-09-25) ────────────────────────
+   The form screen and its date / time sheet. Rows, groups, the sheet, the
+   calendar and the wheel are all lifted from the Me tab (Profile page §10b
+   and field sheet §10c) so a person who has edited their birthday or an
+   alarm meets the identical controls here. Every value reads a token. */
+#wf .lw-scroll{padding-bottom:var(--space-24)}
+
+/* the reference's info banner — a quiet card, sparkle in the brand teal */
+#wf .lw-note{
+  margin:0 var(--gutter) var(--space-12);
+  display:flex;align-items:flex-start;gap:var(--space-12);
+  padding:var(--space-16);border-radius:var(--radius-card);
+  background:var(--surface-card);
+}
+#wf .lw-note-ico{flex:none;width:20px;height:20px;color:var(--metric-readiness)}
+#wf .lw-note-ico svg{width:100%;height:100%;display:block}
+#wf .lw-note p{margin:0;font-size:13px;line-height:18px;color:var(--text-2)}
+
+/* grouped rows — the Me tab's .group / .row / .row--field */
+#wf .lw-group{
+  margin:0 var(--gutter) var(--space-24);
+  background:var(--surface-card);border-radius:var(--radius-card);overflow:hidden;
+}
+#wf .lw-row{
+  position:relative;width:100%;
+  display:flex;align-items:center;gap:var(--space-8);
+  padding:var(--space-16);border:none;background:none;cursor:pointer;
+  font-family:inherit;text-align:left;color:inherit;
+  transition:background var(--duration-fast) var(--ease-standard);
+}
+#wf .lw-row + .lw-row::after{
+  content:"";position:absolute;top:0;left:var(--space-16);right:var(--space-16);
+  height:var(--border-hairline);background:var(--divider);
+}
+#wf .lw-row:hover{background:var(--surface-raised)}
+#wf .lw-row:focus-visible{outline:var(--border-thin) solid var(--text-2);outline-offset:-2px}
+#wf .lw-row .glyph{
+  flex:none;width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  color:var(--neutral-200);
+}
+#wf .lw-row .glyph svg{width:20px;height:20px;display:block}
+#wf .lw-row .fbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-2)}
+#wf .lw-row .lab{flex:1;min-width:0;font-size:13px;line-height:18px;font-weight:var(--weight-medium);color:var(--text-1)}
+/* the trailing value: League Spartan, since it is dates and times */
+#wf .lw-row .val{
+  flex:none;font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-size:13px;line-height:18px;font-weight:var(--weight-medium);color:var(--text-2);
+}
+#wf .lw-row .caret{flex:none;width:16px;height:16px;color:var(--text-3)}
+#wf .lw-row .caret svg{width:100%;height:100%;display:block}
+/* empty activity row: the prompt reads as a prompt, in the secondary text */
+#wf .lw-act[data-empty="1"] .lab{color:var(--text-2)}
+/* the error line under a time, the same shape the Me tab uses for .why */
+#wf .lw-row .why{display:none;font-size:11px;line-height:16px;color:var(--negative-text)}
+#wf .lw-row.err .why{display:block}
+#wf .lw-row.err .val{color:var(--negative-text)}
+
+/* "Duration · 1h 00m" — a grp-note under the time group */
+#wf .lw-dur{
+  margin:calc(-1 * var(--space-16)) var(--gutter) 0;padding:0 var(--space-4);
+  font-size:11px;line-height:16px;color:var(--text-3);font-feature-settings:var(--num-features);
+}
+
+/* Save — the flow's primary button, pinned under the form like the
+   reference. Disabled = --state-inactive (0.45), per components/button.html. */
+#wf .lw-foot{flex:none;padding:var(--space-16) var(--gutter) var(--space-32)}
+#wf .lw-save{width:100%}
+#wf .lw-save[disabled]{opacity:var(--state-inactive);cursor:default}
+#wf .lw-save[disabled]:hover{background:var(--accent)}
+
+/* ---- the date / time sheet — the Me tab's field sheet, verbatim geometry */
+#wf .lw-scrim{
+  position:absolute;inset:0;z-index:75;
+  background:color-mix(in srgb,var(--neutral-900) 68%,transparent);
+  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+}
+#wf .lw-sheet{
+  position:absolute;left:var(--space-8);right:var(--space-8);bottom:var(--space-8);z-index:76;
+  background:var(--surface-card);border-radius:var(--radius-24);
+  padding:var(--space-20) var(--space-16) var(--space-16);
+}
+#wf .lw-scrim[hidden],#wf .lw-sheet[hidden],#wf .lw-sheet [hidden]{display:none}
+#wf .lw-sh-head{display:flex;align-items:center;justify-content:space-between;gap:var(--space-8)}
+#wf .lw-sh-head .t{flex:1;min-width:0;text-align:center;font-size:17px;line-height:22px;font-weight:var(--weight-semibold);color:var(--text-1)}
+/* the tick is the same neutral button as its X (Me tab, owner) */
+#wf .lw-iconbtn{
+  width:32px;height:32px;border-radius:var(--radius-full);border:0;flex:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--surface-raised);color:var(--text-1);
+  transition:background var(--duration-fast) var(--ease-standard);
+}
+#wf .lw-iconbtn:hover{background:var(--surface-fill)}
+#wf .lw-iconbtn [data-icon]{width:16px;height:16px;display:block}
+#wf .lw-iconbtn svg{width:100%;height:100%;display:block}
+#wf .lw-iconbtn[disabled]{opacity:var(--state-inactive);cursor:default}
+
+/* the scroll wheel — hours | minutes, and the calendar's month | year */
+#wf .lw-wheel{position:relative;margin-top:14px;display:flex;gap:var(--space-8);height:220px}
+#wf .lw-wheel .band{
+  position:absolute;left:0;right:0;top:88px;height:44px;border-radius:var(--radius-12);
+  background:var(--surface-raised);pointer-events:none;
+}
+#wf .lw-wheel .col{
+  flex:1;min-width:0;position:relative;z-index:1;text-align:center;
+  overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none;
+  scroll-padding-top:88px;   /* must equal .pad — see the Me tab's note */
+}
+#wf .lw-wheel .col::-webkit-scrollbar{display:none}
+#wf .lw-wheel .col:focus-visible{outline:var(--border-thin) solid var(--text-2);outline-offset:2px;border-radius:var(--radius-12)}
+#wf .lw-wheel .pad{height:88px}
+#wf .lw-wheel .opt{
+  height:44px;line-height:44px;scroll-snap-align:start;cursor:pointer;
+  font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-size:17px;font-weight:var(--weight-medium);color:var(--text-3);
+  transition:color var(--duration-fast) var(--ease-standard);
+}
+#wf .lw-wheel .opt.on{color:var(--text-1);font-weight:var(--weight-bold)}
+#wf .lw-wheel .col.words .opt{font-family:var(--font-text);font-size:15px;font-weight:var(--weight-medium)}
+#wf .lw-wheel .col.words .opt.on{font-weight:var(--weight-semibold)}
+
+/* the calendar */
+#wf .lw-cal-head{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+#wf .lw-cal-title{
+  display:flex;align-items:center;gap:6px;padding:6px var(--space-8);border:0;border-radius:10px;
+  background:none;cursor:pointer;font-family:inherit;
+  font-size:15px;line-height:22px;font-weight:var(--weight-semibold);color:var(--text-1);
+}
+#wf .lw-cal-title:hover{background:var(--surface-raised)}
+#wf .lw-cal-title [data-icon]{width:13px;height:13px;color:var(--text-3);transform:rotate(90deg);transition:transform var(--duration-base) var(--ease-standard)}
+#wf .lw-cal-head.wheel .lw-cal-title [data-icon]{transform:rotate(-90deg)}
+#wf .lw-cal-head.wheel .lw-cal-nav{visibility:hidden}
+#wf .lw-cal-title svg,#wf .lw-cal-nav svg{width:100%;height:100%;display:block}
+#wf .lw-cal-nav{display:flex;gap:6px}
+#wf .lw-cal-nav button{
+  width:32px;height:32px;border:0;border-radius:var(--radius-full);background:var(--surface-raised);
+  color:var(--text-1);cursor:pointer;display:grid;place-items:center;
+  transition:background var(--duration-fast) var(--ease-standard);
+}
+#wf .lw-cal-nav button:hover{background:var(--surface-fill)}
+#wf .lw-cal-nav button[disabled]{opacity:var(--state-inactive);cursor:default;background:var(--surface-raised)}
+#wf .lw-cal-nav [data-icon]{width:13px;height:13px;display:block}
+#wf .lw-cal-week{display:grid;grid-template-columns:repeat(7,1fr);margin-top:var(--space-12)}
+#wf .lw-cal-week span{
+  text-align:center;font-size:10px;line-height:14px;font-weight:var(--weight-medium);
+  letter-spacing:.04em;text-transform:uppercase;color:var(--text-3);
+}
+#wf .lw-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--space-2);margin-top:6px}
+#wf .lw-cal-grid .d{
+  height:38px;border:0;border-radius:var(--radius-full);background:none;cursor:pointer;
+  font-family:var(--font-number);font-feature-settings:var(--num-features);
+  font-size:13px;line-height:38px;font-weight:var(--weight-medium);color:var(--text-1);padding:0;
+}
+#wf .lw-cal-grid .d:hover{background:var(--surface-raised)}
+#wf .lw-cal-grid span.d{visibility:hidden}
+#wf .lw-cal-grid .d.sel{background:var(--metric-readiness);color:var(--on-accent);font-weight:var(--weight-bold)}
+/* a workout can't be logged in the future, so tomorrow onward is unpickable */
+#wf .lw-cal-grid .d[disabled]{color:var(--text-3);opacity:.35;cursor:default;background:none}
 
 /* ── 6. SCREEN 3 — COUNTDOWN ───────────────────────────────────────────── */
 #wf .cd{
@@ -1938,13 +2122,24 @@ body{
             </div>
           </div>
 
-          <!-- Start Workout — visual only; the workout flow isn't built.
-               Closes the Activity monitor section (owner order:
-               progress card, workouts card, then CTA). -->
-          <button class="startbtn" type="button">
-            <span class="phi" data-ph="play" data-weight="fill" style="width:16px;height:16px"></span>
-            Start Workout
-          </button>
+          <!-- Workout CTAs — closes the Activity monitor section (owner
+               order: progress card, workouts card, then CTAs).
+               Owner (2026-09-25): Start Workout shrinks to half width and a
+               "Log Workout" button sits beside it as the SECONDARY tier from
+               components/button.html (teal hairline + teal label, no fill).
+               Start Workout stays primary — one teal fill per screen section.
+               Log Workout opens the manual-entry flow inside #wf (see the
+               LOG WORKOUT section further down). -->
+          <div class="wo-ctas">
+            <button class="startbtn" type="button">
+              <span class="phi" data-ph="play" data-weight="fill" style="width:16px;height:16px"></span>
+              Start Workout
+            </button>
+            <button class="logbtn" type="button">
+              <span class="phi" data-ph="plus" style="width:16px;height:16px"></span>
+              Log Workout
+            </button>
+          </div>
 
         </div>
       </section>
@@ -2814,6 +3009,70 @@ body{
           </div>
         </section>
 
+        <!-- ── LOG WORKOUT · manual entry (owner, 2026-09-25) ──────────────
+             Opened by the Log Workout button on the Health tab. Modelled on
+             the owner's reference screenshot (another app's "Add activity"
+             form): a note, an activity row that opens Choose activity, a
+             Time section with Start / End, and a Save button that stays
+             disabled until the form is complete.
+             Differences from the reference, all deliberate:
+               • Date is its own row (owner asked for "date, time start,
+                 time finish"), rather than folded into the time pills.
+               • The reference's "Location" question is dropped — it is about
+                 where that app's strap was worn, which Pebble doesn't ask.
+               • Rows are Pebble's own grouped rows (Me tab → Profile), not
+                 the reference's pills, so this reads as the same app. -->
+        <section class="page" id="p-log">
+          <div class="pk-head">
+            <button class="icon-btn plain" type="button" id="btn-log-close" aria-label="Close">
+              <span data-icon="x"></span>
+            </button>
+            <span class="t">Log workout</span>
+          </div>
+
+          <div class="scroll lw-scroll">
+            <!-- The reference's info banner, in Pebble's voice.
+                 FLAG: placeholder copy — owner to confirm the wording. -->
+            <div class="lw-note">
+              <span class="lw-note-ico" data-icon="sparkle" data-weight="fill"></span>
+              <p>Logged workouts count toward today’s goals and help Pebble spot your future sessions automatically.</p>
+            </div>
+
+            <!-- Activity — opens the same Choose activity list as Start Workout -->
+            <div class="lw-group">
+              <button class="lw-row lw-act" type="button" id="lw-act" data-empty="1">
+                <span class="glyph" id="lw-act-glyph" data-icon="person-simple" data-weight="fill"></span>
+                <span class="lab" id="lw-act-name">Select activity</span>
+                <span class="caret" data-icon="caret-right"></span>
+              </button>
+            </div>
+
+            <div class="sec-label"><span>Time</span></div>
+            <div class="lw-group">
+              <button class="lw-row" type="button" id="lw-date">
+                <span class="fbody"><span class="lab">Date</span></span>
+                <span class="val" id="lw-date-val">Today</span>
+                <span class="caret" data-icon="caret-right"></span>
+              </button>
+              <button class="lw-row" type="button" id="lw-start">
+                <span class="fbody"><span class="lab">Start time</span><span class="why" id="lw-start-why"></span></span>
+                <span class="val" id="lw-start-val">4:53 PM</span>
+                <span class="caret" data-icon="caret-right"></span>
+              </button>
+              <button class="lw-row" type="button" id="lw-end">
+                <span class="fbody"><span class="lab">End time</span><span class="why" id="lw-end-why"></span></span>
+                <span class="val" id="lw-end-val">5:53 PM</span>
+                <span class="caret" data-icon="caret-right"></span>
+              </button>
+            </div>
+            <p class="lw-dur" id="lw-dur">Duration · 1h 00m</p>
+          </div>
+
+          <div class="lw-foot">
+            <button class="btn btn-primary lw-save" type="button" id="btn-log-save" disabled>Save</button>
+          </div>
+        </section>
+
         <!-- ── SCREEN 3 · Countdown ──────────────────────────────────────── -->
         <section class="page" id="p-countdown">
           <div class="cd">
@@ -2936,6 +3195,54 @@ body{
             <span data-icon="caret-left"></span>
           </button>
         </section>
+
+  <!-- ── LOG WORKOUT · date + time sheet ────────────────────────────────
+       The SAME field sheet the Me tab uses for date of birth and alarm
+       times (Flows for the app/Me tab/Pebble Me Tab.html §10c): cancel /
+       title / tick header, a month grid with a month + year wheel behind
+       the month name, and an hours | minutes wheel with one selection band.
+       Ported, not redesigned — only the class names are prefixed "lw-"
+       because ".picker" already means the Choose activity page in #wf. -->
+  <div class="lw-scrim" id="lw-scrim" hidden></div>
+  <div class="lw-sheet" id="lw-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="lw-sh-title">
+    <div class="lw-sh-head">
+      <button class="lw-iconbtn" id="lw-sh-cancel" type="button" aria-label="Cancel"><span data-icon="x"></span></button>
+      <div class="t" id="lw-sh-title">Date</div>
+      <button class="lw-iconbtn" id="lw-sh-ok" type="button" aria-label="Confirm"><span data-icon="check"></span></button>
+    </div>
+
+    <!-- calendar: two modes behind the month name -->
+    <div id="lw-cal" hidden>
+      <div class="lw-cal-head" id="lw-cal-head">
+        <button class="lw-cal-title" id="lw-cal-title" type="button" aria-expanded="false">
+          <span id="lw-cal-title-text">September 2026</span>
+          <span data-icon="caret-right"></span>
+        </button>
+        <div class="lw-cal-nav">
+          <button id="lw-cal-prev" type="button" aria-label="Previous month"><span data-icon="caret-left"></span></button>
+          <button id="lw-cal-next" type="button" aria-label="Next month"><span data-icon="caret-right"></span></button>
+        </div>
+      </div>
+      <div id="lw-cal-gridwrap">
+        <div class="lw-cal-week" aria-hidden="true">
+          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+        <div class="lw-cal-grid" id="lw-cal-grid" role="grid" aria-label="Days"></div>
+      </div>
+      <div class="lw-wheel" id="lw-cal-wheel" hidden>
+        <div class="band" aria-hidden="true"></div>
+        <div class="col words" id="lw-cal-months" role="listbox" aria-label="Month" tabindex="0"></div>
+        <div class="col" id="lw-cal-years" role="listbox" aria-label="Year" tabindex="0"></div>
+      </div>
+    </div>
+
+    <!-- time: hours beside minutes, one selection band -->
+    <div class="lw-wheel" id="lw-time" hidden>
+      <div class="band" aria-hidden="true"></div>
+      <div class="col" id="lw-time-h" role="listbox" aria-label="Hour" tabindex="0"></div>
+      <div class="col" id="lw-time-m" role="listbox" aria-label="Minute" tabindex="0"></div>
+    </div>
+  </div>
 
   <!-- Discard confirmation — owner copy, Cancel on the left. -->
       <div class="scrim" id="scrim" role="dialog" aria-modal="true" aria-labelledby="dlg-copy">
@@ -4369,6 +4676,7 @@ const APP_SCREEN = document.querySelector('.screen');
 /* Opening the flow from the real Start Workout button, and closing it back
    to the Health tab. The flow's own screens do the rest. */
 function openFlow(){
+  pickFor = 'start';       /* the activity list starts a workout (see LOG WORKOUT) */
   WF_ROOT.hidden = false;
   $('#search-input').value = '';
   $('#search').classList.remove('has-text');
@@ -4380,6 +4688,9 @@ function closeFlow(){
   APP_SCREEN.classList.remove('wf-on-light');
 }
 document.querySelector('.startbtn').addEventListener('click', openFlow);
+/* Log Workout opens the manual-entry form — wired in the LOG WORKOUT
+   section, once the helpers it needs exist. */
+document.querySelector('.logbtn').addEventListener('click', function(){ openLog(); });
 
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -4388,6 +4699,9 @@ document.querySelector('.startbtn').addEventListener('click', openFlow);
    data-weight="fill"> found in the DOM.
    ══════════════════════════════════════════════════════════════════════════ */
 const ICONS = {"regular":{"x":"<path d=\"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z\"/>","magnifying-glass":"<path d=\"M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z\"/>","caret-right":"<path d=\"M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z\"/>","caret-left":"<path d=\"M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z\"/>","play":"<path d=\"M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z\"/>","pause":"<path d=\"M200,32H160a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16h40a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm0,176H160V48h40ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Zm0,176H56V48H96Z\"/>","trash":"<path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z\"/>","floppy-disk":"<path d=\"M219.31,72,184,36.69A15.86,15.86,0,0,0,172.69,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V83.31A15.86,15.86,0,0,0,219.31,72ZM168,208H88V152h80Zm40,0H184V152a16,16,0,0,0-16-16H88a16,16,0,0,0-16,16v56H48V48H172.69L208,83.31ZM160,72a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h56A8,8,0,0,1,160,72Z\"/>","export":"<path d=\"M216,112v96a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V112A16,16,0,0,1,56,96H80a8,8,0,0,1,0,16H56v96H200V112H176a8,8,0,0,1,0-16h24A16,16,0,0,1,216,112ZM93.66,69.66,120,43.31V136a8,8,0,0,0,16,0V43.31l26.34,26.35a8,8,0,0,0,11.32-11.32l-40-40a8,8,0,0,0-11.32,0l-40,40A8,8,0,0,0,93.66,69.66Z\"/>","sparkle":"<path d=\"M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z\"/>","navigation-arrow":"<path d=\"M237.33,106.21,61.41,41l-.16-.05A16,16,0,0,0,40.9,61.25a1,1,0,0,0,.05.16l65.26,175.92A15.77,15.77,0,0,0,121.28,248h.3a15.77,15.77,0,0,0,15-11.29l.06-.2,21.84-78,78-21.84.2-.06a16,16,0,0,0,.62-30.38ZM149.84,144.3a8,8,0,0,0-5.54,5.54L121.3,232l-.06-.17L56,56l175.82,65.22.16.06Z\"/>","clock":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z\"/>","heart":"<path d=\"M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,228.66,240,172,240,102A62.07,62.07,0,0,0,178,40ZM128,214.8C109.74,204.16,32,155.69,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,155.61,146.24,204.15,128,214.8Z\"/>","fire":"<path d=\"M183.89,153.34a57.6,57.6,0,0,1-46.56,46.55A8.75,8.75,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68ZM216,144a88,88,0,0,1-176,0c0-27.92,11-56.47,32.66-84.85a8,8,0,0,1,11.93-.89l24.12,23.41,22-60.41a8,8,0,0,1,12.63-3.41C165.21,36,216,84.55,216,144Zm-16,0c0-46.09-35.79-85.92-58.21-106.33L119.52,98.74a8,8,0,0,1-13.09,3L80.06,76.16C64.09,99.21,56,122,56,144a72,72,0,0,0,144,0Z\"/>","gauge":"<path d=\"M207.06,72.67A111.24,111.24,0,0,0,128,40h-.4C66.07,40.21,16,91,16,153.13V176a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V152A111.25,111.25,0,0,0,207.06,72.67ZM224,176H119.71l54.76-75.3a8,8,0,0,0-12.94-9.42L99.92,176H32V153.13c0-3.08.15-6.12.43-9.13H56a8,8,0,0,0,0-16H35.27c10.32-38.86,44-68.24,84.73-71.66V80a8,8,0,0,0,16,0V56.33A96.14,96.14,0,0,1,221,128H200a8,8,0,0,0,0,16h23.67c.21,2.65.33,5.31.33,8Z\"/>","speedometer":"<path d=\"M114.34,154.34l96-96a8,8,0,0,1,11.32,11.32l-96,96a8,8,0,0,1-11.32-11.32ZM128,88a63.9,63.9,0,0,1,20.44,3.33,8,8,0,1,0,5.11-15.16A80,80,0,0,0,48.49,160.88,8,8,0,0,0,56.43,168c.29,0,.59,0,.89-.05a8,8,0,0,0,7.07-8.83A64.92,64.92,0,0,1,64,152,64.07,64.07,0,0,1,128,88Zm99.74,13a8,8,0,0,0-14.24,7.3,96.27,96.27,0,0,1,5,75.71l-181.1-.07A96.24,96.24,0,0,1,128,56h.88a95,95,0,0,1,42.82,10.5A8,8,0,1,0,179,52.27a112,112,0,0,0-156.66,137A16.07,16.07,0,0,0,37.46,200H218.53a16,16,0,0,0,15.11-10.71,112.35,112.35,0,0,0-5.9-88.3Z\"/>","ruler":"<path d=\"M235.32,73.37,182.63,20.69a16,16,0,0,0-22.63,0L20.68,160a16,16,0,0,0,0,22.63l52.69,52.68a16,16,0,0,0,22.63,0L235.32,96A16,16,0,0,0,235.32,73.37ZM84.68,224,32,171.31l32-32,26.34,26.35a8,8,0,0,0,11.32-11.32L75.31,128,96,107.31l26.34,26.35a8,8,0,0,0,11.32-11.32L107.31,96,128,75.31l26.34,26.35a8,8,0,0,0,11.32-11.32L139.31,64l32-32L224,84.69Z\"/>","map-pin":"<path d=\"M128,64a40,40,0,1,0,40,40A40,40,0,0,0,128,64Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,128Zm0-112a88.1,88.1,0,0,0-88,88c0,31.4,14.51,64.68,42,96.25a254.19,254.19,0,0,0,41.45,38.3,8,8,0,0,0,9.18,0A254.19,254.19,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25A88.1,88.1,0,0,0,128,16Zm0,206c-16.53-13-72-60.75-72-118a72,72,0,0,1,144,0C200,161.23,144.53,209,128,222Z\"/>","timer":"<path d=\"M128,40a96,96,0,1,0,96,96A96.11,96.11,0,0,0,128,40Zm0,176a80,80,0,1,1,80-80A80.09,80.09,0,0,1,128,216ZM173.66,90.34a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32l40-40A8,8,0,0,1,173.66,90.34ZM96,16a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,16Z\"/>","house":"<path d=\"M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z\"/>","sneaker-move":"<path d=\"M231.16,166.63l-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-8-8,48.05,48.05,0,0,1-48-48,8,8,0,0,0-12.83-6.37L30.13,76l-.2.16a16,16,0,0,0-1.24,23.75L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63ZM224,200H151.37L40,88.63l12.87-9.76,38.79,38.79A8,8,0,0,0,103,106.34L65.74,69.11l40-30.31A64.15,64.15,0,0,0,160,87.5v21.89a63.65,63.65,0,0,0,35.38,57.24L224,180.94ZM70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm40,24a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16h54.8A8,8,0,0,1,110.8,208Z\"/>","moon":"<path d=\"M233.54,142.23a8,8,0,0,0-8-2,88.08,88.08,0,0,1-109.8-109.8,8,8,0,0,0-10-10,104.84,104.84,0,0,0-52.91,37A104,104,0,0,0,136,224a103.09,103.09,0,0,0,62.52-20.88,104.84,104.84,0,0,0,37-52.91A8,8,0,0,0,233.54,142.23ZM188.9,190.34A88,88,0,0,1,65.66,67.11a89,89,0,0,1,31.4-26A106,106,0,0,0,96,56,104.11,104.11,0,0,0,200,160a106,106,0,0,0,14.92-1.06A89,89,0,0,1,188.9,190.34Z\"/>","user":"<path d=\"M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z\"/>","barbell":"<path d=\"M248,120h-8V88a16,16,0,0,0-16-16H208V64a16,16,0,0,0-16-16H168a16,16,0,0,0-16,16v56H104V64A16,16,0,0,0,88,48H64A16,16,0,0,0,48,64v8H32A16,16,0,0,0,16,88v32H8a8,8,0,0,0,0,16h8v32a16,16,0,0,0,16,16H48v8a16,16,0,0,0,16,16H88a16,16,0,0,0,16-16V136h48v56a16,16,0,0,0,16,16h24a16,16,0,0,0,16-16v-8h16a16,16,0,0,0,16-16V136h8a8,8,0,0,0,0-16ZM32,168V88H48v80Zm56,24H64V64H88V192Zm104,0H168V64h24V175.82c0,.06,0,.12,0,.18s0,.12,0,.18V192Zm32-24H208V88h16Z\"/>","person-arms-spread":"<path d=\"M160,40a32,32,0,1,0-32,32A32,32,0,0,0,160,40ZM128,56a16,16,0,1,1,16-16A16,16,0,0,1,128,56ZM231.5,87.71A19.62,19.62,0,0,0,212,72H44a20,20,0,0,0-8.38,38.16l.13,0,50.75,22.35-21,79.72A20,20,0,0,0,102,228.8l26-44.87,26,44.87a20,20,0,0,0,36.4-16.52l-21-79.72,50.75-22.35.13,0A19.64,19.64,0,0,0,231.5,87.71Zm-17.8,7.9-56.93,25.06a8,8,0,0,0-4.51,9.36L175.13,217a7,7,0,0,0,.49,1.35,4,4,0,0,1-5,5.45,4,4,0,0,1-2.25-2.07,6.31,6.31,0,0,0-.34-.63L134.92,164a8,8,0,0,0-13.84,0L88,221.05a6.31,6.31,0,0,0-.34.63,4,4,0,0,1-2.25,2.07,4,4,0,0,1-5-5.45,7,7,0,0,0,.49-1.35L103.74,130a8,8,0,0,0-4.51-9.36L42.3,95.61A4,4,0,0,1,44,88H212a4,4,0,0,1,1.73,7.61Z\"/>","person-simple-walk":"<path d=\"M152,80a32,32,0,1,0-32-32A32,32,0,0,0,152,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,152,32Zm64,112a8,8,0,0,1-8,8c-35.31,0-52.95-17.81-67.12-32.12-2.74-2.77-5.36-5.4-8-7.84l-13.43,30.88,37.2,26.57A8,8,0,0,1,160,176v56a8,8,0,0,1-16,0V180.12l-31.07-22.2L79.34,235.19A8,8,0,0,1,72,240a7.84,7.84,0,0,1-3.19-.67,8,8,0,0,1-4.15-10.52l54.08-124.37c-9.31-1.65-20.92,1.2-34.7,8.58a163.88,163.88,0,0,0-30.57,21.77,8,8,0,0,1-10.95-11.66c2.5-2.35,61.69-57.23,98.72-25.08,3.83,3.32,7.48,7,11,10.57C166.19,122.7,179.36,136,208,136A8,8,0,0,1,216,144Z\"/>","person-simple-run":"<path d=\"M152,88a32,32,0,1,0-32-32A32,32,0,0,0,152,88Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,152,40Zm67.31,100.68c-.61.28-7.49,3.28-19.67,3.28-13.85,0-34.55-3.88-60.69-20a169.31,169.31,0,0,1-15.41,32.34,104.29,104.29,0,0,1,31.31,15.81C173.92,186.65,184,207.35,184,232a8,8,0,0,1-16,0c0-41.7-34.69-56.71-54.14-61.85-.55.7-1.12,1.41-1.69,2.1-19.64,23.8-44.25,36.18-71.63,36.18A92.29,92.29,0,0,1,31.2,208,8,8,0,0,1,32.8,192c25.92,2.58,48.47-7.49,67-30,12.49-15.14,21-33.61,25.25-47C86.13,92.35,61.27,111.63,61,111.84A8,8,0,1,1,51,99.36c1.5-1.2,37.22-29,89.51,6.57,45.47,30.91,71.93,20.31,72.18,20.19a8,8,0,1,1,6.63,14.56Z\"/>","person-simple-bike":"<path d=\"M164,80a28,28,0,1,0-28-28A28,28,0,0,0,164,80Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,164,40Zm36,96a40,40,0,1,0,40,40A40,40,0,0,0,200,136Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,200,200ZM56,136a40,40,0,1,0,40,40A40,40,0,0,0,56,136Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,56,200Zm136-80H152a8,8,0,0,1-5.66-2.34L120,91.31,99.31,112l34.35,34.34A8,8,0,0,1,136,152v48a8,8,0,0,1-16,0V155.31L82.34,117.66a8,8,0,0,1,0-11.32l32-32a8,8,0,0,1,11.32,0L155.31,104H192a8,8,0,0,1,0,16Z\"/>","person-simple-hike":"<path d=\"M152,80a32,32,0,1,0-32-32A32,32,0,0,0,152,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,152,32Zm48,112v88a8,8,0,0,1-16,0V151.66c-25.75-2.25-34.35-15.52-42-27.36-2.85-4.39-5.56-8.57-9.13-12.19l-13.4,30.81,37.2,26.57A8,8,0,0,1,160,176v56a8,8,0,0,1-16,0V180.12l-31.07-22.2L79.34,235.19A8,8,0,0,1,72,240a7.84,7.84,0,0,1-3.19-.67,8,8,0,0,1-4.14-10.52L122.19,96.5a8,8,0,0,1,11-3.92,40.92,40.92,0,0,1,8,5.47c6.37,5.52,10.51,11.91,14.16,17.55,7.68,11.84,13.22,20.4,36.6,20.4A8,8,0,0,1,200,144ZM72,152a8,8,0,0,0,7.35-4.85l24-56a8,8,0,0,0-4.2-10.5l-28-12a8,8,0,0,0-10.5,4.2l-24,56a8,8,0,0,0,4.2,10.5l28,12A8,8,0,0,0,72,152ZM54.51,127.8,72.2,86.5l13.3,5.7L67.8,133.49Z\"/>","lightning":"<path d=\"M215.79,118.17a8,8,0,0,0-5-5.66L153.18,90.9l14.66-73.33a8,8,0,0,0-13.69-7l-112,120a8,8,0,0,0,3,13l57.63,21.61L88.16,238.43a8,8,0,0,0,13.69,7l112-120A8,8,0,0,0,215.79,118.17ZM109.37,214l10.47-52.38a8,8,0,0,0-5-9.06L62,132.71l84.62-90.66L136.16,94.43a8,8,0,0,0,5,9.06l52.8,19.8Z\"/>","person-simple-tai-chi":"<path d=\"M128,80A32,32,0,1,0,96,48,32,32,0,0,0,128,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,128,32Zm96,72a8,8,0,0,1-8,8H136v26.72l51.15,21.93A8,8,0,0,1,192,168v48a8,8,0,0,1-16,0V173.28l-46.45-19.91L53.35,222a8,8,0,1,1-10.7-11.9L120,140.44V112H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,104Z\"/>","person-simple":"<path d=\"M128,80A32,32,0,1,0,96,48,32,32,0,0,0,128,80Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,128,32ZM230.86,132.12a8,8,0,0,1-11,2.74c-.35-.21-35.11-20.59-83.88-22.67V149l62,69.73a8,8,0,1,1-12,10.62L128,164,70,229.31a8,8,0,1,1-12-10.62L120,149V112.18c-49,2.08-83.52,22.46-83.88,22.68a8,8,0,1,1-8.23-13.72C29.6,120.11,70.45,96,128,96s98.4,24.11,100.12,25.14A8,8,0,0,1,230.86,132.12Z\"/>","boat":"<path d=\"M221.06,110.59,208,106.23V56a16,16,0,0,0-16-16H136V24a8,8,0,0,0-16,0V40H64A16,16,0,0,0,48,56v50.23l-13.06,4.36A16,16,0,0,0,24,125.77V152c0,61.54,97.89,86.72,102.06,87.76a8,8,0,0,0,3.88,0C134.11,238.72,232,213.54,232,152V125.77A16,16,0,0,0,221.06,110.59ZM64,56H192v44.9L130.53,80.41a8,8,0,0,0-5.06,0L64,100.9Zm152,96c0,24.91-23.68,43-43.55,53.83A228.13,228.13,0,0,1,128,223.72,226.85,226.85,0,0,1,83.81,206C47.6,186.35,40,165.79,40,152V125.77L120,99.1V168a8,8,0,0,0,16,0V99.1l80,26.67Z\"/>","person-simple-swim":"<path d=\"M176,104a32,32,0,1,0-32-32A32,32,0,0,0,176,104Zm0-48a16,16,0,1,1-16,16A16,16,0,0,1,176,56Zm46.16,129.24a8,8,0,0,1-1,11.26c-17.36,14.39-32.86,19.5-47,19.5-18.58,0-34.82-8.82-49.93-17-25.35-13.76-47.24-25.65-79.07.74a8,8,0,1,1-10.22-12.31c40.17-33.29,70.32-16.93,96.93-2.49,25.35,13.77,47.24,25.65,79.07-.74A8,8,0,0,1,222.16,185.24ZM34.89,147.42a8,8,0,1,0,10.22,12.31c31.83-26.38,53.72-14.5,79.07-.74,15.11,8.2,31.35,17,49.93,17,14.14,0,29.64-5.11,47-19.5a8,8,0,1,0-10.22-12.31,75.79,75.79,0,0,1-19.28,12.06l-53.84-53.82A103.34,103.34,0,0,0,64.24,72H40a8,8,0,0,0,0,16H64.24a87.66,87.66,0,0,1,41.88,10.56L76.49,128.17C63.82,129.35,50.07,134.84,34.89,147.42Zm91.57-33.67,46.13,46.12c-14-.43-26.88-7.39-40.77-14.93-10.75-5.84-22.09-12-34.42-15.05l22.26-22.26A87.14,87.14,0,0,1,126.46,113.75Z\"/>","stairs":"<path d=\"M200,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V40A16,16,0,0,0,200,24ZM152,144h48v24H112V144Zm8-16V104h40v24Zm40-88V88H152a8,8,0,0,0-8,8v32H104a8,8,0,0,0-8,8v32H56V40Zm0,176H56V184H200v32Z\"/>","person-simple-circle":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM112,80a16,16,0,1,1,16,16A16,16,0,0,1,112,80Zm72,32a8,8,0,0,1-8,8H136v13.58l30.66,46a8,8,0,0,1-13.32,8.88l-25.34-38-25.34,38a8,8,0,1,1-13.32-8.88l30.66-46V120H80a8,8,0,0,1,0-16h96A8,8,0,0,1,184,112Z\"/>","mountains":"<path d=\"M164,80a28,28,0,1,0-28-28A28,28,0,0,0,164,80Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,164,40Zm90.88,155.92-54.56-92.08A15.87,15.87,0,0,0,186.55,96h0a15.85,15.85,0,0,0-13.76,7.84L146.63,148l-44.84-76.1a16,16,0,0,0-27.58,0L1.11,195.94A8,8,0,0,0,8,208H248a8,8,0,0,0,6.88-12.08ZM88,80l23.57,40H64.43ZM22,192l33-56h66l18.74,31.8,0,0L154,192Zm150.57,0-16.66-28.28L186.55,112,234,192Z\"/>","boxing-glove":"<path d=\"M168,16H120A56.06,56.06,0,0,0,64,72H56a32,32,0,0,0-32,32v29.19a16.09,16.09,0,0,0,3.51,10,8,8,0,0,0,.62.69L64,179.34V216a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V177.12l15.38-53.85a15.89,15.89,0,0,0,.62-4.39V72A56.06,56.06,0,0,0,168,16Zm40,102.88L192.31,173.8A7.85,7.85,0,0,0,192,176v40H80V176a8,8,0,0,0-2.38-5.69L40,133.12V104A16,16,0,0,1,56,88h8v16a8,8,0,0,0,16,0V72a40,40,0,0,1,40-40h48a40,40,0,0,1,40,40Zm-36.42,48.28L153.89,176l17.69,8.84a8,8,0,0,1-7.16,14.32L136,184.94l-28.42,14.22a8,8,0,1,1-7.16-14.32L118.11,176l-17.69-8.84a8,8,0,1,1,7.16-14.32L136,167.06l28.42-14.22a8,8,0,1,1,7.16,14.32Z\"/>","basketball":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM60,72.17A87.2,87.2,0,0,1,79.63,120H40.37A87.54,87.54,0,0,1,60,72.17ZM136,120V40.37a87.59,87.59,0,0,1,48.68,20.37A103.06,103.06,0,0,0,160.3,120Zm-16,0H95.7A103.06,103.06,0,0,0,71.32,60.74,87.59,87.59,0,0,1,120,40.37ZM79.63,136A87.2,87.2,0,0,1,60,183.83,87.54,87.54,0,0,1,40.37,136Zm16.07,0H120v79.63a87.59,87.59,0,0,1-48.68-20.37A103.09,103.09,0,0,0,95.7,136Zm40.3,0h24.3a103.09,103.09,0,0,0,24.38,59.26A87.59,87.59,0,0,1,136,215.63Zm40.37,0h39.26A87.54,87.54,0,0,1,196,183.83,87.2,87.2,0,0,1,176.37,136Zm0-16A87.2,87.2,0,0,1,196,72.17,87.54,87.54,0,0,1,215.63,120Z\"/>","soccer-ball":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm76.52,147.42H170.9l-9.26-12.76,12.63-36.78,15-4.89,26.24,20.13A87.38,87.38,0,0,1,204.52,171.42Zm-164-34.3L66.71,117l15,4.89,12.63,36.78L85.1,171.42H51.48A87.38,87.38,0,0,1,40.47,137.12Zm10-50.64,5.51,18.6L40.71,116.77A87.33,87.33,0,0,1,50.43,86.48ZM109,152,97.54,118.65,128,97.71l30.46,20.94L147,152Zm91.07-46.92,5.51-18.6a87.33,87.33,0,0,1,9.72,30.29Zm-6.2-35.38-9.51,32.08-15.07,4.89L136,83.79V68.21l29.09-20A88.58,88.58,0,0,1,193.86,69.7ZM146.07,41.87,128,54.29,109.93,41.87a88.24,88.24,0,0,1,36.14,0ZM90.91,48.21l29.09,20V83.79L86.72,106.67l-15.07-4.89L62.14,69.7A88.58,88.58,0,0,1,90.91,48.21ZM63.15,187.42H83.52l7.17,20.27A88.4,88.4,0,0,1,63.15,187.42ZM110,214.13,98.12,180.71,107.35,168h41.3l9.23,12.71-11.83,33.42a88,88,0,0,1-36.1,0Zm55.36-6.44,7.17-20.27h20.37A88.4,88.4,0,0,1,165.31,207.69Z\"/>","tennis-ball":"<path d=\"M201.57,54.46a104,104,0,1,0,0,147.08A103.4,103.4,0,0,0,201.57,54.46ZM65.75,65.77a87.63,87.63,0,0,1,53.66-25.31A87.31,87.31,0,0,1,94,94.06a87.42,87.42,0,0,1-53.62,25.35A87.58,87.58,0,0,1,65.75,65.77ZM40.33,135.48a103.29,103.29,0,0,0,65-30.11,103.24,103.24,0,0,0,30.13-65,87.78,87.78,0,0,1,80.18,80.14,104,104,0,0,0-95.16,95.1,87.78,87.78,0,0,1-80.18-80.14Zm149.92,54.75a87.69,87.69,0,0,1-53.66,25.31,88,88,0,0,1,79-78.95A87.58,87.58,0,0,1,190.25,190.23Z\"/>","ping-pong":"<path d=\"M240,196a16,16,0,0,0-6.65-11.7l-38-27.15,17-16.95a39.67,39.67,0,0,0,11-35.79,99.52,99.52,0,0,0-35.4-57.89A101.93,101.93,0,0,0,122.58,24,100.29,100.29,0,0,0,24,122.58a102.12,102.12,0,0,0,22.55,65.28,99.52,99.52,0,0,0,57.89,35.4,39.68,39.68,0,0,0,35.79-11l16.95-17,27.15,38A16,16,0,0,0,196,240c.44,0,.88.05,1.32.05a16,16,0,0,0,11.31-4.69l26.64-26.64A16,16,0,0,0,240,196ZM59,177.83a86.09,86.09,0,0,1-19-55A84.27,84.27,0,0,1,122.8,40a86.28,86.28,0,0,1,55,19A85.08,85.08,0,0,1,196.58,80.1L80.1,196.58A85.08,85.08,0,0,1,59,177.83ZM197.35,224l-32.63-45.69a8,8,0,0,0-5.85-3.32q-.33,0-.66,0a8,8,0,0,0-5.66,2.34l-23.63,23.63a23.68,23.68,0,0,1-21.36,6.63,80.3,80.3,0,0,1-12.3-3.5l108.8-108.8a80.63,80.63,0,0,1,3.5,12.3,23.67,23.67,0,0,1-6.63,21.36L177.3,152.55a8,8,0,0,0,1,12.17L224,197.35Z\"/>","racquet":"<path d=\"M230,26.05C202-1.88,151.53,3.16,117.4,37.3c-31.79,31.79-38.33,77.77-16.51,106.49L71.33,173.35l-.68-.68a16,16,0,0,0-22.64,0L20.69,200a16,16,0,0,0,0,22.64l12.69,12.69a16,16,0,0,0,22.63,0h0L83.34,208a16,16,0,0,0,0-22.63l-.69-.69,29.56-29.56c11.29,8.58,25.24,12.79,40,12.79,22.72,0,47.25-10,66.54-29.3C252.83,104.47,257.88,54,230,26.05ZM44.7,224,32,211.31,59.33,184l6.33,6.34h0L72,196.67ZM224.23,104H200.06v-32h32A72.45,72.45,0,0,1,224.23,104ZM136,149.61A44.15,44.15,0,0,1,106.39,120H136ZM104,104a72.24,72.24,0,0,1,7.86-32H136v32Zm48-32h32v32h-32Zm77.67-16H200.06V26.28a44.23,44.23,0,0,1,29.66,29.66Zm-45.82-32h.16v32h-32V31.76A72.47,72.47,0,0,1,183.9,23.9ZM136,42.06V55.94H122.16a89.72,89.72,0,0,1,6.56-7.32A93.17,93.17,0,0,1,136,42.06Zm16,109.92V120h32v24.16A72.24,72.24,0,0,1,152.05,152Zm48-18.14V120H214a91.62,91.62,0,0,1-6.56,7.32A89.64,89.64,0,0,1,200.06,133.84Z\"/>","cricket":"<path d=\"M243.31,81.37,190.63,28.69a16,16,0,0,0-22.63,0L60.69,136a16,16,0,0,0,0,22.63l20.68,20.68-47,47a8,8,0,0,0,11.32,11.32l47-47,20.68,20.68a16,16,0,0,0,22.63,0L243.31,104a16,16,0,0,0,0-22.63ZM124.69,200,104,179.31l29.66-29.65a8,8,0,0,0-11.32-11.32L92.69,168,72,147.31,107.31,112H160v52.69ZM232,92.69l-56,56V104a8,8,0,0,0-8-8H123.31l56-56L232,92.68ZM60,88A28,28,0,1,0,32,60,28,28,0,0,0,60,88Zm0-40A12,12,0,1,1,48,60,12,12,0,0,1,60,48Z\"/>","music-notes":"<path d=\"M212.92,17.69a8,8,0,0,0-6.86-1.45l-128,32A8,8,0,0,0,72,56V166.08A36,36,0,1,0,88,196V110.25l112-28v51.83A36,36,0,1,0,216,164V24A8,8,0,0,0,212.92,17.69ZM52,216a20,20,0,1,1,20-20A20,20,0,0,1,52,216ZM88,93.75V62.25l112-28v31.5ZM180,184a20,20,0,1,1,20-20A20,20,0,0,1,180,184Z\"/>","flower-lotus":"<path d=\"M245.83,121.63a15.53,15.53,0,0,0-9.52-7.33,73.51,73.51,0,0,0-22.17-2.22c4-19.85,1-35.55-2.06-44.86a16.15,16.15,0,0,0-18.79-10.88,85.53,85.53,0,0,0-28.55,12.12,94.58,94.58,0,0,0-27.11-33.25,16.05,16.05,0,0,0-19.26,0A94.48,94.48,0,0,0,91.26,68.46,85.53,85.53,0,0,0,62.71,56.34,16.15,16.15,0,0,0,43.92,67.22c-3,9.31-6,25-2.06,44.86a73.51,73.51,0,0,0-22.17,2.22,15.53,15.53,0,0,0-9.52,7.33,16,16,0,0,0-1.6,12.27c3.39,12.57,13.8,36.48,45.33,55.32S113.13,208,128.05,208s42.67,0,74-18.78c31.53-18.84,41.94-42.75,45.33-55.32A16,16,0,0,0,245.83,121.63ZM59.14,72.14a.2.2,0,0,1,.23-.15A70.43,70.43,0,0,1,85.18,83.66,118.65,118.65,0,0,0,80,119.17c0,18.74,3.77,34,9.11,46.28A123.59,123.59,0,0,1,69.57,140C51.55,108.62,55.3,84,59.14,72.14Zm3,103.35C35.47,159.57,26.82,140.05,24,129.7a59.82,59.82,0,0,1,22.5-1.17,129.08,129.08,0,0,0,9.15,19.41,142.28,142.28,0,0,0,34,39.56A114.92,114.92,0,0,1,62.1,175.49ZM128,190.4c-9.33-6.94-32-28.23-32-71.23C96,76.7,118.38,55.24,128,48c9.62,7.26,32,28.72,32,71.19C160,162.17,137.33,183.46,128,190.4ZM170.82,83.66A70.43,70.43,0,0,1,196.63,72a.2.2,0,0,1,.23.15C200.7,84,204.45,108.62,186.43,140a123.32,123.32,0,0,1-19.54,25.48c5.34-12.26,9.11-27.54,9.11-46.28A118.65,118.65,0,0,0,170.82,83.66ZM232,129.72c-2.77,10.25-11.4,29.81-38.09,45.77a114.92,114.92,0,0,1-27.55,12,142.28,142.28,0,0,0,34-39.56,129.08,129.08,0,0,0,9.15-19.41A59.69,59.69,0,0,1,232,129.71Z\"/>","person-simple-ski":"<path d=\"M172,88a28,28,0,1,0-28-28A28,28,0,0,0,172,88Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,172,48ZM32.32,77.76a8,8,0,0,1,9.92-5.44L112,92.67l10.32-10.33a8,8,0,0,1,11.32,0L163.31,112H200a8,8,0,0,1,0,16H160a8,8,0,0,1-5.66-2.34L148.73,120l-111-32.36A8,8,0,0,1,32.32,77.76ZM236.44,204.24a69.78,69.78,0,0,1-58.37,8.95L21.77,167.67a8,8,0,1,1,4.47-15.36l76,22.13L128.73,148,85.8,135.69a8,8,0,0,1,4.4-15.39l56,16a8,8,0,0,1,3.46,13.35l-29.9,29.9,62.79,18.28a53.78,53.78,0,0,0,45-6.9,8,8,0,1,1,8.88,13.31Z\"/>","person-simple-snowboard":"<path d=\"M164,80a28,28,0,1,0-28-28A28,28,0,0,0,164,80Zm0-40a12,12,0,1,1-12,12A12,12,0,0,1,164,40Zm54.25,72.32-136-40a8,8,0,1,0-4.52,15.35l40.85,12L85.07,150,40.34,137a25.18,25.18,0,1,0-14.13,48.34L183.65,231a25.88,25.88,0,0,0,7.14,1,25.17,25.17,0,0,0,7-49.36l-50.89-14.75,19.75-29.44a8,8,0,0,0-4.42-12.14l-35.33-10.23,7.78-11.67,79.07,23.26a8,8,0,0,0,4.51-15.35ZM200,206.81a9.07,9.07,0,0,1-3.67,7.3,9.27,9.27,0,0,1-8.22,1.5L30.67,170a9.24,9.24,0,0,1-6.67-8.8,9.06,9.06,0,0,1,3.66-7.3,9.26,9.26,0,0,1,8.23-1.5L193.33,198A9.23,9.23,0,0,1,200,206.81Zm-52.75-68.18-16.49,24.59-29.58-8.58,16.4-24.6Z\"/>","share-network":"<path d=\"M176,160a39.89,39.89,0,0,0-28.62,12.09l-46.1-29.63a39.8,39.8,0,0,0,0-28.92l46.1-29.63a40,40,0,1,0-8.66-13.45l-46.1,29.63a40,40,0,1,0,0,55.82l46.1,29.63A40,40,0,1,0,176,160Zm0-128a24,24,0,1,1-24,24A24,24,0,0,1,176,32ZM64,152a24,24,0,1,1,24-24A24,24,0,0,1,64,152Zm112,72a24,24,0,1,1,24-24A24,24,0,0,1,176,224Z\"/>"},"fill":{"play":"<path d=\"M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z\"/>","pause":"<path d=\"M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z\"/>","trash":"<path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM112,168a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm0-120H96V40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z\"/>","floppy-disk":"<path d=\"M219.31,72,184,36.69A15.86,15.86,0,0,0,172.69,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V83.31A15.86,15.86,0,0,0,219.31,72ZM208,208H184V152a16,16,0,0,0-16-16H88a16,16,0,0,0-16,16v56H48V48H172.69L208,83.31ZM160,72a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h56A8,8,0,0,1,160,72Z\"/>","sparkle":"<path d=\"M208,144a15.78,15.78,0,0,1-10.42,14.94L146,178l-19,51.62a15.92,15.92,0,0,1-29.88,0L78,178l-51.62-19a15.92,15.92,0,0,1,0-29.88L78,110l19-51.62a15.92,15.92,0,0,1,29.88,0L146,110l51.62,19A15.78,15.78,0,0,1,208,144ZM152,48h16V64a8,8,0,0,0,16,0V48h16a8,8,0,0,0,0-16H184V16a8,8,0,0,0-16,0V32H152a8,8,0,0,0,0,16Zm88,32h-8V72a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0V96h8a8,8,0,0,0,0-16Z\"/>","navigation-arrow":"<path d=\"M248,121.58a15.76,15.76,0,0,1-11.29,15l-.2.06-78,21.84-21.84,78-.06.2a15.77,15.77,0,0,1-15,11.29h-.3a15.77,15.77,0,0,1-15.07-10.67L41,61.41a1,1,0,0,1-.05-.16A16,16,0,0,1,61.25,40.9l.16.05,175.92,65.26A15.78,15.78,0,0,1,248,121.58Z\"/>","heart":"<path d=\"M240,102c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,228.66,16,172,16,102A62.07,62.07,0,0,1,78,40c20.65,0,38.73,8.88,50,23.89C139.27,48.88,157.35,40,178,40A62.07,62.07,0,0,1,240,102Z\"/>","fire":"<path d=\"M143.38,17.85a8,8,0,0,0-12.63,3.41l-22,60.41L84.59,58.26a8,8,0,0,0-11.93.89C51,87.53,40,116.08,40,144a88,88,0,0,0,176,0C216,84.55,165.21,36,143.38,17.85Zm40.51,135.49a57.6,57.6,0,0,1-46.56,46.55A7.65,7.65,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z\"/>","house":"<path d=\"M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z\"/>","sneaker-move":"<path d=\"M70.8,184H32a8,8,0,0,1,0-16H70.8a8,8,0,1,1,0,16Zm32,16H48a8,8,0,0,0,0,16h54.8a8,8,0,1,0,0-16Zm128.36-33.37-28.63-14.31A47.74,47.74,0,0,1,176,109.39V80a8,8,0,0,0-7.93-8A48.05,48.05,0,0,1,120,24.07a8,8,0,0,0-12.83-6.44L45.11,64.68a4,4,0,0,0-.41,6l51.44,51.44a8.19,8.19,0,0,1,.6,11.09,8,8,0,0,1-11.71.43l-53-53a4,4,0,0,0-6.44,1.09,16,16,0,0,0,3.12,18.22L142.4,213.66a8,8,0,0,0,5.66,2.34H224a16,16,0,0,0,16-16V180.94A15.92,15.92,0,0,0,231.16,166.63Z\"/>","moon":"<path d=\"M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z\"/>","user":"<path d=\"M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z\"/>","barbell":"<path d=\"M200,64V192a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V136H104v56a16,16,0,0,1-16,16H72a16,16,0,0,1-16-16V64A16,16,0,0,1,72,48H88a16,16,0,0,1,16,16v56h48V64a16,16,0,0,1,16-16h16A16,16,0,0,1,200,64ZM36,72H32A16,16,0,0,0,16,88v32H8.27A8.18,8.18,0,0,0,0,127.47,8,8,0,0,0,8,136h8v32a16,16,0,0,0,16,16h4a4,4,0,0,0,4-4V76A4,4,0,0,0,36,72Zm220,55.47a8.18,8.18,0,0,0-8.25-7.47H240V88a16,16,0,0,0-16-16h-4a4,4,0,0,0-4,4V180a4,4,0,0,0,4,4h4a16,16,0,0,0,16-16V136h8A8,8,0,0,0,256,127.47Z\"/>","person-simple-run":"<path d=\"M120,56a32,32,0,1,1,32,32A32,32,0,0,1,120,56Zm103.28,74.08a8,8,0,0,0-10.6-4c-.25.12-26.71,10.72-72.18-20.19-52.29-35.54-88-7.77-89.51-6.57a8,8,0,1,0,10,12.48c.26-.21,25.12-19.5,64.07,3.27-4.25,13.35-12.76,31.82-25.25,47-18.56,22.48-41.11,32.56-67,30A8,8,0,0,0,31.2,208a92.29,92.29,0,0,0,9.34.47c27.38,0,52-12.38,71.63-36.18.57-.69,1.14-1.4,1.69-2.1C133.31,175.29,168,190.3,168,232a8,8,0,0,0,16,0c0-24.65-10.08-45.35-29.15-59.86a104.29,104.29,0,0,0-31.31-15.81A169.31,169.31,0,0,0,139,124c26.14,16.09,46.84,20,60.69,20,12.18,0,19.06-3,19.67-3.28A8,8,0,0,0,223.28,130.08Z\"/>","person-simple-walk":"<path d=\"M120,48a32,32,0,1,1,32,32A32,32,0,0,1,120,48Zm88,88c-28.64,0-41.81-13.3-55.75-27.37-3.53-3.57-7.18-7.26-11-10.58-37-32.14-96.22,22.73-98.72,25.08a8,8,0,0,0,10.95,11.66A163.88,163.88,0,0,1,84,113c13.78-7.38,25.39-10.23,34.7-8.58L64.66,228.81a8,8,0,0,0,4.15,10.52A7.84,7.84,0,0,0,72,240a8,8,0,0,0,7.34-4.81l33.59-77.27L144,180.12V232a8,8,0,0,0,16,0V176a8,8,0,0,0-3.35-6.51l-37.2-26.57L132.88,112c2.64,2.44,5.26,5.07,8,7.84C155.05,134.19,172.69,152,208,152a8,8,0,0,0,0-16Z\"/>","person-simple-bike":"<path d=\"M136,52a28,28,0,1,1,28,28A28,28,0,0,1,136,52ZM240,176a40,40,0,1,1-40-40A40,40,0,0,1,240,176Zm-16,0a24,24,0,1,0-24,24A24,24,0,0,0,224,176Zm-24-64a8,8,0,0,0-8-8H155.31L125.66,74.34a8,8,0,0,0-11.32,0l-32,32a8,8,0,0,0,0,11.32L120,155.31V200a8,8,0,0,0,16,0V152a8,8,0,0,0-2.34-5.66L99.31,112,120,91.31l26.34,26.35A8,8,0,0,0,152,120h40A8,8,0,0,0,200,112ZM96,176a40,40,0,1,1-40-40A40,40,0,0,1,96,176Zm-16,0a24,24,0,1,0-24,24A24,24,0,0,0,80,176Z\"/>","clock":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm56,112H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z\"/>","map-pin":"<path d=\"M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z\"/>","racquet":"<path d=\"M230,26.05C202-1.88,151.53,3.16,117.4,37.3c-31.79,31.79-38.33,77.77-16.51,106.49L71.33,173.35l-.68-.68a16,16,0,0,0-22.64,0L20.69,200a16,16,0,0,0,0,22.64l12.69,12.69a16,16,0,0,0,22.63,0h0L83.34,208a16,16,0,0,0,0-22.63l-.69-.69,29.56-29.56c11.29,8.58,25.24,12.79,40,12.79,22.72,0,47.25-10,66.54-29.3C252.83,104.47,257.88,54,230,26.05ZM224.23,104H200.06v-32h32A72.45,72.45,0,0,1,224.23,104ZM136,149.61A44.15,44.15,0,0,1,106.39,120H136ZM104,104a72.24,72.24,0,0,1,7.86-32H136v32Zm48-32h32v32h-32Zm77.67-16H200.06V26.28a44.23,44.23,0,0,1,29.66,29.66Zm-45.82-32h.16v32h-32V31.76A72.47,72.47,0,0,1,183.9,23.9ZM136,42.06V55.94H122.16a89.72,89.72,0,0,1,6.56-7.32A93.17,93.17,0,0,1,136,42.06Zm16,109.92V120h32v24.16A72.24,72.24,0,0,1,152.05,152Zm48-18.14V120H214a91.62,91.62,0,0,1-6.56,7.32A89.64,89.64,0,0,1,200.06,133.84Z\"/>","basketball":"<path d=\"M63.6,46.39a103.48,103.48,0,0,1,52-21.65,4,4,0,0,1,4.45,4V120H95.7A103.77,103.77,0,0,0,63.38,52.44,4,4,0,0,1,63.6,46.39ZM46,64.07a103.51,103.51,0,0,0-21.29,51.46,4,4,0,0,0,4,4.47H79.63A87.86,87.86,0,0,0,51.89,63.59,4,4,0,0,0,46,64.07ZM192.4,46.39a103.48,103.48,0,0,0-52-21.65,4,4,0,0,0-4.45,4V120h24.3a103.77,103.77,0,0,1,32.32-67.56A4,4,0,0,0,192.4,46.39Zm38.86,69.14A103.51,103.51,0,0,0,210,64.07a4,4,0,0,0-5.86-.48A87.86,87.86,0,0,0,176.37,120h50.91A4,4,0,0,0,231.26,115.53ZM24.74,140.47A103.51,103.51,0,0,0,46,191.93a4,4,0,0,0,5.86.48A87.86,87.86,0,0,0,79.63,136H28.72A4,4,0,0,0,24.74,140.47ZM210,191.93a103.51,103.51,0,0,0,21.29-51.46,4,4,0,0,0-4-4.47H176.37a87.86,87.86,0,0,0,27.74,56.41A4,4,0,0,0,210,191.93ZM63.6,209.61a103.48,103.48,0,0,0,52,21.65,4,4,0,0,0,4.45-4V136H95.7a103.77,103.77,0,0,1-32.32,67.56A4,4,0,0,0,63.6,209.61ZM160.3,136H136v91.28a4,4,0,0,0,4.45,4,103.48,103.48,0,0,0,52-21.65,4,4,0,0,0,.22-6.05A103.77,103.77,0,0,1,160.3,136Z\"/>","boxing-glove":"<path d=\"M168,16H120A56,56,0,0,0,64,72v31.73A8.17,8.17,0,0,1,56.53,112,8,8,0,0,1,48,104V78.7a4,4,0,0,0-5.63-3.65A32,32,0,0,0,24,104v29.19a16.14,16.14,0,0,0,3.5,10q.3.36.63.69L64,179.34V216a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V177.12l15.38-53.84a16,16,0,0,0,.62-4.4V72A56,56,0,0,0,168,16Zm3.58,168.84a8,8,0,0,1-7.16,14.32L136,184.94l-28.42,14.22a8,8,0,1,1-7.16-14.32L118.11,176l-17.69-8.84a8,8,0,1,1,7.16-14.32L136,167.06l28.42-14.22a8,8,0,1,1,7.16,14.32L153.89,176Z\"/>","mountains":"<path d=\"M254.88,195.92l-54.56-92.08A15.87,15.87,0,0,0,186.55,96h0a15.85,15.85,0,0,0-13.76,7.84l-15.64,26.39a4,4,0,0,0,0,4.07l26.8,45.47a8.13,8.13,0,0,1-1.89,10.55,8,8,0,0,1-11.8-2.26L101.79,71.88a16,16,0,0,0-27.58,0L1.11,195.94a8,8,0,0,0,1,9.52A8.23,8.23,0,0,0,8.23,208H247.77a8.29,8.29,0,0,0,6.09-2.55A8,8,0,0,0,254.88,195.92ZM64.43,120,88,80l23.57,40ZM140,52a24,24,0,1,1,24,24A24,24,0,0,1,140,52Z\"/>","cricket":"<path d=\"M243.31,81.37,190.63,28.69a16,16,0,0,0-22.63,0L60.69,136a16,16,0,0,0,0,22.63l20.68,20.68-47,47a8,8,0,0,0,11.32,11.32l47-47,20.68,20.68a16,16,0,0,0,22.63,0L243.31,104a16,16,0,0,0,0-22.63ZM124.69,200,104,179.31l29.66-29.65a8,8,0,0,0-11.32-11.32L92.69,168,72,147.31,107.31,112H160v52.69ZM32,60A28,28,0,1,1,60,88,28,28,0,0,1,32,60Z\"/>","music-notes":"<path d=\"M212.92,17.71a7.89,7.89,0,0,0-6.86-1.46l-128,32A8,8,0,0,0,72,56V166.1A36,36,0,1,0,88,196V102.25l112-28V134.1A36,36,0,1,0,216,164V24A8,8,0,0,0,212.92,17.71Z\"/>","person-simple-circle":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,40a16,16,0,1,1-16,16A16,16,0,0,1,128,64Zm48,56H136v13.58l30.66,46a8,8,0,0,1-13.32,8.88l-25.34-38-25.34,38a8,8,0,1,1-13.32-8.88l30.66-46V120H80a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Z\"/>","soccer-ball":"<path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,39.38,24.79-17.05a88.41,88.41,0,0,1,36.18,27l-8,26.94c-.2,0-.41.1-.61.17l-22.82,7.41a7.59,7.59,0,0,0-1,.4L136,88.62c0-.2,0-.41,0-.62V64C136,63.79,136,63.58,136,63.38ZM95.24,46.33,120,63.38c0,.2,0,.41,0,.62V88c0,.21,0,.42,0,.62L91.44,108.29a7.59,7.59,0,0,0-1-.4l-22.82-7.41c-.2-.07-.41-.12-.61-.17l-8-26.94A88.41,88.41,0,0,1,95.24,46.33Zm-13,129.09H53.9a87.4,87.4,0,0,1-13.79-43.07l22-16.88a5.77,5.77,0,0,0,.58.22l22.83,7.42a7.83,7.83,0,0,0,.93.22l10.79,31.42c-.15.18-.3.36-.44.55L82.7,174.71A7.8,7.8,0,0,0,82.24,175.42ZM150.69,213a88.16,88.16,0,0,1-45.38,0L95.25,184.6c.13-.16.27-.31.39-.48l14.11-19.42a7.66,7.66,0,0,0,.46-.7h35.58a7.66,7.66,0,0,0,.46.7l14.11,19.42c.12.17.26.32.39.48Zm23.07-37.61a7.8,7.8,0,0,0-.46-.71L159.19,155.3c-.14-.19-.29-.37-.44-.55l10.79-31.42a7.83,7.83,0,0,0,.93-.22l22.83-7.42a5.77,5.77,0,0,0,.58-.22l22,16.88a87.4,87.4,0,0,1-13.79,43.07Z\"/>","person-arms-spread":"<path d=\"M100,36a28,28,0,1,1,28,28A28,28,0,0,1,100,36ZM227.6,92.57A15.7,15.7,0,0,0,212,80H44a16,16,0,0,0-6.7,30.53l.06,0,53.89,23.73-21.92,83.3a16,16,0,0,0,7.9,20.91A15.83,15.83,0,0,0,84,240a16,16,0,0,0,14.44-9.06L128,180l29.58,51a16,16,0,0,0,29.07-13.35l-21.92-83.3,54-23.76A15.7,15.7,0,0,0,227.6,92.57Z\"/>","lightning":"<path d=\"M213.85,125.46l-112,120a8,8,0,0,1-13.69-7l14.66-73.33L45.19,143.49a8,8,0,0,1-3-13l112-120a8,8,0,0,1,13.69,7L153.18,90.9l57.63,21.61a8,8,0,0,1,3,12.95Z\"/>","person-simple-hike":"<path d=\"M120,48a32,32,0,1,1,32,32A32,32,0,0,1,120,48Zm72,88c-23.37,0-28.92-8.56-36.6-20.4-3.65-5.64-7.79-12-14.16-17.55a40.92,40.92,0,0,0-8-5.47,8,8,0,0,0-11,3.92L64.66,228.81a8,8,0,0,0,4.15,10.52A7.84,7.84,0,0,0,72,240a8,8,0,0,0,7.34-4.81l33.59-77.27L144,180.12V232a8,8,0,0,0,16,0V176a8,8,0,0,0-3.35-6.51l-37.2-26.57,13.4-30.81c3.57,3.62,6.28,7.8,9.13,12.19,7.67,11.84,16.27,25.11,42,27.36V232a8,8,0,0,0,16,0V144A8,8,0,0,0,192,136ZM72,152a8,8,0,0,0,7.36-4.85l24-56a8,8,0,0,0-4.2-10.5l-28-12a8,8,0,0,0-10.5,4.2l-24,56a8,8,0,0,0,4.2,10.5l28,12A8,8,0,0,0,72,152Z\"/>","flower-lotus":"<path d=\"M245.83,121.63a15.53,15.53,0,0,0-9.52-7.33,73.55,73.55,0,0,0-22.17-2.22c4-19.85,1-35.55-2-44.86a16.17,16.17,0,0,0-18.8-10.88,85.53,85.53,0,0,0-28.55,12.12,94.58,94.58,0,0,0-27.11-33.25,16.05,16.05,0,0,0-19.26,0A94.58,94.58,0,0,0,91.26,68.46,85.53,85.53,0,0,0,62.71,56.34,16.14,16.14,0,0,0,43.92,67.22c-3,9.31-6,25-2.06,44.86a73.55,73.55,0,0,0-22.17,2.22,15.53,15.53,0,0,0-9.52,7.33,16,16,0,0,0-1.6,12.26c3.39,12.58,13.8,36.49,45.33,55.33S113.13,208,128.05,208s42.67,0,74-18.78c31.53-18.84,41.94-42.75,45.33-55.33A16,16,0,0,0,245.83,121.63ZM62.1,175.49C35.47,159.57,26.82,140.05,24,129.7a59.61,59.61,0,0,1,22.5-1.17,129.08,129.08,0,0,0,9.15,19.41,142.28,142.28,0,0,0,34,39.56A114.92,114.92,0,0,1,62.1,175.49ZM128,190.4c-9.33-6.94-32-28.23-32-71.23C96,76.7,118.38,55.24,128,48c9.62,7.26,32,28.72,32,71.19C160,162.17,137.33,183.46,128,190.4Zm104-60.68c-2.77,10.24-11.4,29.81-38.09,45.77a114.92,114.92,0,0,1-27.55,12,142.28,142.28,0,0,0,34-39.56,129.08,129.08,0,0,0,9.15-19.41A59.69,59.69,0,0,1,232,129.71Z\"/>","person-simple":"<path d=\"M95.89,48a32,32,0,1,1,32,32A32,32,0,0,1,95.89,48Zm132.23,73.14C226.4,120.11,185.55,96,128,96S29.6,120.11,27.88,121.14a8,8,0,0,0,8.24,13.72c.36-.22,34.91-20.6,83.88-22.68V149L58,218.69a8,8,0,1,0,12,10.62L128,164l58,65.27a8,8,0,0,0,12-10.62L136,149V112.19c48.77,2.08,83.53,22.46,83.88,22.67a8,8,0,1,0,8.24-13.72Z\"/>","boat":"<path d=\"M221.06,110.59,208,106.23V56a16,16,0,0,0-16-16H136V24a8,8,0,0,0-16,0V40H64A16,16,0,0,0,48,56v50.23l-13.06,4.36A16,16,0,0,0,24,125.77V152c0,61.54,97.89,86.72,102.06,87.76a8,8,0,0,0,3.88,0C134.11,238.72,232,213.54,232,152V125.77A16,16,0,0,0,221.06,110.59ZM136,168a8,8,0,0,1-16,0V104.87a8,8,0,0,1,16,0Zm56-67.1L130.53,80.41a8,8,0,0,0-5.06,0L64,100.9V56H192Z\"/>","person-simple-ski":"<path d=\"M144,60a28,28,0,1,1,28,28A28,28,0,0,1,144,60ZM37.76,87.68l111,32.36,5.61,5.61A8,8,0,0,0,160,128h40a8,8,0,0,0,0-16H163.31l-4.72-4.72,0,0-24.9-24.9a8,8,0,0,0-11.32,0L112,92.67,42.24,72.32a8,8,0,0,0-4.48,15.36Zm200.9,105.47a8,8,0,0,0-11.1-2.22,53.78,53.78,0,0,1-45,6.9l-62.79-18.28,29.9-29.9a8,8,0,0,0-3.46-13.35l-56-16a8,8,0,0,0-4.4,15.39L128.73,148l-26.5,26.49-76-22.13a8,8,0,1,0-4.48,15.36l156.31,45.52a69.78,69.78,0,0,0,58.37-8.95A8,8,0,0,0,238.66,193.15Z\"/>","person-simple-snowboard":"<path d=\"M136,52a28,28,0,1,1,28,28A28,28,0,0,1,136,52Zm87.67,70.25a8,8,0,0,1-9.93,5.42l-79.07-23.26-7.78,11.67,35.33,10.23a8,8,0,0,1,4.42,12.14l-19.75,29.44,50.89,14.75A25.32,25.32,0,0,1,216,206.81,25.28,25.28,0,0,1,190.79,232a25.88,25.88,0,0,1-7.14-1L26.21,185.35A25.32,25.32,0,0,1,8,161.18,25.25,25.25,0,0,1,40.34,137l44.73,13,33.52-50.28-40.85-12a8,8,0,1,1,4.52-15.35l136,40A8,8,0,0,1,223.67,122.25ZM117.58,130l-16.4,24.6,29.58,8.58,16.49-24.59Z\"/>","stairs":"<path d=\"M200,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V40A16,16,0,0,0,200,24Zm-40,80h40v24H160Zm-48,40h88v24H112Zm88,72H56V184H200v32Z\"/>","person-simple-swim":"<path d=\"M144,72a32,32,0,1,1,32,32A32,32,0,0,1,144,72Zm66.89,112.19c-31.83,26.39-53.72,14.51-79.07.74-26.61-14.44-56.76-30.81-96.93,2.49a8,8,0,1,0,10.22,12.31c31.83-26.39,53.72-14.5,79.07-.74,15.11,8.2,31.35,17,49.93,17,14.14,0,29.64-5.11,47-19.5a8,8,0,0,0-10.22-12.32Zm-176-36.76a8,8,0,1,0,10.22,12.31c31.83-26.38,53.72-14.5,79.07-.74,15.11,8.2,31.35,17,49.93,17,14.14,0,29.64-5.11,47-19.5a8,8,0,1,0-10.22-12.31,75.79,75.79,0,0,1-19.28,12.06l-53.84-53.82A103.34,103.34,0,0,0,64.24,72H40a8,8,0,0,0,0,16H64.24a87.66,87.66,0,0,1,41.88,10.56L76.49,128.17C63.82,129.36,50.07,134.84,34.89,147.42Z\"/>","ping-pong":"<path d=\"M240,196a16,16,0,0,0-6.65-11.7l-38-27.15,17-16.95a39.67,39.67,0,0,0,11-35.79,99.52,99.52,0,0,0-35.4-57.89A101.93,101.93,0,0,0,122.58,24,100.29,100.29,0,0,0,24,122.58a102.12,102.12,0,0,0,22.55,65.28,99.52,99.52,0,0,0,57.89,35.4,39.68,39.68,0,0,0,35.79-11l16.95-17,27.15,38A16,16,0,0,0,196,240c.44,0,.88.05,1.32.05a16,16,0,0,0,11.31-4.69l26.64-26.64A16,16,0,0,0,240,196Zm-42.6,28-32.63-45.69a8,8,0,0,0-5.85-3.32q-.33,0-.66,0a8,8,0,0,0-5.66,2.34l-23.63,23.63a23.68,23.68,0,0,1-21.36,6.63,80.3,80.3,0,0,1-12.3-3.5l108.8-108.8a80.63,80.63,0,0,1,3.5,12.3,23.67,23.67,0,0,1-6.63,21.36L177.3,152.55a8,8,0,0,0,1,12.17L224,197.36Z\"/>","tennis-ball":"<path d=\"M24.81,115.41a103.9,103.9,0,0,1,90.6-90.65,4,4,0,0,1,4.47,3.79,87.82,87.82,0,0,1-91.27,91.33A4,4,0,0,1,24.81,115.41Zm202.54,20.7c-1.12,0-2.23-.07-3.35-.07a87.84,87.84,0,0,0-87.88,91.41,4,4,0,0,0,4.47,3.79,103.9,103.9,0,0,0,90.6-90.66A4,4,0,0,0,227.35,136.11Zm-76.89,14.35A103.33,103.33,0,0,1,224,120c1,0,2.06,0,3.09,0a4,4,0,0,0,4.12-4.43,103.91,103.91,0,0,0-90.88-90.89,4,4,0,0,0-4.43,4.12,103.72,103.72,0,0,1-30.36,76.7A103.33,103.33,0,0,1,32,136c-1,0-2.06,0-3.09,0a4,4,0,0,0-4.12,4.43,103.91,103.91,0,0,0,90.88,90.89,4,4,0,0,0,4.43-4.12A103.72,103.72,0,0,1,150.46,150.46Z\"/>","person-simple-tai-chi":"<path d=\"M96,48a32,32,0,1,1,32,32A32,32,0,0,1,96,48ZM216,96H40a8,8,0,0,0,0,16h80v28.44L42.65,210.05A8,8,0,0,0,53.35,222l76.2-68.58L176,173.28V216a8,8,0,0,0,16,0V168a8,8,0,0,0-4.85-7.35L136,138.72V112h80a8,8,0,0,0,0-16Z\"/>"}};
+/* Added 2026-09-25 for the Log Workout sheet: the tick on its header.
+   Same Phosphor path the rest of this file already uses for "check". */
+ICONS.regular.check = '<path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/>';
 
 function renderIcons(root){
   (root || document).querySelectorAll('[data-icon]').forEach(function(el){
@@ -4934,9 +5248,13 @@ function renderDetails(){
   $('#wd-when').textContent = fmtSpan(s.startedAt, end);
 
   /* Route map — GPS activities only. */
+  /* A logged workout has no GPS trace — the band doesn't record a route on
+     its own — so the map card only shows for sessions that were recorded
+     live (flagged, 2026-09-25). */
+  var hasRoute = a.gps && !s.logged;
   var mapCard = $('#wd-map-card');
-  mapCard.hidden = !a.gps;
-  if (a.gps) $('#wd-map').innerHTML = mapSVG('wd', 328, 160, 1);
+  mapCard.hidden = !hasRoute;
+  if (hasRoute) $('#wd-map').innerHTML = mapSVG('wd', 328, 160, 1);
 
   /* Tiles. Duration / Calories / Max HR / Effort are the approved four; the
      activity's own metric (distance, reps, laps…) and one more heart-rate
@@ -5000,7 +5318,7 @@ function renderDetails(){
   show('p-details');
   releaseChart();
   drawChart();
-  if (a.gps) drawRoute('wd', Math.min(1, s.elapsed / ROUTE_FULL_SECONDS) || 0.02);
+  if (hasRoute) drawRoute('wd', Math.min(1, s.elapsed / ROUTE_FULL_SECONDS) || 0.02);
 
   /* Saving pushes this activity to the front of Most recent. */
   recents = [a.name].concat(recents.filter(function(n){ return n !== a.name; })).slice(0, 5);
@@ -5011,7 +5329,12 @@ function renderDetails(){
    ══════════════════════════════════════════════════════════════════════════ */
 /* Start Workout -> the activity list: wired to this file's own CTA above. */
 
-$('#btn-picker-close').addEventListener('click', closeFlow);
+/* The X on Choose activity: from Start Workout it leaves the flow; from
+   Log Workout it just returns to the form, nothing picked. */
+$('#btn-picker-close').addEventListener('click', function(){
+  if (pickFor === 'log'){ show('p-log'); return; }
+  closeFlow();
+});
 
 $('#search-input').addEventListener('input', function(e){
   $('#search').classList.toggle('has-text', e.target.value.length > 0);
@@ -5034,6 +5357,9 @@ $('#p-picker').addEventListener('click', function(e){
   if (!row) return;
   var act = activityByName(row.dataset.act);
   if (!act) return;
+
+  /* Opened from Log Workout: the pick goes back into the form. */
+  if (pickFor === 'log'){ setLogActivity(act); show('p-log'); return; }
 
   $('#cd-name').textContent = act.name;
   show('p-countdown');
@@ -5121,6 +5447,286 @@ Array.prototype.slice.call(document.querySelectorAll('#wfSpeed input')).forEach(
     speed = Number(r.value) || 1;
     Array.prototype.slice.call(document.querySelectorAll('#wfSpeed label')).forEach(function(l){ l.classList.toggle('on', l.contains(r)); });
   });
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   9. LOG WORKOUT — manual entry (owner, 2026-09-25)
+   The Log Workout button beside Start Workout opens a form: activity, date,
+   start time, end time. Save turns it into a session and shows it on the
+   same Workout details screen a live workout lands on.
+
+   How it hangs together, in plain English:
+     • `logForm` holds the form's current values.
+     • The activity row re-uses the Choose activity list; `pickFor` tells
+       that list whether a tap starts a workout or fills this form.
+     • Date and times open ONE sheet, ported from the Me tab (calendar for
+       the date, hours | minutes wheel for a time). The sheet edits a draft;
+       only the tick copies it back, so cancelling really cancels.
+     • paintLog() redraws the rows, checks the times and enables Save.
+   ══════════════════════════════════════════════════════════════════════════ */
+var pickFor = 'start';
+var LW_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var LW_ROW = 44;               /* one wheel row; must match .lw-wheel .opt */
+var LW_YEARS_BACK = 2;         /* how far back a workout can be logged */
+var lwReduced = function(){ return matchMedia('(prefers-reduced-motion: reduce)').matches; };
+var pad2 = function(n){ return String(n).padStart(2, '0'); };
+
+/* The form. Times are minutes after midnight on `date`. */
+var logForm = { act:null, date:null, start:0, end:0 };
+
+function lwToday(){ var d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function lwSameDay(a, b){ return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+function lwAt(date, mins){ return new Date(date.getFullYear(), date.getMonth(), date.getDate(), Math.floor(mins / 60), mins % 60); }
+function lwFmtTime(mins){ return fmtTime(lwAt(lwToday(), mins)); }   /* "4:53 PM" — the app's time format */
+function lwFmtDate(d){
+  /* "25 Sep" — day first, as the reference shows. Built by hand: en-GB
+     spells September "Sept", which reads oddly next to "Jun" and "Jul". */
+  var label = d.getDate() + ' ' + LW_MONTHS[d.getMonth()].slice(0, 3);
+  if (lwSameDay(d, lwToday())) return 'Today, ' + label;
+  var y = lwToday(); y.setDate(y.getDate() - 1);
+  if (lwSameDay(d, y)) return 'Yesterday, ' + label;
+  return d.toLocaleDateString('en-US', { weekday:'short' }) + ', ' + label +
+         (d.getFullYear() !== lwToday().getFullYear() ? ' ' + d.getFullYear() : '');
+}
+function lwFmtDur(mins){ return Math.floor(mins / 60) + 'h ' + pad2(mins % 60) + 'm'; }
+
+/* Open the form. Defaults follow the reference: the hour that just ended
+   (so "now − 1h → now", today). Just after midnight that would reach into
+   yesterday, so it starts at 00:00 instead. */
+function openLog(){
+  var now = new Date();
+  var nowMin = now.getHours() * 60 + now.getMinutes();
+  logForm = { act:null, date:lwToday(), start:Math.max(0, nowMin - 60), end:nowMin };
+  if (logForm.end === logForm.start) logForm.end = logForm.start + 1;   /* 00:00 exactly */
+  pickFor = 'log';
+  WF_ROOT.hidden = false;
+  setLogActivity(null);
+  show('p-log');
+}
+
+function setLogActivity(act){
+  logForm.act = act;
+  var row = $('#lw-act');
+  row.dataset.empty = act ? '' : '1';
+  $('#lw-act-name').textContent = act ? act.name : 'Select activity';
+  var g = $('#lw-act-glyph');
+  g.dataset.icon = act ? act.icon : 'person-simple';
+  delete g.dataset.done;
+  renderIcons(row);
+  paintLog();
+}
+
+/* Is the form valid? Returns an error for the start and/or end row. */
+function logErrors(){
+  var e = { start:'', end:'' };
+  var now = new Date();
+  if (logForm.end <= logForm.start) e.end = 'End time must be after the start time';
+  /* FLAG: an overnight workout (23:30 → 00:30) can't be entered — both
+     times sit on the one date. Needs an end-date row if that case matters. */
+  if (lwAt(logForm.date, logForm.start) > now) e.start = 'Start time can’t be in the future';
+  if (!e.end && lwAt(logForm.date, logForm.end) > now) e.end = 'End time can’t be in the future';
+  return e;
+}
+
+function paintLog(){
+  var err = logErrors();
+  $('#lw-date-val').textContent  = lwFmtDate(logForm.date);
+  $('#lw-start-val').textContent = lwFmtTime(logForm.start);
+  $('#lw-end-val').textContent   = lwFmtTime(logForm.end);
+  $('#lw-start').classList.toggle('err', !!err.start);
+  $('#lw-end').classList.toggle('err', !!err.end);
+  $('#lw-start-why').textContent = err.start;
+  $('#lw-end-why').textContent   = err.end;
+  var ok = !err.start && !err.end;
+  $('#lw-dur').textContent = ok ? 'Duration · ' + lwFmtDur(logForm.end - logForm.start) : '';
+  $('#btn-log-save').disabled = !(ok && logForm.act);
+}
+
+$('#lw-act').addEventListener('click', function(){
+  pickFor = 'log';
+  $('#search-input').value = '';
+  $('#search').classList.remove('has-text');
+  renderPicker('');
+  show('p-picker');
+});
+$('#btn-log-close').addEventListener('click', function(){ closeLogSheet(); closeFlow(); });
+
+/* ---- the sheet: one shell, two bodies (calendar | time wheel) ------------ */
+var lwOnOk = null;
+
+function openLogSheet(title, body){
+  $('#lw-sh-title').textContent = title;
+  /* visible BEFORE the wheels fill — scrollTop does nothing on a hidden
+     element, which would open every wheel on its first value (Me tab note) */
+  $('#lw-scrim').hidden = false;
+  $('#lw-sheet').hidden = false;
+  $('#lw-cal').hidden  = body !== 'cal';
+  $('#lw-time').hidden = body !== 'time';
+  renderIcons($('#lw-sheet'));
+}
+function closeLogSheet(){
+  $('#lw-scrim').hidden = true;
+  $('#lw-sheet').hidden = true;
+  lwOnOk = null;
+}
+$('#lw-sh-cancel').addEventListener('click', closeLogSheet);
+$('#lw-scrim').addEventListener('click', closeLogSheet);
+$('#lw-sh-ok').addEventListener('click', function(){
+  if (lwOnOk) lwOnOk();
+  closeLogSheet();
+  paintLog();
+});
+
+/* One wheel column. Whatever sits in the band is what's chosen — ported
+   from the Me tab's fillCol so the two behave identically. */
+function lwFillCol(col, items, selected, onPick){
+  col.innerHTML = '<div class="pad"></div>' + items.map(function(it, i){
+    return '<div class="opt' + (i === selected ? ' on' : '') + '" role="option" aria-selected="' +
+           (i === selected) + '" data-i="' + i + '">' + it + '</div>';
+  }).join('') + '<div class="pad"></div>';
+  $$('.opt', col).forEach(function(o){
+    o.onclick = function(){ col.scrollTo({ top:Number(o.dataset.i) * LW_ROW, behavior:lwReduced() ? 'auto' : 'smooth' }); };
+  });
+  var raf = null;
+  col.onscroll = function(){
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(function(){
+      var i = Math.max(0, Math.min(items.length - 1, Math.round(col.scrollTop / LW_ROW)));
+      $$('.opt', col).forEach(function(o, k){
+        o.classList.toggle('on', k === i);
+        o.setAttribute('aria-selected', String(k === i));
+      });
+      onPick(i);
+    });
+  };
+  col.scrollTop = selected * LW_ROW;
+}
+
+/* --- time: hours | minutes, 24-hour, as in the Me tab's alarm sheet ---
+   FLAG: the wheel is 24-hour (the Me tab's component) while the rows read
+   "4:53 PM" (the Home tab's format). Kept both as they are elsewhere in the
+   app; if Units & Format → time format is 12h, the wheel should follow. */
+function openLogTime(which){
+  var cur = logForm[which];
+  var h = Math.floor(cur / 60), m = cur % 60;
+  openLogSheet(which === 'start' ? 'Start time' : 'End time', 'time');
+  var hours = Array.from({ length:24 }, function(_, i){ return pad2(i); });
+  var mins  = Array.from({ length:60 }, function(_, i){ return pad2(i); });
+  lwFillCol($('#lw-time-h'), hours, h, function(i){ h = i; });
+  lwFillCol($('#lw-time-m'), mins,  m, function(i){ m = i; });
+  lwOnOk = function(){ logForm[which] = h * 60 + m; };
+}
+$('#lw-start').addEventListener('click', function(){ openLogTime('start'); });
+$('#lw-end').addEventListener('click', function(){ openLogTime('end'); });
+
+/* --- date: the month grid, with a month + year wheel behind the title --- */
+var lwCal = { y:0, m:0, d:0, mode:'grid' };
+function lwDaysIn(y, m){ return new Date(y, m + 1, 0).getDate(); }
+function lwDraft(){ return new Date(lwCal.y, lwCal.m, lwCal.d); }
+
+function lwPaintTitle(){
+  $('#lw-cal-title-text').textContent = LW_MONTHS[lwCal.m] + ' ' + lwCal.y;
+  var t = lwToday();
+  $('#lw-cal-next').disabled = lwCal.y > t.getFullYear() || (lwCal.y === t.getFullYear() && lwCal.m >= t.getMonth());
+  $('#lw-cal-prev').disabled = lwCal.y <= t.getFullYear() - LW_YEARS_BACK && lwCal.m === 0;
+}
+function lwPaintGrid(){
+  var first = new Date(lwCal.y, lwCal.m, 1).getDay();
+  var total = lwDaysIn(lwCal.y, lwCal.m);
+  var today = lwToday();
+  var html = '';
+  for (var i = 0; i < first; i++) html += '<span class="d"></span>';
+  for (var d = 1; d <= total; d++){
+    var future = new Date(lwCal.y, lwCal.m, d) > today;
+    var sel = lwCal.d === d;
+    html += '<button type="button" class="d' + (sel ? ' sel' : '') + '" data-d="' + d + '"' +
+            (future ? ' disabled' : '') + ' role="gridcell" aria-selected="' + sel + '">' + d + '</button>';
+  }
+  var grid = $('#lw-cal-grid');
+  grid.innerHTML = html;
+  $$('.d[data-d]', grid).forEach(function(b){
+    b.onclick = function(){ lwCal.d = Number(b.dataset.d); lwPaintGrid(); };
+  });
+  lwPaintTitle();
+}
+/* keep the draft on a real, non-future day after a month/year change */
+function lwClamp(){
+  var t = lwToday();
+  if (lwCal.y > t.getFullYear() || (lwCal.y === t.getFullYear() && lwCal.m > t.getMonth())){
+    lwCal.y = t.getFullYear(); lwCal.m = t.getMonth();
+  }
+  lwCal.d = Math.min(lwCal.d, lwDaysIn(lwCal.y, lwCal.m));
+  if (lwDraft() > t) lwCal.d = t.getDate();
+}
+function lwSetMode(mode){
+  lwCal.mode = mode;
+  var wheel = mode === 'wheel';
+  $('#lw-cal-gridwrap').hidden = wheel;
+  $('#lw-cal-wheel').hidden = !wheel;
+  $('#lw-cal-head').classList.toggle('wheel', wheel);
+  $('#lw-cal-title').setAttribute('aria-expanded', String(wheel));
+  if (!wheel){ lwPaintGrid(); return; }
+  var years = [];
+  for (var y = lwToday().getFullYear() - LW_YEARS_BACK; y <= lwToday().getFullYear(); y++) years.push(y);
+  lwFillCol($('#lw-cal-months'), LW_MONTHS, lwCal.m, function(i){ lwCal.m = i; lwClamp(); lwPaintTitle(); });
+  lwFillCol($('#lw-cal-years'), years.map(String), years.indexOf(lwCal.y), function(i){
+    lwCal.y = years[i]; lwClamp(); lwPaintTitle();
+  });
+}
+function lwStepMonth(delta){
+  var m = lwCal.m + delta, y = lwCal.y;
+  if (m < 0){ m = 11; y--; }
+  if (m > 11){ m = 0; y++; }
+  var t = lwToday();
+  if (y < t.getFullYear() - LW_YEARS_BACK) return;
+  if (y > t.getFullYear() || (y === t.getFullYear() && m > t.getMonth())) return;
+  lwCal.y = y; lwCal.m = m;
+  lwClamp();
+  lwPaintGrid();
+}
+$('#lw-cal-title').addEventListener('click', function(){ lwSetMode(lwCal.mode === 'grid' ? 'wheel' : 'grid'); });
+$('#lw-cal-prev').addEventListener('click', function(){ lwStepMonth(-1); });
+$('#lw-cal-next').addEventListener('click', function(){ lwStepMonth(1); });
+
+$('#lw-date').addEventListener('click', function(){
+  lwCal.y = logForm.date.getFullYear(); lwCal.m = logForm.date.getMonth(); lwCal.d = logForm.date.getDate();
+  openLogSheet('Date', 'cal');
+  lwSetMode('grid');
+  lwOnOk = function(){ logForm.date = lwDraft(); };
+});
+
+/* --- Save: build a session from the form and show its details ---
+   The band records heart rate all day, so the session's readings are
+   modelled the same way the live screen does (warm-up ramp toward the
+   activity's peak), just computed in one go for the chosen window.
+   FLAG: in the real app these come from the band's stored data for that
+   window; this prototype simulates them, like the live workout does. */
+function simulateLogged(act, startedAt, seconds){
+  var s = newSession(act);
+  s.startedAt = startedAt;
+  s.logged = true;
+  s.hrs.push(act.hrBase);
+  s.secs.push(1);
+  var step = Math.max(5, Math.round(seconds / 240));   /* ~240 readings, whatever the length */
+  while (s.elapsed < seconds){
+    var dt = Math.min(step, seconds - s.elapsed);
+    s.elapsed += dt;
+    var ramp   = Math.min(1, s.elapsed / 360);
+    var target = act.hrBase + (act.hrPeak - act.hrBase) * (0.35 + 0.55 * ramp);
+    s.hr += (target - s.hr) * 0.25 + (Math.random() - 0.5) * 5;
+    s.hr = Math.max(act.hrBase - 6, Math.min(act.hrPeak + 4, s.hr));
+    s.kcal  += act.kcalPerMin  * (dt / 60);
+    s.third += act.thirdPerMin * (dt / 60);
+    s.hrs.push(Math.round(s.hr));
+    s.secs.push(dt);
+  }
+  return s;
+}
+$('#btn-log-save').addEventListener('click', function(){
+  if (this.disabled || !logForm.act) return;
+  session = simulateLogged(logForm.act, lwAt(logForm.date, logForm.start), (logForm.end - logForm.start) * 60);
+  pickFor = 'start';
+  renderDetails();
 });
 
 /* First paint. */

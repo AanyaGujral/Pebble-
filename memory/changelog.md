@@ -5,6 +5,24 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-25 — Log Workout added beside Start Workout on the Health tab
+  (`Flows for the app /Onboarding + home flows/Homepage + measurel all +
+  start workout flow.html`). Start Workout shrinks to half the row; Log
+  Workout is the SECONDARY tier from `components/button.html` (teal hairline
+  + teal label, opacity-only states). Tapping it opens a manual-entry form
+  inside the existing #wf overlay, modelled on the owner's reference
+  screenshot: info note, "Select activity" row (re-uses Choose activity),
+  Date / Start time / End time rows, live "Duration" line, and a Save button
+  that stays disabled until an activity is picked and the times are valid
+  (end after start, nothing in the future). Date and time open the SAME
+  field sheet the Me tab uses (month grid + month/year wheel; hours |
+  minutes wheel), ported with an `lw-` prefix. Save simulates the band's
+  readings for that window and lands on the existing Workout details
+  screen, minus the GPS map card (a logged workout has no route).
+  FLAGS in code: CTA height 48 vs the button sheet's 52; 24-hour wheel vs
+  12-hour row labels; overnight workouts not enterable (single date);
+  info-note copy is placeholder; reference's "Location" question dropped.
+
 - 2026-09-03 (rev 2.2) — Owner round of eight on the leaderboard.
   (1) Hero band is now the Pebble green — built from the teal ramp
   (teal.400 wash over a teal.500 → surface.card gradient) rather than the
