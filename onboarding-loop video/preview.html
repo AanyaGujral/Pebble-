@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pebble onboarding loop — final</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07080C;--panel:#0A0D0E;--teal:#6CC4B3;}
+*{box-sizing:border-box}
+body{margin:0;background:#131519;color:#E6E8EA;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:32px}
+h1{font:600 15px/1.4 -apple-system,sans-serif;letter-spacing:.02em;color:#9AA0A6;margin:0 0 4px;text-transform:uppercase}
+.sub{color:#6D7379;margin:0 0 26px;font-size:13px;max-width:64ch}
+.wrap{display:flex;gap:44px;align-items:flex-start;flex-wrap:wrap}
+.phone{width:330px;height:704px;border-radius:48px;background:var(--bg);position:relative;overflow:hidden;flex:none;
+  box-shadow:0 0 0 8px #1C1F24,0 0 0 9px #2A2E34,0 24px 60px rgba(0,0,0,.6)}
+.phone video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.scrimTop{position:absolute;top:0;left:0;right:0;height:120px;
+  background:linear-gradient(to bottom,rgba(7,8,12,.75),rgba(7,8,12,0));opacity:0;transition:opacity .25s}
+.showTop .scrimTop{opacity:1}
+.scrimBot{position:absolute;left:0;right:0;bottom:0;height:58%;
+  background:linear-gradient(to bottom,rgba(10,13,14,0) 0%,rgba(10,13,14,.55) 26%,rgba(10,13,14,.94) 46%,var(--panel) 58%)}
+.status{position:absolute;top:0;left:0;right:0;height:48px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;font:600 14px/1 -apple-system,sans-serif;color:#fff;z-index:3}
+.content{position:absolute;left:0;right:0;bottom:0;padding:0 28px 28px;z-index:3}
+.mark{width:38px;height:42px;margin-bottom:16px}
+h2{font-family:"League Spartan",-apple-system,sans-serif;font-weight:700;font-size:33px;line-height:1.12;margin:0 0 22px;letter-spacing:-.01em}
+h2 .g{color:#A8ADB2;display:block} h2 .w{color:#fff;display:block}
+.btn{height:52px;border-radius:999px;background:var(--teal);color:#07080C;display:flex;align-items:center;justify-content:center;
+  font:600 15px/22px -apple-system,sans-serif;width:100%}
+.legal{margin:15px 0 0;text-align:center;font-size:11px;line-height:1.5;color:#6D7379}
+.legal b{color:#C6CACE;font-weight:600}
+.side{flex:1;min-width:300px;max-width:52ch}
+button.t{background:#1E2126;color:#C6CACE;border:1px solid #2E3239;border-radius:999px;padding:9px 17px;font:600 12px/1 inherit;cursor:pointer}
+button.t[aria-pressed="true"]{background:var(--teal);color:#07080C;border-color:var(--teal)}
+table{border-collapse:collapse;width:100%;margin:14px 0 22px;font-size:12.5px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #24272D}
+th{color:#7C8288;font-weight:600;text-transform:uppercase;font-size:10.5px;letter-spacing:.05em}
+td.n{color:#E6E8EA;font-variant-numeric:tabular-nums}
+code{background:#1A1D22;border:1px solid #24272D;border-radius:5px;padding:1px 5px;font-size:12px;color:#B9BFC5}
+pre{background:#0F1114;border:1px solid #24272D;border-radius:9px;padding:13px 15px;overflow-x:auto;font-size:11.5px;line-height:1.6;color:#B9BFC5}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#7C8288;margin:24px 0 0}
+</style></head><body>
+<h1>Pebble onboarding loop — final</h1>
+<p class="sub">7.00 s seamless loop, 1080&times;1920, no audio track. Clip&nbsp;3 is the 1.0–4.0 s window of the pickleball master, warm-graded to sit with the other two.</p>
+<div class="wrap">
+  <div class="phone" id="ph">
+    <video src="onboarding-loop-1080x1920.mp4" autoplay muted loop playsinline></video>
+    <div class="scrimTop"></div><div class="scrimBot"></div>
+    <div class="status"><span>12:30</span><span>&#9679;&#9679;&#9679; &#9679;</span></div>
+    <div class="content">
+      <svg class="mark" viewBox="0 0 34 38" fill="none"><path d="M8 36c0-12 3-20 9-25 5-4 11-3 13 2 2 5-2 11-8 12-5 1-9-2-9-6 0-3 2-5 5-5" stroke="#6CC4B3" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <h2><span class="g">Your health,</span><span class="w">your way</span></h2>
+      <div class="btn">Get Started</div>
+      <p class="legal">By continuing, you agree to our <b>Terms of Service</b> &amp; <b>Privacy Policy</b></p>
+    </div>
+  </div>
+  <div class="side">
+    <button class="t" id="topBtn" aria-pressed="false">Toggle top scrim</button>
+    <table>
+      <tr><th>File</th><th>Codec</th><th>Size</th></tr>
+      <tr><td>onboarding-loop-1080x1920.mp4</td><td>H.264</td><td class="n">3.6 MB</td></tr>
+      <tr><td>onboarding-loop-1080x1920-hevc.mp4</td><td>HEVC</td><td class="n">962 KB</td></tr>
+      <tr><td>onboarding-loop-720x1280.mp4</td><td>H.264</td><td class="n">1.7 MB</td></tr>
+      <tr><td>poster.jpg</td><td>JPEG</td><td class="n">110 KB</td></tr>
+    </table>
+    <h3>Bottom scrim</h3>
+    <pre>linear-gradient(
+  to bottom,
+  rgba(10,13,14,0)    0%,
+  rgba(10,13,14,.55) 26%,
+  rgba(10,13,14,.94) 46%,
+  #0A0D0E            58%
+)  /* height: 58% of screen */</pre>
+    <h3>Top scrim — needed</h3>
+    <pre>linear-gradient(
+  to bottom,
+  rgba(7,8,12,.75),
+  rgba(7,8,12,0)
+)  /* height: 120px */</pre>
+    <p style="color:#8B9197;font-size:12.5px;line-height:1.65;margin-top:16px">
+    All three clips are bright where your status bar sits, so the top scrim isn't optional.
+    Use <code>poster.jpg</code> as the placeholder so the first frame is painted before the video decodes,
+    and set the video <code>muted</code> + <code>playsinline</code> or iOS won't autoplay it.</p>
+  </div>
+</div>
+<script>
+const b=document.getElementById('topBtn'),p=document.getElementById('ph');
+b.onclick=()=>{const on=b.getAttribute('aria-pressed')==='true';
+b.setAttribute('aria-pressed',String(!on));p.classList.toggle('showTop',!on);};
+</script></body></html>
