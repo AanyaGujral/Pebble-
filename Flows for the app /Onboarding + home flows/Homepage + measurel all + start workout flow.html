@@ -1384,6 +1384,12 @@ body{
 #wf .lw-wheel .col.words .opt{font-family:var(--font-text);font-size:15px;font-weight:var(--weight-medium)}
 #wf .lw-wheel .col.words .opt.on{font-weight:var(--weight-semibold)}
 
+/* time wheel: hours and minutes sit close together at the centre rather
+   than each taking half the sheet (owner, 2026-09-25). The band still runs
+   the full width, as in the Me tab's alarm sheet. */
+#wf #lw-time{justify-content:center;gap:var(--space-16)}
+#wf #lw-time .col{flex:0 0 72px}
+
 /* the calendar */
 #wf .lw-cal-head{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
 #wf .lw-cal-title{
@@ -1411,8 +1417,11 @@ body{
   letter-spacing:.04em;text-transform:uppercase;color:var(--text-3);
 }
 #wf .lw-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--space-2);margin-top:6px}
+/* a fixed 38px square centred in its column, so the selected day is a
+   circle rather than a column-wide oval (owner, 2026-09-25) */
 #wf .lw-cal-grid .d{
-  height:38px;border:0;border-radius:var(--radius-full);background:none;cursor:pointer;
+  width:38px;height:38px;justify-self:center;
+  border:0;border-radius:var(--radius-full);background:none;cursor:pointer;
   font-family:var(--font-number);font-feature-settings:var(--num-features);
   font-size:13px;line-height:38px;font-weight:var(--weight-medium);color:var(--text-1);padding:0;
 }

@@ -5,6 +5,11 @@ meaningful change. Format: `[date] — what changed — why/notes`
 
 ---
 
+- 2026-09-25 — Log Workout sheet polish (owner): selected calendar day is
+  a true 38px circle (was a column-wide oval); the hours | minutes wheel
+  now sits as two 72px columns at the centre with a 16px gap instead of
+  each taking half the sheet.
+
 - 2026-09-25 — Log Workout added beside Start Workout on the Health tab
   (`Flows for the app /Onboarding + home flows/Homepage + measurel all +
   start workout flow.html`). Start Workout shrinks to half the row; Log
